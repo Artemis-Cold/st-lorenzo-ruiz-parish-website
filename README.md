@@ -1,4 +1,4 @@
-# React + Laravel Project
+# St. Lorenzo Ruiz Parish Website
 
 A simple full-stack web application built with **React** for the frontend and **Laravel** for the backend.
 
