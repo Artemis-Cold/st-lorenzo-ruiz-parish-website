@@ -4,7 +4,7 @@ import {
   Church,
   ScrollText,
   FileText,
-  House,
+  Cross,
 } from "lucide-react";
 
 const services = [
@@ -44,10 +44,10 @@ const services = [
     color: "bg-emerald-100 text-emerald-600",
   },
   {
-    icon: House,
-    title: "Blessings",
+    icon: Cross,
+    title: "Special Mass",
     description:
-      "Book blessings for homes, businesses, vehicles, and other special occasions through the parish.",
+      "Book special mass for homes, businesses, vehicles, and other special occasions through the parish.",
     color: "bg-orange-100 text-orange-600",
   },
 ];

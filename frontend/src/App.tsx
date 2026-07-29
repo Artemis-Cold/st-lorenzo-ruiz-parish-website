@@ -4,7 +4,8 @@ import Home from "./features/home/pages/Home";
 import SignUp from "./features/auth/pages/SignUp";
 import Login from "./features/auth/pages/Login";
 import StaffLogin from "./features/auth/pages/StaffLogin";
-import Dashboard from "./features/dashboard/pages/Dashboard";
+import Dashboard from "./features/parishioner/pages/Dashboard";
+import Wedding from "./features/parishioner/pages/Wedding";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/staff/login" element={<StaffLogin />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/services/wedding" element={<Wedding />} />
       </Routes>
     </BrowserRouter>
   );
