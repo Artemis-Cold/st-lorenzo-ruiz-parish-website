@@ -1,3 +1,4 @@
+import type { Person } from "./person";
 import type { PackageItem } from "../data/packages";
 import type { TimeSlot } from "../data/timeSlots";
 
@@ -14,15 +15,8 @@ export interface WeddingBooking {
   };
 
   applicant: {
-    groom: {
-      firstName: string;
-      lastName: string;
-    };
-
-    bride: {
-      firstName: string;
-      lastName: string;
-    };
+    groom: Person;
+    bride: Person;
   };
 
   remarks: string;

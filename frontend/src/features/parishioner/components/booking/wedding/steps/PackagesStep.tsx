@@ -1,10 +1,10 @@
 import { Check } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 
-import { BookingCard } from "..";
-import { addOns } from "../../../data/packages";
-import type { PackageItem } from "../../../data/packages";
-import type { WeddingBooking } from "../../../types/wedding";
+import { BookingCard } from "../..";
+import { addOns } from "../../../../data/packages";
+import type { PackageItem } from "../../../../data/packages";
+import type { WeddingBooking } from "../../../../types/wedding";
 
 interface PackagesStepProps {
   booking: WeddingBooking;

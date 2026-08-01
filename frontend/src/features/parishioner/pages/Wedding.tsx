@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import DashboardLayout from "../components/DashboardLayout";
 
@@ -8,16 +8,14 @@ import {
   BookingFooter,
 } from "../components/booking";
 
-import RequirementsStep from "../components/booking/steps/RequirementsStep";
-import ScheduleStep from "../components/booking/steps/ScheduleStep";
-import PackagesStep from "../components/booking/steps/PackagesStep";
-import DetailsStep from "../components/booking/steps/DetailsStep";
-import ConfirmationStep from "../components/booking/steps/ConfirmationStep";
+import RequirementsStep from "../components/booking/wedding/steps/RequirementsStep";
+import ScheduleStep from "../components/booking/wedding/steps/ScheduleStep";
+import PackagesStep from "../components/booking/wedding/steps/PackagesStep";
+import DetailsStep from "../components/booking/wedding/steps/DetailsStep";
+import ConfirmationStep from "../components/booking/wedding/steps/ConfirmationStep";
 
 import type { WeddingBooking } from "../types/wedding";
 import { packageItems } from "../data/packages";
-
-
 
 const stepLabels = [
   "Requirements",
@@ -28,7 +26,6 @@ const stepLabels = [
 ];
 
 export default function Wedding() {
-
   const [booking, setBooking] = useState<WeddingBooking>({
     service: "Wedding",
 
@@ -45,24 +42,87 @@ export default function Wedding() {
       groom: {
         firstName: "",
         lastName: "",
+        middleInitial: "",
+
+        address: "",
+        age: null,
+        contactNumber: "",
+
+        church: {
+          baptizedIn: "",
+          confirmedIn: "",
+        },
+
+        father: {
+          firstName: "",
+          lastName: "",
+          middleInitial: "",
+        },
+
+        mother: {
+          firstName: "",
+          lastName: "",
+          middleInitial: "",
+        },
+
+        previousChurchMarriage: {
+          churchName: "",
+          priest: "",
+          churchAddress: "",
+        },
       },
 
       bride: {
         firstName: "",
         lastName: "",
+        middleInitial: "",
+
+        address: "",
+        age: null,
+        contactNumber: "",
+
+        church: {
+          baptizedIn: "",
+          confirmedIn: "",
+        },
+
+        father: {
+          firstName: "",
+          lastName: "",
+          middleInitial: "",
+        },
+
+        mother: {
+          firstName: "",
+          lastName: "",
+          middleInitial: "",
+        },
+
+        previousChurchMarriage: {
+          churchName: "",
+          priest: "",
+          churchAddress: "",
+        },
       },
     },
 
     remarks: "",
   });
-  
+
   const [currentStep, setCurrentStep] = useState(1);
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, [currentStep]);
 
   const pages = [
     <RequirementsStep key="requirements" />,
     <ScheduleStep key="schedule" />,
     <PackagesStep booking={booking} setBooking={setBooking} />,
-    <DetailsStep key="details" />,
+    <DetailsStep key="details" booking={booking} setBooking={setBooking} />,
     <ConfirmationStep key="confirmation" />,
   ];
 

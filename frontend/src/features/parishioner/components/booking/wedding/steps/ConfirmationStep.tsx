@@ -1,4 +1,4 @@
-import { BookingCard } from "..";
+import { BookingCard } from "../..";
 
 export default function ConfirmationStep() {
   return (

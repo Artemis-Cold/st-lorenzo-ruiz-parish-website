@@ -1,7 +1,7 @@
 import { useState } from "react";
 
-import BookingCalendar from "../BookingCalendar";
-import TimeSlotPanel from "../TimeSlotPanel";
+import BookingCalendar from "../../BookingCalendar";
+import TimeSlotPanel from "../../TimeSlotPanel";
 export default function ScheduleStep() {
   const [selectedDate, setSelectedDate] = useState(new Date());
 

@@ -1,6 +1,27 @@
-import { BookingCard } from "..";
+import { BookingCard } from "../..";
+import type { WeddingBooking } from "../../../../types/wedding";
+import type { Dispatch, SetStateAction } from "react";
+import type { Person } from "../../../../types/person";
 
-export default function DetailsStep() {
+interface DetailsStepProps {
+  booking: WeddingBooking;
+  setBooking: Dispatch<SetStateAction<WeddingBooking>>;
+}
+
+export default function DetailsStep({ booking, setBooking }: DetailsStepProps) {
+  const updateGroom = <K extends keyof Person>(field: K, value: Person[K]) => {
+    setBooking((prev) => ({
+      ...prev,
+      applicant: {
+        ...prev.applicant,
+        groom: {
+          ...prev.applicant.groom,
+          [field]: value,
+        },
+      },
+    }));
+  };
+
   return (
     <>
       <BookingCard title="Groom's Information">
@@ -18,6 +39,8 @@ export default function DetailsStep() {
 
                 <input
                   type="text"
+                  value={booking.applicant.groom.lastName}
+                  onChange={(e) => updateGroom("lastName", e.target.value)}
                   placeholder="Enter last name"
                   className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-[#B22222] focus:outline-none"
                 />
@@ -30,6 +53,8 @@ export default function DetailsStep() {
 
                 <input
                   type="text"
+                  value={booking.applicant.groom.firstName}
+                  onChange={(e) => updateGroom("firstName", e.target.value)}
                   placeholder="Enter first name"
                   className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-[#B22222] focus:outline-none"
                 />
@@ -41,6 +66,8 @@ export default function DetailsStep() {
                 <input
                   type="text"
                   maxLength={1}
+                  value={booking.applicant.groom.middleInitial}
+                  onChange={(e) => updateGroom("middleInitial", e.target.value)}
                   placeholder="M"
                   className="w-full rounded-xl border border-gray-300 px-4 py-3 text-center focus:border-[#B22222] focus:outline-none"
                 />
@@ -53,6 +80,8 @@ export default function DetailsStep() {
 
                 <input
                   type="text"
+                  value={booking.applicant.groom.address}
+                  onChange={(e) => updateGroom("address", e.target.value)}
                   placeholder="Street, Barangay, Municipality/City"
                   className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-[#B22222] focus:outline-none"
                 />
@@ -65,6 +94,13 @@ export default function DetailsStep() {
 
                 <input
                   type="number"
+                  value={booking.applicant.groom.age ?? ""}
+                  onChange={(e) =>
+                    updateGroom(
+                      "age",
+                      e.target.value === "" ? null : Number(e.target.value),
+                    )
+                  }
                   placeholder="00"
                   className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-[#B22222] focus:outline-none"
                 />
@@ -77,6 +113,8 @@ export default function DetailsStep() {
 
                 <input
                   type="tel"
+                  value={booking.applicant.groom.contactNumber}
+                  onChange={(e) => updateGroom("contactNumber", e.target.value)}
                   placeholder="09XX XXX XXXX"
                   className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-[#B22222] focus:outline-none"
                 />
@@ -161,8 +199,8 @@ export default function DetailsStep() {
 
               <div className="col-span-12 rounded-xl border border-amber-300 bg-amber-50 p-4">
                 <p className="text-sm text-amber-800">
-                  <strong>Reminder:</strong> Please enter your mother's maiden
-                  name (surname before marriage).
+                  <strong>Reminder:</strong> Please enter the groom's mother's
+                  maiden name (surname before marriage).
                 </p>
               </div>
 
@@ -408,8 +446,8 @@ export default function DetailsStep() {
 
               <div className="col-span-12 rounded-xl border border-amber-300 bg-amber-50 p-4">
                 <p className="text-sm text-amber-800">
-                  <strong>Reminder:</strong> Please enter your mother's maiden
-                  name (surname before marriage).
+                  <strong>Reminder:</strong> Please enter the bride's mother's
+                  maiden name (surname before marriage).
                 </p>
               </div>
 
@@ -489,6 +527,42 @@ export default function DetailsStep() {
                 <input
                   type="text"
                   placeholder="Street, Barangay, Municipality/City"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-[#B22222] focus:outline-none"
+                />
+              </div>
+            </div>
+          </section>
+        </form>
+      </BookingCard>
+
+      <BookingCard title="Requirements">
+        <form className="space-y-8">
+          <section>
+            <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
+              Attach Soft Copy of Requirements
+            </h3>
+
+            <div className="grid grid-cols-12 gap-4">
+              <div className="col-span-12 md:col-span-6">
+                <label className="mb-2 block text-sm font-medium">
+                  Baptized In <span className="text-red-600">*</span>
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="Name of Parish"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-[#B22222] focus:outline-none"
+                />
+              </div>
+
+              <div className="col-span-12 md:col-span-6">
+                <label className="mb-2 block text-sm font-medium">
+                  Confirmed In <span className="text-red-600">*</span>
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="Name of Parish"
                   className="w-full rounded-xl border border-gray-300 px-4 py-3 focus:border-[#B22222] focus:outline-none"
                 />
               </div>
