@@ -6,6 +6,7 @@ import Login from "./features/auth/pages/Login";
 import StaffLogin from "./features/auth/pages/StaffLogin";
 import Dashboard from "./features/parishioner/pages/Dashboard";
 import Wedding from "./features/parishioner/pages/Wedding";
+import Funeral from "./features/parishioner/pages/Funeral";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/staff/login" element={<StaffLogin />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/services/wedding" element={<Wedding />} />
+        <Route path="/services/funeral" element={<Funeral />} />
       </Routes>
     </BrowserRouter>
   );

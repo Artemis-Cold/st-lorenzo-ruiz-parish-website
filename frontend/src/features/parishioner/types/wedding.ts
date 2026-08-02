@@ -20,4 +20,14 @@ export interface WeddingBooking {
   };
 
   remarks: string;
+
+  requirements: {
+    marriageLicense: File | null;
+    cenomar: File | null;
+    baptismalCertificate: File | null;
+    confirmationCertificate: File | null;
+    couplePhoto: File | null;
+    sponsorMarriageContract: File | null;
+    sponsorConfirmationCertificate: File | null;
+};
 }

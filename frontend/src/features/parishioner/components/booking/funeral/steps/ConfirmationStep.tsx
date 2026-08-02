@@ -7,11 +7,11 @@ import PackageSummary from "../summary/PackageSummary";
 import DetailsStep from "./DetailsStep";
 
 import type { Dispatch, SetStateAction } from "react";
-import type { WeddingBooking } from "../../../../types/wedding";
+import type { FuneralBooking } from "../../../../types/funeral";
 
 interface ConfirmationStepProps {
-  booking: WeddingBooking;
-  setBooking: Dispatch<SetStateAction<WeddingBooking>>;
+  booking: FuneralBooking;
+  setBooking: Dispatch<SetStateAction<FuneralBooking>>;
 }
 
 export default function ConfirmationStep({

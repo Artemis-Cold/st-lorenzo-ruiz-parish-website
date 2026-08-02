@@ -106,6 +106,16 @@ export default function Wedding() {
       },
     },
 
+    requirements: {
+      marriageLicense: null,
+      cenomar: null,
+      baptismalCertificate: null,
+      confirmationCertificate: null,
+      couplePhoto: null,
+      sponsorMarriageContract: null,
+      sponsorConfirmationCertificate: null,
+    },
+
     remarks: "",
   });
 
@@ -120,10 +130,14 @@ export default function Wedding() {
 
   const pages = [
     <RequirementsStep key="requirements" />,
-    <ScheduleStep key="schedule" />,
+    <ScheduleStep booking={booking} setBooking={setBooking} key="schedule" />,
     <PackagesStep booking={booking} setBooking={setBooking} />,
     <DetailsStep key="details" booking={booking} setBooking={setBooking} />,
-    <ConfirmationStep key="confirmation" />,
+    <ConfirmationStep
+      booking={booking}
+      setBooking={setBooking}
+      key="confirmation"
+    />,
   ];
 
   return (

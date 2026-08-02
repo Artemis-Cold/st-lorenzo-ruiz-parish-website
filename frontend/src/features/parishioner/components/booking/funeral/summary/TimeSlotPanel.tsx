@@ -1,15 +1,19 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { CalendarDays } from "lucide-react";
 
-import { timeSlots } from "../../data/timeSlots";
-import TimeSlotCard from "./TimeSlotCard";
+import { timeSlots } from "../../../../data/timeSlots";
+import TimeSlotCard from "../../TimeSlotCard";
+
+import type { Dispatch, SetStateAction } from "react";
+import type { FuneralBooking } from "../../../../types/funeral";
 
 interface Props {
-  selectedDate: Date;
+  booking: FuneralBooking;
+  setBooking: Dispatch<SetStateAction<FuneralBooking>>;
 }
 
-export default function TimeSlotPanel({ selectedDate }: Props) {
-  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+export default function TimeSlotPanel({ booking, setBooking }: Props) {
+  const selectedDate = booking.date ?? new Date();
 
   const key = `${selectedDate.getFullYear()}-${String(
     selectedDate.getMonth() + 1,
@@ -49,8 +53,13 @@ export default function TimeSlotPanel({ selectedDate }: Props) {
             <TimeSlotCard
               key={slot.id}
               slot={slot}
-              selected={selectedSlot === slot.id}
-              onSelect={() => setSelectedSlot(slot.id)}
+              selected={booking.timeSlot?.id === slot.id}
+              onSelect={() =>
+                setBooking((prev) => ({
+                  ...prev,
+                  timeSlot: slot,
+                }))
+              }
             />
           ))
         )}

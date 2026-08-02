@@ -1,11 +1,11 @@
 import BookingCalendar from "../../BookingCalendar";
-import TimeSlotPanel from "../summary/TimeSlotPanel";
+import TimeSlotPanel from "../../funeral/summary/TimeSlotPanel";
 import type { Dispatch, SetStateAction } from "react";
-import type { WeddingBooking } from "../../../../types/wedding";
+import type { FuneralBooking } from "../../../../types/funeral";
 
 interface ScheduleStepProps {
-  booking: WeddingBooking;
-  setBooking: Dispatch<SetStateAction<WeddingBooking>>;
+  booking: FuneralBooking;
+  setBooking: Dispatch<SetStateAction<FuneralBooking>>;
 }
 
 export default function ScheduleStep({

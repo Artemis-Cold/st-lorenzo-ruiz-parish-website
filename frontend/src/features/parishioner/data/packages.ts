@@ -1,3 +1,30 @@
+import type { LucideIcon } from "lucide-react";
+import { Music2, Cross } from "lucide-react";
+
+export interface FuneralPackage {
+  id: number;
+  name: string;
+  price: number;
+  recommended?: boolean;
+  icon: LucideIcon;
+}
+
+export const funeralPackages: FuneralPackage[] = [
+  {
+    id: 1,
+    name: "With Choir",
+    price: 3000,
+    recommended: true,
+    icon: Music2,
+  },
+  {
+    id: 2,
+    name: "Without Choir",
+    price: 2000,
+    icon: Cross,
+  },
+];
+
 export interface PackageItem {
   id: number;
   name: string;
