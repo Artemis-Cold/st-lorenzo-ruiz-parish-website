@@ -5,7 +5,6 @@ export interface PersonName {
   middleInitial: string;
 }
 
-export type Parent = PersonName;
 export type Spouse = PersonName;
 
 export interface ChurchInformation {
@@ -46,8 +45,8 @@ export interface Person extends PersonName {
 
   church: ChurchInformation;
 
-  father: Parent;
-  mother: Parent;
+  father: PersonName;
+  mother: PersonName;
 
   previousChurchMarriage: PreviousChurchMarriage;
 }
@@ -58,8 +57,8 @@ export interface Deceased extends PersonName {
   age: number | null;
   birthday: Date | null;
 
-  father: Parent;
-  mother: Parent;
+  father: PersonName;
+  mother: PersonName;
 
   spouse: Spouse;
   children: PersonName[];
@@ -72,4 +71,37 @@ export interface Deceased extends PersonName {
   informant: Informant;
 }
 
+export interface Parent extends PersonName {
+  birthPlace: string;
+}
 
+export interface GodParent extends PersonName {
+  residence: string;
+}
+
+export interface GodParentPair {
+  godFather: GodParent;
+  godMother: GodParent;
+
+  requirements: {
+    marriageContract: File | null;
+    confirmationCertificate: File | null;
+  };
+}
+
+export interface Baptizand extends PersonName {
+  birthDate: Date | null;
+  birthPlace: string;
+
+  age: number | null;
+  gender: string;
+
+  father: Parent;
+  mother: Parent;
+
+  address: string;
+
+  contactNumber: string;
+
+  godParents: GodParentPair[];
+}

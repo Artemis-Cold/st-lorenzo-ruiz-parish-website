@@ -7,6 +7,8 @@ import StaffLogin from "./features/auth/pages/StaffLogin";
 import Dashboard from "./features/parishioner/pages/Dashboard";
 import Wedding from "./features/parishioner/pages/Wedding";
 import Funeral from "./features/parishioner/pages/Funeral";
+import Baptism from "./features/parishioner/pages/Baptism";
+import NavigationPage from "./features/ar-navigation/NavigationPage";
 
 function App() {
   return (
@@ -19,6 +21,8 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/services/wedding" element={<Wedding />} />
         <Route path="/services/funeral" element={<Funeral />} />
+        <Route path="/services/baptism" element={<Baptism />} />
+        <Route path="/ar-navigation" element={<NavigationPage />} />
       </Routes>
     </BrowserRouter>
   );

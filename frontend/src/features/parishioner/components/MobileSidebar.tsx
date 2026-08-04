@@ -136,7 +136,7 @@ export default function MobileSidebar({ open, onClose }: MobileSidebarProps) {
             collapsed={false}
             icon={MapPinned}
             label="AR Navigation"
-            to="/ar"
+            to="/ar-navigation"
           />
 
           <SidebarItem

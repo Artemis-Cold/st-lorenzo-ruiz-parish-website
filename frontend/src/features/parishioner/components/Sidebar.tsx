@@ -116,7 +116,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           collapsed={collapsed}
           icon={MapPinned}
           label="AR Navigation"
-          to="/ar"
+          to="/ar-navigation"
         />
 
         <SidebarItem

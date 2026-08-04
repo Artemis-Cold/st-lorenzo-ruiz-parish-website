@@ -10,4 +10,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    allowedHosts: ["overprice-grunge-majority.ngrok-free.dev"],
+  },
 });

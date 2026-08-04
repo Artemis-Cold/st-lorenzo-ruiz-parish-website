@@ -1,6 +1,25 @@
 import type { LucideIcon } from "lucide-react";
 import { Music2, Cross } from "lucide-react";
 
+export interface BaptismPackage {
+  id: number;
+  name: string;
+  price: number;
+}
+
+export const baptismPackages: BaptismPackage[] = [
+  {
+    id: 1,
+    name: "Monday to Saturday",
+    price: 2500,
+  },
+  {
+    id: 2,
+    name: "Sunday",
+    price: 800,
+  },
+];
+
 export interface FuneralPackage {
   id: number;
   name: string;
