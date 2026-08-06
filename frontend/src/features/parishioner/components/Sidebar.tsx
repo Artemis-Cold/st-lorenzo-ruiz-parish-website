@@ -1,5 +1,5 @@
 import SidebarPopover from "./SidebarPopover";
-
+import LogoutButton from "./LogoutButton";
 import {
   CalendarDays,
   CircleHelp,
@@ -14,7 +14,11 @@ import {
   ScrollText,
   Cross,
   FileText,
+  LogOut,
 } from "lucide-react";
+
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 import logo from "../../../assets/images/parish-logo.png";
 
@@ -26,6 +30,17 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login", { replace: true });
+    } catch (error) {
+      console.error(error);
+    }
+  };
   return (
     <aside
       className={`fixed left-0 top-0 hidden h-screen bg-[#B22222] text-white shadow-xl transition-all duration-300 lg:flex lg:flex-col ${
@@ -136,6 +151,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           label="About"
           to="/about"
         />
+
+        <LogoutButton collapsed={false} />
       </div>
     </aside>
   );

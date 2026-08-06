@@ -5,6 +5,7 @@ import CalendarCard from "../components/dashboard/CalendarCard";
 import AnnouncementCard from "../components/dashboard/AnnouncementCard";
 
 export default function Dashboard() {
+  
   return (
     <DashboardLayout>
       <WelcomeBanner />

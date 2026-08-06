@@ -1,6 +1,11 @@
 import church from "@/assets/images/church.png";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function WelcomeBanner() {
+  const { user } = useAuth();
+
+  if (!user) return null;
+
   return (
     <section
       className="relative overflow-hidden rounded-3xl bg-cover bg-center shadow-lg"
@@ -16,7 +21,7 @@ export default function WelcomeBanner() {
           Welcome
         </span>
 
-        <h1 className="font-serif text-4xl font-bold">Welcome Back, Juan!</h1>
+        <h1 className="font-serif text-4xl font-bold">Welcome Back, {user.first_name}!</h1>
 
         <p className="mt-4 max-w-xl text-gray-200">
           Manage parish service bookings, monitor your requests, receive

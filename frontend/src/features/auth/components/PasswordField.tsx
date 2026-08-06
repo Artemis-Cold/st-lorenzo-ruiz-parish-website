@@ -1,14 +1,22 @@
 import { Eye, EyeOff, Lock } from "lucide-react";
-import { useState } from "react";
+import { useState, type ChangeEvent } from "react";
 
 interface PasswordFieldProps {
   label: string;
   placeholder: string;
+
+  value: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+
+  disabled?: boolean;
 }
 
 export default function PasswordField({
   label,
   placeholder,
+  value,
+  onChange,
+  disabled = false,
 }: PasswordFieldProps) {
   const [show, setShow] = useState(false);
 
@@ -24,15 +32,19 @@ export default function PasswordField({
         <input
           type={show ? "text" : "password"}
           placeholder={placeholder}
-          className="w-full py-3 outline-none"
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          className="w-full py-3 outline-none disabled:cursor-not-allowed disabled:opacity-60"
         />
 
-        <button type="button" onClick={() => setShow(!show)}>
-          {show ? (
-            <EyeOff size={18} className="text-gray-400" />
-          ) : (
-            <Eye size={18} className="text-gray-400" />
-          )}
+        <button
+          type="button"
+          onClick={() => setShow(!show)}
+          disabled={disabled}
+          className="text-gray-400"
+        >
+          {show ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
       </div>
     </div>

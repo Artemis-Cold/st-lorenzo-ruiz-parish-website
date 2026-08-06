@@ -10,32 +10,82 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {
-        Schema::create('users', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
-            $table->rememberToken();
-            $table->timestamps();
-        });
+{
+    Schema::create('users', function (Blueprint $table) {
+        $table->id();
 
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
-        });
+        /*
+        |--------------------------------------------------------------------------
+        | Authentication
+        |--------------------------------------------------------------------------
+        */
 
-        Schema::create('sessions', function (Blueprint $table) {
-            $table->string('id')->primary();
-            $table->foreignId('user_id')->nullable()->index();
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
-            $table->longText('payload');
-            $table->integer('last_activity')->index();
-        });
-    }
+        $table->string('parishioner_id')->nullable()->unique();
+        $table->string('username')->unique();
+        $table->string('password');
+
+        /*
+        |--------------------------------------------------------------------------
+        | Personal Information
+        |--------------------------------------------------------------------------
+        */
+
+        $table->string('first_name');
+        $table->string('middle_name')->nullable();
+        $table->string('last_name');
+        $table->string('suffix')->nullable();
+
+        $table->date('birth_date')->nullable();
+
+        $table->enum('gender', [
+            'Male',
+            'Female',
+        ])->nullable();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Contact Information
+        |--------------------------------------------------------------------------
+        */
+
+        $table->string('phone', 20)->unique();
+
+        $table->string('house_no')->nullable();
+        $table->string('street')->nullable();
+        $table->string('barangay');
+        $table->string('municipality');
+        $table->string('province');
+        $table->string('zip_code')->nullable();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Profile
+        |--------------------------------------------------------------------------
+        */
+
+        $table->string('profile_photo')->nullable();
+
+        /*
+        |--------------------------------------------------------------------------
+        | System
+        |--------------------------------------------------------------------------
+        */
+
+        $table->enum('role', [
+            'admin',
+            'staff',
+            'parishioner',
+        ])->default('parishioner');
+
+        $table->boolean('is_active')->default(true);
+
+        $table->timestamp('phone_verified_at')->nullable();
+
+        $table->rememberToken();
+
+        $table->timestamps();
+    });
+}
 
     /**
      * Reverse the migrations.

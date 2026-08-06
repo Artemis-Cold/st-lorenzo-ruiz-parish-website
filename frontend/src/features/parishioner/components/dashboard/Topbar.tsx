@@ -1,10 +1,15 @@
 import { Bell, Menu } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface TopbarProps {
   onMenuClick: () => void;
 }
 
 export default function Topbar({ onMenuClick }: TopbarProps) {
+  const { user } = useAuth();
+
+  if (!user) return null;
+
   return (
     <header className="flex h-20 items-center justify-between border-b bg-white px-4 shadow-sm md:px-6 lg:px-8">
       {/* Left */}
@@ -47,7 +52,7 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
           />
 
           <div className="hidden md:block">
-            <p className="font-semibold">Juan Dela Cruz</p>
+            <p className="font-semibold">{user.full_name}</p>
 
             <p className="text-sm text-gray-500">Parishioner</p>
           </div>

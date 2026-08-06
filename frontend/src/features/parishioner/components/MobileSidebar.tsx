@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import LogoutButton from "./LogoutButton";
 
 import {
   CalendarDays,
@@ -13,7 +16,7 @@ import {
   ScrollText,
   User,
   X,
-  FileText
+  FileText,
 } from "lucide-react";
 
 import logo from "../../../assets/images/parish-logo.png";
@@ -26,6 +29,7 @@ interface MobileSidebarProps {
 
 export default function MobileSidebar({ open, onClose }: MobileSidebarProps) {
   const [serviceOpen, setServiceOpen] = useState(false);
+
   return (
     <>
       {/* Overlay */}
@@ -154,6 +158,8 @@ export default function MobileSidebar({ open, onClose }: MobileSidebarProps) {
             label="About"
             to="/about"
           />
+
+          <LogoutButton collapsed={false} />
         </div>
       </aside>
     </>

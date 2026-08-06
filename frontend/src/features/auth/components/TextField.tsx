@@ -1,10 +1,16 @@
 import type { LucideIcon } from "lucide-react";
+import type { ChangeEvent } from "react";
 
 interface TextFieldProps {
   label: string;
   placeholder: string;
   icon: LucideIcon;
   type?: string;
+
+  value: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+
+  disabled?: boolean;
 }
 
 export default function TextField({
@@ -12,6 +18,9 @@ export default function TextField({
   placeholder,
   icon: Icon,
   type = "text",
+  value,
+  onChange,
+  disabled = false,
 }: TextFieldProps) {
   return (
     <div>
@@ -25,7 +34,10 @@ export default function TextField({
         <input
           type={type}
           placeholder={placeholder}
-          className="w-full bg-transparent py-3 outline-none"
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          className="w-full bg-transparent py-3 outline-none disabled:cursor-not-allowed disabled:opacity-60"
         />
       </div>
     </div>

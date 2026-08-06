@@ -1,3 +1,7 @@
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+
 import { Link } from "react-router-dom";
 import { User } from "lucide-react";
 
@@ -7,19 +11,48 @@ import PasswordField from "../components/PasswordField";
 import TextField from "../components/TextField";
 
 export default function Login() {
+  const navigate = useNavigate();
+
+  const { login } = useAuth();
+
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      await login({
+        username,
+        password,
+      });
+
+      navigate("/dashboard");
+    } catch (error: any) {
+      alert(error.response?.data?.message ?? "Invalid username or password.");
+    }
+  };
+
   return (
     <AuthLayout
       title="Parishioner Login"
       subtitle="Sign in to manage your bookings, requests, and parish services."
     >
-      <form className="space-y-5">
+      <form onSubmit={handleLogin} className="space-y-5">
         <TextField
           label="Username"
           placeholder="Enter your username"
           icon={User}
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
         />
 
-        <PasswordField label="Password" placeholder="Enter your password" />
+        <PasswordField
+          label="Password"
+          placeholder="Enter your password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
 
         <div className="flex justify-end">
           <Link

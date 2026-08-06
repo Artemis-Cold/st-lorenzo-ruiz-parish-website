@@ -1,0 +1,103 @@
+<?php
+
+namespace App\Services\Auth;
+
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+
+class AuthService
+{
+    /**
+     * Register a new parishioner.
+     */
+    public function register(array $data): array
+    {
+        // Create the user first
+        $user = User::create([
+            'username'      => $data['username'],
+            'password'      => Hash::make($data['password']),
+
+            'first_name'    => $data['first_name'],
+            'middle_name'   => $data['middle_name'] ?? null,
+            'last_name'     => $data['last_name'],
+            'suffix'        => $data['suffix'] ?? null,
+
+            'birth_date'    => $data['birth_date'] ?? null,
+            'gender'        => $data['gender'] ?? null,
+
+            'phone'         => $data['phone'],
+
+            'house_no'      => $data['house_no'] ?? null,
+            'street'        => $data['street'] ?? null,
+            'barangay'      => $data['barangay'],
+            'municipality'  => $data['municipality'],
+            'province'      => $data['province'],
+            'zip_code'      => $data['zip_code'] ?? null,
+
+            'role'          => 'parishioner',
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Generate Parishioner ID
+        |--------------------------------------------------------------------------
+        */
+
+        $year = now()->year;
+
+        $user->update([
+            'parishioner_id' => sprintf(
+                'PR-%d-%06d',
+                $year,
+                $user->id
+            ),
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Sanctum Token
+        |--------------------------------------------------------------------------
+        */
+
+        $token = $user
+            ->createToken('mobile')
+            ->plainTextToken;
+
+        return [
+            'user' => $user->fresh(),
+            'token' => $token,
+        ];
+    }
+
+    /**
+     * Login user.
+     */
+    public function login(array $credentials): array
+    {
+        $user = User::where(
+            'username',
+            $credentials['username']
+        )->first();
+
+        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+            abort(401, 'Invalid username or password.');
+        }
+
+        $token = $user
+            ->createToken('mobile')
+            ->plainTextToken;
+
+        return [
+            'user' => $user,
+            'token' => $token,
+        ];
+    }
+
+    /**
+     * Logout current user.
+     */
+    public function logout(User $user): void
+    {
+        $user->currentAccessToken()->delete();
+    }
+}
