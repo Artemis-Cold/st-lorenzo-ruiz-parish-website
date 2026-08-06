@@ -20,7 +20,7 @@ return new class extends Migration
         |--------------------------------------------------------------------------
         */
 
-        $table->string('parishioner_id')->nullable()->unique();
+        $table->string('parishioner_id')->unique();
         $table->string('username')->unique();
         $table->string('password');
 

@@ -4,6 +4,7 @@ namespace App\Services\Auth;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use App\Services\Parishioner\ParishionerIdService;
 
 class AuthService
 {
@@ -46,11 +47,7 @@ class AuthService
         $year = now()->year;
 
         $user->update([
-            'parishioner_id' => sprintf(
-                'PR-%d-%06d',
-                $year,
-                $user->id
-            ),
+            'parishioner_id' => ParishionerIdService::generate(),
         ]);
 
         /*
