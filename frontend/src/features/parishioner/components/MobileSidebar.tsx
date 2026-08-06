@@ -13,7 +13,6 @@ import {
   ScrollText,
   User,
   X,
-  Church,
   FileText
 } from "lucide-react";
 
@@ -110,13 +109,6 @@ export default function MobileSidebar({ open, onClose }: MobileSidebarProps) {
 
                 <SidebarItem
                   collapsed={false}
-                  icon={Church}
-                  label="Blessing"
-                  to="/services/blessing"
-                />
-
-                <SidebarItem
-                  collapsed={false}
                   icon={ScrollText}
                   label="Mass Intention"
                   to="/services/mass-intention"
@@ -126,7 +118,7 @@ export default function MobileSidebar({ open, onClose }: MobileSidebarProps) {
                   collapsed={false}
                   icon={FileText}
                   label="Request Documents"
-                  to="/services/documents"
+                  to="/services/document-request"
                 />
               </div>
             )}

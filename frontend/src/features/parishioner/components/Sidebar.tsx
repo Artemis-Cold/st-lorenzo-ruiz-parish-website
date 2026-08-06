@@ -11,7 +11,6 @@ import {
   User,
   Baby,
   HeartHandshake,
-  Church,
   ScrollText,
   Cross,
   FileText,
@@ -95,18 +94,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               icon: Cross,
             },
             {
-              label: "Blessing",
-              to: "/services/blessing",
-              icon: Church,
-            },
-            {
               label: "Mass Intention",
               to: "/services/mass-intention",
               icon: ScrollText,
             },
             {
               label: "Request Documents",
-              to: "/services/documents",
+              to: "/services/document-request",
               icon: FileText,
             },
           ]}

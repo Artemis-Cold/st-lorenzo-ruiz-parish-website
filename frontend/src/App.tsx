@@ -8,7 +8,10 @@ import Dashboard from "./features/parishioner/pages/Dashboard";
 import Wedding from "./features/parishioner/pages/Wedding";
 import Funeral from "./features/parishioner/pages/Funeral";
 import Baptism from "./features/parishioner/pages/Baptism";
-import NavigationPage from "./features/ar-navigation/NavigationPage";
+import Mass from "./features/parishioner/pages/Mass";
+import Document from "./features/parishioner/pages/Document";
+import ARTest from "./features/ar-navigation/ARTest";
+import Profile from "./features/parishioner/pages/Profile";
 
 function App() {
   return (
@@ -22,7 +25,10 @@ function App() {
         <Route path="/services/wedding" element={<Wedding />} />
         <Route path="/services/funeral" element={<Funeral />} />
         <Route path="/services/baptism" element={<Baptism />} />
-        <Route path="/ar-navigation" element={<NavigationPage />} />
+        <Route path="/services/mass-intention" element={<Mass />} />
+        <Route path="/services/document-request" element={<Document />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/ar-navigation" element={<ARTest />} />
       </Routes>
     </BrowserRouter>
   );
