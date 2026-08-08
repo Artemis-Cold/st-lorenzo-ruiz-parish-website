@@ -1,11 +1,14 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-
-use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\ProfileController;
+use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Api\BaptismBookingController;
+use App\Http\Controllers\Api\BookingSlotController;
+use App\Http\Controllers\Api\ServicePackageController;
+
+use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
 
@@ -21,9 +24,26 @@ Route::prefix('auth')->group(function () {
 
     });
 
-    
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+
+    Route::post(
+        '/bookings/baptism',
+        [BaptismBookingController::class, 'store']
+    );
 
 });
+
+Route::get(
+    '/services/{code}/packages',
+    [ServicePackageController::class, 'index']
+);
+
+Route::get(
+    '/booking-slots',
+    [BookingSlotController::class, 'index']
+);
 
 Route::get('/', function () {
     return response()->json([

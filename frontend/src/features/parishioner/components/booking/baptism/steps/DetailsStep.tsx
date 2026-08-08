@@ -1,33 +1,56 @@
 import { BookingCard } from "../..";
-import type { BaptismBooking } from "../../../../types/baptism";
 import type { Dispatch, SetStateAction } from "react";
+import FileUploadField from "../summary/FileUploadField";
 import type {
   Baptizand,
   Parent,
   GodParent,
   GodParentPair,
-} from "../../../../types/person";
-import FileUploadField from "../summary/FileUploadField";
+  BaptismBooking,
+  BaptismDocument,
+} from "../../../../types/baptism";
 
 interface DetailsStepProps {
   booking: BaptismBooking;
   setBooking: Dispatch<SetStateAction<BaptismBooking>>;
   readOnly?: boolean;
+  errors?: Record<string, string[]>;
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+
+  return <p className="mt-1 text-sm text-red-600">{message}</p>;
 }
 
 export default function DetailsStep({
   booking,
   setBooking,
   readOnly,
+  errors,
 }: DetailsStepProps) {
-  const inputClass = `
+  const getError = (key: string): string | undefined => errors?.[key]?.[0];
+
+  const inputClass = (hasError?: boolean) => `
 w-full rounded-xl border px-4 py-3 transition
 ${
   readOnly
     ? "border-gray-200 bg-gray-50 text-gray-700"
-    : "border-gray-300 bg-white focus:border-[#B22222] focus:outline-none"
+    : hasError
+      ? "border-red-400 bg-white focus:border-red-500 focus:outline-none"
+      : "border-gray-300 bg-white focus:border-[#B22222] focus:outline-none"
 }
 `;
+
+  const updateBooking = <K extends keyof BaptismBooking>(
+    field: K,
+    value: BaptismBooking[K],
+  ) => {
+    setBooking((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
   const updateBaptizand = <K extends keyof Baptizand>(
     field: K,
@@ -42,94 +65,83 @@ ${
     }));
   };
 
-  const updateFather = <K extends keyof Parent>(field: K, value: Parent[K]) => {
-    setBooking((prev) => ({
-      ...prev,
-      baptizand: {
-        ...prev.baptizand,
-        father: {
-          ...prev.baptizand.father,
-          [field]: value,
-        },
-      },
-    }));
-  };
+  const fatherIndex = booking.parents.findIndex(
+    (p) => p.relationship === "father",
+  );
+  const motherIndex = booking.parents.findIndex(
+    (p) => p.relationship === "mother",
+  );
+  const father = booking.parents[fatherIndex];
+  const mother = booking.parents[motherIndex];
 
-  const updateMother = <K extends keyof Parent>(field: K, value: Parent[K]) => {
+  const updateParent = (
+    relationship: "father" | "mother",
+    field: keyof Omit<Parent, "relationship">,
+    value: string,
+  ) => {
     setBooking((prev) => ({
       ...prev,
-      baptizand: {
-        ...prev.baptizand,
-        mother: {
-          ...prev.baptizand.mother,
-          [field]: value,
-        },
-      },
+      parents: prev.parents.map((p) =>
+        p.relationship === relationship ? { ...p, [field]: value } : p,
+      ),
     }));
   };
 
   const removeGodParentPair = (index: number) => {
     setBooking((prev) => ({
       ...prev,
-      baptizand: {
-        ...prev.baptizand,
-        godParents: prev.baptizand.godParents.filter((_, i) => i !== index),
-      },
+      god_parents: prev.god_parents.filter((_, i) => i !== index),
     }));
   };
 
   const addGodParentPair = () => {
     setBooking((prev) => ({
       ...prev,
-      baptizand: {
-        ...prev.baptizand,
-        godParents: [
-          ...prev.baptizand.godParents,
-          {
-            godFather: {
-              firstName: "",
-              lastName: "",
-              middleInitial: "",
-              residence: "",
-            },
-            godMother: {
-              firstName: "",
-              lastName: "",
-              middleInitial: "",
-              residence: "",
-            },
-            requirements: {
-              marriageContract: null,
-              confirmationCertificate: null,
-            },
+      god_parents: [
+        ...prev.god_parents,
+        {
+          god_father: {
+            role: "godfather",
+            first_name: "",
+            last_name: "",
+            middle_initial: "",
+            residence: "",
           },
-        ],
-      },
+          god_mother: {
+            role: "godmother",
+            first_name: "",
+            last_name: "",
+            middle_initial: "",
+            residence: "",
+          },
+          requirements: {
+            marriage_contract: null,
+            confirmation_certificate: null,
+          },
+        },
+      ],
     }));
   };
 
   const updateGodParent = (
     index: number,
-    role: "godFather" | "godMother",
-    field: keyof GodParent,
+    role: "god_father" | "god_mother",
+    field: keyof Omit<GodParent, "role">,
     value: string,
   ) => {
     setBooking((prev) => ({
       ...prev,
-      baptizand: {
-        ...prev.baptizand,
-        godParents: prev.baptizand.godParents.map((pair, i) =>
-          i === index
-            ? {
-                ...pair,
-                [role]: {
-                  ...pair[role],
-                  [field]: value,
-                },
-              }
-            : pair,
-        ),
-      },
+      god_parents: prev.god_parents.map((pair, i) =>
+        i === index
+          ? {
+              ...pair,
+              [role]: {
+                ...pair[role],
+                [field]: value,
+              },
+            }
+          : pair,
+      ),
     }));
   };
 
@@ -140,33 +152,39 @@ ${
   ) => {
     setBooking((prev) => ({
       ...prev,
-      baptizand: {
-        ...prev.baptizand,
-        godParents: prev.baptizand.godParents.map((pair, i) =>
-          i === index
-            ? {
-                ...pair,
-                requirements: {
-                  ...pair.requirements,
-                  [field]: file,
-                },
-              }
-            : pair,
-        ),
-      },
+      god_parents: prev.god_parents.map((pair, i) =>
+        i === index
+          ? {
+              ...pair,
+              requirements: {
+                ...pair.requirements,
+                [field]: file,
+              },
+            }
+          : pair,
+      ),
     }));
   };
 
-  const updateRequirement = (
-    field: keyof BaptismBooking["requirements"],
+  // ---- Documents ----
+  const getDocumentIndex = (type: BaptismDocument["document_type"]) =>
+    booking.documents.findIndex((d) => d.document_type === type);
+
+  const getDocument = (type: BaptismDocument["document_type"]) =>
+    booking.documents.find((d) => d.document_type === type)?.file ?? null;
+
+  const updateDocument = (
+    type: BaptismDocument["document_type"],
     file: File | null,
   ) => {
     setBooking((prev) => ({
       ...prev,
-      requirements: {
-        ...prev.requirements,
-        [field]: file,
-      },
+      documents: file
+        ? [
+            ...prev.documents.filter((d) => d.document_type !== type),
+            { document_type: type, file },
+          ]
+        : prev.documents.filter((d) => d.document_type !== type),
     }));
   };
 
@@ -187,12 +205,13 @@ ${
 
                 <input
                   type="text"
-                  value={booking.baptizand.lastName}
-                  onChange={(e) => updateBaptizand("lastName", e.target.value)}
+                  value={booking.baptizand.last_name}
+                  onChange={(e) => updateBaptizand("last_name", e.target.value)}
                   placeholder="Enter last name"
                   readOnly={readOnly}
-                  className={inputClass}
+                  className={inputClass(!!getError("baptizand.last_name"))}
                 />
+                <FieldError message={getError("baptizand.last_name")} />
               </div>
 
               <div className="col-span-12 md:col-span-5">
@@ -202,12 +221,15 @@ ${
 
                 <input
                   type="text"
-                  value={booking.baptizand.firstName}
-                  onChange={(e) => updateBaptizand("firstName", e.target.value)}
+                  value={booking.baptizand.first_name}
+                  onChange={(e) =>
+                    updateBaptizand("first_name", e.target.value)
+                  }
                   placeholder="Enter first name"
                   readOnly={readOnly}
-                  className={inputClass}
+                  className={inputClass(!!getError("baptizand.first_name"))}
                 />
+                <FieldError message={getError("baptizand.first_name")} />
               </div>
 
               <div className="col-span-12 md:col-span-2">
@@ -216,17 +238,41 @@ ${
                 <input
                   type="text"
                   maxLength={1}
-                  value={booking.baptizand.middleInitial}
+                  value={booking.baptizand.middle_initial}
                   onChange={(e) =>
-                    updateBaptizand("middleInitial", e.target.value)
+                    updateBaptizand("middle_initial", e.target.value)
                   }
                   placeholder="M"
                   readOnly={readOnly}
-                  className={inputClass}
+                  className={inputClass(!!getError("baptizand.middle_initial"))}
                 />
+                <FieldError message={getError("baptizand.middle_initial")} />
               </div>
 
-              <div className="col-span-12">
+              <div className="col-span-12 md:col-span-4">
+                <label className="mb-2 block text-sm font-medium">
+                  Gender <span className="text-red-600">*</span>
+                </label>
+
+                <select
+                  value={booking.baptizand.gender}
+                  onChange={(e) =>
+                    updateBaptizand(
+                      "gender",
+                      e.target.value as Baptizand["gender"],
+                    )
+                  }
+                  disabled={readOnly}
+                  className={inputClass(!!getError("baptizand.gender"))}
+                >
+                  <option value="">Select Gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                </select>
+                <FieldError message={getError("baptizand.gender")} />
+              </div>
+
+              <div className="col-span-12 md:col-span-8">
                 <label className="mb-2 block text-sm font-medium">
                   Address <span className="text-red-600">*</span>
                 </label>
@@ -237,8 +283,9 @@ ${
                   onChange={(e) => updateBaptizand("address", e.target.value)}
                   placeholder="Street, Barangay, Municipality/City"
                   readOnly={readOnly}
-                  className={inputClass}
+                  className={inputClass(!!getError("baptizand.address"))}
                 />
+                <FieldError message={getError("baptizand.address")} />
               </div>
 
               <div className="col-span-12 md:col-span-3">
@@ -257,8 +304,9 @@ ${
                   }
                   placeholder="00"
                   readOnly={readOnly}
-                  className={inputClass}
+                  className={inputClass(!!getError("baptizand.age"))}
                 />
+                <FieldError message={getError("baptizand.age")} />
               </div>
 
               <div className="col-span-12 md:col-span-4">
@@ -269,19 +317,20 @@ ${
                 <input
                   type="date"
                   value={
-                    booking.baptizand.birthDate
-                      ? booking.baptizand.birthDate.toISOString().split("T")[0]
+                    booking.baptizand.birth_date
+                      ? booking.baptizand.birth_date.toISOString().split("T")[0]
                       : ""
                   }
                   onChange={(e) =>
                     updateBaptizand(
-                      "birthDate",
+                      "birth_date",
                       e.target.value ? new Date(e.target.value) : null,
                     )
                   }
                   readOnly={readOnly}
-                  className={inputClass}
+                  className={inputClass(!!getError("baptizand.birth_date"))}
                 />
+                <FieldError message={getError("baptizand.birth_date")} />
               </div>
 
               <div className="col-span-12 md:col-span-5">
@@ -291,14 +340,15 @@ ${
 
                 <input
                   type="text"
-                  value={booking.baptizand.birthPlace}
+                  value={booking.baptizand.birth_place ?? ""}
                   onChange={(e) =>
-                    updateBaptizand("birthPlace", e.target.value)
+                    updateBaptizand("birth_place", e.target.value)
                   }
                   placeholder="Place of Birth"
                   readOnly={readOnly}
-                  className={inputClass}
+                  className={inputClass(!!getError("baptizand.birth_place"))}
                 />
+                <FieldError message={getError("baptizand.birth_place")} />
               </div>
             </div>
           </section>
@@ -318,9 +368,16 @@ ${
                   type="text"
                   placeholder="Enter father's last name"
                   readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.baptizand.father.lastName}
-                  onChange={(e) => updateFather("lastName", e.target.value)}
+                  className={inputClass(
+                    !!getError(`parents.${fatherIndex}.last_name`),
+                  )}
+                  value={father?.last_name ?? ""}
+                  onChange={(e) =>
+                    updateParent("father", "last_name", e.target.value)
+                  }
+                />
+                <FieldError
+                  message={getError(`parents.${fatherIndex}.last_name`)}
                 />
               </div>
 
@@ -333,9 +390,16 @@ ${
                   type="text"
                   placeholder="Enter father's first name"
                   readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.baptizand.father.firstName}
-                  onChange={(e) => updateFather("firstName", e.target.value)}
+                  className={inputClass(
+                    !!getError(`parents.${fatherIndex}.first_name`),
+                  )}
+                  value={father?.first_name ?? ""}
+                  onChange={(e) =>
+                    updateParent("father", "first_name", e.target.value)
+                  }
+                />
+                <FieldError
+                  message={getError(`parents.${fatherIndex}.first_name`)}
                 />
               </div>
 
@@ -349,11 +413,16 @@ ${
                   maxLength={1}
                   placeholder="M"
                   readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.baptizand.father.middleInitial}
+                  className={inputClass(
+                    !!getError(`parents.${fatherIndex}.middle_initial`),
+                  )}
+                  value={father?.middle_initial ?? ""}
                   onChange={(e) =>
-                    updateFather("middleInitial", e.target.value)
+                    updateParent("father", "middle_initial", e.target.value)
                   }
+                />
+                <FieldError
+                  message={getError(`parents.${fatherIndex}.middle_initial`)}
                 />
               </div>
 
@@ -367,9 +436,16 @@ ${
                   type="text"
                   placeholder="Place of Birth"
                   readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.baptizand.father.birthPlace}
-                  onChange={(e) => updateFather("birthPlace", e.target.value)}
+                  className={inputClass(
+                    !!getError(`parents.${fatherIndex}.birth_place`),
+                  )}
+                  value={father?.birth_place ?? ""}
+                  onChange={(e) =>
+                    updateParent("father", "birth_place", e.target.value)
+                  }
+                />
+                <FieldError
+                  message={getError(`parents.${fatherIndex}.birth_place`)}
                 />
               </div>
 
@@ -389,9 +465,16 @@ ${
                   type="text"
                   placeholder="Enter mother's last name"
                   readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.baptizand.mother.lastName}
-                  onChange={(e) => updateMother("lastName", e.target.value)}
+                  className={inputClass(
+                    !!getError(`parents.${motherIndex}.last_name`),
+                  )}
+                  value={mother?.last_name ?? ""}
+                  onChange={(e) =>
+                    updateParent("mother", "last_name", e.target.value)
+                  }
+                />
+                <FieldError
+                  message={getError(`parents.${motherIndex}.last_name`)}
                 />
               </div>
 
@@ -404,9 +487,16 @@ ${
                   type="text"
                   placeholder="Enter mother's first name"
                   readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.baptizand.mother.firstName}
-                  onChange={(e) => updateMother("firstName", e.target.value)}
+                  className={inputClass(
+                    !!getError(`parents.${motherIndex}.first_name`),
+                  )}
+                  value={mother?.first_name ?? ""}
+                  onChange={(e) =>
+                    updateParent("mother", "first_name", e.target.value)
+                  }
+                />
+                <FieldError
+                  message={getError(`parents.${motherIndex}.first_name`)}
                 />
               </div>
 
@@ -420,11 +510,16 @@ ${
                   maxLength={1}
                   placeholder="M"
                   readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.baptizand.mother.middleInitial}
+                  className={inputClass(
+                    !!getError(`parents.${motherIndex}.middle_initial`),
+                  )}
+                  value={mother?.middle_initial ?? ""}
                   onChange={(e) =>
-                    updateMother("middleInitial", e.target.value)
+                    updateParent("mother", "middle_initial", e.target.value)
                   }
+                />
+                <FieldError
+                  message={getError(`parents.${motherIndex}.middle_initial`)}
                 />
               </div>
 
@@ -438,27 +533,59 @@ ${
                   type="text"
                   placeholder="Place of Birth"
                   readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.baptizand.mother.birthPlace}
-                  onChange={(e) => updateMother("birthPlace", e.target.value)}
+                  className={inputClass(
+                    !!getError(`parents.${motherIndex}.birth_place`),
+                  )}
+                  value={mother?.birth_place ?? ""}
+                  onChange={(e) =>
+                    updateParent("mother", "birth_place", e.target.value)
+                  }
+                />
+                <FieldError
+                  message={getError(`parents.${motherIndex}.birth_place`)}
                 />
               </div>
 
-              <div className="col-span-12">
+              <div className="col-span-12 md:col-span-6">
                 <label className="mb-2 block text-sm font-medium">
                   Contact Number <span className="text-red-600">*</span>
                 </label>
 
                 <input
                   type="tel"
-                  value={booking.baptizand.contactNumber}
+                  value={booking.baptizand.contact_number ?? ""}
                   onChange={(e) =>
-                    updateBaptizand("contactNumber", e.target.value)
+                    updateBaptizand("contact_number", e.target.value)
                   }
                   placeholder="09XX XXX XXXX"
                   readOnly={readOnly}
-                  className={inputClass}
+                  className={inputClass(!!getError("baptizand.contact_number"))}
                 />
+                <FieldError message={getError("baptizand.contact_number")} />
+              </div>
+
+              <div className="col-span-12 md:col-span-6">
+                <label className="mb-2 block text-sm font-medium">
+                  Seminar Date <span className="text-red-600">*</span>
+                </label>
+
+                <input
+                  type="date"
+                  value={
+                    booking.seminar_date
+                      ? booking.seminar_date.toISOString().split("T")[0]
+                      : ""
+                  }
+                  onChange={(e) =>
+                    updateBooking(
+                      "seminar_date",
+                      e.target.value ? new Date(e.target.value) : null,
+                    )
+                  }
+                  readOnly={readOnly}
+                  className={inputClass(!!getError("baptizand.seminar_date"))}
+                />
+                <FieldError message={getError("seminar_date")} />
               </div>
             </div>
           </section>
@@ -469,7 +596,7 @@ ${
             </h3>
 
             <div className="space-y-8">
-              {booking.baptizand.godParents.map((pair, index) => (
+              {booking.god_parents.map((pair, index) => (
                 <div
                   key={index}
                   className="rounded-xl border border-gray-200 p-6"
@@ -505,18 +632,27 @@ ${
 
                           <input
                             type="text"
-                            value={pair.godFather.lastName}
+                            value={pair.god_father.last_name}
                             onChange={(e) =>
                               updateGodParent(
                                 index,
-                                "godFather",
-                                "lastName",
+                                "god_father",
+                                "last_name",
                                 e.target.value,
                               )
                             }
                             readOnly={readOnly}
-                            className={inputClass}
+                            className={inputClass(
+                              !!getError(
+                                `god_parents.${index}.god_father.last_name`,
+                              ),
+                            )}
                             placeholder="Enter last name of godfather"
+                          />
+                          <FieldError
+                            message={getError(
+                              `god_parents.${index}.god_father.last_name`,
+                            )}
                           />
                         </div>
 
@@ -527,18 +663,27 @@ ${
 
                           <input
                             type="text"
-                            value={pair.godFather.firstName}
+                            value={pair.god_father.first_name}
                             onChange={(e) =>
                               updateGodParent(
                                 index,
-                                "godFather",
-                                "firstName",
+                                "god_father",
+                                "first_name",
                                 e.target.value,
                               )
                             }
                             readOnly={readOnly}
-                            className={inputClass}
+                            className={inputClass(
+                              !!getError(
+                                `god_parents.${index}.god_father.first_name`,
+                              ),
+                            )}
                             placeholder="Enter first name of godfather"
+                          />
+                          <FieldError
+                            message={getError(
+                              `god_parents.${index}.god_father.first_name`,
+                            )}
                           />
                         </div>
 
@@ -550,18 +695,27 @@ ${
                           <input
                             type="text"
                             maxLength={1}
-                            value={pair.godFather.middleInitial}
+                            value={pair.god_father.middle_initial}
                             onChange={(e) =>
                               updateGodParent(
                                 index,
-                                "godFather",
-                                "middleInitial",
+                                "god_father",
+                                "middle_initial",
                                 e.target.value,
                               )
                             }
                             readOnly={readOnly}
-                            className={inputClass}
+                            className={inputClass(
+                              !!getError(
+                                `god_parents.${index}.god_father.middle_initial`,
+                              ),
+                            )}
                             placeholder="M"
+                          />
+                          <FieldError
+                            message={getError(
+                              `god_parents.${index}.god_father.middle_initial`,
+                            )}
                           />
                         </div>
 
@@ -572,18 +726,27 @@ ${
 
                           <input
                             type="text"
-                            value={pair.godFather.residence}
+                            value={pair.god_father.residence}
                             onChange={(e) =>
                               updateGodParent(
                                 index,
-                                "godFather",
+                                "god_father",
                                 "residence",
                                 e.target.value,
                               )
                             }
                             readOnly={readOnly}
-                            className={inputClass}
+                            className={inputClass(
+                              !!getError(
+                                `god_parents.${index}.god_father.residence`,
+                              ),
+                            )}
                             placeholder="Enter residence of godfather"
+                          />
+                          <FieldError
+                            message={getError(
+                              `god_parents.${index}.god_father.residence`,
+                            )}
                           />
                         </div>
                       </div>
@@ -603,18 +766,27 @@ ${
 
                           <input
                             type="text"
-                            value={pair.godMother.lastName}
+                            value={pair.god_mother.last_name}
                             onChange={(e) =>
                               updateGodParent(
                                 index,
-                                "godMother",
-                                "lastName",
+                                "god_mother",
+                                "last_name",
                                 e.target.value,
                               )
                             }
                             readOnly={readOnly}
-                            className={inputClass}
+                            className={inputClass(
+                              !!getError(
+                                `god_parents.${index}.god_mother.last_name`,
+                              ),
+                            )}
                             placeholder="Enter last name of godmother"
+                          />
+                          <FieldError
+                            message={getError(
+                              `god_parents.${index}.god_mother.last_name`,
+                            )}
                           />
                         </div>
 
@@ -625,18 +797,27 @@ ${
 
                           <input
                             type="text"
-                            value={pair.godMother.firstName}
+                            value={pair.god_mother.first_name}
                             onChange={(e) =>
                               updateGodParent(
                                 index,
-                                "godMother",
-                                "firstName",
+                                "god_mother",
+                                "first_name",
                                 e.target.value,
                               )
                             }
                             readOnly={readOnly}
-                            className={inputClass}
+                            className={inputClass(
+                              !!getError(
+                                `god_parents.${index}.god_mother.first_name`,
+                              ),
+                            )}
                             placeholder="Enter first name of godmother"
+                          />
+                          <FieldError
+                            message={getError(
+                              `god_parents.${index}.god_mother.first_name`,
+                            )}
                           />
                         </div>
 
@@ -648,18 +829,27 @@ ${
                           <input
                             type="text"
                             maxLength={1}
-                            value={pair.godMother.middleInitial}
+                            value={pair.god_mother.middle_initial}
                             onChange={(e) =>
                               updateGodParent(
                                 index,
-                                "godMother",
-                                "middleInitial",
+                                "god_mother",
+                                "middle_initial",
                                 e.target.value,
                               )
                             }
                             readOnly={readOnly}
-                            className={inputClass}
+                            className={inputClass(
+                              !!getError(
+                                `god_parents.${index}.god_mother.middle_initial`,
+                              ),
+                            )}
                             placeholder="M"
+                          />
+                          <FieldError
+                            message={getError(
+                              `god_parents.${index}.god_mother.middle_initial`,
+                            )}
                           />
                         </div>
 
@@ -670,18 +860,27 @@ ${
 
                           <input
                             type="text"
-                            value={pair.godMother.residence}
+                            value={pair.god_mother.residence}
                             onChange={(e) =>
                               updateGodParent(
                                 index,
-                                "godMother",
+                                "god_mother",
                                 "residence",
                                 e.target.value,
                               )
                             }
                             readOnly={readOnly}
-                            className={inputClass}
+                            className={inputClass(
+                              !!getError(
+                                `god_parents.${index}.god_mother.residence`,
+                              ),
+                            )}
                             placeholder="Enter residence of godmother"
+                          />
+                          <FieldError
+                            message={getError(
+                              `god_parents.${index}.god_mother.residence`,
+                            )}
                           />
                         </div>
 
@@ -703,15 +902,20 @@ ${
                               <div className="col-span-12 md:col-span-6">
                                 <FileUploadField
                                   label="Marriage Contract"
-                                  file={pair.requirements.marriageContract}
+                                  file={pair.requirements.marriage_contract}
                                   onChange={(file) =>
                                     updateGodParentRequirement(
                                       index,
-                                      "marriageContract",
+                                      "marriage_contract",
                                       file,
                                     )
                                   }
                                   readOnly={readOnly}
+                                />
+                                <FieldError
+                                  message={getError(
+                                    `god_parents.${index}.requirements.marriage_contract`,
+                                  )}
                                 />
                               </div>
 
@@ -719,16 +923,21 @@ ${
                                 <FileUploadField
                                   label="Confirmation Certificate"
                                   file={
-                                    pair.requirements.confirmationCertificate
+                                    pair.requirements.confirmation_certificate
                                   }
                                   onChange={(file) =>
                                     updateGodParentRequirement(
                                       index,
-                                      "confirmationCertificate",
+                                      "confirmation_certificate",
                                       file,
                                     )
                                   }
                                   readOnly={readOnly}
+                                />
+                                <FieldError
+                                  message={getError(
+                                    `god_parents.${index}.requirements.confirmation_certificate`,
+                                  )}
                                 />
                               </div>
                             </div>
@@ -772,11 +981,17 @@ ${
                 <FileUploadField
                   label="Birth Certificate of the Child"
                   required
-                  file={booking.requirements.birthCertificate}
-                  onChange={(file) =>
-                    updateRequirement("birthCertificate", file)
-                  }
+                  file={getDocument("birth_certificate")}
+                  onChange={(file) => updateDocument("birth_certificate", file)}
                   readOnly={readOnly}
+                />
+                <FieldError
+                  message={
+                    getError("documents.birth_certificate") ??
+                    getError(
+                      `documents.${getDocumentIndex("birth_certificate")}.file`,
+                    )
+                  }
                 />
               </div>
 
@@ -785,7 +1000,7 @@ ${
 
                 <p className="mt-1 text-sm text-blue-700">
                   Required only for applicants who are
-                  <strong> not under the parish jurisdiction.</strong>
+                  <strong> not under the parish jurisdiction. </strong>
                   This document may be obtained from the applicant's parish of
                   origin.
                 </p>
@@ -794,9 +1009,14 @@ ${
               <div className="col-span-12">
                 <FileUploadField
                   label="Baptism Permit"
-                  file={booking.requirements.baptismPermit}
-                  onChange={(file) => updateRequirement("baptismPermit", file)}
+                  file={getDocument("baptism_permit")}
+                  onChange={(file) => updateDocument("baptism_permit", file)}
                   readOnly={readOnly}
+                />
+                <FieldError
+                  message={getError(
+                    `documents.${getDocumentIndex("baptism_permit")}.file`,
+                  )}
                 />
               </div>
 
@@ -814,9 +1034,19 @@ ${
               <div className="col-span-12">
                 <FileUploadField
                   label="Certificate of No Record of Baptism"
-                  file={booking.requirements.noRecordCert}
-                  onChange={(file) => updateRequirement("noRecordCert", file)}
+                  file={getDocument("no_record_certificate")}
+                  onChange={(file) =>
+                    updateDocument("no_record_certificate", file)
+                  }
                   readOnly={readOnly}
+                />
+                <FieldError
+                  message={
+                    getError("documents.no_record_certificate") ??
+                    getError(
+                      `documents.${getDocumentIndex("no_record_certificate")}.file`,
+                    )
+                  }
                 />
               </div>
             </div>
@@ -829,7 +1059,7 @@ ${
 
             <p className="text-sm text-green-700">
               The required document for each pair of godparents
-              <strong> (Marriage Contract or Confirmation Certificate)</strong>
+              <strong> (Marriage Contract or Confirmation Certificate) </strong>
               is uploaded together with each Godparent Pair above. No additional
               upload is required in this section.
             </p>

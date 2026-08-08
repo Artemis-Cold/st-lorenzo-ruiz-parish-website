@@ -36,4 +36,9 @@ class ServicePackage extends Model
     {
         return $this->hasMany(PackageAddon::class);
     }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
 }

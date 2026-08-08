@@ -23,7 +23,7 @@ class UserResource extends JsonResource
             'full_name' => $this->full_name,
 
             'first_name' => $this->first_name,
-            'middle_name' => $this->middle_name,
+            'middle_initial' => $this->middle_initial,
             'last_name' => $this->last_name,
             'suffix' => $this->suffix,
 
@@ -46,7 +46,7 @@ class UserResource extends JsonResource
 
             'role' => $this->role,
 
-            'phone_verified' => !is_null($this->phone_verified_at),
+            'phone_verified' => ! is_null($this->phone_verified_at),
 
             'created_at' => $this->created_at,
 

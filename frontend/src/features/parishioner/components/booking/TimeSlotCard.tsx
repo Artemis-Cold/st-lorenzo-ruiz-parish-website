@@ -1,7 +1,7 @@
-import type { TimeSlot } from "../../data/timeSlots";
+import type { BookingSlot } from "../../../../services/bookingSlotService";
 
 interface TimeSlotCardProps {
-  slot: TimeSlot;
+  slot: BookingSlot;
   selected: boolean;
   onSelect: () => void;
 }
@@ -11,15 +11,9 @@ export default function TimeSlotCard({
   selected,
   onSelect,
 }: TimeSlotCardProps) {
-  const colors = {
-    available: "bg-green-500",
-    limited: "bg-yellow-400",
-    full: "bg-[#B22222]",
-  };
-
   return (
     <button
-      disabled={slot.status === "full"}
+      disabled={!slot.available}
       onClick={onSelect}
       className={`w-full rounded-2xl border p-4 text-left transition-all duration-200
 
@@ -30,7 +24,7 @@ export default function TimeSlotCard({
       }
 
       ${
-        slot.status === "full"
+        !slot.available
           ? "cursor-not-allowed opacity-60"
           : "hover:-translate-y-1 hover:shadow-md"
       }
@@ -38,29 +32,31 @@ export default function TimeSlotCard({
     >
       <div className="flex items-start justify-between">
         <div>
-          <h3 className="text-lg font-semibold">{slot.time}</h3>
+          <h3 className="text-lg font-semibold">
+            {slot.start_time} - {slot.end_time}
+          </h3>
 
-          <p className="text-sm text-gray-500">{slot.service}</p>
+          <p className="text-sm text-gray-500">
+            Baptism Schedule
+          </p>
         </div>
 
-        <span className={`mt-1 h-3 w-3 rounded-full ${colors[slot.status]}`} />
+        <span
+          className={`mt-1 h-3 w-3 rounded-full ${
+            slot.available ? "bg-green-500" : "bg-[#B22222]"
+          }`}
+        />
       </div>
 
       <div className="mt-3 text-sm">
-        {slot.status === "available" && (
+        {slot.available ? (
           <span className="text-green-600">
-            {slot.remainingSlots} slots available
+            Available
           </span>
-        )}
-
-        {slot.status === "limited" && (
-          <span className="text-yellow-600">
-            Only {slot.remainingSlots} slots left
+        ) : (
+          <span className="text-[#B22222]">
+            Fully Booked
           </span>
-        )}
-
-        {slot.status === "full" && (
-          <span className="text-[#B22222]">Fully Booked</span>
         )}
       </div>
     </button>

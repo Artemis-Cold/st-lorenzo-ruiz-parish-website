@@ -3,27 +3,23 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BookingSlot extends Model
 {
     protected $fillable = [
-
         'service_id',
-
         'booking_date',
-
-        'booking_time',
-
+        'start_time',
+        'end_time',
         'capacity',
-
         'is_active',
-
     ];
 
     protected $casts = [
-
-        'booking_date'=>'date',
-
+        'booking_date' => 'date',
+        'is_active' => 'boolean',
     ];
 
     public function service()
@@ -31,7 +27,7 @@ class BookingSlot extends Model
         return $this->belongsTo(Service::class);
     }
 
-    public function bookings()
+    public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
     }

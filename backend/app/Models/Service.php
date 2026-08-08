@@ -10,11 +10,12 @@ class Service extends Model
     protected $fillable = [
         'code',
         'name',
-        'active',
+        'description',
+        'is_active',
     ];
 
     protected $casts = [
-        'active' => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     public function packages(): HasMany
@@ -22,8 +23,13 @@ class Service extends Model
         return $this->hasMany(ServicePackage::class);
     }
 
-    public function bookingSlots()
-{
-    return $this->hasMany(BookingSlot::class);
-}
+    public function bookingSlots(): HasMany
+    {
+        return $this->hasMany(BookingSlot::class);
+    }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
 }

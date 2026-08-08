@@ -15,7 +15,7 @@ class ParishionerIdService
             ->latest('id')
             ->first();
 
-        if (!$lastUser) {
+        if (! $lastUser) {
             $number = 1;
         } else {
             $lastNumber = (int) substr($lastUser->parishioner_id, -6);

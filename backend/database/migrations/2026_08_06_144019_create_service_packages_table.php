@@ -18,11 +18,11 @@ return new class extends Migration
 
             $table->string('name');
 
-            $table->decimal('base_price',10,2);
+            $table->decimal('base_price', 10, 2);
 
             $table->boolean('recommended')->default(false);
 
-            $table->boolean('active')->default(true);
+            $table->boolean('is_active')->default(true);
 
             $table->timestamps();
         });

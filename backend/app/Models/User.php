@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -16,7 +17,7 @@ class User extends Authenticatable
         'password',
 
         'first_name',
-        'middle_name',
+        'middle_initial',
         'last_name',
         'suffix',
 
@@ -61,9 +62,19 @@ class User extends Authenticatable
     {
         return trim(implode(' ', array_filter([
             $this->first_name,
-            $this->middle_name,
+            $this->middle_initial,
             $this->last_name,
             $this->suffix,
         ])));
+    }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    public function approvedBookings(): HasMany
+    {
+        return $this->hasMany(Booking::class, 'approved_by');
     }
 }

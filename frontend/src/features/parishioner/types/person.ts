@@ -1,8 +1,8 @@
 export type ApplicantType = "groom" | "bride";
 export interface PersonName {
-  firstName: string;
-  lastName: string;
-  middleInitial: string;
+  first_name: string;
+  middle_initial: string;
+  last_name: string;
 }
 
 export type Spouse = PersonName;
@@ -72,36 +72,35 @@ export interface Deceased extends PersonName {
 }
 
 export interface Parent extends PersonName {
-  birthPlace: string;
+  relationship: "father" | "mother";
+  birth_place: string;
 }
 
 export interface GodParent extends PersonName {
+  role: "godfather" | "godmother";
   residence: string;
 }
 
 export interface GodParentPair {
-  godFather: GodParent;
-  godMother: GodParent;
+  god_father: GodParent;
+  god_mother: GodParent;
 
   requirements: {
-    marriageContract: File | null;
-    confirmationCertificate: File | null;
+    marriage_contract: File | null;
+    confirmation_certificate: File | null;
   };
 }
 
 export interface Baptizand extends PersonName {
-  birthDate: Date | null;
-  birthPlace: string;
+  birth_date: Date | null;
+
+  birth_place: string | null;
 
   age: number | null;
-  gender: string;
 
-  father: Parent;
-  mother: Parent;
+  gender: "Male" | "Female";
 
   address: string;
 
-  contactNumber: string;
-
-  godParents: GodParentPair[];
+  contact_number: string | null;
 }

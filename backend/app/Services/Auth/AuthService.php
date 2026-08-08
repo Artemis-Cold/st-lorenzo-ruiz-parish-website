@@ -3,8 +3,8 @@
 namespace App\Services\Auth;
 
 use App\Models\User;
-use Illuminate\Support\Facades\Hash;
 use App\Services\Parishioner\ParishionerIdService;
+use Illuminate\Support\Facades\Hash;
 
 class AuthService
 {
@@ -15,27 +15,27 @@ class AuthService
     {
         // Create the user first
         $user = User::create([
-            'username'      => $data['username'],
-            'password'      => Hash::make($data['password']),
+            'username' => $data['username'],
+            'password' => Hash::make($data['password']),
 
-            'first_name'    => $data['first_name'],
-            'middle_name'   => $data['middle_name'] ?? null,
-            'last_name'     => $data['last_name'],
-            'suffix'        => $data['suffix'] ?? null,
+            'first_name' => $data['first_name'],
+            'middle_initial' => $data['middle_initial'] ?? null,
+            'last_name' => $data['last_name'],
+            'suffix' => $data['suffix'] ?? null,
 
-            'birth_date'    => $data['birth_date'] ?? null,
-            'gender'        => $data['gender'] ?? null,
+            'birth_date' => $data['birth_date'] ?? null,
+            'gender' => $data['gender'] ?? null,
 
-            'phone'         => $data['phone'],
+            'phone' => $data['phone'],
 
-            'house_no'      => $data['house_no'] ?? null,
-            'street'        => $data['street'] ?? null,
-            'barangay'      => $data['barangay'],
-            'municipality'  => $data['municipality'],
-            'province'      => $data['province'],
-            'zip_code'      => $data['zip_code'] ?? null,
+            'house_no' => $data['house_no'] ?? null,
+            'street' => $data['street'] ?? null,
+            'barangay' => $data['barangay'],
+            'municipality' => $data['municipality'],
+            'province' => $data['province'],
+            'zip_code' => $data['zip_code'] ?? null,
 
-            'role'          => 'parishioner',
+            'role' => 'parishioner',
         ]);
 
         /*
@@ -76,7 +76,7 @@ class AuthService
             $credentials['username']
         )->first();
 
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             abort(401, 'Invalid username or password.');
         }
 

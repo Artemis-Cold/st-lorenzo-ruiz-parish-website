@@ -18,19 +18,23 @@ return new class extends Migration
 
             $table->date('booking_date');
 
-            $table->time('booking_time');
+            $table->time('start_time');
 
-            $table->unsignedInteger('capacity');
+            $table->time('end_time');
 
-            $table->boolean('is_active')
-                ->default(true);
+            // Maximum number of bookings allowed
+            $table->unsignedTinyInteger('capacity')->default(1);
+
+            // Secretary can temporarily disable a slot
+            $table->boolean('is_active')->default(true);
 
             $table->timestamps();
 
+            // Prevent duplicate slots
             $table->unique([
                 'service_id',
                 'booking_date',
-                'booking_time'
+                'start_time',
             ]);
         });
     }

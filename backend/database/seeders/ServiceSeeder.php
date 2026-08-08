@@ -12,33 +12,33 @@ class ServiceSeeder extends Seeder
         Service::insert([
 
             [
-                'id' => 1,
                 'code' => 'baptism',
                 'name' => 'Baptism',
+                'description' => 'Sacrament of Baptism',
             ],
 
             [
-                'id' => 2,
                 'code' => 'wedding',
                 'name' => 'Wedding',
+                'description' => 'Holy Matrimony',
             ],
 
             [
-                'id' => 3,
                 'code' => 'funeral',
                 'name' => 'Funeral',
+                'description' => 'Funeral Mass',
             ],
 
             [
-                'id' => 4,
                 'code' => 'mass-intention',
                 'name' => 'Mass Intention',
+                'description' => 'Mass Offering',
             ],
 
             [
-                'id' => 5,
                 'code' => 'document-request',
                 'name' => 'Document Request',
+                'description' => 'Certificates and Parish Documents',
             ],
 
         ]);

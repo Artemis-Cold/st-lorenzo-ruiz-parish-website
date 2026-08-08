@@ -10,82 +10,82 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-{
-    Schema::create('users', function (Blueprint $table) {
-        $table->id();
+    {
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Authentication
-        |--------------------------------------------------------------------------
-        */
+            /*
+            |--------------------------------------------------------------------------
+            | Authentication
+            |--------------------------------------------------------------------------
+            */
 
-        $table->string('parishioner_id')->unique();
-        $table->string('username')->unique();
-        $table->string('password');
+            $table->string('parishioner_id')->unique();
+            $table->string('username')->unique();
+            $table->string('password');
 
-        /*
-        |--------------------------------------------------------------------------
-        | Personal Information
-        |--------------------------------------------------------------------------
-        */
+            /*
+            |--------------------------------------------------------------------------
+            | Personal Information
+            |--------------------------------------------------------------------------
+            */
 
-        $table->string('first_name');
-        $table->string('middle_name')->nullable();
-        $table->string('last_name');
-        $table->string('suffix')->nullable();
+            $table->string('first_name');
+            $table->string('middle_initial')->nullable();
+            $table->string('last_name');
+            $table->string('suffix')->nullable();
 
-        $table->date('birth_date')->nullable();
+            $table->date('birth_date')->nullable();
 
-        $table->enum('gender', [
-            'Male',
-            'Female',
-        ])->nullable();
+            $table->enum('gender', [
+                'Male',
+                'Female',
+            ])->nullable();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Contact Information
-        |--------------------------------------------------------------------------
-        */
+            /*
+            |--------------------------------------------------------------------------
+            | Contact Information
+            |--------------------------------------------------------------------------
+            */
 
-        $table->string('phone', 20)->unique();
+            $table->string('phone', 20)->unique();
 
-        $table->string('house_no')->nullable();
-        $table->string('street')->nullable();
-        $table->string('barangay');
-        $table->string('municipality');
-        $table->string('province');
-        $table->string('zip_code')->nullable();
+            $table->string('house_no')->nullable();
+            $table->string('street')->nullable();
+            $table->string('barangay');
+            $table->string('municipality');
+            $table->string('province');
+            $table->string('zip_code')->nullable();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Profile
-        |--------------------------------------------------------------------------
-        */
+            /*
+            |--------------------------------------------------------------------------
+            | Profile
+            |--------------------------------------------------------------------------
+            */
 
-        $table->string('profile_photo')->nullable();
+            $table->string('profile_photo')->nullable();
 
-        /*
-        |--------------------------------------------------------------------------
-        | System
-        |--------------------------------------------------------------------------
-        */
+            /*
+            |--------------------------------------------------------------------------
+            | System
+            |--------------------------------------------------------------------------
+            */
 
-        $table->enum('role', [
-            'admin',
-            'staff',
-            'parishioner',
-        ])->default('parishioner');
+            $table->enum('role', [
+                'admin',
+                'staff',
+                'parishioner',
+            ])->default('parishioner');
 
-        $table->boolean('is_active')->default(true);
+            $table->boolean('is_active')->default(true);
 
-        $table->timestamp('phone_verified_at')->nullable();
+            $table->timestamp('phone_verified_at')->nullable();
 
-        $table->rememberToken();
+            $table->rememberToken();
 
-        $table->timestamps();
-    });
-}
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.

@@ -1,27 +1,92 @@
-
 import type { Dispatch, SetStateAction } from "react";
 
 import { BookingCard } from "../..";
 
-import { baptismPackages } from "../../../../data/packages";
+import { useEffect, useState } from "react";
+
+import {
+  getServicePackages,
+  type ServicePackage,
+} from "../../../../../../services/servicePackageService";
 
 import type { BaptismBooking } from "../../../../types/baptism";
-import type { BaptismPackage } from "../../../../data/packages";
 
 interface PackagesStepProps {
   booking: BaptismBooking;
   setBooking: Dispatch<SetStateAction<BaptismBooking>>;
+  selectedDate: Date | null;
+  selectedPackage: ServicePackage | null;
+  setSelectedPackage: Dispatch<SetStateAction<ServicePackage | null>>;
 }
 
 export default function PackagesStep({
   booking,
   setBooking,
+  selectedDate,
+  selectedPackage,
+  setSelectedPackage,
 }: PackagesStepProps) {
-  const selectPackage = (pkg: BaptismPackage) => {
+  const [packages, setPackages] = useState<ServicePackage[]>([]);
+
+  useEffect(() => {
+    const loadPackages = async () => {
+      try {
+        const data = await getServicePackages("baptism");
+        setPackages(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    loadPackages();
+  }, []);
+
+  const isSunday = selectedDate ? selectedDate.getDay() === 0 : null;
+
+  const relevantPackages =
+    isSunday === null
+      ? packages
+      : packages.filter((pkg) =>
+          isSunday
+            ? pkg.name.toLowerCase().includes("sunday")
+            : !pkg.name.toLowerCase().includes("sunday"),
+        );
+
+  // If the previously selected package no longer matches the chosen date
+  // (e.g. user picked a package, went back, changed the date), clear it.
+  useEffect(() => {
+    if (booking.service_package_id === 0) return;
+
+    const stillValid = relevantPackages.some(
+      (pkg) => pkg.id === booking.service_package_id,
+    );
+
+    if (!stillValid) {
+      setBooking((prev) => ({ ...prev, service_package_id: 0 }));
+      setSelectedPackage(null);
+    }
+  }, [selectedDate, packages]);
+
+  // If selectedPackage was lost on remount (e.g. navigated away and back)
+  // but booking.service_package_id still points at a valid package once
+  // the list has loaded, restore it so PackageSummary isn't left blank.
+  useEffect(() => {
+    if (selectedPackage || booking.service_package_id === 0) return;
+
+    const match = packages.find((pkg) => pkg.id === booking.service_package_id);
+
+    if (match) {
+      setSelectedPackage(match);
+    }
+  }, [packages]);
+
+  const selectPackage = (pkg: ServicePackage) => {
     setBooking((prev) => ({
       ...prev,
-      package: pkg,
+      service_package_id: pkg.id,
     }));
+
+    setSelectedPackage(pkg);
   };
 
   return (
@@ -30,8 +95,19 @@ export default function PackagesStep({
         <div>
           <h3 className="mb-6 text-2xl font-bold">Baptismal Rates</h3>
 
+          {selectedDate && (
+            <p className="mb-4 text-sm text-gray-500">
+              Showing rates for{" "}
+              {selectedDate.toLocaleDateString(undefined, {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
+          )}
+
           <div className="space-y-4">
-            {baptismPackages.map((pkg) => (
+            {relevantPackages.map((pkg) => (
               <label
                 key={pkg.id}
                 className={`
@@ -39,7 +115,7 @@ export default function PackagesStep({
               rounded-xl border p-5 transition
 
               ${
-                booking.package?.id === pkg.id
+                booking.service_package_id === pkg.id
                   ? "border-[#B22222] bg-red-50"
                   : "border-gray-200 hover:border-[#B22222]"
               }
@@ -48,7 +124,7 @@ export default function PackagesStep({
                 <div className="flex items-center gap-4">
                   <input
                     type="radio"
-                    checked={booking.package?.id === pkg.id}
+                    checked={booking.service_package_id === pkg.id}
                     onChange={() => selectPackage(pkg)}
                     className="h-5 w-5 accent-[#B22222]"
                   />
@@ -57,7 +133,7 @@ export default function PackagesStep({
                 </div>
 
                 <span className="text-2xl font-semibold text-[#B22222]">
-                  ₱{pkg.price.toLocaleString()}
+                  ₱{Number(pkg.base_price).toLocaleString()}
                 </span>
               </label>
             ))}

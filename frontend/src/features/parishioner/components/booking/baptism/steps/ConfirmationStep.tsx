@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import ConfirmationNotice from "../summary/ConfirmationNotice";
 import ScheduleSummary from "../summary/ScheduleSummary";
 import PackageSummary from "../summary/PackageSummary";
@@ -8,36 +6,40 @@ import DetailsStep from "./DetailsStep";
 
 import type { Dispatch, SetStateAction } from "react";
 import type { BaptismBooking } from "../../../../types/baptism";
+import type { BookingSlot } from "../../../../../../services/bookingSlotService";
+import type { ServicePackage } from "../../../../../../services/servicePackageService";
 
 interface ConfirmationStepProps {
   booking: BaptismBooking;
   setBooking: Dispatch<SetStateAction<BaptismBooking>>;
+  selectedDate: Date | null;
+  selectedSlot: BookingSlot | null;
+  selectedPackage: ServicePackage | null;
+  agree: boolean;
+  setAgree: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function ConfirmationStep({
   booking,
   setBooking,
+  selectedDate,
+  selectedSlot,
+  selectedPackage,
+  agree,
+  setAgree,
 }: ConfirmationStepProps) {
-  const [agree, setAgree] = useState(false);
-
   return (
     <div className="space-y-8">
       <ConfirmationNotice />
 
-      <ScheduleSummary booking={booking} />
+      <ScheduleSummary selectedDate={selectedDate} selectedSlot={selectedSlot} />
 
-      <PackageSummary booking={booking} />
+      <PackageSummary selectedPackage={selectedPackage} />
 
-      <DetailsStep
-        booking={booking}
-        setBooking={setBooking}
-        readOnly
-      />
+      <DetailsStep booking={booking} setBooking={setBooking} readOnly />
 
       <div className="rounded-3xl border border-[#B22222]/20 bg-red-50 p-6">
-        <h3 className="mb-4 text-xl font-bold text-[#B22222]">
-          Declaration
-        </h3>
+        <h3 className="mb-4 text-xl font-bold text-[#B22222]">Declaration</h3>
 
         <p className="mb-6 text-gray-700">
           I hereby certify that all information and uploaded documents provided
