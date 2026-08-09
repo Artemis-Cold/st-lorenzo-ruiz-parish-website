@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\BaptismBookingController;
 use App\Http\Controllers\Api\BookingSlotController;
 use App\Http\Controllers\Api\ServicePackageController;
+use App\Http\Controllers\Api\WeddingBookingController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\ProfileController;
@@ -30,6 +31,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post(
         '/bookings/baptism',
         [BaptismBookingController::class, 'store']
+    );
+
+    Route::post(
+        '/bookings/wedding',
+        [WeddingBookingController::class, 'store']
     );
 
     Route::patch('/profile/complete', [ProfileController::class, 'complete']);

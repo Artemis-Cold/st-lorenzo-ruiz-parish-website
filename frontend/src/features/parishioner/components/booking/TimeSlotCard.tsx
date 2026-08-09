@@ -4,12 +4,14 @@ interface TimeSlotCardProps {
   slot: BookingSlot;
   selected: boolean;
   onSelect: () => void;
+  label?: string;
 }
 
 export default function TimeSlotCard({
   slot,
   selected,
   onSelect,
+  label = "Schedule",
 }: TimeSlotCardProps) {
   return (
     <button
@@ -36,9 +38,7 @@ export default function TimeSlotCard({
             {slot.start_time} - {slot.end_time}
           </h3>
 
-          <p className="text-sm text-gray-500">
-            Baptism Schedule
-          </p>
+          <p className="text-sm text-gray-500">{label}</p>
         </div>
 
         <span
@@ -50,13 +50,9 @@ export default function TimeSlotCard({
 
       <div className="mt-3 text-sm">
         {slot.available ? (
-          <span className="text-green-600">
-            Available
-          </span>
+          <span className="text-green-600">Available</span>
         ) : (
-          <span className="text-[#B22222]">
-            Fully Booked
-          </span>
+          <span className="text-[#B22222]">Fully Booked</span>
         )}
       </div>
     </button>

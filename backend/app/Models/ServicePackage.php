@@ -13,13 +13,13 @@ class ServicePackage extends Model
         'name',
         'base_price',
         'recommended',
-        'active',
+        'is_active',
     ];
 
     protected $casts = [
         'base_price' => 'decimal:2',
         'recommended' => 'boolean',
-        'active' => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     public function service(): BelongsTo

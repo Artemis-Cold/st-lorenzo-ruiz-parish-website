@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import ConfirmationNotice from "../summary/ConfirmationNotice";
 import ScheduleSummary from "../summary/ScheduleSummary";
 import PackageSummary from "../summary/PackageSummary";
@@ -8,25 +6,35 @@ import DetailsStep from "./DetailsStep";
 
 import type { Dispatch, SetStateAction } from "react";
 import type { WeddingBooking } from "../../../../types/wedding";
+import type { BookingSlot } from "../../../../../../services/bookingSlotService";
+import type { ServicePackage } from "../../../../../../services/servicePackageService";
 
 interface ConfirmationStepProps {
   booking: WeddingBooking;
   setBooking: Dispatch<SetStateAction<WeddingBooking>>;
+  selectedDate: Date | null;
+  selectedSlot: BookingSlot | null;
+  selectedPackage: ServicePackage | null;
+  agree: boolean;
+  setAgree: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function ConfirmationStep({
   booking,
   setBooking,
+  selectedDate,
+  selectedSlot,
+  selectedPackage,
+  agree,
+  setAgree,
 }: ConfirmationStepProps) {
-  const [agree, setAgree] = useState(false);
-
   return (
     <div className="space-y-8">
       <ConfirmationNotice />
 
-      <ScheduleSummary booking={booking} />
+      <ScheduleSummary selectedDate={selectedDate} selectedSlot={selectedSlot} />
 
-      <PackageSummary booking={booking} />
+      <PackageSummary selectedPackage={selectedPackage} />
 
       <DetailsStep
         booking={booking}

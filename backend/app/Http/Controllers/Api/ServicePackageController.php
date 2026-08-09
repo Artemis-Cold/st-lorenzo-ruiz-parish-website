@@ -14,6 +14,7 @@ class ServicePackageController extends Controller
         return response()->json(
             $service->packages()
                 ->where('is_active', true)
+                ->with(['inclusions', 'addons'])
                 ->orderByDesc('recommended')
                 ->orderBy('base_price')
                 ->get()

@@ -1,28 +1,38 @@
-import { useMemo } from "react";
 import { CalendarDays } from "lucide-react";
-
-import { timeSlots } from "../../../../data/timeSlots";
 import TimeSlotCard from "../../TimeSlotCard";
 
 import type { Dispatch, SetStateAction } from "react";
 import type { WeddingBooking } from "../../../../types/wedding";
+import type { BookingSlot } from "../../../../../../services/bookingSlotService";
 
 interface Props {
   booking: WeddingBooking;
   setBooking: Dispatch<SetStateAction<WeddingBooking>>;
+
+  slots: BookingSlot[];
+
+  loading: boolean;
+
+  selectedDate: Date | null;
+
+  setSelectedSlot: Dispatch<SetStateAction<BookingSlot | null>>;
 }
 
-export default function TimeSlotPanel({ booking, setBooking }: Props) {
-  const selectedDate = booking.date ?? new Date();
-
-  const key = `${selectedDate.getFullYear()}-${String(
-    selectedDate.getMonth() + 1,
-  ).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
-
-  const slots = useMemo(
-    () => timeSlots.filter((slot) => slot.date === key),
-    [key],
-  );
+export default function TimeSlotPanel({
+  booking,
+  setBooking,
+  slots,
+  loading,
+  selectedDate,
+  setSelectedSlot,
+}: Props) {
+  if (loading) {
+    return (
+      <div className="rounded-2xl border py-10 text-center">
+        Loading slots...
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-3xl bg-white p-6 shadow-lg">
@@ -33,12 +43,14 @@ export default function TimeSlotPanel({ booking, setBooking }: Props) {
           <h2 className="font-serif text-xl font-bold">Available Time Slots</h2>
 
           <p className="text-sm text-gray-500">
-            {selectedDate.toLocaleDateString("en-US", {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-              year: "numeric",
-            })}
+            {selectedDate
+              ? selectedDate.toLocaleDateString("en-US", {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                })
+              : "Select a date"}
           </p>
         </div>
       </div>
@@ -53,13 +65,16 @@ export default function TimeSlotPanel({ booking, setBooking }: Props) {
             <TimeSlotCard
               key={slot.id}
               slot={slot}
-              selected={booking.timeSlot?.id === slot.id}
-              onSelect={() =>
+              label="Wedding Schedule"
+              selected={booking.booking_slot_id === slot.id}
+              onSelect={() => {
                 setBooking((prev) => ({
                   ...prev,
-                  timeSlot: slot,
-                }))
-              }
+                  booking_slot_id: slot.id,
+                }));
+
+                setSelectedSlot(slot);
+              }}
             />
           ))
         )}

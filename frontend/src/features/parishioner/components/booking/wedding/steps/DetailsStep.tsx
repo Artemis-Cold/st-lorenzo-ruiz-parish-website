@@ -1,20 +1,34 @@
 import { BookingCard } from "../..";
-import type { WeddingBooking } from "../../../../types/wedding";
+import type {
+  ApplicantType,
+  Person,
+  WeddingBooking,
+  WeddingDocument,
+} from "../../../../types/wedding";
 import type { Dispatch, SetStateAction } from "react";
-import type { ApplicantType, Person } from "../../../../types/person";
 import FileUploadField from "../summary/FileUploadField";
 
 interface DetailsStepProps {
   booking: WeddingBooking;
   setBooking: Dispatch<SetStateAction<WeddingBooking>>;
   readOnly?: boolean;
+  errors?: Record<string, string[]>;
+}
+
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+
+  return <p className="field-error mt-1 text-sm text-red-600">{message}</p>;
 }
 
 export default function DetailsStep({
   booking,
   setBooking,
   readOnly,
+  errors,
 }: DetailsStepProps) {
+  const getError = (key: string): string | undefined => errors?.[key]?.[0];
+
   const inputClass = `
 w-full rounded-xl border px-4 py-3 transition
 ${
@@ -23,6 +37,9 @@ ${
     : "border-gray-300 bg-white focus:border-[#B22222] focus:outline-none"
 }
 `;
+
+  const formClass =
+    "space-y-8 [&_div:has(>.field-error)>input]:border-red-400 [&_div:has(>.field-error)>input]:focus:border-red-500";
 
   const updateApplicant = <K extends keyof Person>(
     applicant: ApplicantType,
@@ -102,11 +119,11 @@ ${
   };
 
   const updateApplicantPreviousMarriage = <
-    K extends keyof Person["previousChurchMarriage"],
+    K extends keyof Person["previous_church_marriage"],
   >(
     applicant: ApplicantType,
     field: K,
-    value: Person["previousChurchMarriage"][K],
+    value: Person["previous_church_marriage"][K],
   ) => {
     setBooking((prev) => ({
       ...prev,
@@ -114,8 +131,8 @@ ${
         ...prev.applicant,
         [applicant]: {
           ...prev.applicant[applicant],
-          previousChurchMarriage: {
-            ...prev.applicant[applicant].previousChurchMarriage,
+          previous_church_marriage: {
+            ...prev.applicant[applicant].previous_church_marriage,
             [field]: value,
           },
         },
@@ -123,23 +140,31 @@ ${
     }));
   };
 
-  const updateRequirement = (
-    field: keyof WeddingBooking["requirements"],
+  const getDocument = (type: WeddingDocument["document_type"]) =>
+    booking.documents.find((document) => document.document_type === type)
+      ?.file ?? null;
+
+  const updateDocument = (
+    type: WeddingDocument["document_type"],
     file: File | null,
   ) => {
     setBooking((prev) => ({
       ...prev,
-      requirements: {
-        ...prev.requirements,
-        [field]: file,
-      },
+      documents: file
+        ? [
+            ...prev.documents.filter(
+              (document) => document.document_type !== type,
+            ),
+            { document_type: type, file },
+          ]
+        : prev.documents.filter((document) => document.document_type !== type),
     }));
   };
 
   return (
     <>
       <BookingCard title="Groom's Information">
-        <form className="space-y-8">
+        <form className={formClass}>
           <section>
             <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
               Personal Information
@@ -153,14 +178,15 @@ ${
 
                 <input
                   type="text"
-                  value={booking.applicant.groom.lastName}
+                  value={booking.applicant.groom.last_name}
                   onChange={(e) =>
-                    updateApplicant("groom", "lastName", e.target.value)
+                    updateApplicant("groom", "last_name", e.target.value)
                   }
                   placeholder="Enter last name"
                   readOnly={readOnly}
                   className={inputClass}
                 />
+                <FieldError message={getError("applicant.groom.last_name")} />
               </div>
 
               <div className="col-span-12 md:col-span-5">
@@ -170,14 +196,15 @@ ${
 
                 <input
                   type="text"
-                  value={booking.applicant.groom.firstName}
+                  value={booking.applicant.groom.first_name}
                   onChange={(e) =>
-                    updateApplicant("groom", "firstName", e.target.value)
+                    updateApplicant("groom", "first_name", e.target.value)
                   }
                   placeholder="Enter first name"
                   readOnly={readOnly}
                   className={inputClass}
                 />
+                <FieldError message={getError("applicant.groom.first_name")} />
               </div>
 
               <div className="col-span-12 md:col-span-2">
@@ -186,14 +213,15 @@ ${
                 <input
                   type="text"
                   maxLength={1}
-                  value={booking.applicant.groom.middleInitial}
+                  value={booking.applicant.groom.middle_initial}
                   onChange={(e) =>
-                    updateApplicant("groom", "middleInitial", e.target.value)
+                    updateApplicant("groom", "middle_initial", e.target.value)
                   }
                   placeholder="M"
                   readOnly={readOnly}
                   className={inputClass}
                 />
+                <FieldError message={getError("applicant.groom.middle_initial")} />
               </div>
 
               <div className="col-span-12">
@@ -211,6 +239,7 @@ ${
                   readOnly={readOnly}
                   className={inputClass}
                 />
+                <FieldError message={getError("applicant.groom.address")} />
               </div>
 
               <div className="col-span-12 md:col-span-3">
@@ -232,6 +261,7 @@ ${
                   readOnly={readOnly}
                   className={inputClass}
                 />
+                <FieldError message={getError("applicant.groom.age")} />
               </div>
 
               <div className="col-span-12 md:col-span-9">
@@ -241,14 +271,15 @@ ${
 
                 <input
                   type="tel"
-                  value={booking.applicant.groom.contactNumber}
+                  value={booking.applicant.groom.contact_number}
                   onChange={(e) =>
-                    updateApplicant("groom", "contactNumber", e.target.value)
+                    updateApplicant("groom", "contact_number", e.target.value)
                   }
                   placeholder="09XX XXX XXXX"
                   readOnly={readOnly}
                   className={inputClass}
                 />
+                <FieldError message={getError("applicant.groom.contact_number")} />
               </div>
             </div>
           </section>
@@ -269,10 +300,17 @@ ${
                   placeholder="Name of Parish"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.groom.church.baptizedIn}
+                  value={booking.applicant.groom.church.baptized_in}
                   onChange={(e) =>
-                    updateApplicantChurch("groom", "baptizedIn", e.target.value)
+                    updateApplicantChurch(
+                      "groom",
+                      "baptized_in",
+                      e.target.value,
+                    )
                   }
+                />
+                <FieldError
+                  message={getError("applicant.groom.church.baptized_in")}
                 />
               </div>
 
@@ -286,14 +324,17 @@ ${
                   placeholder="Name of Parish"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.groom.church.confirmedIn}
+                  value={booking.applicant.groom.church.confirmed_in}
                   onChange={(e) =>
                     updateApplicantChurch(
                       "groom",
-                      "confirmedIn",
+                      "confirmed_in",
                       e.target.value,
                     )
                   }
+                />
+                <FieldError
+                  message={getError("applicant.groom.church.confirmed_in")}
                 />
               </div>
             </div>
@@ -315,10 +356,13 @@ ${
                   placeholder="Enter father's last name"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.groom.father.lastName}
+                  value={booking.applicant.groom.father.last_name}
                   onChange={(e) =>
-                    updateApplicantFather("groom", "lastName", e.target.value)
+                    updateApplicantFather("groom", "last_name", e.target.value)
                   }
+                />
+                <FieldError
+                  message={getError("applicant.groom.father.last_name")}
                 />
               </div>
 
@@ -332,10 +376,13 @@ ${
                   placeholder="Enter father's first name"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.groom.father.firstName}
+                  value={booking.applicant.groom.father.first_name}
                   onChange={(e) =>
-                    updateApplicantFather("groom", "firstName", e.target.value)
+                    updateApplicantFather("groom", "first_name", e.target.value)
                   }
+                />
+                <FieldError
+                  message={getError("applicant.groom.father.first_name")}
                 />
               </div>
 
@@ -350,14 +397,17 @@ ${
                   placeholder="M"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.groom.father.middleInitial}
+                  value={booking.applicant.groom.father.middle_initial}
                   onChange={(e) =>
                     updateApplicantFather(
                       "groom",
-                      "middleInitial",
+                      "middle_initial",
                       e.target.value,
                     )
                   }
+                />
+                <FieldError
+                  message={getError("applicant.groom.father.middle_initial")}
                 />
               </div>
 
@@ -378,10 +428,13 @@ ${
                   placeholder="Enter mother's last name"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.groom.mother.lastName}
+                  value={booking.applicant.groom.mother.last_name}
                   onChange={(e) =>
-                    updateApplicantMother("groom", "lastName", e.target.value)
+                    updateApplicantMother("groom", "last_name", e.target.value)
                   }
+                />
+                <FieldError
+                  message={getError("applicant.groom.mother.last_name")}
                 />
               </div>
 
@@ -395,10 +448,13 @@ ${
                   placeholder="Enter mother's first name"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.groom.mother.firstName}
+                  value={booking.applicant.groom.mother.first_name}
                   onChange={(e) =>
-                    updateApplicantMother("groom", "firstName", e.target.value)
+                    updateApplicantMother("groom", "first_name", e.target.value)
                   }
+                />
+                <FieldError
+                  message={getError("applicant.groom.mother.first_name")}
                 />
               </div>
 
@@ -413,14 +469,17 @@ ${
                   placeholder="M"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.groom.mother.middleInitial}
+                  value={booking.applicant.groom.mother.middle_initial}
                   onChange={(e) =>
                     updateApplicantMother(
                       "groom",
-                      "middleInitial",
+                      "middle_initial",
                       e.target.value,
                     )
                   }
+                />
+                <FieldError
+                  message={getError("applicant.groom.mother.middle_initial")}
                 />
               </div>
             </div>
@@ -443,15 +502,20 @@ ${
                   readOnly={readOnly}
                   className={inputClass}
                   value={
-                    booking.applicant.groom.previousChurchMarriage.churchName
+                    booking.applicant.groom.previous_church_marriage.church_name
                   }
                   onChange={(e) =>
                     updateApplicantPreviousMarriage(
                       "groom",
-                      "churchName",
+                      "church_name",
                       e.target.value,
                     )
                   }
+                />
+                <FieldError
+                  message={getError(
+                    "applicant.groom.previous_church_marriage.church_name",
+                  )}
                 />
               </div>
 
@@ -465,7 +529,9 @@ ${
                   placeholder="Name of Parish Priest"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.groom.previousChurchMarriage.priest}
+                  value={
+                    booking.applicant.groom.previous_church_marriage.priest
+                  }
                   onChange={(e) =>
                     updateApplicantPreviousMarriage(
                       "groom",
@@ -473,6 +539,11 @@ ${
                       e.target.value,
                     )
                   }
+                />
+                <FieldError
+                  message={getError(
+                    "applicant.groom.previous_church_marriage.priest",
+                  )}
                 />
               </div>
               <div className="col-span-12">
@@ -486,15 +557,21 @@ ${
                   readOnly={readOnly}
                   className={inputClass}
                   value={
-                    booking.applicant.groom.previousChurchMarriage.churchAddress
+                    booking.applicant.groom.previous_church_marriage
+                      .church_address
                   }
                   onChange={(e) =>
                     updateApplicantPreviousMarriage(
                       "groom",
-                      "churchAddress",
+                      "church_address",
                       e.target.value,
                     )
                   }
+                />
+                <FieldError
+                  message={getError(
+                    "applicant.groom.previous_church_marriage.church_address",
+                  )}
                 />
               </div>
             </div>
@@ -503,7 +580,7 @@ ${
       </BookingCard>
 
       <BookingCard title="Bride's Information">
-        <form className="space-y-8">
+        <form className={formClass}>
           <section>
             <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
               Personal Information
@@ -517,14 +594,15 @@ ${
 
                 <input
                   type="text"
-                  value={booking.applicant.bride.lastName}
+                  value={booking.applicant.bride.last_name}
                   onChange={(e) =>
-                    updateApplicant("bride", "lastName", e.target.value)
+                    updateApplicant("bride", "last_name", e.target.value)
                   }
                   placeholder="Enter last name"
                   readOnly={readOnly}
                   className={inputClass}
                 />
+                <FieldError message={getError("applicant.bride.last_name")} />
               </div>
 
               <div className="col-span-12 md:col-span-5">
@@ -534,14 +612,15 @@ ${
 
                 <input
                   type="text"
-                  value={booking.applicant.bride.firstName}
+                  value={booking.applicant.bride.first_name}
                   onChange={(e) =>
-                    updateApplicant("bride", "firstName", e.target.value)
+                    updateApplicant("bride", "first_name", e.target.value)
                   }
                   placeholder="Enter first name"
                   readOnly={readOnly}
                   className={inputClass}
                 />
+                <FieldError message={getError("applicant.bride.first_name")} />
               </div>
 
               <div className="col-span-12 md:col-span-2">
@@ -550,9 +629,9 @@ ${
                 <input
                   type="text"
                   maxLength={1}
-                  value={booking.applicant.bride.middleInitial}
+                  value={booking.applicant.bride.middle_initial}
                   onChange={(e) =>
-                    updateApplicant("bride", "middleInitial", e.target.value)
+                    updateApplicant("bride", "middle_initial", e.target.value)
                   }
                   placeholder="M"
                   readOnly={readOnly}
@@ -575,6 +654,7 @@ ${
                   readOnly={readOnly}
                   className={inputClass}
                 />
+                <FieldError message={getError("applicant.bride.address")} />
               </div>
 
               <div className="col-span-12 md:col-span-3">
@@ -596,6 +676,7 @@ ${
                   readOnly={readOnly}
                   className={inputClass}
                 />
+                <FieldError message={getError("applicant.bride.age")} />
               </div>
 
               <div className="col-span-12 md:col-span-9">
@@ -605,14 +686,15 @@ ${
 
                 <input
                   type="tel"
-                  value={booking.applicant.bride.contactNumber}
+                  value={booking.applicant.bride.contact_number}
                   onChange={(e) =>
-                    updateApplicant("bride", "contactNumber", e.target.value)
+                    updateApplicant("bride", "contact_number", e.target.value)
                   }
                   placeholder="09XX XXX XXXX"
                   readOnly={readOnly}
                   className={inputClass}
                 />
+                <FieldError message={getError("applicant.bride.contact_number")} />
               </div>
             </div>
           </section>
@@ -633,10 +715,17 @@ ${
                   placeholder="Name of Parish"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.bride.church.baptizedIn}
+                  value={booking.applicant.bride.church.baptized_in}
                   onChange={(e) =>
-                    updateApplicantChurch("bride", "baptizedIn", e.target.value)
+                    updateApplicantChurch(
+                      "bride",
+                      "baptized_in",
+                      e.target.value,
+                    )
                   }
+                />
+                <FieldError
+                  message={getError("applicant.bride.church.baptized_in")}
                 />
               </div>
 
@@ -650,14 +739,17 @@ ${
                   placeholder="Name of Parish"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.bride.church.confirmedIn}
+                  value={booking.applicant.bride.church.confirmed_in}
                   onChange={(e) =>
                     updateApplicantChurch(
                       "bride",
-                      "confirmedIn",
+                      "confirmed_in",
                       e.target.value,
                     )
                   }
+                />
+                <FieldError
+                  message={getError("applicant.bride.church.confirmed_in")}
                 />
               </div>
             </div>
@@ -679,10 +771,13 @@ ${
                   placeholder="Enter father's last name"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.bride.father.lastName}
+                  value={booking.applicant.bride.father.last_name}
                   onChange={(e) =>
-                    updateApplicantFather("bride", "lastName", e.target.value)
+                    updateApplicantFather("bride", "last_name", e.target.value)
                   }
+                />
+                <FieldError
+                  message={getError("applicant.bride.father.last_name")}
                 />
               </div>
 
@@ -696,10 +791,13 @@ ${
                   placeholder="Enter father's first name"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.bride.father.firstName}
+                  value={booking.applicant.bride.father.first_name}
                   onChange={(e) =>
-                    updateApplicantFather("bride", "firstName", e.target.value)
+                    updateApplicantFather("bride", "first_name", e.target.value)
                   }
+                />
+                <FieldError
+                  message={getError("applicant.bride.father.first_name")}
                 />
               </div>
 
@@ -714,11 +812,11 @@ ${
                   placeholder="M"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.bride.father.middleInitial}
+                  value={booking.applicant.bride.father.middle_initial}
                   onChange={(e) =>
                     updateApplicantFather(
                       "bride",
-                      "middleInitial",
+                      "middle_initial",
                       e.target.value,
                     )
                   }
@@ -742,10 +840,13 @@ ${
                   placeholder="Enter mother's last name"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.bride.mother.lastName}
+                  value={booking.applicant.bride.mother.last_name}
                   onChange={(e) =>
-                    updateApplicantMother("bride", "lastName", e.target.value)
+                    updateApplicantMother("bride", "last_name", e.target.value)
                   }
+                />
+                <FieldError
+                  message={getError("applicant.bride.mother.last_name")}
                 />
               </div>
 
@@ -759,10 +860,13 @@ ${
                   placeholder="Enter mother's first name"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.bride.mother.firstName}
+                  value={booking.applicant.bride.mother.first_name}
                   onChange={(e) =>
-                    updateApplicantMother("bride", "firstName", e.target.value)
+                    updateApplicantMother("bride", "first_name", e.target.value)
                   }
+                />
+                <FieldError
+                  message={getError("applicant.bride.mother.first_name")}
                 />
               </div>
 
@@ -777,11 +881,11 @@ ${
                   placeholder="M"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.bride.mother.middleInitial}
+                  value={booking.applicant.bride.mother.middle_initial}
                   onChange={(e) =>
                     updateApplicantMother(
                       "bride",
-                      "middleInitial",
+                      "middle_initial",
                       e.target.value,
                     )
                   }
@@ -807,15 +911,20 @@ ${
                   readOnly={readOnly}
                   className={inputClass}
                   value={
-                    booking.applicant.bride.previousChurchMarriage.churchName
+                    booking.applicant.bride.previous_church_marriage.church_name
                   }
                   onChange={(e) =>
                     updateApplicantPreviousMarriage(
                       "bride",
-                      "churchName",
+                      "church_name",
                       e.target.value,
                     )
                   }
+                />
+                <FieldError
+                  message={getError(
+                    "applicant.bride.previous_church_marriage.church_name",
+                  )}
                 />
               </div>
 
@@ -829,7 +938,9 @@ ${
                   placeholder="Name of Parish Priest"
                   readOnly={readOnly}
                   className={inputClass}
-                  value={booking.applicant.bride.previousChurchMarriage.priest}
+                  value={
+                    booking.applicant.bride.previous_church_marriage.priest
+                  }
                   onChange={(e) =>
                     updateApplicantPreviousMarriage(
                       "bride",
@@ -837,6 +948,11 @@ ${
                       e.target.value,
                     )
                   }
+                />
+                <FieldError
+                  message={getError(
+                    "applicant.bride.previous_church_marriage.priest",
+                  )}
                 />
               </div>
               <div className="col-span-12">
@@ -850,15 +966,21 @@ ${
                   readOnly={readOnly}
                   className={inputClass}
                   value={
-                    booking.applicant.bride.previousChurchMarriage.churchAddress
+                    booking.applicant.bride.previous_church_marriage
+                      .church_address
                   }
                   onChange={(e) =>
                     updateApplicantPreviousMarriage(
                       "bride",
-                      "churchAddress",
+                      "church_address",
                       e.target.value,
                     )
                   }
+                />
+                <FieldError
+                  message={getError(
+                    "applicant.bride.previous_church_marriage.church_address",
+                  )}
                 />
               </div>
             </div>
@@ -867,7 +989,7 @@ ${
       </BookingCard>
 
       <BookingCard title="Requirements">
-        <form className="space-y-8">
+        <form className={formClass}>
           <section>
             <h3 className="mb-2 border-b pb-2 text-lg font-semibold text-[#B22222]">
               {readOnly
@@ -886,33 +1008,36 @@ ${
                 <FileUploadField
                   label="Marriage License"
                   required
-                  file={booking.requirements.marriageLicense}
-                  onChange={(file) =>
-                    updateRequirement("marriageLicense", file)
-                  }
+                  file={getDocument("marriage_license")}
+                  onChange={(file) => updateDocument("marriage_license", file)}
                   readOnly={readOnly}
                 />
+                <FieldError message={getError("documents.marriage_license")} />
               </div>
 
               <div className="col-span-12 md:col-span-6">
                 <FileUploadField
                   label="Certificate of No Marriage (CENOMAR)"
                   required
-                  file={booking.requirements.cenomar}
-                  onChange={(file) => updateRequirement("cenomar", file)}
+                  file={getDocument("cenomar")}
+                  onChange={(file) => updateDocument("cenomar", file)}
                   readOnly={readOnly}
                 />
+                <FieldError message={getError("documents.cenomar")} />
               </div>
 
               <div className="col-span-12 md:col-span-6">
                 <FileUploadField
                   label="Baptismal Certificate"
                   required
-                  file={booking.requirements.baptismalCertificate}
+                  file={getDocument("baptismal_certificate")}
                   onChange={(file) =>
-                    updateRequirement("baptismalCertificate", file)
+                    updateDocument("baptismal_certificate", file)
                   }
                   readOnly={readOnly}
+                />
+                <FieldError
+                  message={getError("documents.baptismal_certificate")}
                 />
               </div>
 
@@ -920,11 +1045,14 @@ ${
                 <FileUploadField
                   label="Confirmation Certificate"
                   required
-                  file={booking.requirements.confirmationCertificate}
+                  file={getDocument("confirmation_certificate")}
                   onChange={(file) =>
-                    updateRequirement("confirmationCertificate", file)
+                    updateDocument("confirmation_certificate", file)
                   }
                   readOnly={readOnly}
+                />
+                <FieldError
+                  message={getError("documents.confirmation_certificate")}
                 />
               </div>
 
@@ -932,10 +1060,11 @@ ${
                 <FileUploadField
                   label="Three (3) Copies of 3R Couple Photo"
                   required
-                  file={booking.requirements.couplePhoto}
-                  onChange={(file) => updateRequirement("couplePhoto", file)}
+                  file={getDocument("couple_photo")}
+                  onChange={(file) => updateDocument("couple_photo", file)}
                   readOnly={readOnly}
                 />
+                <FieldError message={getError("documents.couple_photo")} />
               </div>
             </div>
           </section>
@@ -954,20 +1083,21 @@ ${
               <div className="col-span-12 md:col-span-6">
                 <FileUploadField
                   label="Marriage Contract"
-                  file={booking.requirements.sponsorMarriageContract}
+                  file={getDocument("sponsor_marriage_contract")}
                   onChange={(file) =>
-                    updateRequirement("sponsorMarriageContract", file)
+                    updateDocument("sponsor_marriage_contract", file)
                   }
                   readOnly={readOnly}
                 />
+                <FieldError message={getError("documents.sponsor")} />
               </div>
 
               <div className="col-span-12 md:col-span-6">
                 <FileUploadField
                   label="Confirmation Certificate"
-                  file={booking.requirements.sponsorConfirmationCertificate}
+                  file={getDocument("sponsor_confirmation_certificate")}
                   onChange={(file) =>
-                    updateRequirement("sponsorConfirmationCertificate", file)
+                    updateDocument("sponsor_confirmation_certificate", file)
                   }
                   readOnly={readOnly}
                 />

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Booking extends Model
 {
@@ -59,6 +60,19 @@ class Booking extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(BookingDocument::class);
+    }
+
+    public function weddingApplicants(): HasMany
+    {
+        return $this->hasMany(WeddingApplicant::class);
+    }
+
+    public function selectedAddons(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            PackageAddon::class,
+            'booking_package_addons'
+        )->withTimestamps();
     }
 
     public function slot(): BelongsTo
