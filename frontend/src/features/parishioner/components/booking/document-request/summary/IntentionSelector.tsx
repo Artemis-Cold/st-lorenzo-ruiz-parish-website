@@ -84,14 +84,11 @@ export default function IntentionSelector({
         groups: [
           ...prev.groups,
           {
-            service: "Mass Intention",
-            date: prev.date,
             type,
             entries: [
               {
                 id: Date.now(),
                 names: [],
-                amount: null,
               },
             ],
           },
@@ -106,14 +103,14 @@ export default function IntentionSelector({
         {/* Selected Date */}
         <div className="border-b pb-4">
           <h2 className="font-semibold uppercase tracking-wide text-[#B22222]">
-            {booking.date
-              ? format(booking.date, "MMMM yyyy")
+            {booking.intention_date
+              ? format(booking.intention_date, "MMMM yyyy")
               : "Select Date"}
           </h2>
 
           <p className="text-sm text-gray-500">
-            {booking.date
-              ? format(booking.date, "EEEE, MMMM d, yyyy")
+            {booking.intention_date
+              ? format(booking.intention_date, "EEEE, MMMM d, yyyy")
               : "No date selected"}
           </p>
         </div>

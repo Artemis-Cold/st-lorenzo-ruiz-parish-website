@@ -21,6 +21,7 @@ import type {
 interface Props {
   booking: MassIntentionBooking;
   setBooking: Dispatch<SetStateAction<MassIntentionBooking>>;
+  errors?: Record<string, string[]>;
 }
 
 const intentionOptions = [
@@ -63,6 +64,7 @@ const intentionOptions = [
 export default function IntentionSelector({
   booking,
   setBooking,
+  errors,
 }: Props) {
   const toggleIntention = (type: IntentionType) => {
     setBooking((prev) => {
@@ -84,14 +86,11 @@ export default function IntentionSelector({
         groups: [
           ...prev.groups,
           {
-            service: "Mass Intention",
-            date: prev.date,
             type,
             entries: [
               {
                 id: Date.now(),
                 names: [],
-                amount: null,
               },
             ],
           },
@@ -106,14 +105,14 @@ export default function IntentionSelector({
         {/* Selected Date */}
         <div className="border-b pb-4">
           <h2 className="font-semibold uppercase tracking-wide text-[#B22222]">
-            {booking.date
-              ? format(booking.date, "MMMM yyyy")
+            {booking.intention_date
+              ? format(booking.intention_date, "MMMM yyyy")
               : "Select Date"}
           </h2>
 
           <p className="text-sm text-gray-500">
-            {booking.date
-              ? format(booking.date, "EEEE, MMMM d, yyyy")
+            {booking.intention_date
+              ? format(booking.intention_date, "EEEE, MMMM d, yyyy")
               : "No date selected"}
           </p>
         </div>
@@ -178,6 +177,9 @@ export default function IntentionSelector({
               );
             })}
           </div>
+          {errors?.groups?.[0] && (
+            <p className="mt-2 text-sm text-red-600">{errors.groups[0]}</p>
+          )}
         </div>
 
         <div className="rounded-xl border border-red-200 bg-red-50 p-4">

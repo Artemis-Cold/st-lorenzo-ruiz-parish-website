@@ -12,13 +12,16 @@ interface DetailsStepProps {
   booking: MassIntentionBooking;
   setBooking: Dispatch<SetStateAction<MassIntentionBooking>>;
   readOnly?: boolean;
+  errors?: Record<string, string[]>;
 }
 
 export default function DetailsStep({
   booking,
   setBooking,
   readOnly = false,
+  errors,
 }: DetailsStepProps) {
+  const getError = (key: string) => errors?.[key]?.[0];
   const inputClass = `
 w-full rounded-lg border px-4 py-2 transition
 ${
@@ -45,11 +48,9 @@ ${
                   ? entry
                   : {
                       ...entry,
-                      names: value
-                        .split(",")
-                        .map((name) => name.trim())
-                        .filter(Boolean)
-                        .slice(0, 3),
+                      // Preserve spaces and a trailing comma while the user is
+                      // typing. Values are normalized before submission.
+                      names: value.split(",").slice(0, 3),
                     },
               ),
             },
@@ -70,7 +71,6 @@ ${
                 {
                   id: Date.now(),
                   names: [],
-                  amount: null,
                 },
               ],
             },
@@ -115,20 +115,38 @@ ${
                     {index + 1}
                   </span>
 
-                  <input
-                    type="text"
-                    readOnly={readOnly}
-                    className={inputClass}
-                    placeholder="Enter Name/s"
-                    value={entry.names.join(", ")}
-                    onChange={(e) =>
-                      updateEntry(
-                        group.type,
-                        entry.id,
-                        e.target.value,
-                      )
-                    }
-                  />
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      readOnly={readOnly}
+                      className={
+                        inputClass +
+                        (getError(
+                          "groups." +
+                            booking.groups.indexOf(group) +
+                            ".entries." +
+                            index +
+                            ".names",
+                        )
+                          ? " border-red-400"
+                          : "")
+                      }
+                      placeholder="Enter Name/s"
+                      value={entry.names.join(",")}
+                      onChange={(e) =>
+                        updateEntry(group.type, entry.id, e.target.value)
+                      }
+                    />
+                    <FieldError
+                      message={getError(
+                        "groups." +
+                          booking.groups.indexOf(group) +
+                          ".entries." +
+                          index +
+                          ".names",
+                      )}
+                    />
+                  </div>
 
                   {!readOnly &&
                     group.entries.length > 1 && (
@@ -168,4 +186,10 @@ ${
       ))}
     </div>
   );
+}
+
+function FieldError({ message }: { message?: string }) {
+  return message ? (
+    <p className="mt-1 text-sm text-red-600">{message}</p>
+  ) : null;
 }

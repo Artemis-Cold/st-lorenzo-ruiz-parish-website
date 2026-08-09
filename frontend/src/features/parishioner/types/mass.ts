@@ -8,8 +8,7 @@ export type IntentionType =
 
 export interface IntentionEntry {
   id: number;
-  names: string[]; // maximum of 3 names
-  amount: number | null;
+  names: string[];
 }
 
 export interface IntentionGroup {
@@ -18,14 +17,9 @@ export interface IntentionGroup {
 }
 
 export interface MassIntentionBooking {
-  service: "Mass Intention";
-
-  date: Date | null;
-
+  intention_date: Date | null;
   groups: IntentionGroup[];
-
   remarks: string;
-
-  referenceNumber: string;
+  reference_number: string;
   receipt: File | null;
 }

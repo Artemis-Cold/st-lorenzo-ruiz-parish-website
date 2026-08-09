@@ -21,6 +21,7 @@ class DatabaseSeeder extends Seeder
             PackageInclusionSeeder::class,
             PackageAddonSeeder::class,
             BookingSlotSeeder::class,
+            FuneralBookingSlotSeeder::class,
         ]);
     }
 }

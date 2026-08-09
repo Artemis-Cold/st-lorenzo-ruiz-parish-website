@@ -10,14 +10,17 @@ interface PaymentStepProps {
   booking: MassIntentionBooking;
   setBooking: Dispatch<SetStateAction<MassIntentionBooking>>;
   readOnly?: boolean;
+  errors?: Record<string, string[]>;
 }
 
 export default function PaymentStep({
   booking,
   setBooking,
   readOnly = false,
+  errors,
 }: PaymentStepProps) {
-  const updateBooking = <K extends "referenceNumber" | "receipt">(
+  const getError = (key: string) => errors?.[key]?.[0];
+  const updateBooking = <K extends "reference_number" | "receipt">(
     field: K,
     value: MassIntentionBooking[K],
   ) => {
@@ -126,23 +129,28 @@ ${
 
           <div>
             <label className="mb-2 block text-sm font-medium">
-              GCash Reference Number
+              GCash Reference Number <span className="text-red-600">*</span>
             </label>
 
             <input
               type="text"
-              value={booking.referenceNumber}
-              onChange={(e) => updateBooking("referenceNumber", e.target.value)}
+              value={booking.reference_number}
+              onChange={(e) => updateBooking("reference_number", e.target.value)}
               readOnly={readOnly}
               placeholder="Enter GCash Reference Number"
-              className={inputClass}
+              className={
+                inputClass +
+                (getError("reference_number") ? " border-red-400" : "")
+              }
             />
+            <FieldError message={getError("reference_number")} />
           </div>
 
           <div>
             <label className="mb-2 block text-sm font-medium">
-              Payment Receipt
+              Payment Receipt <span className="text-red-600">*</span>
             </label>
+            <FieldError message={getError("receipt")} />
 
             <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-red-300 bg-red-50 px-6 py-10 transition hover:border-[#B22222] hover:bg-red-100">
               <UploadCloud size={48} className="mb-3 text-[#B22222]" />
@@ -173,4 +181,10 @@ ${
       </BookingCard>
     </div>
   );
+}
+
+function FieldError({ message }: { message?: string }) {
+  return message ? (
+    <p className="mt-1 text-sm text-red-600">{message}</p>
+  ) : null;
 }

@@ -4,12 +4,17 @@ import BaptismForm from "../forms/BaptismForm";
 import ConfirmationForm from "../forms/ConfirmationForm";
 import DeathForm from "../forms/DeathForm";
 import MarriageForm from "../forms/MarriageBansForm";
-import MarriageBansForm from "../forms/MarriageBansForm";
 import PermissionForm from "../forms/PermissionForm";
 
 import type {
   DocumentRequestBooking,
   DocumentRequest,
+  DocumentDetailValue,
+  BaptismalCertificateDetails,
+  ConfirmationCertificateDetails,
+  DeathCertificateDetails,
+  MarriageCertificateDetails,
+  PermissionRequestDetails,
 } from "../../../../types/document";
 
 import type {
@@ -23,17 +28,19 @@ interface Props {
     SetStateAction<DocumentRequestBooking>
   >;
   readOnly?: boolean;
+  errors?: Record<string, string[]>;
 }
 
 export default function DetailsStep({
   booking,
   setBooking,
   readOnly = false,
+  errors,
 }: Props) {
   const updateRequest = (
     requestId: number,
     field: string,
-    value: any,
+    value: DocumentDetailValue,
   ) => {
     setBooking((prev) => ({
       ...prev,
@@ -60,32 +67,55 @@ export default function DetailsStep({
     }));
   };
 
-  const renderForm = (request: DocumentRequest) => {
-    const props = {
-      details: request.details as any,
+  const renderForm = (request: DocumentRequest, index: number) => {
+    const sharedProps = {
       readOnly,
-      updateRequest: (field: string, value: any) =>
+      updateRequest: (field: string, value: DocumentDetailValue) =>
         updateRequest(request.id, field, value),
+      errors,
+      errorPrefix: "requests." + index + ".details",
     };
 
-    switch (request.documentType) {
+    switch (request.document_type) {
       case "Baptismal Certificate":
-        return <BaptismForm {...props} />;
+        return (
+          <BaptismForm
+            {...sharedProps}
+            details={request.details as BaptismalCertificateDetails}
+          />
+        );
 
       case "Confirmation Certificate":
-        return <ConfirmationForm {...props} />;
+        return (
+          <ConfirmationForm
+            {...sharedProps}
+            details={request.details as ConfirmationCertificateDetails}
+          />
+        );
 
       case "Death Certificate":
-        return <DeathForm {...props} />;
+        return (
+          <DeathForm
+            {...sharedProps}
+            details={request.details as DeathCertificateDetails}
+          />
+        );
 
       case "Marriage Certificate":
-        return <MarriageForm {...props} />;
-
-      case "Publication of Marriage Bans":
-        return <MarriageBansForm {...props} />;
+        return (
+          <MarriageForm
+            {...sharedProps}
+            details={request.details as MarriageCertificateDetails}
+          />
+        );
 
       case "Request of Permission":
-        return <PermissionForm {...props} />;
+        return (
+          <PermissionForm
+            {...sharedProps}
+            details={request.details as PermissionRequestDetails}
+          />
+        );
 
       default:
         return null;
@@ -94,13 +124,13 @@ export default function DetailsStep({
 
   return (
     <div className="space-y-6">
-      {booking.requests.map((request) => (
+      {booking.requests.map((request, index) => (
         <BookingCard
           key={request.id}
-          title={request.documentType}
+          title={request.document_type}
         >
           <div className="space-y-6">
-            {renderForm(request)}
+            {renderForm(request, index)}
 
             {!readOnly && (
               <div className="flex justify-end">

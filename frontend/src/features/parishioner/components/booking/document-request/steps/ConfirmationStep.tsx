@@ -1,13 +1,18 @@
 import { BookingCard } from "../..";
 import type { DocumentRequestBooking } from "../../../../types/document";
 import { ReceiptText, FileText } from "lucide-react";
+import type { Dispatch, SetStateAction } from "react";
 
 interface ConfirmationStepProps {
   booking: DocumentRequestBooking;
+  agree: boolean;
+  setAgree: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function ConfirmationStep({
   booking,
+  agree,
+  setAgree,
 }: ConfirmationStepProps) {
   const total = booking.requests.reduce(
     (sum, request) => sum + request.price,
@@ -34,7 +39,7 @@ export default function ConfirmationStep({
 
                 <div>
                   <p className="font-medium">
-                    {request.documentType}
+                    {request.document_type}
                   </p>
 
                   <p className="text-sm text-gray-500">
@@ -70,7 +75,7 @@ export default function ConfirmationStep({
             </p>
 
             <p className="mt-1 font-semibold">
-              {booking.referenceNumber || "-"}
+              {booking.reference_number || "-"}
             </p>
           </div>
 
@@ -88,11 +93,17 @@ export default function ConfirmationStep({
 
             {booking.receipt ? (
               <div className="space-y-3">
-                <img
-                  src={URL.createObjectURL(booking.receipt)}
-                  alt="Receipt"
-                  className="max-h-96 w-full rounded-lg border object-contain"
-                />
+                {booking.receipt.type.startsWith("image/") ? (
+                  <img
+                    src={URL.createObjectURL(booking.receipt)}
+                    alt="Receipt"
+                    className="max-h-96 w-full rounded-lg border object-contain"
+                  />
+                ) : (
+                  <p className="rounded-lg border p-4 text-sm">
+                    PDF receipt uploaded successfully.
+                  </p>
+                )}
 
                 <p className="text-sm text-gray-500">
                   {booking.receipt.name}
@@ -116,6 +127,25 @@ export default function ConfirmationStep({
           )}
         </div>
       </BookingCard>
+      <div className="rounded-3xl border border-[#B22222]/20 bg-red-50 p-6">
+        <h3 className="mb-4 text-xl font-bold text-[#B22222]">Declaration</h3>
+        <p className="mb-6 text-gray-700">
+          I certify that the request details and payment information provided
+          are true and accurate.
+        </p>
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border bg-white p-4">
+          <input
+            type="checkbox"
+            checked={agree}
+            onChange={(event) => setAgree(event.target.checked)}
+            className="mt-1 h-5 w-5 accent-[#B22222]"
+          />
+          <span className="text-sm text-gray-700">
+            I have reviewed the information and agree to the parish's request
+            policies.
+          </span>
+        </label>
+      </div>
     </div>
   );
 }

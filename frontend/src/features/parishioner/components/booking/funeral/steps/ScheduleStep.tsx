@@ -1,33 +1,56 @@
+import { useEffect, useState } from "react";
 import BookingCalendar from "../../BookingCalendar";
-import TimeSlotPanel from "../../funeral/summary/TimeSlotPanel";
+import TimeSlotPanel from "../summary/TimeSlotPanel";
 import type { Dispatch, SetStateAction } from "react";
 import type { FuneralBooking } from "../../../../types/funeral";
+import type { BookingSlot } from "../../../../../../services/bookingSlotService";
+import { getBookingSlots } from "../../../../../../services/bookingSlotService";
 
-interface ScheduleStepProps {
+interface Props {
   booking: FuneralBooking;
   setBooking: Dispatch<SetStateAction<FuneralBooking>>;
+  selectedDate: Date | null;
+  setSelectedDate: Dispatch<SetStateAction<Date | null>>;
+  selectedSlot: BookingSlot | null;
+  setSelectedSlot: Dispatch<SetStateAction<BookingSlot | null>>;
 }
 
-export default function ScheduleStep({
-  booking,
-  setBooking,
-}: ScheduleStepProps) {
+export default function ScheduleStep(props: Props) {
+  const { booking, setBooking, selectedDate, setSelectedDate, setSelectedSlot } = props;
+  const [slots, setSlots] = useState<BookingSlot[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!selectedDate) return;
+    getBookingSlots("funeral", selectedDate.toISOString().split("T")[0])
+      .then(setSlots)
+      .finally(() => setLoading(false));
+  }, [selectedDate]);
+
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2">
         <BookingCalendar
-          selectedDate={booking.date ?? new Date()}
-          onDateSelect={(date) =>
-            setBooking((prev) => ({
-              ...prev,
-              date,
-              timeSlot: null,
-            }))
-          }
+          selectedDate={selectedDate ?? new Date()}
+          onDateSelect={(date) => {
+            setLoading(true);
+            setSelectedDate(date);
+            setSelectedSlot(null);
+            setBooking((previous) => ({
+              ...previous,
+              booking_slot_id: 0,
+            }));
+          }}
         />
       </div>
-
-      <TimeSlotPanel booking={booking} setBooking={setBooking} />
+      <TimeSlotPanel
+        booking={booking}
+        setBooking={setBooking}
+        slots={slots}
+        loading={loading}
+        selectedDate={selectedDate}
+        setSelectedSlot={setSelectedSlot}
+      />
     </div>
   );
 }

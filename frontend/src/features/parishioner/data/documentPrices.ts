@@ -23,10 +23,6 @@ export const DOCUMENT_PRICES: DocumentPrice[] = [
     price: 100,
   },
   {
-    type: "Publication of Marriage Bans",
-    price: 500,
-  },
-  {
     type: "Request of Permission",
     price: 100,
   },

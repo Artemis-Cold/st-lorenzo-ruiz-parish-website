@@ -1,13 +1,18 @@
 import { BookingCard } from "../..";
 
 import type { MassIntentionBooking } from "../../../../types/mass";
+import type { Dispatch, SetStateAction } from "react";
 
 interface ConfirmationStepProps {
   booking: MassIntentionBooking;
+  agree: boolean;
+  setAgree: Dispatch<SetStateAction<boolean>>;
 }
 
 export default function ConfirmationStep({
   booking,
+  agree,
+  setAgree,
 }: ConfirmationStepProps) {
   const totalIntentions = booking.groups.reduce(
     (sum, group) => sum + group.entries.length,
@@ -49,6 +54,17 @@ export default function ConfirmationStep({
                       .map((g) => g.type)
                       .join(", ")
                   : "-"
+              }
+            />
+
+            <SummaryRow
+              label="Intention Date"
+              value={
+                booking.intention_date?.toLocaleDateString("en-US", {
+                  month: "long",
+                  day: "numeric",
+                  year: "numeric",
+                }) ?? "-"
               }
             />
 
@@ -104,6 +120,25 @@ export default function ConfirmationStep({
           )}
         </div>
       </BookingCard>
+      <div className="rounded-3xl border border-[#B22222]/20 bg-red-50 p-6 lg:col-span-2">
+        <h3 className="mb-4 text-xl font-bold text-[#B22222]">Declaration</h3>
+        <p className="mb-6 text-gray-700">
+          I certify that the Mass Intention and payment information provided are
+          true and accurate.
+        </p>
+        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-white p-4">
+          <input
+            type="checkbox"
+            checked={agree}
+            onChange={(event) => setAgree(event.target.checked)}
+            className="mt-1 h-5 w-5 accent-[#B22222]"
+          />
+          <span className="text-sm text-gray-700">
+            I have reviewed the information above and agree to the parish's
+            booking policies.
+          </span>
+        </label>
+      </div>
     </div>
   );
 }

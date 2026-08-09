@@ -67,6 +67,21 @@ class Booking extends Model
         return $this->hasMany(WeddingApplicant::class);
     }
 
+    public function funeralDeceased(): HasOne
+    {
+        return $this->hasOne(FuneralDeceased::class);
+    }
+
+    public function massIntention(): HasOne
+    {
+        return $this->hasOne(MassIntention::class);
+    }
+
+    public function documentRequest(): HasOne
+    {
+        return $this->hasOne(DocumentRequestBooking::class);
+    }
+
     public function selectedAddons(): BelongsToMany
     {
         return $this->belongsToMany(

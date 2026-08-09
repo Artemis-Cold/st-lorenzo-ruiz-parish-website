@@ -3,19 +3,18 @@ export type DocumentType =
   | "Confirmation Certificate"
   | "Death Certificate"
   | "Marriage Certificate"
-  | "Publication of Marriage Bans"
   | "Request of Permission";
 
 export interface BaptismalCertificateDetails {
   name: string;
   address: string;
-  baptismDate: Date | null;
+  baptism_date: Date | null;
 }
 
 export interface ConfirmationCertificateDetails {
   name: string;
   address: string;
-  confirmationDate: Date | null;
+  confirmation_date: Date | null;
 }
 
 export interface DeathCertificateDetails {
@@ -24,21 +23,14 @@ export interface DeathCertificateDetails {
 }
 
 export interface MarriageCertificateDetails {
-  brideName: string;
-  groomName: string;
+  bride_name: string;
+  groom_name: string;
   address: string;
-  marriageDate: Date | null;
-}
-
-export interface MarriageBansDetails {
-  brideName: string;
-  groomName: string;
-  address: string;
-  marriageDate: Date | null;
+  marriage_date: Date | null;
 }
 
 export interface PermissionRequestDetails {
-  fullName: string;
+  full_name: string;
   address: string;
 }
 
@@ -47,27 +39,20 @@ export type DocumentDetails =
   | ConfirmationCertificateDetails
   | DeathCertificateDetails
   | MarriageCertificateDetails
-  | MarriageBansDetails
   | PermissionRequestDetails;
+
+export type DocumentDetailValue = string | Date | null;
 
 export interface DocumentRequest {
   id: number;
-
-  documentType: DocumentType;
-
-  /** Price of this document request */
+  document_type: DocumentType;
   price: number;
-
   details: DocumentDetails;
 }
 
 export interface DocumentRequestBooking {
-  service: "Document Request";
-
   requests: DocumentRequest[];
-
   remarks: string;
-
-  referenceNumber: string;
+  reference_number: string;
   receipt: File | null;
 }

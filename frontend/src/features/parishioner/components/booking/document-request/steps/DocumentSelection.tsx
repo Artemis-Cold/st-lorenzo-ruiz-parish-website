@@ -18,6 +18,7 @@ import type {
 interface Props {
   booking: DocumentRequestBooking;
   setBooking: Dispatch<SetStateAction<DocumentRequestBooking>>;
+  errors?: Record<string, string[]>;
 }
 
 function createDefaultDetails(type: DocumentType): DocumentDetails {
@@ -26,14 +27,14 @@ function createDefaultDetails(type: DocumentType): DocumentDetails {
       return {
         name: "",
         address: "",
-        baptismDate: null,
+        baptism_date: null,
       };
 
     case "Confirmation Certificate":
       return {
         name: "",
         address: "",
-        confirmationDate: null,
+        confirmation_date: null,
       };
 
     case "Death Certificate":
@@ -44,47 +45,43 @@ function createDefaultDetails(type: DocumentType): DocumentDetails {
 
     case "Marriage Certificate":
       return {
-        brideName: "",
-        groomName: "",
+        bride_name: "",
+        groom_name: "",
         address: "",
-        marriageDate: null,
-      };
-
-    case "Publication of Marriage Bans":
-      return {
-        brideName: "",
-        groomName: "",
-        address: "",
-        marriageDate: null,
+        marriage_date: null,
       };
 
     case "Request of Permission":
       return {
-        fullName: "",
+        full_name: "",
         address: "",
       };
   }
 }
 
-export default function DocumentSelectionStep({ booking, setBooking }: Props) {
+export default function DocumentSelectionStep({
+  booking,
+  setBooking,
+  errors,
+}: Props) {
   const toggleDocument = (type: DocumentType) => {
     setBooking((prev) => {
       const exists = prev.requests.some(
-        (request) => request.documentType === type,
+        (request) => request.document_type === type,
       );
 
       if (exists) {
         return {
           ...prev,
           requests: prev.requests.filter(
-            (request) => request.documentType !== type,
+            (request) => request.document_type !== type,
           ),
         };
       }
 
       const newRequest: DocumentRequest = {
         id: Date.now(),
-        documentType: type,
+        document_type: type,
         price: getDocumentPrice(type),
         details: createDefaultDetails(type),
       };
@@ -102,7 +99,7 @@ export default function DocumentSelectionStep({ booking, setBooking }: Props) {
         <div className="divide-y rounded-xl border">
           {DOCUMENT_PRICES.map((document) => {
             const selected = booking.requests.some(
-              (request) => request.documentType === document.type,
+              (request) => request.document_type === document.type,
             );
 
             return (
@@ -149,6 +146,9 @@ export default function DocumentSelectionStep({ booking, setBooking }: Props) {
             );
           })}
         </div>
+        {errors?.requests?.[0] && (
+          <p className="text-sm text-red-600">{errors.requests[0]}</p>
+        )}
 
         {booking.requests.length > 0 && (
           <div className="rounded-lg bg-red-50 p-4 text-sm text-[#B22222]">

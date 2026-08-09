@@ -1,23 +1,54 @@
-import type { Deceased } from "./person";
+export interface PersonName {
+  first_name: string;
+  middle_initial: string;
+  last_name: string;
+}
 
-import type { FuneralPackage } from "../data/packages";
-import type { TimeSlot } from "../data/timeSlots";
+export interface Sacraments {
+  baptized: boolean;
+  confirmed: boolean;
+  church_married: boolean;
+  anointed_of_the_sick: boolean;
+}
+
+export type Participation = "regular" | "sometimes" | "never";
+
+export interface ChurchLife {
+  attends_mass: Participation | "";
+  confesses: Participation | "";
+}
+
+export interface Informant extends PersonName {
+  relationship: string;
+  contact_number: string;
+  date_provided: Date | null;
+}
+
+export interface Deceased extends PersonName {
+  address: string;
+  death_cause: string;
+  age: number | null;
+  birth_date: Date | null;
+  father: PersonName;
+  mother: PersonName;
+  spouse: PersonName;
+  children: PersonName[];
+  sacraments: Sacraments;
+  church_life: ChurchLife;
+  characteristics: string;
+  informant: Informant;
+}
+
+export interface FuneralDocument {
+  document_type: "death_certificate" | "biography";
+  file: File;
+}
 
 export interface FuneralBooking {
-  service: "Funeral";
-
-  date: Date | null;
-
-  timeSlot: TimeSlot | null;
-
-  package: FuneralPackage | null;
-
+  booking_slot_id: number;
+  service_package_id: number;
+  selected_addon_ids: number[];
   deceased: Deceased;
-
+  documents: FuneralDocument[];
   remarks: string;
-
-  requirements: {
-    deathCertificate: File | null;
-    biography: File | null;
-  };
 }
