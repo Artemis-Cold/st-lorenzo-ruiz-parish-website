@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\BookingSlot;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class BaptismBookingService
 {
@@ -56,7 +57,7 @@ class BaptismBookingService
         array $data
     ): Booking {
         return Booking::create([
-            'booking_reference' => 'TEMP',
+            'booking_reference' => $this->generateReference(),
 
             'user_id' => auth()->id(),
 
@@ -68,6 +69,15 @@ class BaptismBookingService
 
             'remarks' => $data['remarks'] ?? null,
         ]);
+    }
+
+    private function generateReference(): string
+    {
+        do {
+            $reference = 'BPT-'.strtoupper(Str::random(8));
+        } while (Booking::where('booking_reference', $reference)->exists());
+
+        return $reference;
     }
 
     private function createBaptizand(

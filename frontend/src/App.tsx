@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "sonner";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
@@ -21,6 +22,7 @@ import ARTest from "./features/ar-navigation/ARTest";
 function App() {
   return (
     <BrowserRouter>
+      <Toaster position="top-center" richColors />
       <Routes>
         {/* Public */}
         <Route path="/" element={<Home />} />

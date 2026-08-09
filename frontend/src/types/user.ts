@@ -11,7 +11,7 @@ export interface User {
 
   first_name: string;
 
-  middle_name: string | null;
+  middle_initial: string | null;
 
   last_name: string;
 
@@ -21,9 +21,9 @@ export interface User {
 
   address: Address;
 
-  birth_date: string;
+  birth_date: string | null;
 
-  gender: string;
+  gender: string | null;
 
   profile_photo: string | null;
 
@@ -32,4 +32,6 @@ export interface User {
   phone_verified: boolean;
 
   created_at: string;
+
+  profile_completed: boolean;
 }

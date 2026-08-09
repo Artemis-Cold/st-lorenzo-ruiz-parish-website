@@ -1,6 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
+import { AxiosError } from "axios";
 
 import { Link } from "react-router-dom";
 import { User } from "lucide-react";
@@ -17,19 +18,48 @@ export default function Login() {
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setFieldErrors({});
+    setSubmitting(true);
 
     try {
-      await login({
-        username,
-        password,
-      });
+      await login({ username, password });
 
       navigate("/dashboard");
-    } catch (error: any) {
-      alert(error.response?.data?.message ?? "Invalid username or password.");
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        const status = err.response?.status;
+
+        if (status === 401) {
+          setError("Invalid username or password.");
+        } else if (status === 422) {
+          setFieldErrors(err.response?.data?.errors ?? {});
+          setError("Please check your details and try again.");
+        } else if (status === 429) {
+          setError(
+            "Too many login attempts. Please wait a moment and try again.",
+          );
+        } else if (!err.response) {
+          setError(
+            "Unable to reach the server. Check your connection and try again.",
+          );
+        } else {
+          setError(
+            err.response?.data?.message ??
+              "Something went wrong. Please try again.",
+          );
+        }
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -39,20 +69,38 @@ export default function Login() {
       subtitle="Sign in to manage your bookings, requests, and parish services."
     >
       <form onSubmit={handleLogin} className="space-y-5">
-        <TextField
-          label="Username"
-          placeholder="Enter your username"
-          icon={User}
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
+        {error && <p className="text-sm text-red-600">{error}</p>}
 
-        <PasswordField
-          label="Password"
-          placeholder="Enter your password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <div>
+          <TextField
+            label="Username"
+            placeholder="Enter your username"
+            icon={User}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            disabled={submitting}
+          />
+          {fieldErrors.username && (
+            <p className="mt-1 text-sm text-red-600">
+              {fieldErrors.username[0]}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <PasswordField
+            label="Password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            disabled={submitting}
+          />
+          {fieldErrors.password && (
+            <p className="mt-1 text-sm text-red-600">
+              {fieldErrors.password[0]}
+            </p>
+          )}
+        </div>
 
         <div className="flex justify-end">
           <Link
@@ -63,7 +111,9 @@ export default function Login() {
           </Link>
         </div>
 
-        <AuthButton type="submit">Sign In</AuthButton>
+        <AuthButton type="submit" disabled={submitting}>
+          {submitting ? "Signing In..." : "Sign In"}
+        </AuthButton>
       </form>
 
       {/* Register */}

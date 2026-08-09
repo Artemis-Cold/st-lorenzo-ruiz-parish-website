@@ -37,6 +37,7 @@ class User extends Authenticatable
 
         'role',
         'is_active',
+        'profile_completed',
     ];
 
     protected $hidden = [
@@ -51,6 +52,7 @@ class User extends Authenticatable
             'phone_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'profile_completed' => 'boolean',
         ];
     }
 

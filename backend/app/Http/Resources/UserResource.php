@@ -49,7 +49,7 @@ class UserResource extends JsonResource
             'phone_verified' => ! is_null($this->phone_verified_at),
 
             'created_at' => $this->created_at,
-
+            'profile_completed' => $this->profile_completed,
         ];
     }
 }

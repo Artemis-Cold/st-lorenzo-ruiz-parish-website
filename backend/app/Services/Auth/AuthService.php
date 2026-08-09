@@ -13,8 +13,9 @@ class AuthService
      */
     public function register(array $data): array
     {
-        // Create the user first
         $user = User::create([
+            'parishioner_id' => ParishionerIdService::generate(),
+
             'username' => $data['username'],
             'password' => Hash::make($data['password']),
 
@@ -30,24 +31,12 @@ class AuthService
 
             'house_no' => $data['house_no'] ?? null,
             'street' => $data['street'] ?? null,
-            'barangay' => $data['barangay'],
-            'municipality' => $data['municipality'],
-            'province' => $data['province'],
+            'barangay' => $data['barangay'] ?? null,
+            'municipality' => $data['municipality'] ?? null,
+            'province' => $data['province'] ?? null,
             'zip_code' => $data['zip_code'] ?? null,
 
             'role' => 'parishioner',
-        ]);
-
-        /*
-        |--------------------------------------------------------------------------
-        | Generate Parishioner ID
-        |--------------------------------------------------------------------------
-        */
-
-        $year = now()->year;
-
-        $user->update([
-            'parishioner_id' => ParishionerIdService::generate(),
         ]);
 
         /*

@@ -31,7 +31,6 @@ class RegisterRequest extends FormRequest
                 'max:30',
                 'unique:users,username',
             ],
-
             'password' => [
                 'required',
                 'confirmed',
@@ -42,41 +41,29 @@ class RegisterRequest extends FormRequest
                 'required',
                 'string',
             ],
-
-            'middle_name' => [
+            'middle_initial' => [
                 'nullable',
                 'string',
             ],
-
             'last_name' => [
                 'required',
                 'string',
             ],
-
             'suffix' => [
                 'nullable',
                 'string',
             ],
-
             'phone' => [
                 'required',
                 'unique:users,phone',
             ],
-
             'house_no' => ['nullable'],
-
             'street' => ['nullable'],
-
-            'barangay' => ['required'],
-
-            'municipality' => ['required'],
-
-            'province' => ['required'],
-
+            'barangay' => ['nullable', 'string'],
+            'municipality' => ['nullable', 'string'],
+            'province' => ['nullable', 'string'],
             'zip_code' => ['nullable'],
-
             'birth_date' => ['nullable', 'date'],
-
             'gender' => ['nullable'],
         ];
     }

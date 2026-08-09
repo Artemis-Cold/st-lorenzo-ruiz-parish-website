@@ -15,7 +15,7 @@ export interface RegisterRequest {
 
   first_name: string;
 
-  middle_name?: string;
+  middle_initial?: string;
 
   last_name: string;
 
@@ -23,21 +23,21 @@ export interface RegisterRequest {
 
   phone: string;
 
-  house_no: string;
+  house_no?: string;
 
-  street: string;
+  street?: string;
 
-  barangay: string;
+  barangay?: string;
 
-  municipality: string;
+  municipality?: string;
 
-  province: string;
+  province?: string;
 
-  zip_code: string;
+  zip_code?: string;
 
-  birth_date: string;
+  birth_date?: string;
 
-  gender: string;
+  gender?: string;
 }
 
 export interface AuthPayload {

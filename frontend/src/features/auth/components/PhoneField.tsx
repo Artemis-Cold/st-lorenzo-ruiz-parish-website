@@ -1,6 +1,17 @@
 import { Phone } from "lucide-react";
+import type { ChangeEvent } from "react";
 
-export default function PhoneField() {
+interface PhoneFieldProps {
+  value: string;
+  onChange: (e: ChangeEvent<HTMLInputElement>) => void;
+  disabled?: boolean;
+}
+
+export default function PhoneField({
+  value,
+  onChange,
+  disabled = false,
+}: PhoneFieldProps) {
   return (
     <div>
       <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -13,7 +24,10 @@ export default function PhoneField() {
         <input
           type="tel"
           placeholder="09XX XXX XXXX"
-          className="w-full py-3 outline-none"
+          value={value}
+          onChange={onChange}
+          disabled={disabled}
+          className="w-full py-3 outline-none disabled:cursor-not-allowed disabled:opacity-60"
         />
       </div>
     </div>

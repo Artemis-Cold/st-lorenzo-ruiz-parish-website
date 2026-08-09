@@ -6,22 +6,14 @@ import {
   type ReactNode,
 } from "react";
 
-import { login as loginApi, logout as logoutApi, me } from "@/api/auth";
-
-interface User {
-  id: number;
-  parishioner_id: string;
-
-  username: string;
-  
-  first_name: string;
-
-  full_name: string;
-
-  phone: string;
-
-  role: string;
-}
+import {
+  login as loginApi,
+  logout as logoutApi,
+  register as registerApi,
+  me,
+} from "@/api/auth";
+import type { User } from "@/types/user";
+import type { RegisterRequest } from "@/types/auth";
 
 interface LoginCredentials {
   username: string;
@@ -33,7 +25,9 @@ interface AuthContextType {
 
   loading: boolean;
 
-  login: (credentials: LoginCredentials) => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<User>;
+
+  register: (data: RegisterRequest) => Promise<User>;
 
   logout: () => Promise<void>;
 
@@ -75,12 +69,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const login = async (credentials: LoginCredentials) => {
+  const login = async (credentials: LoginCredentials): Promise<User> => {
     const response = await loginApi(credentials);
 
     localStorage.setItem("token", response.token);
 
     setUser(response.user);
+
+    return response.user;
+  };
+
+  const register = async (data: RegisterRequest): Promise<User> => {
+    const response = await registerApi(data);
+
+    localStorage.setItem("token", response.token);
+
+    setUser(response.user);
+
+    return response.user;
   };
 
   const logout = async () => {
@@ -100,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loading,
 
         login,
+        register,
         logout,
 
         refreshUser,

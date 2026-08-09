@@ -3,6 +3,9 @@ import { useState } from "react";
 import MobileSidebar from "./MobileSidebar";
 import Sidebar from "./Sidebar";
 import Topbar from "./dashboard/Topbar";
+import CompleteProfileModal from "./CompleteProfileModal";
+
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function DashboardLayout({
   children,
@@ -11,6 +14,8 @@ export default function DashboardLayout({
 }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const { user } = useAuth();
 
   return (
     <div
@@ -30,6 +35,8 @@ export default function DashboardLayout({
 
         <main className="flex-1 p-4 md:p-6 lg:p-8">{children}</main>
       </div>
+
+      {user && !user.profile_completed && <CompleteProfileModal />}
     </div>
   );
 }

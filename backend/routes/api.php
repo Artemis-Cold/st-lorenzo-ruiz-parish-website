@@ -1,13 +1,12 @@
 <?php
 
+use App\Http\Controllers\Api\BaptismBookingController;
+use App\Http\Controllers\Api\BookingSlotController;
+use App\Http\Controllers\Api\ServicePackageController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Api\BaptismBookingController;
-use App\Http\Controllers\Api\BookingSlotController;
-use App\Http\Controllers\Api\ServicePackageController;
-
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
@@ -32,6 +31,8 @@ Route::middleware('auth:sanctum')->group(function () {
         '/bookings/baptism',
         [BaptismBookingController::class, 'store']
     );
+
+    Route::patch('/profile/complete', [ProfileController::class, 'complete']);
 
 });
 
