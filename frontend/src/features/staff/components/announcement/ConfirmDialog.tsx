@@ -5,6 +5,7 @@ interface ConfirmDialogProps {
   confirmLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
+  confirming?: boolean;
 }
 
 export default function ConfirmDialog({
@@ -14,6 +15,7 @@ export default function ConfirmDialog({
   confirmLabel = "Delete",
   onConfirm,
   onCancel,
+  confirming = false,
 }: ConfirmDialogProps) {
   if (!open) return null;
 
@@ -26,15 +28,17 @@ export default function ConfirmDialog({
         <div className="mt-6 flex gap-3">
           <button
             onClick={onCancel}
+            disabled={confirming}
             className="flex-1 rounded-xl border border-[#E7E2DA] py-2.5 font-medium text-gray-600 transition hover:bg-gray-50"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
+            disabled={confirming}
             className="flex-1 rounded-xl bg-red-600 py-2.5 font-semibold text-white transition hover:bg-red-700"
           >
-            {confirmLabel}
+            {confirming ? "Deleting..." : confirmLabel}
           </button>
         </div>
       </div>

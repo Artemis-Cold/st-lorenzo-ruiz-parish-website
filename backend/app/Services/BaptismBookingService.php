@@ -31,6 +31,8 @@ class BaptismBookingService
                 'baptizand.parents',
                 'baptizand.godParentPairs.godParents',
                 'documents',
+                'package',
+                'selectedAddons',
             ]);
         });
     }

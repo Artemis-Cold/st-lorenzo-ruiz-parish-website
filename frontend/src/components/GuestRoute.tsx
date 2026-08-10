@@ -2,7 +2,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function GuestRoute() {
-  const { loading, isAuthenticated } = useAuth();
+  const { user, loading, isAuthenticated } = useAuth();
 
   if (loading) {
     return (
@@ -13,7 +13,12 @@ export default function GuestRoute() {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    const destination =
+      user?.role === "staff" || user?.role === "admin"
+        ? "/staff/dashboard"
+        : "/dashboard";
+
+    return <Navigate to={destination} replace />;
   }
 
   return <Outlet />;

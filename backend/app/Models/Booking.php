@@ -4,12 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class Booking extends Model
 {
+    protected $appends = [
+        'total_amount',
+    ];
+
     protected $fillable = [
         'booking_reference',
         'user_id',
@@ -25,6 +29,13 @@ class Booking extends Model
     protected $casts = [
         'processed_at' => 'datetime',
     ];
+
+    public function getTotalAmountAttribute(): float
+    {
+        return (float) (($this->package?->base_price ?? 0)
+            + ($this->package?->inclusions->sum('price') ?? 0)
+            + $this->selectedAddons->sum('price'));
+    }
 
     /*
     |--------------------------------------------------------------------------

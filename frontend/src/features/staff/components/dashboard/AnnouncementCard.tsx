@@ -1,4 +1,5 @@
 import { Megaphone, ChevronRight } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export interface AnnouncementItem {
   id: number;
@@ -23,9 +24,12 @@ export default function AnnouncementCard({ announcements }: Props) {
           </h2>
         </div>
 
-        <button className="text-sm font-medium text-[#B22222] hover:underline">
+        <Link
+          to="/staff/announcements"
+          className="text-sm font-medium text-[#B22222] hover:underline"
+        >
           View all
-        </button>
+        </Link>
       </div>
 
       {announcements.length === 0 ? (
@@ -36,8 +40,9 @@ export default function AnnouncementCard({ announcements }: Props) {
       ) : (
         <div className="space-y-3">
           {announcements.map((item) => (
-            <button
+            <Link
               key={item.id}
+              to="/staff/announcements"
               className="group flex w-full items-center gap-4 rounded-2xl border border-[#E7E2DA] p-4 text-left transition hover:border-[#B22222]/30 hover:bg-[#B22222]/[0.03]"
             >
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#B22222] text-white">
@@ -55,7 +60,7 @@ export default function AnnouncementCard({ announcements }: Props) {
                 size={18}
                 className="shrink-0 text-gray-300 transition group-hover:translate-x-0.5 group-hover:text-[#B22222]"
               />
-            </button>
+            </Link>
           ))}
         </div>
       )}

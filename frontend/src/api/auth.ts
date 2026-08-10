@@ -22,6 +22,14 @@ export const login = async (data: LoginCredentials): Promise<AuthPayload> => {
   return response.data;
 };
 
+export const staffLogin = async (
+  data: LoginCredentials,
+): Promise<AuthPayload> => {
+  const response = await api.post<AuthPayload>("/auth/staff/login", data);
+
+  return response.data;
+};
+
 export const me = async (): Promise<MeResponse> => {
   const response = await api.get<MeResponse>("/auth/me");
 

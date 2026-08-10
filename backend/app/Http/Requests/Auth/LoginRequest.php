@@ -20,10 +20,13 @@ class LoginRequest extends FormRequest
 
             'username' => [
                 'required',
+                'string',
+                'max:255',
             ],
 
             'password' => [
                 'required',
+                'string',
             ],
 
         ];

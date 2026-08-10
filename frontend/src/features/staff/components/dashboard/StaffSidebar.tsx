@@ -4,15 +4,16 @@ import {
   ClipboardList,
   CalendarRange,
   FileText,
-  CircleDollarSign,
   Receipt,
+  Settings,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import logo from "../../../../assets/images/parish-logo.png";
 
 import { useAuth } from "@/contexts/AuthContext";
+import StaffLogoutButton from "./StaffLogoutButton";
 
-export const navItems = [
+const navItems = [
   {
     label: "Dashboard",
     to: "/staff/dashboard",
@@ -44,15 +45,15 @@ export const navItems = [
     color: "#2F7D5E",
   },
   {
-    label: "Payment Management",
-    to: "/staff/payments",
-    icon: CircleDollarSign,
-    color: "#2563A8",
-  },
-  {
     label: "Transactions",
     to: "/staff/transactions",
     icon: Receipt,
+    color: "#2563A8",
+  },
+  {
+    label: "Settings",
+    to: "/staff/settings",
+    icon: Settings,
     color: "#2563A8",
   },
 ];
@@ -101,6 +102,7 @@ export default function StaffSidebar({ onNavigate }: StaffSidebarProps) {
             <span className="truncate">{label}</span>
           </NavLink>
         ))}
+        <StaffLogoutButton onLogout={onNavigate} />
       </nav>
 
       <div className="border-t border-white/10 px-6 py-4 text-center text-[11px] text-white/50">

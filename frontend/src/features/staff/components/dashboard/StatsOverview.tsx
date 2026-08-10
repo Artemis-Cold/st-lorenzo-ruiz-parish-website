@@ -1,7 +1,6 @@
 import {
   CalendarRange,
   FileText,
-  CircleDollarSign,
   ClipboardList,
 } from "lucide-react";
 
@@ -15,12 +14,7 @@ export interface StatItem {
 const defaultStats: StatItem[] = [
   { label: "Bookings Today", value: 0, icon: CalendarRange, color: "#2F7D5E" },
   { label: "Pending Requests", value: 0, icon: FileText, color: "#2F7D5E" },
-  {
-    label: "Payments This Week",
-    value: 0,
-    icon: CircleDollarSign,
-    color: "#2563A8",
-  },
+  { label: "Pending Bookings", value: 0, icon: CalendarRange, color: "#2563A8" },
   { label: "Mass Intentions", value: 0, icon: ClipboardList, color: "#C9A227" },
 ];
 

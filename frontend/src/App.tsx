@@ -3,6 +3,7 @@ import { Toaster } from "sonner";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
+import StaffProtectedRoute from "./components/StaffProtectedRoute";
 import Home from "./features/home/pages/Home";
 
 import Login from "./features/auth/pages/Login";
@@ -24,6 +25,8 @@ import Announcements from "./features/staff/pages/Announcement";
 import MassIntentions from "./features/staff/pages/MassIntentions";
 import BookingManagement from "./features/staff/pages/BookingManagement";
 import Requests from "./features/staff/pages/Request";
+import Transactions from "./features/staff/pages/Transactions";
+import StaffSettings from "./features/staff/pages/Settings";
 
 function App() {
   return (
@@ -36,6 +39,7 @@ function App() {
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<SignUp />} />
+          <Route path="/staff/login" element={<StaffLogin />} />
         </Route>
 
         {/* Protected */}
@@ -57,12 +61,15 @@ function App() {
           <Route path="/ar-navigation" element={<ARTest />} />
         </Route>
 
-        <Route path="/staff/login" element={<StaffLogin />} />
-        <Route path="/staff/dashboard" element={<StaffDashboard />} />
-        <Route path="/staff/announcements" element={<Announcements />} />
-        <Route path="/staff/mass-intentions" element={<MassIntentions />} />
-        <Route path="/staff/bookings" element={<BookingManagement />} />
-        <Route path="/staff/requests" element={<Requests />} />
+        <Route element={<StaffProtectedRoute />}>
+          <Route path="/staff/dashboard" element={<StaffDashboard />} />
+          <Route path="/staff/announcements" element={<Announcements />} />
+          <Route path="/staff/mass-intentions" element={<MassIntentions />} />
+          <Route path="/staff/bookings" element={<BookingManagement />} />
+          <Route path="/staff/requests" element={<Requests />} />
+          <Route path="/staff/transactions" element={<Transactions />} />
+          <Route path="/staff/settings" element={<StaffSettings />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

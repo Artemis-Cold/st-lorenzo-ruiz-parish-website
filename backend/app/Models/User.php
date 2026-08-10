@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -9,7 +10,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'parishioner_id',
@@ -62,9 +63,13 @@ class User extends Authenticatable
 
     public function getFullNameAttribute(): string
     {
+        $middleInitial = $this->middle_initial
+            ? rtrim($this->middle_initial, '.').'.'
+            : null;
+
         return trim(implode(' ', array_filter([
             $this->first_name,
-            $this->middle_initial,
+            $middleInitial,
             $this->last_name,
             $this->suffix,
         ])));

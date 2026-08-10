@@ -12,6 +12,7 @@ interface AnnouncementFormModalProps {
   initialValues?: AnnouncementFormValues;
   onClose: () => void;
   onSubmit: (values: AnnouncementFormValues) => void;
+  submitting?: boolean;
 }
 
 function nowAsDatetimeLocal(): string {
@@ -21,25 +22,30 @@ function nowAsDatetimeLocal(): string {
   return local.toISOString().slice(0, 16);
 }
 
+function asDatetimeLocal(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value.slice(0, 16);
+
+  const offset = date.getTimezoneOffset();
+  return new Date(date.getTime() - offset * 60 * 1000)
+    .toISOString()
+    .slice(0, 16);
+}
+
 export default function AnnouncementFormModal({
   open,
   initialValues,
   onClose,
   onSubmit,
+  submitting = false,
 }: AnnouncementFormModalProps) {
   const [title, setTitle] = useState(initialValues?.title ?? "");
   const [details, setDetails] = useState(initialValues?.details ?? "");
   const [postedAt, setPostedAt] = useState(
-    initialValues?.postedAt ?? nowAsDatetimeLocal(),
+    initialValues?.postedAt
+      ? asDatetimeLocal(initialValues.postedAt)
+      : nowAsDatetimeLocal(),
   );
-
-  useEffect(() => {
-    if (open) {
-      setTitle(initialValues?.title ?? "");
-      setDetails(initialValues?.details ?? "");
-      setPostedAt(initialValues?.postedAt ?? nowAsDatetimeLocal());
-    }
-  }, [open, initialValues]);
 
   useEffect(() => {
     if (!open) return;
@@ -74,6 +80,7 @@ export default function AnnouncementFormModal({
 
           <button
             onClick={onClose}
+            disabled={submitting}
             aria-label="Close"
             className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
           >
@@ -89,6 +96,7 @@ export default function AnnouncementFormModal({
             <input
               type="text"
               required
+              disabled={submitting}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Parish Office Closed on June 20"
@@ -102,6 +110,7 @@ export default function AnnouncementFormModal({
             </label>
             <textarea
               required
+              disabled={submitting}
               rows={4}
               value={details}
               onChange={(e) => setDetails(e.target.value)}
@@ -117,6 +126,7 @@ export default function AnnouncementFormModal({
             <input
               type="datetime-local"
               required
+              disabled={submitting}
               value={postedAt}
               onChange={(e) => setPostedAt(e.target.value)}
               className="w-full rounded-xl border border-[#E7E2DA] px-4 py-3 outline-none transition focus:border-[#B22222]"
@@ -131,15 +141,21 @@ export default function AnnouncementFormModal({
             <button
               type="button"
               onClick={onClose}
+              disabled={submitting}
               className="flex-1 rounded-xl border border-[#E7E2DA] py-3 font-medium text-gray-600 transition hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               type="submit"
+              disabled={submitting}
               className="flex-1 rounded-xl bg-[#B22222] py-3 font-semibold text-white transition hover:bg-[#8B1C1C]"
             >
-              {initialValues ? "Save Changes" : "Publish Announcement"}
+              {submitting
+                ? "Saving..."
+                : initialValues
+                  ? "Save Changes"
+                  : "Publish Announcement"}
             </button>
           </div>
         </form>

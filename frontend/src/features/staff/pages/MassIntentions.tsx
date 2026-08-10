@@ -1,11 +1,15 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { ClipboardList, Search, Printer, Plus, Info } from "lucide-react";
+import { ClipboardList, Search, Printer, Info } from "lucide-react";
 
 import StaffDashboardLayout from "../components/dashboard/StaffDashboardLayout";
 import StatusBadge, { type IntentionStatus } from "../components/StatusBadge";
 import MassIntentionDetailModal from "../components/mass-intentions/MassIntentionDetailModal";
 import type { MassIntention, IntentionType } from "../types/massIntention";
+import {
+  getStaffMassIntentions,
+  updateMassIntentionStatus,
+} from "@/services/staffManagementService";
 
 const intentionTypes: IntentionType[] = [
   "Anniversary",
@@ -15,28 +19,32 @@ const intentionTypes: IntentionType[] = [
   "Thanksgiving",
 ];
 
-// Mock data — replace with a real fetch/mutations once the backend exists
-const initialIntentions: MassIntention[] = Array.from({ length: 14 }).map(
-  (_, i) => ({
-    id: i + 1,
-    date: "12-06-2026",
-    names: "John Doe & Jane Doe",
-    contactNumber: "0917-000-0000",
-    type: intentionTypes[i % intentionTypes.length],
-    amount: 500,
-    status: i % 5 === 0 ? "approved" : i % 7 === 0 ? "rejected" : "pending",
-  }),
-);
-
 const PAGE_SIZE = 10;
 
 export default function MassIntentions() {
-  const [intentions, setIntentions] =
-    useState<MassIntention[]>(initialIntentions);
+  const [intentions, setIntentions] = useState<MassIntention[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeType, setActiveType] = useState<IntentionType>("Anniversary");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<MassIntention | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    getStaffMassIntentions()
+      .then((data) => {
+        if (active) setIntentions(data);
+      })
+      .catch(() => toast.error("Unable to load mass intentions."))
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     return intentions.filter((item) => {
@@ -61,15 +69,19 @@ export default function MassIntentions() {
     setPage(1);
   };
 
-  const handleUpdateStatus = (id: number, status: IntentionStatus) => {
-    setIntentions((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status } : item)),
-    );
-
-    const item = intentions.find((i) => i.id === id);
-    toast.success(`Mass intention for "${item?.names}" has been ${status}.`);
-
-    setSelected(null);
+  const handleUpdateStatus = async (id: number, status: IntentionStatus) => {
+    try {
+      const updated = await updateMassIntentionStatus(id, status);
+      setIntentions((items) =>
+        items.map((item) =>
+          item.bookingId === updated.bookingId ? { ...item, status } : item,
+        ),
+      );
+      toast.success(`Mass intention for "${updated.names}" has been ${status}.`);
+      setSelected(null);
+    } catch {
+      toast.error("Unable to update the mass intention status.");
+    }
   };
 
   return (
@@ -134,15 +146,6 @@ export default function MassIntentions() {
                 <Printer size={16} />
                 Print
               </button>
-              <button
-                onClick={() =>
-                  toast.info("Add Mass Intention form coming soon.")
-                }
-                className="flex items-center gap-2 rounded-xl bg-[#B22222] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#8B1C1C]"
-              >
-                <Plus size={16} />
-                Add Mass Intention
-              </button>
             </div>
           </div>
 
@@ -188,7 +191,9 @@ export default function MassIntentions() {
                       colSpan={8}
                       className="px-5 py-14 text-center text-gray-400"
                     >
-                      No {activeType.toLowerCase()} intentions found.
+                      {loading
+                        ? "Loading mass intentions..."
+                        : `No ${activeType.toLowerCase()} intentions found.`}
                     </td>
                   </tr>
                 ) : (

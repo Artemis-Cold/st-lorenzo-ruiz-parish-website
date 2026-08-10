@@ -44,6 +44,36 @@ export default function MassIntentionDetailModal({
             <StatusBadge status={intention.status} />
           </div>
 
+          <div className="flex items-center justify-between gap-4 text-sm">
+            <span className="text-gray-500">Booking Reference</span>
+            <span className="text-right font-medium text-[#292524]">
+              {intention.reference}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 text-sm">
+            <span className="text-gray-500">Payment Reference</span>
+            <span className="text-right font-medium text-[#292524]">
+              {intention.paymentReference}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 text-sm">
+            <span className="text-gray-500">Submitted Receipt</span>
+            {intention.receipt ? (
+              <a
+                href={intention.receipt.url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-right font-medium text-[#B22222] hover:underline"
+              >
+                {intention.receipt.fileName}
+              </a>
+            ) : (
+              <span className="text-gray-400">None</span>
+            )}
+          </div>
+
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">Type</span>
             <span className="font-medium text-[#292524]">{intention.type}</span>

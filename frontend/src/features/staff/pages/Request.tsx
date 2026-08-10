@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { FileText, Search, Printer, Info } from "lucide-react";
 import jsPDF from "jspdf";
@@ -12,67 +12,46 @@ import type {
   RequestCategory,
   RequestStatus,
 } from "../types/request";
+import {
+  getStaffDocumentRequests,
+  updateDocumentRequestStatus,
+} from "@/services/staffManagementService";
+import { formatLabel } from "../utils/formatLabel";
 
-const categories: RequestCategory[] = ["Document", "Special Mass"];
-
-const documentSubtypes = [
-  "Baptismal Certificate",
-  "Confirmation Certificate",
-  "CENOMAR",
-];
-const specialMassSubtypes = [
-  "Thanksgiving Mass",
-  "Healing Mass",
-  "Requiem Mass",
-];
-
-// Mock data — replace with a real fetch/mutations once the backend exists
-const initialRequests: ServiceRequest[] = Array.from({ length: 15 }).map(
-  (_, i) => {
-    const category: RequestCategory = i % 3 === 0 ? "Special Mass" : "Document";
-
-    return {
-      id: i + 1,
-      date: "00-00-0000",
-      name: i % 2 === 0 ? "John Doe" : "Jane Doe",
-      contactNumber: "000-0000-000",
-      category,
-      subtype:
-        category === "Document"
-          ? documentSubtypes[i % documentSubtypes.length]
-          : specialMassSubtypes[i % specialMassSubtypes.length],
-      amount: category === "Document" ? 100 : 500,
-      status:
-        i % 7 === 0
-          ? "completed"
-          : i % 5 === 0
-            ? "ready"
-            : i % 4 === 0
-              ? "processing"
-              : "pending",
-    };
-  },
-);
+const categories: RequestCategory[] = ["Document"];
 
 const PAGE_SIZE = 10;
 
 export default function Requests() {
-  const [requests, setRequests] = useState<ServiceRequest[]>(initialRequests);
+  const [requests, setRequests] = useState<ServiceRequest[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] =
     useState<RequestCategory>("Document");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<ServiceRequest | null>(null);
 
+  useEffect(() => {
+    let active = true;
+
+    getStaffDocumentRequests()
+      .then((data) => {
+        if (active) setRequests(data);
+      })
+      .catch(() => toast.error("Unable to load document requests."))
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const documentTotal = useMemo(
     () => requests.filter((r) => r.category === "Document").length,
     [requests],
   );
-  const specialMassTotal = useMemo(
-    () => requests.filter((r) => r.category === "Special Mass").length,
-    [requests],
-  );
-
   const filtered = useMemo(() => {
     return requests.filter((item) => {
       if (item.category !== activeCategory) return false;
@@ -96,15 +75,19 @@ export default function Requests() {
     setPage(1);
   };
 
-  const handleUpdateStatus = (id: number, status: RequestStatus) => {
-    setRequests((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status } : item)),
-    );
-
-    const item = requests.find((r) => r.id === id);
-    toast.success(`Request from "${item?.name}" marked as ${status}.`);
-
-    setSelected(null);
+  const handleUpdateStatus = async (id: number, status: RequestStatus) => {
+    try {
+      const updated = await updateDocumentRequestStatus(id, status);
+      setRequests((items) =>
+        items.map((item) =>
+          item.bookingId === updated.bookingId ? { ...item, status } : item,
+        ),
+      );
+      toast.success(`Request from "${updated.name}" marked as ${status}.`);
+      setSelected(null);
+    } catch {
+      toast.error("Unable to update the document request status.");
+    }
   };
 
   const handleExportPdf = () => {
@@ -142,7 +125,7 @@ export default function Requests() {
         item.date,
         item.name,
         item.contactNumber,
-        item.subtype,
+        formatLabel(item.subtype),
         `P${item.amount.toLocaleString()}.00`,
         item.status.charAt(0).toUpperCase() + item.status.slice(1),
       ]),
@@ -179,7 +162,6 @@ export default function Requests() {
                 </h1>
                 <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-white/75">
                   <span>Total Document Requests: {documentTotal}</span>
-                  <span>Total Special Mass Requests: {specialMassTotal}</span>
                 </p>
               </div>
             </div>
@@ -264,7 +246,9 @@ export default function Requests() {
                       colSpan={8}
                       className="px-5 py-14 text-center text-gray-400"
                     >
-                      No {activeCategory.toLowerCase()} requests found.
+                      {loading
+                        ? "Loading document requests..."
+                        : `No ${activeCategory.toLowerCase()} requests found.`}
                     </td>
                   </tr>
                 ) : (
@@ -286,7 +270,7 @@ export default function Requests() {
                         {item.contactNumber}
                       </td>
                       <td className="px-5 py-4 text-gray-500">
-                        {item.subtype}
+                        {formatLabel(item.subtype)}
                       </td>
                       <td className="px-5 py-4 font-semibold text-[#B22222]">
                         ₱{item.amount.toLocaleString()}.00

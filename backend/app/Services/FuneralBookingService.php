@@ -93,6 +93,7 @@ class FuneralBookingService
             return $booking->load([
                 'funeralDeceased.children',
                 'documents',
+                'package',
                 'selectedAddons',
             ]);
         });

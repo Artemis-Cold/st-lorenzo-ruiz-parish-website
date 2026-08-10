@@ -49,6 +49,7 @@ class WeddingBookingService
             return $booking->load([
                 'weddingApplicants',
                 'documents',
+                'package',
                 'selectedAddons',
             ]);
         });

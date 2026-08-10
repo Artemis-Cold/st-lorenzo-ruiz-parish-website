@@ -1,7 +1,8 @@
-import { X, Loader2, PackageCheck, CheckCircle2, XCircle } from "lucide-react";
+import { X, CheckCircle2, XCircle } from "lucide-react";
 
 import RequestStatusBadge from "../requests/RequestStatusBadge";
 import type { ServiceRequest, RequestStatus } from "../../types/request";
+import { formatLabel } from "../../utils/formatLabel";
 
 interface Props {
   request: ServiceRequest | null;
@@ -17,13 +18,11 @@ export default function RequestDetailModal({
   if (!request) return null;
 
   const isActionable =
-    request.status === "pending" ||
-    request.status === "processing" ||
-    request.status === "ready";
+    request.status === "pending" || request.status === "approved";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-3xl bg-white p-7 shadow-lg">
+      <div className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-7 shadow-lg">
         <div className="mb-6 flex items-start justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
@@ -43,7 +42,52 @@ export default function RequestDetailModal({
           </button>
         </div>
 
-        <div className="space-y-4 rounded-2xl border border-[#E7E2DA] p-5">
+        <div className="mt-4 space-y-3 rounded-2xl border border-[#E7E2DA] p-5">
+          <h3 className="font-semibold text-[#292524]">Requested documents</h3>
+          {request.documents.map((document) => (
+            <div
+              key={document.id}
+              className="rounded-xl bg-[#FAF8F5] p-3 text-sm"
+            >
+              <div className="flex justify-between gap-4">
+                <span className="font-medium text-[#292524]">
+                  {formatLabel(document.type)}
+                </span>
+                <span className="font-semibold text-[#B22222]">
+                  ₱{document.price.toLocaleString()}.00
+                </span>
+              </div>
+              {Object.entries(document.details).map(([key, value]) => (
+                <p key={key} className="mt-1 text-xs text-gray-500">
+                  <span className="capitalize">{key.replaceAll("_", " ")}:</span>{" "}
+                  {Array.isArray(value)
+                    ? value.join(", ")
+                    : String(value ?? "—")}
+                </p>
+              ))}
+            </div>
+          ))}
+          <div className="border-t border-[#E7E2DA] pt-3 text-xs text-gray-500">
+            Payment reference: {request.paymentReference}
+          </div>
+          <div className="text-xs text-gray-500">
+            Submitted receipt:{" "}
+            {request.receipt ? (
+              <a
+                href={request.receipt.url}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-[#B22222] hover:underline"
+              >
+                {request.receipt.fileName}
+              </a>
+            ) : (
+              "None"
+            )}
+          </div>
+        </div>
+
+        <div className="mt-4 space-y-4 rounded-2xl border border-[#E7E2DA] p-5">
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">Status</span>
             <RequestStatusBadge status={request.status} />
@@ -59,7 +103,7 @@ export default function RequestDetailModal({
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">Requested</span>
             <span className="font-medium text-[#292524]">
-              {request.subtype}
+              {formatLabel(request.subtype)}
             </span>
           </div>
 
@@ -89,25 +133,15 @@ export default function RequestDetailModal({
           <div className="mt-6 space-y-2.5">
             {request.status === "pending" && (
               <button
-                onClick={() => onUpdateStatus(request.id, "processing")}
+                onClick={() => onUpdateStatus(request.id, "approved")}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#B22222] py-3 font-semibold text-white transition hover:bg-[#8B1C1C]"
               >
-                <Loader2 size={18} />
-                Start Processing
+                <CheckCircle2 size={18} />
+                Approve Request
               </button>
             )}
 
-            {request.status === "processing" && (
-              <button
-                onClick={() => onUpdateStatus(request.id, "ready")}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-3 font-semibold text-white transition hover:bg-purple-700"
-              >
-                <PackageCheck size={18} />
-                Mark Ready for Pickup
-              </button>
-            )}
-
-            {request.status === "ready" && (
+            {request.status === "approved" && (
               <button
                 onClick={() => onUpdateStatus(request.id, "completed")}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-3 font-semibold text-white transition hover:bg-green-700"
@@ -117,13 +151,15 @@ export default function RequestDetailModal({
               </button>
             )}
 
-            <button
-              onClick={() => onUpdateStatus(request.id, "rejected")}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-3 font-semibold text-red-600 transition hover:bg-red-50"
-            >
-              <XCircle size={18} />
-              Reject Request
-            </button>
+            {request.status === "pending" && (
+              <button
+                onClick={() => onUpdateStatus(request.id, "rejected")}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-3 font-semibold text-red-600 transition hover:bg-red-50"
+              >
+                <XCircle size={18} />
+                Reject Request
+              </button>
+            )}
           </div>
         )}
       </div>

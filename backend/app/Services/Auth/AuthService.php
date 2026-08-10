@@ -80,6 +80,35 @@ class AuthService
     }
 
     /**
+     * Login a staff member or administrator.
+     */
+    public function loginStaff(array $credentials): array
+    {
+        $user = User::where('username', $credentials['username'])->first();
+
+        if (
+            ! $user
+            || ! in_array($user->role, ['staff', 'admin'], true)
+            || ! Hash::check($credentials['password'], $user->password)
+        ) {
+            abort(401, 'Invalid staff username or password.');
+        }
+
+        if (! $user->is_active) {
+            abort(403, 'This staff account is inactive. Please contact an administrator.');
+        }
+
+        $token = $user
+            ->createToken('staff-dashboard', ['staff'])
+            ->plainTextToken;
+
+        return [
+            'user' => $user,
+            'token' => $token,
+        ];
+    }
+
+    /**
      * Logout current user.
      */
     public function logout(User $user): void

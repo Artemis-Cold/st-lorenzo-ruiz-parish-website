@@ -1,6 +1,6 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { CalendarClock, Search, Printer, Plus, Info } from "lucide-react";
+import { CalendarClock, Search, Printer, Info } from "lucide-react";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -8,35 +8,39 @@ import StaffDashboardLayout from "../components/dashboard/StaffDashboardLayout";
 import BookingStatusBadge from "../components/booking/BookingStatusBadge";
 import BookingDetailModal from "../components/booking/BookingDetailModal";
 import type { Booking, BookingStatus, BookingType } from "../types/booking";
+import {
+  getStaffBookings,
+  updateStaffBookingStatus,
+} from "@/services/staffManagementService";
 
 const bookingTypes: BookingType[] = ["Marriage", "Funeral", "Baptism"];
-
-// Mock data — replace with a real fetch/mutations once the backend exists
-const initialBookings: Booking[] = Array.from({ length: 14 }).map((_, i) => ({
-  id: i + 1,
-  date: "00-00-0000",
-  names: "John Doe & Jane Doe",
-  contactNumber: "000-0000-000",
-  type: bookingTypes[i % bookingTypes.length],
-  amount: 20000,
-  status:
-    i % 6 === 0
-      ? "paid"
-      : i % 9 === 0
-        ? "completed"
-        : i % 11 === 0
-          ? "cancelled"
-          : "pending",
-}));
 
 const PAGE_SIZE = 10;
 
 export default function BookingManagement() {
-  const [bookings, setBookings] = useState<Booking[]>(initialBookings);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeType, setActiveType] = useState<BookingType>("Marriage");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Booking | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    getStaffBookings()
+      .then((data) => {
+        if (active) setBookings(data);
+      })
+      .catch(() => toast.error("Unable to load bookings."))
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     return bookings.filter((item) => {
@@ -61,15 +65,17 @@ export default function BookingManagement() {
     setPage(1);
   };
 
-  const handleUpdateStatus = (id: number, status: BookingStatus) => {
-    setBookings((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, status } : item)),
-    );
-
-    const item = bookings.find((b) => b.id === id);
-    toast.success(`Booking for "${item?.names}" marked as ${status}.`);
-
-    setSelected(null);
+  const handleUpdateStatus = async (id: number, status: BookingStatus) => {
+    try {
+      const updated = await updateStaffBookingStatus(id, status);
+      setBookings((items) =>
+        items.map((item) => (item.id === updated.id ? updated : item)),
+      );
+      toast.success(`Booking for "${updated.names}" marked as ${status}.`);
+      setSelected(null);
+    } catch {
+      toast.error("Unable to update the booking status.");
+    }
   };
 
   const handleExportPdf = () => {
@@ -183,13 +189,6 @@ export default function BookingManagement() {
                 <Printer size={16} />
                 Export PDF
               </button>
-              <button
-                onClick={() => toast.info("Add Booking form coming soon.")}
-                className="flex items-center gap-2 rounded-xl bg-[#B22222] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#8B1C1C]"
-              >
-                <Plus size={16} />
-                Add Booking
-              </button>
             </div>
           </div>
 
@@ -235,7 +234,9 @@ export default function BookingManagement() {
                       colSpan={8}
                       className="px-5 py-14 text-center text-gray-400"
                     >
-                      No {activeType.toLowerCase()} bookings found.
+                      {loading
+                        ? "Loading bookings..."
+                        : `No ${activeType.toLowerCase()} bookings found.`}
                     </td>
                   </tr>
                 ) : (

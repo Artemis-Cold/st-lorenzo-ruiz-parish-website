@@ -21,6 +21,9 @@ class DocumentRequestItem extends Model
 
     public function documentRequest(): BelongsTo
     {
-        return $this->belongsTo(DocumentRequestBooking::class);
+        return $this->belongsTo(
+            DocumentRequestBooking::class,
+            'document_request_booking_id'
+        );
     }
 }
