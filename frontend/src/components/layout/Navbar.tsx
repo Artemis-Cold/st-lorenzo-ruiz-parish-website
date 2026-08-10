@@ -6,6 +6,7 @@ import logo from "../../assets/images/parish-logo.png";
 const navItems = [
   { label: "Home", href: "#home" },
   { label: "About", href: "#about" },
+  { label: "Announcements", href: "#announcements" },
   { label: "Monthly Schedule", href: "#schedule" },
   { label: "Services", href: "#services" },
 ];

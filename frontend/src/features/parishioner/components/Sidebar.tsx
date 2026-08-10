@@ -33,13 +33,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       }`}
     >
       {/* Logo + Toggle */}
-      <div className="border-b border-red-700 p-5">
+      <div className={`relative border-b border-red-700 p-5 ${collapsed ? "pb-8" : ""}`}>
         <div
-          className={`flex ${
-            collapsed
-              ? "flex-col items-center gap-4"
-              : "items-center justify-between"
-          }`}
+          className="flex justify-center"
         >
           <img
             src={logo}
@@ -53,7 +49,8 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
           <button
             onClick={onToggle}
-            className="rounded-lg p-2 transition hover:bg-[#981B1B]"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className={`rounded-lg p-2 transition hover:bg-[#981B1B] ${collapsed ? "absolute bottom-1 left-1/2 -translate-x-1/2 translate-y-1/2 bg-[#B22222]" : "absolute right-4 top-1/2 -translate-y-1/2"}`}
           >
             {collapsed ? (
               <PanelLeftOpen size={22} />
@@ -137,7 +134,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           to="/about"
         />
 
-        <LogoutButton collapsed={false} />
+        <LogoutButton collapsed={collapsed} />
       </div>
     </aside>
   );

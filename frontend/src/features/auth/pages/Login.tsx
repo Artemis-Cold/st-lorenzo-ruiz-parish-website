@@ -1,5 +1,5 @@
 import { useAuth } from "@/contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useState, type FormEvent } from "react";
 import { AxiosError } from "axios";
 
@@ -13,6 +13,7 @@ import TextField from "../components/TextField";
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { login } = useAuth();
 
@@ -69,6 +70,7 @@ export default function Login() {
       subtitle="Sign in to manage your bookings, requests, and parish services."
     >
       <form onSubmit={handleLogin} className="space-y-5">
+        {location.state?.message && <p className="rounded-xl bg-green-50 p-3 text-sm text-green-700">{location.state.message}</p>}
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <div>
@@ -104,7 +106,7 @@ export default function Login() {
 
         <div className="flex justify-end">
           <Link
-            to="/forgot-password"
+            to="/forgot-password?portal=parishioner"
             className="text-sm font-medium text-[#B22222] hover:underline"
           >
             Forgot Password?

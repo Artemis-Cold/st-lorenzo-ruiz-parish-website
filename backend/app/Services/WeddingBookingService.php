@@ -13,6 +13,8 @@ use Illuminate\Validation\ValidationException;
 
 class WeddingBookingService
 {
+    public function __construct(private BookingSlotAvailabilityService $availability) {}
+
     public function store(array $data): Booking
     {
         return DB::transaction(function () use ($data) {
@@ -59,11 +61,7 @@ class WeddingBookingService
     {
         $slot = BookingSlot::query()->lockForUpdate()->findOrFail($slotId);
 
-        if (! $slot->is_active || $slot->bookings()->count() >= $slot->capacity) {
-            throw ValidationException::withMessages([
-                'booking_slot_id' => 'Selected booking slot is unavailable.',
-            ]);
-        }
+        $this->availability->ensureBookable($slot);
 
         return $slot;
     }

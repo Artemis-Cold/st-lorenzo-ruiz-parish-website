@@ -45,7 +45,7 @@ export default function MobileSidebar({ open, onClose }: MobileSidebarProps) {
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-red-700 p-6">
+        <div className="relative flex justify-center border-b border-red-700 p-6">
           <img
             src={logo}
             alt="Parish Logo"
@@ -54,7 +54,7 @@ export default function MobileSidebar({ open, onClose }: MobileSidebarProps) {
 
           <button
             onClick={onClose}
-            className="rounded-lg p-2 transition hover:bg-[#981B1B]"
+            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-lg p-2 transition hover:bg-[#981B1B]"
           >
             <X size={24} />
           </button>

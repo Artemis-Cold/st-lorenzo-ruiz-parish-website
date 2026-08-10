@@ -11,6 +11,8 @@ use Illuminate\Support\Str;
 
 class BaptismBookingService
 {
+    public function __construct(private BookingSlotAvailabilityService $availability) {}
+
     public function store(array $data): Booking
     {
         return DB::transaction(function () use ($data) {
@@ -39,17 +41,9 @@ class BaptismBookingService
 
     private function validateSlot(int $slotId): BookingSlot
     {
-        $slot = BookingSlot::findOrFail($slotId);
+        $slot = BookingSlot::query()->lockForUpdate()->findOrFail($slotId);
 
-        if (! $slot->is_active) {
-            throw new \Exception('Selected booking slot is unavailable.');
-        }
-
-        $currentBookings = $slot->bookings()->count();
-
-        if ($currentBookings >= $slot->capacity) {
-            throw new \Exception('Selected booking slot is already full.');
-        }
+        $this->availability->ensureBookable($slot);
 
         return $slot;
     }

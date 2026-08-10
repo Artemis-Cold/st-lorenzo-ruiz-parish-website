@@ -497,6 +497,33 @@ ${
                 <FieldError message={getError("deceased.mother.middle_initial")} />
               </div>
 
+              <div className="col-span-12 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <label className="flex items-center gap-3 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    checked={booking.deceased.has_spouse}
+                    disabled={readOnly}
+                    onChange={(event) => setBooking((previous) => ({
+                      ...previous,
+                      deceased: {
+                        ...previous.deceased,
+                        has_spouse: event.target.checked,
+                        spouse: event.target.checked
+                          ? previous.deceased.spouse
+                          : { first_name: "", middle_initial: "", last_name: "" },
+                      },
+                    }))}
+                    className="h-4 w-4 accent-[#B22222]"
+                  />
+                  Include spouse information
+                </label>
+                <p className="mt-1 pl-7 text-xs text-gray-500">
+                  Leave this unchecked if the deceased had no spouse.
+                </p>
+              </div>
+
+              {booking.deceased.has_spouse && <>
+
               <div className="col-span-12 md:col-span-5">
                 <label className="mb-2 block text-sm font-medium">
                   Spouse's Last Name <span className="text-red-600">*</span>
@@ -547,6 +574,7 @@ ${
                 />
                 <FieldError message={getError("deceased.spouse.middle_initial")} />
               </div>
+              </>}
             </div>
           </section>
 
@@ -1004,7 +1032,7 @@ ${
 
             <p className="mb-6 text-sm text-gray-500">
               Upload clear scanned copies or photos of the required documents.
-              Accepted formats are PDF, JPG, JPEG, and PNG (maximum 5 MB per
+              Accepted formats are PDF, JPG, JPEG, and PNG (maximum 2 MB per
               file).
             </p>
 

@@ -1,5 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { getBookingAvailability } from "@/services/bookingSlotService";
 
 type BookingStatus = "available" | "limited" | "full";
 
@@ -7,18 +9,6 @@ interface CalendarDayStatus {
   status: BookingStatus;
   slots: number;
 }
-
-const schedule: Record<number, CalendarDayStatus> = {
-  3: { status: "available", slots: 5 },
-  5: { status: "limited", slots: 2 },
-  8: { status: "full", slots: 0 },
-  11: { status: "available", slots: 4 },
-  14: { status: "full", slots: 0 },
-  18: { status: "limited", slots: 1 },
-  22: { status: "available", slots: 6 },
-  25: { status: "full", slots: 0 },
-  29: { status: "limited", slots: 2 },
-};
 
 const colors: Record<BookingStatus, string> = {
   available: "bg-green-500",
@@ -28,12 +18,32 @@ const colors: Record<BookingStatus, string> = {
 
 export default function Schedule() {
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [schedule, setSchedule] = useState<Record<number, CalendarDayStatus>>({});
 
   const monthName = currentDate.toLocaleString("en-US", {
     month: "long",
   });
 
   const year = currentDate.getFullYear();
+
+  useEffect(() => {
+    const month = `${year}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`;
+    Promise.all(["wedding", "baptism", "funeral"].map((service) => getBookingAvailability(service, month)))
+      .then((results) => {
+        const days: Record<number, { capacity: number; remaining: number }> = {};
+        results.flat().forEach((availability) => {
+          const day = Number(availability.date.slice(-2));
+          days[day] ??= { capacity: 0, remaining: 0 };
+          days[day].capacity += availability.capacity;
+          days[day].remaining += availability.remaining;
+        });
+        setSchedule(Object.fromEntries(Object.entries(days).map(([day, value]) => [day, {
+          slots: value.remaining,
+          status: value.remaining === 0 ? "full" : value.remaining / value.capacity <= 0.25 ? "limited" : "available",
+        }])));
+      })
+      .catch(() => setSchedule({}));
+  }, [currentDate, year]);
 
   const previousMonth = () => {
     setCurrentDate(
@@ -203,9 +213,9 @@ export default function Schedule() {
           {/* CTA */}
 
           <div className="mt-12 text-center">
-            <button className="rounded-xl bg-[#B22222] px-8 py-4 font-semibold text-white shadow-lg transition hover:bg-[#981B1B]">
+            <Link to="/login" className="inline-flex rounded-xl bg-[#B22222] px-8 py-4 font-semibold text-white shadow-lg transition hover:bg-[#981B1B]">
               Book a Parish Service
-            </button>
+            </Link>
           </div>
         </div>
       </div>

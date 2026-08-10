@@ -6,15 +6,19 @@ use App\Http\Controllers\Api\BookingSlotController;
 use App\Http\Controllers\Api\DocumentRequestBookingController;
 use App\Http\Controllers\Api\FuneralBookingController;
 use App\Http\Controllers\Api\MassIntentionBookingController;
+use App\Http\Controllers\Api\ParishionerBookingController;
 use App\Http\Controllers\Api\ServicePackageController;
 use App\Http\Controllers\Api\Staff\StaffBookingController;
+use App\Http\Controllers\Api\Staff\StaffAvailabilityController;
 use App\Http\Controllers\Api\Staff\StaffDashboardController;
 use App\Http\Controllers\Api\Staff\StaffDocumentRequestController;
 use App\Http\Controllers\Api\Staff\StaffMassIntentionController;
 use App\Http\Controllers\Api\Staff\StaffSettingsController;
 use App\Http\Controllers\Api\Staff\StaffTransactionController;
+use App\Http\Controllers\Api\Staff\WeddingAppointmentController;
 use App\Http\Controllers\Api\WeddingBookingController;
 use App\Http\Controllers\Auth\LoginController;
+use App\Http\Controllers\Auth\PasswordResetOtpController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -25,10 +29,16 @@ Route::prefix('auth')->group(function () {
 
     Route::post('/register', RegisterController::class);
 
-    Route::post('/login', LoginController::class);
+    Route::post('/login', LoginController::class)
+        ->middleware('throttle:login');
 
     Route::post('/staff/login', StaffLoginController::class)
         ->middleware('throttle:login');
+
+    Route::post('/password/otp', [PasswordResetOtpController::class, 'send'])
+        ->middleware('throttle:5,1');
+    Route::post('/password/reset', [PasswordResetOtpController::class, 'reset'])
+        ->middleware('throttle:10,1');
 
     Route::middleware('auth:sanctum')->group(function () {
 
@@ -67,6 +77,8 @@ Route::middleware('auth:sanctum')->group(function () {
         [DocumentRequestBookingController::class, 'store']
     );
 
+    Route::get('/bookings/{booking}', [ParishionerBookingController::class, 'show']);
+
     Route::patch('/profile/complete', [ProfileController::class, 'complete']);
     Route::patch('/profile', [ProfileController::class, 'update']);
     Route::get('/profile', [ProfileController::class, 'show']);
@@ -87,7 +99,12 @@ Route::middleware(['auth:sanctum', 'staff'])
         Route::get('/transactions', [StaffTransactionController::class, 'index']);
         Route::patch('/transactions/{bookingDocument}/status', [StaffTransactionController::class, 'updateStatus']);
         Route::get('/bookings', [StaffBookingController::class, 'index']);
+        Route::get('/availability', [StaffAvailabilityController::class, 'index']);
+        Route::post('/availability', [StaffAvailabilityController::class, 'store']);
+        Route::patch('/availability/{bookingSlot}', [StaffAvailabilityController::class, 'update']);
+        Route::delete('/availability/{bookingSlot}', [StaffAvailabilityController::class, 'destroy']);
         Route::patch('/bookings/{booking}/status', [StaffBookingController::class, 'updateStatus']);
+        Route::post('/bookings/{booking}/appointments', [WeddingAppointmentController::class, 'store']);
         Route::get('/mass-intentions', [StaffMassIntentionController::class, 'index']);
         Route::patch('/mass-intentions/{massIntentionEntry}/status', [StaffMassIntentionController::class, 'updateStatus']);
         Route::get('/document-requests', [StaffDocumentRequestController::class, 'index']);

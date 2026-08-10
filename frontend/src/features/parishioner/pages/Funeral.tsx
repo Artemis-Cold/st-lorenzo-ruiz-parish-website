@@ -44,6 +44,7 @@ export default function Funeral() {
       birth_date: null,
       father: emptyName(),
       mother: emptyName(),
+      has_spouse: false,
       spouse: emptyName(),
       children: [],
       sacraments: {
@@ -135,7 +136,7 @@ export default function Funeral() {
     required("deceased.age", deceased.age, "Age");
     required("deceased.birth_date", deceased.birth_date, "Birthday");
     required("deceased.death_cause", deceased.death_cause, "Cause of death");
-    for (const parent of ["father", "mother", "spouse"] as const) {
+    for (const parent of ["father", "mother"] as const) {
       const parentLabel =
         parent === "father" ? "Father" : parent === "mother" ? "Mother" : "Spouse";
       required(
@@ -148,6 +149,10 @@ export default function Funeral() {
         deceased[parent].last_name,
         parentLabel + "'s last name",
       );
+    }
+    if (deceased.has_spouse) {
+      required("deceased.spouse.first_name", deceased.spouse.first_name, "Spouse's first name");
+      required("deceased.spouse.last_name", deceased.spouse.last_name, "Spouse's last name");
     }
     required(
       "deceased.church_life.attends_mass",
@@ -208,6 +213,13 @@ export default function Funeral() {
       errors["documents.biography"] = [
         "Biography of the Deceased is required.",
       ];
+    }
+    for (const document of booking.documents) {
+      if (document.file.size > 2 * 1024 * 1024) {
+        errors[`documents.${document.document_type}`] = [
+          `${document.document_type === "death_certificate" ? "Death Certificate" : "Biography"} must not exceed 2 MB.`,
+        ];
+      }
     }
 
     return errors;

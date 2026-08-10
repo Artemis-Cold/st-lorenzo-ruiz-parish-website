@@ -44,6 +44,7 @@ class RegisterRequest extends FormRequest
             'middle_initial' => [
                 'nullable',
                 'string',
+                'max:1',
             ],
             'last_name' => [
                 'required',
@@ -55,6 +56,7 @@ class RegisterRequest extends FormRequest
             ],
             'phone' => [
                 'required',
+                'regex:/^09\d{9}$/',
                 'unique:users,phone',
             ],
             'house_no' => ['nullable'],

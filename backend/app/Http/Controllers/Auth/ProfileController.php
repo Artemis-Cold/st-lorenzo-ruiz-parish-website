@@ -59,7 +59,7 @@ class ProfileController extends Controller
             ->with(['service', 'package', 'slot', 'massIntention']);
 
         $currentBookings = (clone $bookingQuery)
-            ->whereIn('status', ['pending', 'approved'])
+            ->whereIn('status', ['pending', 'approved', 'ready_for_pickup'])
             ->latest()
             ->get()
             ->map(fn ($booking) => $this->bookingData($booking));
@@ -79,6 +79,7 @@ class ProfileController extends Controller
             ->flatMap(fn ($booking) => $booking->documentRequest->items->map(
                 fn ($item) => [
                     'id' => $item->id,
+                    'booking_id' => $booking->id,
                     'booking_reference' => $booking->booking_reference,
                     'document_type' => $item->document_type,
                     'status' => $booking->status,

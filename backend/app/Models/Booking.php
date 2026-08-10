@@ -105,4 +105,9 @@ class Booking extends Model
     {
         return $this->belongsTo(BookingSlot::class, 'booking_slot_id');
     }
+
+    public function weddingAppointments(): HasMany
+    {
+        return $this->hasMany(WeddingAppointment::class);
+    }
 }

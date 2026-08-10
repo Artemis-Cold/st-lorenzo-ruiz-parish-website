@@ -313,6 +313,7 @@ export default function BookingManagement() {
       </div>
 
       <BookingDetailModal
+        key={selected?.id ?? "closed"}
         booking={selected}
         onClose={() => setSelected(null)}
         onUpdateStatus={handleUpdateStatus}

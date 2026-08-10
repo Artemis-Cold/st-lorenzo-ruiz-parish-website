@@ -30,6 +30,25 @@ export const staffLogin = async (
   return response.data;
 };
 
+export type PasswordResetPortal = "parishioner" | "staff";
+
+export async function requestPasswordResetOtp(username: string, phone: string, portal: PasswordResetPortal) {
+  const response = await api.post<{ message: string }>("/auth/password/otp", { username, phone, portal });
+  return response.data;
+}
+
+export async function resetPasswordWithOtp(data: {
+  username: string;
+  phone: string;
+  portal: PasswordResetPortal;
+  otp: string;
+  password: string;
+  password_confirmation: string;
+}) {
+  const response = await api.post<{ message: string }>("/auth/password/reset", data);
+  return response.data;
+}
+
 export const me = async (): Promise<MeResponse> => {
   const response = await api.get<MeResponse>("/auth/me");
 
@@ -86,7 +105,7 @@ export interface ProfileBooking {
   booking_reference: string;
   service: string;
   package: string | null;
-  status: "pending" | "approved" | "rejected" | "cancelled" | "completed";
+  status: "pending" | "approved" | "ready_for_pickup" | "rejected" | "cancelled" | "completed";
   booking_date: string | null;
   start_time: string | null;
   end_time: string | null;
@@ -95,6 +114,7 @@ export interface ProfileBooking {
 
 export interface ProfileDocument {
   id: number;
+  booking_id: number;
   booking_reference: string;
   document_type: string;
   status: ProfileBooking["status"];

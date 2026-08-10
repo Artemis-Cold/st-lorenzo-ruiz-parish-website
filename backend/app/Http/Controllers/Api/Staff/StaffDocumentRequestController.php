@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Staff;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Staff\UpdateBookingStatusRequest;
 use App\Models\DocumentRequestBooking;
+use App\Services\SmsNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 
@@ -34,8 +35,26 @@ class StaffDocumentRequestController extends Controller
 
         $this->changeStatus($booking, $request->validated('status'), [
             'pending' => ['approved', 'rejected', 'cancelled'],
-            'approved' => ['completed', 'cancelled'],
+            'approved' => ['ready_for_pickup', 'cancelled'],
+            'ready_for_pickup' => ['completed', 'cancelled'],
         ]);
+
+        $status = $request->validated('status');
+        $documentTypes = $documentRequest->items
+            ->pluck('document_type')
+            ->filter()
+            ->unique()
+            ->values()
+            ->join(', ', ' and ');
+        $message = $status === 'ready_for_pickup'
+            ? "St. Lorenzo Parish: Your {$documentTypes} request ({$booking->booking_reference}) is ready for pickup. Please visit the parish office during office hours."
+            : "St. Lorenzo Parish: Your {$documentTypes} request ({$booking->booking_reference}) is now ".str_replace('_', ' ', $status).'.';
+
+        app(SmsNotificationService::class)->queue(
+            $booking->loadMissing('user'),
+            'document_status',
+            $message
+        );
 
         $documentRequest->load(['items', 'booking.user', 'booking.documents']);
 

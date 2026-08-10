@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AxiosError } from "axios";
 import { User } from "lucide-react";
 
@@ -12,6 +12,7 @@ import TextField from "../components/TextField";
 
 export default function StaffLogin() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { staffLogin } = useAuth();
 
   const [username, setUsername] = useState("");
@@ -71,6 +72,7 @@ export default function StaffLogin() {
       subtitle="Sign in to manage parish services and bookings."
     >
       <form onSubmit={handleLogin} className="space-y-5">
+        {location.state?.message && <p className="rounded-xl bg-green-50 p-3 text-sm text-green-700">{location.state.message}</p>}
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <div>
@@ -106,7 +108,7 @@ export default function StaffLogin() {
 
         <div className="flex justify-end">
           <Link
-            to="/forgot-password"
+            to="/forgot-password?portal=staff"
             className="text-sm font-medium text-[#B22222] hover:underline"
           >
             Forgot Password?

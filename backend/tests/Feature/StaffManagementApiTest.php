@@ -159,6 +159,20 @@ class StaffManagementApiTest extends TestCase
         $this->patchJson("/api/staff/document-requests/{$request->id}/status", [
             'status' => 'approved',
         ])->assertOk()->assertJsonPath('data.status', 'approved');
+
+        $this->patchJson("/api/staff/document-requests/{$request->id}/status", [
+            'status' => 'ready_for_pickup',
+        ])->assertOk()->assertJsonPath('data.status', 'ready_for_pickup');
+
+        $this->assertDatabaseHas('sms_messages', [
+            'booking_id' => $booking->id,
+            'category' => 'document_status',
+            'message' => "St. Lorenzo Parish: Your Baptismal Certificate and Confirmation Certificate request ({$booking->booking_reference}) is ready for pickup. Please visit the parish office during office hours.",
+        ]);
+
+        $this->patchJson("/api/staff/document-requests/{$request->id}/status", [
+            'status' => 'completed',
+        ])->assertOk()->assertJsonPath('data.status', 'completed');
     }
 
     public function test_parishioners_cannot_access_staff_management_apis(): void

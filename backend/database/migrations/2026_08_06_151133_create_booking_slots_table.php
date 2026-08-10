@@ -31,11 +31,7 @@ return new class extends Migration
             $table->timestamps();
 
             // Prevent duplicate slots
-            $table->unique([
-                'service_id',
-                'booking_date',
-                'start_time',
-            ]);
+            $table->unique(['booking_date', 'start_time']);
         });
     }
 

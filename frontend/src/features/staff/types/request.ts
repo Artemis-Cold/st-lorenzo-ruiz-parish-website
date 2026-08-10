@@ -3,6 +3,7 @@ export type RequestCategory = "Document";
 export type RequestStatus =
   | "pending"
   | "approved"
+  | "ready_for_pickup"
   | "completed"
   | "rejected"
   | "cancelled";

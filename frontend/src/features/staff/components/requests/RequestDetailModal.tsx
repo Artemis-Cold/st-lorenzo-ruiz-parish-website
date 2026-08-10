@@ -1,8 +1,9 @@
-import { X, CheckCircle2, XCircle } from "lucide-react";
+import { X, CheckCircle2 } from "lucide-react";
 
 import RequestStatusBadge from "../requests/RequestStatusBadge";
 import type { ServiceRequest, RequestStatus } from "../../types/request";
 import { formatLabel } from "../../utils/formatLabel";
+import RejectConfirmationButton from "../RejectConfirmationButton";
 
 interface Props {
   request: ServiceRequest | null;
@@ -18,7 +19,9 @@ export default function RequestDetailModal({
   if (!request) return null;
 
   const isActionable =
-    request.status === "pending" || request.status === "approved";
+    request.status === "pending" ||
+    request.status === "approved" ||
+    request.status === "ready_for_pickup";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -143,22 +146,31 @@ export default function RequestDetailModal({
 
             {request.status === "approved" && (
               <button
+                onClick={() => onUpdateStatus(request.id, "ready_for_pickup")}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-3 font-semibold text-white transition hover:bg-purple-700"
+              >
+                <CheckCircle2 size={18} />
+                Mark Ready for Pickup
+              </button>
+            )}
+
+            {request.status === "ready_for_pickup" && (
+              <button
                 onClick={() => onUpdateStatus(request.id, "completed")}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-3 font-semibold text-white transition hover:bg-green-700"
               >
                 <CheckCircle2 size={18} />
-                Mark Completed
+                Mark as Claimed
               </button>
             )}
 
             {request.status === "pending" && (
-              <button
-                onClick={() => onUpdateStatus(request.id, "rejected")}
+              <RejectConfirmationButton
+                label="Reject Request"
+                itemLabel="document request"
+                onConfirm={() => onUpdateStatus(request.id, "rejected")}
                 className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-3 font-semibold text-red-600 transition hover:bg-red-50"
-              >
-                <XCircle size={18} />
-                Reject Request
-              </button>
+              />
             )}
           </div>
         )}

@@ -18,7 +18,7 @@ class UpdateBookingStatusRequest extends FormRequest
             'status' => [
                 'required',
                 'string',
-                Rule::in(['approved', 'rejected', 'cancelled', 'completed']),
+                Rule::in(['approved', 'ready_for_pickup', 'rejected', 'cancelled', 'completed']),
             ],
         ];
     }

@@ -65,7 +65,11 @@ class AuthService
             $credentials['username']
         )->first();
 
-        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
+        if (
+            ! $user
+            || $user->role !== 'parishioner'
+            || ! Hash::check($credentials['password'], $user->password)
+        ) {
             abort(401, 'Invalid username or password.');
         }
 

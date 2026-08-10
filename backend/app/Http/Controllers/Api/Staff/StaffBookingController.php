@@ -23,6 +23,7 @@ class StaffBookingController extends Controller
                 'documents', 'weddingApplicants', 'baptizand.parents',
                 'baptizand.godParentPairs.godParents',
                 'funeralDeceased.children',
+                'weddingAppointments',
             ])
             ->latest()
             ->get()
@@ -50,6 +51,7 @@ class StaffBookingController extends Controller
             'documents', 'weddingApplicants', 'baptizand.parents',
             'baptizand.godParentPairs.godParents',
             'funeralDeceased.children',
+            'weddingAppointments',
         ]);
 
         return response()->json(['data' => $this->serialize($booking)]);
@@ -118,6 +120,13 @@ class StaffBookingController extends Controller
                     'url' => Storage::disk('public')->url($document->file_path),
                 ])->values(),
                 'serviceData' => $this->serviceData($booking),
+                'appointments' => $booking->weddingAppointments->map(fn ($appointment) => [
+                    'id' => $appointment->id,
+                    'type' => $appointment->type,
+                    'scheduledAt' => $appointment->scheduled_at->toIso8601String(),
+                    'venue' => $appointment->venue,
+                    'notes' => $appointment->notes,
+                ])->values(),
             ],
         ];
     }

@@ -1,7 +1,8 @@
-import { X, Check, XCircle } from "lucide-react";
+import { X, Check } from "lucide-react";
 
 import StatusBadge, { type IntentionStatus } from "../StatusBadge";
 import type { MassIntention } from "../../types/massIntention";
+import RejectConfirmationButton from "../RejectConfirmationButton";
 
 interface Props {
   intention: MassIntention | null;
@@ -103,13 +104,11 @@ export default function MassIntentionDetailModal({
 
         {intention.status === "pending" && (
           <div className="mt-6 flex gap-3">
-            <button
-              onClick={() => onUpdateStatus(intention.id, "rejected")}
+            <RejectConfirmationButton
+              itemLabel="mass intention"
+              onConfirm={() => onUpdateStatus(intention.id, "rejected")}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 py-3 font-semibold text-red-600 transition hover:bg-red-50"
-            >
-              <XCircle size={18} />
-              Reject
-            </button>
+            />
             <button
               onClick={() => onUpdateStatus(intention.id, "approved")}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B22222] py-3 font-semibold text-white transition hover:bg-[#8B1C1C]"

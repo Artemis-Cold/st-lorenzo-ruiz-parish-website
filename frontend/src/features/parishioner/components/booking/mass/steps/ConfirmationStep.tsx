@@ -1,4 +1,5 @@
 import { BookingCard } from "../..";
+import { useAuth } from "@/contexts/AuthContext";
 
 import type { MassIntentionBooking } from "../../../../types/mass";
 import type { Dispatch, SetStateAction } from "react";
@@ -14,6 +15,7 @@ export default function ConfirmationStep({
   agree,
   setAgree,
 }: ConfirmationStepProps) {
+  const { user } = useAuth();
   const totalIntentions = booking.groups.reduce(
     (sum, group) => sum + group.entries.length,
     0,
@@ -43,7 +45,7 @@ export default function ConfirmationStep({
           <div className="divide-y rounded-lg border border-gray-200">
             <SummaryRow
               label="Parishioner"
-              value="Ihra Cueto"
+              value={user?.full_name ?? "-"}
             />
 
             <SummaryRow

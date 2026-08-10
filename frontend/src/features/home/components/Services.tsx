@@ -4,8 +4,8 @@ import {
   Church,
   ScrollText,
   FileText,
-  Cross,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const services = [
   {
@@ -14,6 +14,7 @@ const services = [
     description:
       "Schedule baptism appointments online, submit documentary requirements, and receive updates about seminar schedules and appointment status.",
     color: "bg-sky-100 text-sky-600",
+    path: "/services/baptism",
   },
   {
     icon: HeartHandshake,
@@ -21,6 +22,7 @@ const services = [
     description:
       "Reserve wedding dates, upload requirements, and receive notifications for interviews, seminars, and document verification.",
     color: "bg-rose-100 text-rose-600",
+    path: "/services/wedding",
   },
   {
     icon: Church,
@@ -28,6 +30,7 @@ const services = [
     description:
       "Coordinate funeral masses and burial services while communicating efficiently with the parish office.",
     color: "bg-violet-100 text-violet-600",
+    path: "/services/funeral",
   },
   {
     icon: ScrollText,
@@ -35,6 +38,7 @@ const services = [
     description:
       "Offer Mass intentions for thanksgiving, healing, birthdays, anniversaries, and prayers for departed loved ones.",
     color: "bg-amber-100 text-amber-600",
+    path: "/services/mass-intention",
   },
   {
     icon: FileText,
@@ -42,13 +46,7 @@ const services = [
     description:
       "Request baptismal, confirmation, marriage, and other parish certificates while tracking your request status online.",
     color: "bg-emerald-100 text-emerald-600",
-  },
-  {
-    icon: Cross,
-    title: "Special Mass",
-    description:
-      "Book special mass for homes, businesses, vehicles, and other special occasions through the parish.",
-    color: "bg-orange-100 text-orange-600",
+    path: "/services/document-request",
   },
 ];
 
@@ -99,9 +97,7 @@ export default function Services() {
                   {service.description}
                 </p>
 
-                <button className="mt-8 font-semibold text-[#B22222] transition-all group-hover:translate-x-2">
-                  Learn More →
-                </button>
+                <Link to="/login" state={{ redirectTo: service.path }} className="mt-8 inline-flex font-semibold text-[#B22222] transition-all group-hover:translate-x-2">Book this service →</Link>
               </div>
             );
           })}

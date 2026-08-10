@@ -18,10 +18,18 @@ const formatDate = (date: string | null) =>
       })
     : "No scheduled date";
 
+const formatStatus = (status: string) =>
+  status
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
 export default function RecentBookings({
   bookings,
+  onView,
 }: {
   bookings: ProfileBooking[];
+  onView: (id: number) => void;
 }) {
   return (
     <BookingCard title="Recent Bookings">
@@ -30,6 +38,7 @@ export default function RecentBookings({
           <div
             key={booking.id}
             className="rounded-xl border border-gray-200 p-4 transition hover:border-[#B22222]"
+            onClick={() => onView(booking.id)}
           >
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex gap-3">
@@ -55,7 +64,7 @@ export default function RecentBookings({
                   statusStyle[booking.status] ?? "bg-gray-100 text-gray-700"
                 }`}
               >
-                {booking.status}
+                {formatStatus(booking.status)}
               </span>
             </div>
             <div className="mt-4 flex items-center gap-2 border-t pt-4 text-sm text-gray-600">
@@ -63,6 +72,7 @@ export default function RecentBookings({
               {formatDate(booking.booking_date)}
               {booking.start_time && ` • ${booking.start_time}`}
             </div>
+            <p className="mt-3 text-right text-xs font-semibold text-[#B22222]">View booking information</p>
           </div>
         ))}
 

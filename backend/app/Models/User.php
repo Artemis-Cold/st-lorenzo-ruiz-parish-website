@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -60,6 +61,13 @@ class User extends Authenticatable
     protected $appends = [
         'full_name',
     ];
+
+    protected function middleInitial(): Attribute
+    {
+        return Attribute::make(
+            set: fn ($value) => filled($value) ? mb_strtoupper(trim($value)) : null,
+        );
+    }
 
     public function getFullNameAttribute(): string
     {

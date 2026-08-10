@@ -3,28 +3,21 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use App\Services\Parishioner\ParishionerIdService;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class UserSeeder extends Seeder
 {
     public function run(): void
     {
-        User::create([
-
-            'parishioner_id' => ParishionerIdService::generate(),
-
-            'username' => 'zoal123',
-
-            'password' => Hash::make('password123'),
-
-            'first_name' => 'Zoal',
-            'middle_initial' => 'B',
-            'last_name' => 'Andal',
+        User::updateOrCreate(['username' => 'johndoe'], [
+            'parishioner_id' => 'PAR-TEST-000001',
+            'password' => 'John@12345',
+            'first_name' => 'John',
+            'middle_initial' => null,
+            'last_name' => 'Doe',
             'suffix' => null,
 
-            'phone' => '09171234567',
+            'phone' => '09170000001',
 
             'house_no' => '123',
             'street' => 'Main Street',
@@ -33,7 +26,7 @@ class UserSeeder extends Seeder
             'province' => 'Batangas',
             'zip_code' => '4228',
 
-            'birth_date' => '2002-08-14',
+            'birth_date' => '1995-01-15',
 
             'gender' => 'Male',
 
@@ -42,9 +35,8 @@ class UserSeeder extends Seeder
             'role' => 'parishioner',
 
             'is_active' => true,
-
             'phone_verified_at' => now(),
-
+            'profile_completed' => true,
         ]);
     }
 }

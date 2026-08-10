@@ -31,6 +31,7 @@ export interface Deceased extends PersonName {
   birth_date: Date | null;
   father: PersonName;
   mother: PersonName;
+  has_spouse: boolean;
   spouse: PersonName;
   children: PersonName[];
   sacraments: Sacraments;

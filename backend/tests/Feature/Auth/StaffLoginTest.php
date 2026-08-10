@@ -61,6 +61,21 @@ class StaffLoginTest extends TestCase
         $this->assertDatabaseCount('personal_access_tokens', 0);
     }
 
+    public function test_staff_cannot_login_through_parishioner_login(): void
+    {
+        $staff = User::factory()->create([
+            'role' => 'staff',
+            'password' => 'secret-password',
+        ]);
+
+        $this->postJson('/api/auth/login', [
+            'username' => $staff->username,
+            'password' => 'secret-password',
+        ])->assertUnauthorized();
+
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+    }
+
     public function test_inactive_staff_cannot_login(): void
     {
         $staff = User::factory()->create([

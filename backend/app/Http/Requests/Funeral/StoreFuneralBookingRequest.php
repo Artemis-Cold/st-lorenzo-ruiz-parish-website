@@ -4,6 +4,7 @@ namespace App\Http\Requests\Funeral;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
+use Illuminate\Validation\Rule;
 
 class StoreFuneralBookingRequest extends FormRequest
 {
@@ -30,6 +31,7 @@ class StoreFuneralBookingRequest extends FormRequest
             'deceased.death_cause' => ['required', 'string', 'max:255'],
             'deceased.age' => ['required', 'integer', 'min:0', 'max:150'],
             'deceased.birth_date' => ['required', 'date', 'before_or_equal:today'],
+            'deceased.has_spouse' => ['required', 'boolean'],
             'deceased.children' => ['nullable', 'array'],
             'deceased.sacraments' => ['required', 'array'],
             'deceased.sacraments.*' => ['required', 'boolean'],
@@ -49,18 +51,22 @@ class StoreFuneralBookingRequest extends FormRequest
                 'required',
                 'file',
                 'mimes:jpg,jpeg,png,pdf',
-                'max:5120',
+                'max:2048',
             ],
         ];
 
         foreach ($name as $field => $fieldRules) {
             $rules["deceased.$field"] = $fieldRules;
             $rules["deceased.informant.$field"] = $fieldRules;
-            foreach (['father', 'mother', 'spouse'] as $relative) {
+            foreach (['father', 'mother'] as $relative) {
                 $rules["deceased.$relative.$field"] = $fieldRules;
             }
             $rules["deceased.children.*.$field"] = $fieldRules;
         }
+
+        $rules['deceased.spouse.first_name'] = ['nullable', Rule::requiredIf(fn () => $this->boolean('deceased.has_spouse')), 'string', 'max:100'];
+        $rules['deceased.spouse.middle_initial'] = ['nullable', 'string', 'max:1'];
+        $rules['deceased.spouse.last_name'] = ['nullable', Rule::requiredIf(fn () => $this->boolean('deceased.has_spouse')), 'string', 'max:100'];
 
         return $rules;
     }

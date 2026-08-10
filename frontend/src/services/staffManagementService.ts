@@ -69,3 +69,14 @@ export async function updateDocumentRequestStatus(
   );
   return response.data.data;
 }
+
+export async function scheduleWeddingAppointment(
+  bookingId: number,
+  data: { type: "seminar" | "priest_interview"; scheduledAt: string; venue: string; notes: string },
+) {
+  const response = await api.post<{ data: Booking["details"]["appointments"][number] }>(
+    `/staff/bookings/${bookingId}/appointments`,
+    data,
+  );
+  return response.data.data;
+}

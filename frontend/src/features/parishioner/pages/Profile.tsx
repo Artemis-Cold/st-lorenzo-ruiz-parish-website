@@ -8,6 +8,7 @@ import Documents from "../components/profile/Documents";
 import PersonalInformation from "../components/profile/PersonalInformation";
 import ProfileEditForm from "../components/profile/ProfileEditForm";
 import HelpCard from "../components/profile/HelpCard";
+import BookingDetailModal from "../components/profile/BookingDetailModal";
 import {
   getProfile,
   type ProfileBooking,
@@ -26,6 +27,7 @@ export default function Profile() {
     "current" | "recent" | "documents"
   >("current");
   const [editing, setEditing] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -126,11 +128,11 @@ export default function Profile() {
       )}
 
       <div className="mt-8 grid gap-8 xl:grid-cols-[2fr_1fr]">
-        {activeTab === "current" && <CurrentBookings bookings={bookings} />}
+        {activeTab === "current" && <CurrentBookings bookings={bookings} onView={setSelectedBookingId} />}
         {activeTab === "recent" && (
-          <RecentBookings bookings={recentBookings} />
+          <RecentBookings bookings={recentBookings} onView={setSelectedBookingId} />
         )}
-        {activeTab === "documents" && <Documents documents={documents} />}
+        {activeTab === "documents" && <Documents documents={documents} onView={setSelectedBookingId} />}
 
         <div className="space-y-8">
           <PersonalInformation
@@ -143,6 +145,7 @@ export default function Profile() {
           <HelpCard />
         </div>
       </div>
+      <BookingDetailModal bookingId={selectedBookingId} onClose={() => setSelectedBookingId(null)} />
     </DashboardLayout>
   );
 }

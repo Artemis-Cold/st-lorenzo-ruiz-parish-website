@@ -21,6 +21,11 @@ interface AnnouncementResponse {
   data: Announcement;
 }
 
+export async function getPublicAnnouncements(): Promise<Announcement[]> {
+  const response = await api.get<{ data: Announcement[] }>("/announcements");
+  return response.data.data;
+}
+
 export async function getStaffAnnouncements(): Promise<Announcement[]> {
   const response = await api.get<{ data: Announcement[] }>(
     "/staff/announcements",

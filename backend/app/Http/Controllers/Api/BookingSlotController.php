@@ -26,6 +26,7 @@ class BookingSlotController extends Controller
         $query = BookingSlot::query()
             ->where('service_id', $service->id)
             ->where('is_active', true)
+            ->with('service')
             ->withCount([
                 'bookings as bookings_count' => fn ($query) => $query
                     ->whereNotIn('status', ['cancelled', 'rejected']),
@@ -55,7 +56,7 @@ class BookingSlotController extends Controller
                     ->map(function ($dailySlots, $date) {
                         $capacity = $dailySlots->sum('capacity');
                         $booked = $dailySlots->sum('bookings_count');
-                        $remaining = max(0, $capacity - $booked);
+                        $remaining = $dailySlots->sum(fn ($slot) => max(0, $slot->capacity - $slot->bookings_count));
 
                         return [
                             'date' => $date,

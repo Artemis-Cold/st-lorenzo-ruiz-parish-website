@@ -12,17 +12,18 @@ const documentLabel = (value: string) =>
 const statusStyle: Record<string, string> = {
   completed: "bg-green-100 text-green-700",
   approved: "bg-blue-100 text-blue-700",
+  ready_for_pickup: "bg-purple-100 text-purple-700",
   pending: "bg-amber-100 text-amber-700",
   cancelled: "bg-red-100 text-red-700",
   rejected: "bg-gray-200 text-gray-700",
 };
 
-export default function Documents({ documents }: { documents: ProfileDocument[] }) {
+export default function Documents({ documents, onView }: { documents: ProfileDocument[]; onView: (id: number) => void }) {
   return (
     <BookingCard title="My Document Requests">
       <div className="space-y-4">
         {documents.map((document) => (
-          <div key={document.id} className="rounded-2xl border border-gray-200 p-5">
+          <div key={document.id} onClick={() => onView(document.booking_id)} className="cursor-pointer rounded-2xl border border-gray-200 p-5 transition hover:border-[#B22222]">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex gap-4">
                 <div className="rounded-xl bg-red-50 p-3">
@@ -49,13 +50,14 @@ export default function Documents({ documents }: { documents: ProfileDocument[] 
                 </div>
               </div>
               <span
-                className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
                   statusStyle[document.status] ?? "bg-gray-100 text-gray-700"
                 }`}
               >
-                {document.status}
+                {documentLabel(document.status)}
               </span>
             </div>
+            <p className="mt-3 text-right text-xs font-semibold text-[#B22222]">View request information</p>
           </div>
         ))}
 

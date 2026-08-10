@@ -1,8 +1,12 @@
-import { Ban, CheckCircle2, X, XCircle } from "lucide-react";
+import { useState, type FormEvent } from "react";
+import { Ban, CheckCircle2, X } from "lucide-react";
+import { toast } from "sonner";
 
 import type { Booking, BookingStatus } from "../../types/booking";
 import BookingStatusBadge from "./BookingStatusBadge";
 import { formatLabel } from "../../utils/formatLabel";
+import { scheduleWeddingAppointment } from "@/services/staffManagementService";
+import RejectConfirmationButton from "../RejectConfirmationButton";
 
 interface Props {
   booking: Booking | null;
@@ -20,10 +24,20 @@ function Detail({ label, value }: { label: string; value: React.ReactNode }) {
 }
 
 export default function BookingDetailModal({ booking, onClose, onUpdateStatus }: Props) {
+  const [appointments, setAppointments] = useState(booking?.details.appointments ?? []);
+  const [appointment, setAppointment] = useState({ type: "seminar" as "seminar" | "priest_interview", scheduledAt: "", venue: "", notes: "" });
   if (!booking) return null;
 
   const { details } = booking;
   const service = details.serviceData;
+  const schedule = async (event: FormEvent) => {
+    event.preventDefault();
+    try {
+      const saved = await scheduleWeddingAppointment(booking.id, appointment);
+      setAppointments((items) => [...items.filter((item) => item.type !== saved.type), saved]);
+      toast.success("Schedule saved and SMS queued.");
+    } catch { toast.error("Unable to save schedule."); }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
@@ -71,6 +85,20 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus }:
           </section>
         ))}
 
+        {booking.type === "Marriage" && (
+          <section className="mt-4 space-y-4 rounded-2xl border border-[#E7E2DA] p-5">
+            <h3 className="font-semibold text-[#292524]">Wedding schedules and SMS</h3>
+            {appointments.map((item) => <Detail key={item.type} label={formatLabel(item.type)} value={`${new Date(item.scheduledAt).toLocaleString()} — ${item.venue}`} />)}
+            <form onSubmit={schedule} className="grid gap-3 sm:grid-cols-2">
+              <select value={appointment.type} onChange={(e) => setAppointment({...appointment, type: e.target.value as typeof appointment.type})} className="rounded-xl border px-3 py-2"><option value="seminar">Wedding Seminar</option><option value="priest_interview">Priest Interview</option></select>
+              <input type="datetime-local" required value={appointment.scheduledAt} onChange={(e) => setAppointment({...appointment, scheduledAt: e.target.value})} className="rounded-xl border px-3 py-2" />
+              <input required placeholder="Venue" value={appointment.venue} onChange={(e) => setAppointment({...appointment, venue: e.target.value})} className="rounded-xl border px-3 py-2" />
+              <input placeholder="Notes (optional)" value={appointment.notes} onChange={(e) => setAppointment({...appointment, notes: e.target.value})} className="rounded-xl border px-3 py-2" />
+              <button className="rounded-xl bg-[#B22222] px-4 py-2 font-semibold text-white sm:col-span-2">Save Schedule &amp; Notify</button>
+            </form>
+          </section>
+        )}
+
         {service.deceased && (
           <section className="mt-4 space-y-3 rounded-2xl border border-[#E7E2DA] p-5">
             <h3 className="font-semibold text-[#292524]">Deceased and informant information</h3>
@@ -108,7 +136,7 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus }:
         {(booking.status === "pending" || booking.status === "approved") && (
           <div className="mt-6 space-y-2.5">
             {booking.status === "pending" && <div className="flex gap-2.5">
-              <button onClick={() => onUpdateStatus(booking.id, "rejected")} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 py-3 font-semibold text-red-600"><XCircle size={18} /> Reject</button>
+              <RejectConfirmationButton itemLabel="booking" onConfirm={() => onUpdateStatus(booking.id, "rejected")} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 py-3 font-semibold text-red-600 transition hover:bg-red-50" />
               <button onClick={() => onUpdateStatus(booking.id, "approved")} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B22222] py-3 font-semibold text-white"><CheckCircle2 size={18} /> Approve</button>
             </div>}
             {booking.status === "approved" && <button onClick={() => onUpdateStatus(booking.id, "completed")} className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 font-semibold text-white"><CheckCircle2 size={18} /> Mark as Completed</button>}

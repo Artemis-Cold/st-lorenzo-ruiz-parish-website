@@ -83,7 +83,9 @@ export default function Requests() {
           item.bookingId === updated.bookingId ? { ...item, status } : item,
         ),
       );
-      toast.success(`Request from "${updated.name}" marked as ${status}.`);
+      toast.success(
+        `Request from "${updated.name}" marked as ${formatLabel(status)}.`,
+      );
       setSelected(null);
     } catch {
       toast.error("Unable to update the document request status.");
@@ -127,7 +129,7 @@ export default function Requests() {
         item.contactNumber,
         formatLabel(item.subtype),
         `P${item.amount.toLocaleString()}.00`,
-        item.status.charAt(0).toUpperCase() + item.status.slice(1),
+        formatLabel(item.status),
       ]),
       headStyles: { fillColor: [178, 34, 34] },
       styles: { fontSize: 9 },

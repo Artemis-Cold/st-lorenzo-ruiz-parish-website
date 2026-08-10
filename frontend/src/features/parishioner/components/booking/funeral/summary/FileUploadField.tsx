@@ -1,5 +1,5 @@
 import { FileText, Upload, X } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 
 interface FileUploadFieldProps {
   label: string;
@@ -19,6 +19,8 @@ export default function FileUploadField({
   readOnly,
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [sizeError, setSizeError] = useState<string | null>(null);
+  const maxSize = 2 * 1024 * 1024;
 
   const openPicker = () => {
     if (readOnly) return;
@@ -39,8 +41,20 @@ export default function FileUploadField({
         type="file"
         accept={accept}
         disabled={readOnly}
-        onChange={(e) => onChange?.(e.target.files?.[0] ?? null)}
+        onChange={(e) => {
+          const selected = e.target.files?.[0] ?? null;
+          if (selected && selected.size > maxSize) {
+            setSizeError("The file must not exceed 2 MB.");
+            onChange(null);
+            e.target.value = "";
+            return;
+          }
+          setSizeError(null);
+          onChange(selected);
+        }}
       />
+
+      {sizeError && <p className="mb-2 text-sm text-red-600">{sizeError}</p>}
 
       {readOnly ? (
         <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
@@ -80,7 +94,7 @@ export default function FileUploadField({
 
           <p className="mt-1 text-sm text-gray-500">Click to browse</p>
 
-          <p className="mt-2 text-xs text-gray-400">PDF, JPG, PNG (Max 5 MB)</p>
+          <p className="mt-2 text-xs text-gray-400">PDF, JPG, PNG (Max 2 MB)</p>
         </button>
       ) : (
         <div className="rounded-2xl border border-green-300 bg-green-50 p-5">

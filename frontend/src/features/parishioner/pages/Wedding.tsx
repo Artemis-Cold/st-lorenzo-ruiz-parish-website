@@ -260,6 +260,15 @@ export default function Wedding() {
       ["couple_photo", "Couple Photo"],
     ] as const;
 
+    currentBooking.documents.forEach((document) => {
+      if (document.file.size > 2 * 1024 * 1024) {
+        addError(
+          `documents.${document.document_type}`,
+          `${document.file.name} must not exceed 2 MB.`,
+        );
+      }
+    });
+
     requiredDocuments.forEach(([documentType, label]) => {
       if (
         !currentBooking.documents.some(

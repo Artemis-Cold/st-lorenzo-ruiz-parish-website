@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 
 import { BookingCard } from "../booking";
+import { Link } from "react-router-dom";
 
 export default function HelpCard() {
   return (
@@ -83,9 +84,7 @@ export default function HelpCard() {
           </div>
         </div>
 
-        <button className="w-full rounded-xl bg-[#B22222] py-3 font-medium text-white transition hover:bg-[#991B1B]">
-          Contact Parish Office
-        </button>
+        <Link to="/help" className="flex w-full justify-center rounded-xl bg-[#B22222] py-3 font-medium text-white transition hover:bg-[#991B1B]">Open Help Center</Link>
       </div>
     </BookingCard>
   );

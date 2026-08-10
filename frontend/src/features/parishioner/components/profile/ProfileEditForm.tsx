@@ -69,7 +69,7 @@ export default function ProfileEditForm({ user, onSaved, onCancel }: Props) {
   const field = (
     key: keyof UpdateProfileData,
     label: string,
-    options?: { type?: string; required?: boolean; maxLength?: number },
+    options?: { type?: string; required?: boolean; maxLength?: number; placeholder?: string },
   ) => (
     <div>
       <label className="mb-2 block text-sm font-medium">
@@ -81,9 +81,15 @@ export default function ProfileEditForm({ user, onSaved, onCancel }: Props) {
       <input
         type={options?.type ?? "text"}
         maxLength={options?.maxLength}
+        placeholder={options?.placeholder ?? `Enter ${label.toLowerCase()}`}
         value={form[key]}
         onChange={(event) =>
-          update(key, event.target.value as UpdateProfileData[typeof key])
+          update(
+            key,
+            (key === "middle_initial"
+              ? event.target.value.toUpperCase()
+              : event.target.value) as UpdateProfileData[typeof key],
+          )
         }
         className={
           "w-full rounded-xl border px-4 py-3 outline-none " +
@@ -125,10 +131,11 @@ export default function ProfileEditForm({ user, onSaved, onCancel }: Props) {
           {field("middle_initial", "Middle Initial", {
             required: false,
             maxLength: 1,
+            placeholder: "e.g. B",
           })}
           {field("last_name", "Last Name")}
-          {field("suffix", "Suffix", { required: false })}
-          {field("phone", "Contact Number")}
+          {field("suffix", "Suffix", { required: false, placeholder: "e.g. Jr., Sr., III" })}
+          {field("phone", "Contact Number", { placeholder: "e.g. 0917 123 4567" })}
           {field("birth_date", "Birth Date", { type: "date" })}
         </div>
 
@@ -152,12 +159,12 @@ export default function ProfileEditForm({ user, onSaved, onCancel }: Props) {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          {field("house_no", "House Number", { required: false })}
-          {field("street", "Street", { required: false })}
+          {field("house_no", "House Number", { required: false, placeholder: "e.g. 123" })}
+          {field("street", "Street", { required: false, placeholder: "e.g. Rizal Street" })}
           {field("barangay", "Barangay")}
           {field("municipality", "Municipality/City")}
           {field("province", "Province")}
-          {field("zip_code", "ZIP Code", { required: false })}
+          {field("zip_code", "ZIP Code", { required: false, placeholder: "e.g. 4000" })}
         </div>
 
         <div className="flex justify-end gap-3">

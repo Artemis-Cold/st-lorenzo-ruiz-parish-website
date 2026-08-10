@@ -73,5 +73,12 @@ export interface Booking {
         godParents: Array<{ role: string; name: string; residence: string }>;
       };
     };
+    appointments: Array<{
+      id: number;
+      type: "seminar" | "priest_interview";
+      scheduledAt: string;
+      venue: string;
+      notes: string | null;
+    }>;
   };
 }

@@ -1,5 +1,6 @@
 import { ArrowRight, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 import parishLogo from "../../../assets/images/parish-logo.png";
 import churchImage from "../../../assets/images/church.png";
@@ -91,14 +92,14 @@ export default function Hero() {
           transition={{ delay: 0.7 }}
           className="mt-12 flex flex-wrap justify-center gap-4 mb-12"
         >
-          <button className="flex cursor-pointer items-center gap-2 rounded-xl bg-[#B22222] px-8 py-4 font-semibold text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-[#981B1B]">
+          <Link to="/login" className="flex cursor-pointer items-center gap-2 rounded-xl bg-[#B22222] px-8 py-4 font-semibold text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:bg-[#981B1B]">
             Book a Service
             <ArrowRight size={18} />
-          </button>
+          </Link>
 
-          <button className="cursor-pointer rounded-xl border-2 border-white px-8 py-4 font-semibold text-white backdrop-blur-sm transition-all duration-300 hover:bg-white hover:text-[#B22222]">
+          <a href="#about" className="cursor-pointer rounded-xl border-2 border-white px-8 py-4 font-semibold text-white backdrop-blur-sm transition-all duration-300 hover:bg-white hover:text-[#B22222]">
             Learn More
-          </button>
+          </a>
         </motion.div>
       </div>
     </section>

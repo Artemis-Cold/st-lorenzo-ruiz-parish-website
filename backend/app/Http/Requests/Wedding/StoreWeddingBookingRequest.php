@@ -33,7 +33,7 @@ class StoreWeddingBookingRequest extends FormRequest
                 'required',
                 'file',
                 'mimes:jpg,jpeg,png,pdf',
-                'max:5120',
+                'max:2048',
             ],
         ];
 

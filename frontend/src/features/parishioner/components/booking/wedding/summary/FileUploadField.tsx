@@ -1,5 +1,7 @@
 import { FileText, Upload, X } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState } from "react";
+
+const MAX_FILE_SIZE = 2 * 1024 * 1024;
 
 interface FileUploadFieldProps {
   label: string;
@@ -19,6 +21,7 @@ export default function FileUploadField({
   readOnly,
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [sizeError, setSizeError] = useState<string | null>(null);
 
   const openPicker = () => {
     if (readOnly) return;
@@ -39,8 +42,23 @@ export default function FileUploadField({
         type="file"
         accept={accept}
         disabled={readOnly}
-        onChange={(e) => onChange?.(e.target.files?.[0] ?? null)}
+        onChange={(e) => {
+          const selectedFile = e.target.files?.[0] ?? null;
+
+          if (selectedFile && selectedFile.size > MAX_FILE_SIZE) {
+            setSizeError("The file must not exceed 2 MB.");
+            e.target.value = "";
+            return;
+          }
+
+          setSizeError(null);
+          onChange(selectedFile);
+        }}
       />
+
+      {sizeError && (
+        <p className="mb-2 text-sm text-red-600">{sizeError}</p>
+      )}
 
       {readOnly ? (
         <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
@@ -80,7 +98,7 @@ export default function FileUploadField({
 
           <p className="mt-1 text-sm text-gray-500">Click to browse</p>
 
-          <p className="mt-2 text-xs text-gray-400">PDF, JPG, PNG (Max 5 MB)</p>
+          <p className="mt-2 text-xs text-gray-400">PDF, JPG, PNG (Max 2 MB)</p>
         </button>
       ) : (
         <div className="rounded-2xl border border-green-300 bg-green-50 p-5">
@@ -103,7 +121,10 @@ export default function FileUploadField({
 
             <button
               type="button"
-              onClick={() => onChange?.(null)}
+              onClick={() => {
+                setSizeError(null);
+                onChange(null);
+              }}
               className="rounded-lg p-2 transition hover:bg-red-100"
             >
               <X size={18} />

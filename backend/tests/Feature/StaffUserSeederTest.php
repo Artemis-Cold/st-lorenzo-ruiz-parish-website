@@ -17,18 +17,18 @@ class StaffUserSeederTest extends TestCase
         $this->seed(StaffUserSeeder::class);
 
         $this->assertDatabaseHas('users', [
-            'username' => 'parishstaff',
+            'username' => 'mariaclara',
             'role' => 'staff',
             'is_active' => true,
         ]);
 
-        $user = User::where('username', 'parishstaff')->firstOrFail();
+        $user = User::where('username', 'mariaclara')->firstOrFail();
 
-        $this->assertTrue(Hash::check('Staff@12345', $user->password));
+        $this->assertTrue(Hash::check('Maria@12345', $user->password));
 
         $this->postJson('/api/auth/staff/login', [
-            'username' => 'parishstaff',
-            'password' => 'Staff@12345',
+            'username' => 'mariaclara',
+            'password' => 'Maria@12345',
         ])->assertOk()->assertJsonPath('user.role', 'staff');
     }
 

@@ -3,10 +3,27 @@ import { CalendarDays, Church } from "lucide-react";
 import { BookingCard } from "../booking";
 import type { ProfileBooking } from "@/api/auth";
 
+const statusStyles: Record<ProfileBooking["status"], string> = {
+  pending: "bg-amber-100 text-amber-700",
+  approved: "bg-green-100 text-green-700",
+  ready_for_pickup: "bg-purple-100 text-purple-700",
+  completed: "bg-green-100 text-green-700",
+  cancelled: "bg-red-100 text-red-700",
+  rejected: "bg-gray-200 text-gray-700",
+};
+
+const statusLabel = (status: ProfileBooking["status"]) =>
+  status
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+
 export default function CurrentBookings({
   bookings,
+  onView,
 }: {
   bookings: ProfileBooking[];
+  onView: (id: number) => void;
 }) {
   return (
     <BookingCard title="Current Bookings">
@@ -20,7 +37,8 @@ export default function CurrentBookings({
           {bookings.map((booking) => (
             <div
               key={booking.id}
-              className="rounded-xl border border-gray-200 p-5"
+              className="cursor-pointer rounded-xl border border-gray-200 p-5 transition hover:border-[#B22222] hover:shadow-sm"
+              onClick={() => onView(booking.id)}
             >
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
@@ -34,15 +52,14 @@ export default function CurrentBookings({
                 </div>
                 <span
                   className={
-                    "rounded-full px-3 py-1 text-xs font-semibold uppercase " +
-                    (booking.status === "approved"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-amber-100 text-amber-700")
+                    "rounded-full px-3 py-1 text-xs font-semibold " +
+                    statusStyles[booking.status]
                   }
                 >
-                  {booking.status}
+                  {statusLabel(booking.status)}
                 </span>
               </div>
+              <p className="mt-3 text-right text-xs font-semibold text-[#B22222]">View booking information</p>
 
               <div className="mt-4 flex items-center gap-2 border-t pt-4 text-sm text-gray-600">
                 <CalendarDays size={16} />

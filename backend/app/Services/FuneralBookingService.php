@@ -13,16 +13,14 @@ use Illuminate\Validation\ValidationException;
 
 class FuneralBookingService
 {
+    public function __construct(private BookingSlotAvailabilityService $availability) {}
+
     public function store(array $data): Booking
     {
         return DB::transaction(function () use ($data) {
             $slot = BookingSlot::query()->lockForUpdate()
                 ->findOrFail($data['booking_slot_id']);
-            if (! $slot->is_active || $slot->bookings()->count() >= $slot->capacity) {
-                throw ValidationException::withMessages([
-                    'booking_slot_id' => 'Selected booking slot is unavailable.',
-                ]);
-            }
+            $this->availability->ensureBookable($slot);
 
             $package = ServicePackage::findOrFail($data['service_package_id']);
             if (! $package->is_active || $package->service_id !== $slot->service_id) {
@@ -102,10 +100,16 @@ class FuneralBookingService
     private function relativeColumns(array $person): array
     {
         $columns = [];
-        foreach (['father', 'mother', 'spouse'] as $relative) {
+        foreach (['father', 'mother'] as $relative) {
             foreach (['first_name', 'middle_initial', 'last_name'] as $field) {
                 $columns[$relative.'_'.$field] = $person[$relative][$field] ?? null;
             }
+        }
+
+        foreach (['first_name', 'middle_initial', 'last_name'] as $field) {
+            $columns['spouse_'.$field] = ($person['has_spouse'] ?? false)
+                ? ($person['spouse'][$field] ?? null)
+                : null;
         }
 
         return $columns;

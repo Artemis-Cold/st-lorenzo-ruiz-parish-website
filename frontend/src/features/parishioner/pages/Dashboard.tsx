@@ -6,15 +6,20 @@ import WelcomeBanner from "../components/dashboard/WelcomeBanner";
 import EventsCard from "../components/dashboard/EventsCard";
 import CalendarCard from "../components/dashboard/CalendarCard";
 import AnnouncementCard from "../components/dashboard/AnnouncementCard";
+import { getPublicAnnouncements, type Announcement } from "@/services/announcementService";
 
 export default function Dashboard() {
   const [bookings, setBookings] = useState<ProfileBooking[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    getProfile()
-      .then((response) => setBookings(response.current_bookings))
+    Promise.all([getProfile(), getPublicAnnouncements()])
+      .then(([profile, publicAnnouncements]) => {
+        setBookings(profile.current_bookings);
+        setAnnouncements(publicAnnouncements);
+      })
       .catch(() => setError("Unable to load your dashboard information."))
       .finally(() => setLoading(false));
   }, []);
@@ -33,7 +38,7 @@ export default function Dashboard() {
         {loading ? (
           <div className="min-h-80 animate-pulse rounded-3xl bg-white shadow-lg" />
         ) : (
-          <EventsCard bookings={bookings} />
+          <EventsCard announcements={announcements} />
         )}
 
         <div className="space-y-8">
