@@ -19,6 +19,12 @@ import Profile from "./features/parishioner/pages/Profile";
 
 import ARTest from "./features/ar-navigation/ARTest";
 
+import StaffDashboard from "./features/staff/pages/Dashboard";
+import Announcements from "./features/staff/pages/Announcement";
+import MassIntentions from "./features/staff/pages/MassIntentions";
+import BookingManagement from "./features/staff/pages/BookingManagement";
+import Requests from "./features/staff/pages/Request";
+
 function App() {
   return (
     <BrowserRouter>
@@ -31,8 +37,6 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<SignUp />} />
         </Route>
-
-        <Route path="/staff/login" element={<StaffLogin />} />
 
         {/* Protected */}
         <Route element={<ProtectedRoute />}>
@@ -52,6 +56,13 @@ function App() {
 
           <Route path="/ar-navigation" element={<ARTest />} />
         </Route>
+
+        <Route path="/staff/login" element={<StaffLogin />} />
+        <Route path="/staff/dashboard" element={<StaffDashboard />} />
+        <Route path="/staff/announcements" element={<Announcements />} />
+        <Route path="/staff/mass-intentions" element={<MassIntentions />} />
+        <Route path="/staff/bookings" element={<BookingManagement />} />
+        <Route path="/staff/requests" element={<Requests />} />
       </Routes>
     </BrowserRouter>
   );

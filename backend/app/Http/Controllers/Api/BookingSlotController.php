@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\BookingSlot;
 use App\Models\Service;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class BookingSlotController extends Controller
@@ -13,7 +14,8 @@ class BookingSlotController extends Controller
     {
         $request->validate([
             'service' => ['required', 'string'],
-            'date' => ['required', 'date'],
+            'date' => ['nullable', 'required_without:month', 'date_format:Y-m-d'],
+            'month' => ['nullable', 'required_without:date', 'date_format:Y-m'],
         ]);
 
         $service = Service::where(
@@ -21,11 +23,55 @@ class BookingSlotController extends Controller
             $request->service
         )->firstOrFail();
 
-        $slots = BookingSlot::query()
+        $query = BookingSlot::query()
             ->where('service_id', $service->id)
-            ->whereDate('booking_date', $request->date)
             ->where('is_active', true)
-            ->withCount('bookings')
+            ->withCount([
+                'bookings as bookings_count' => fn ($query) => $query
+                    ->whereNotIn('status', ['cancelled', 'rejected']),
+            ]);
+
+        if ($request->filled('month')) {
+            $month = Carbon::createFromFormat('Y-m', $request->month);
+            $today = Carbon::today();
+            $monthEnd = $month->copy()->endOfMonth();
+
+            if ($monthEnd->lt($today)) {
+                return response()->json([]);
+            }
+
+            $rangeStart = $month->copy()->startOfMonth()->max($today);
+            $slots = $query
+                ->whereBetween('booking_date', [
+                    $rangeStart->toDateString(),
+                    $monthEnd->toDateString(),
+                ])
+                ->orderBy('booking_date')
+                ->orderBy('start_time')
+                ->get();
+
+            return response()->json(
+                $slots->groupBy(fn ($slot) => $slot->booking_date->toDateString())
+                    ->map(function ($dailySlots, $date) {
+                        $capacity = $dailySlots->sum('capacity');
+                        $booked = $dailySlots->sum('bookings_count');
+                        $remaining = max(0, $capacity - $booked);
+
+                        return [
+                            'date' => $date,
+                            'capacity' => $capacity,
+                            'booked' => $booked,
+                            'remaining' => $remaining,
+                            'status' => $remaining === 0
+                                ? 'full'
+                                : ($remaining / $capacity <= 0.25 ? 'limited' : 'available'),
+                        ];
+                    })->values()
+            );
+        }
+
+        $slots = $query
+            ->whereDate('booking_date', $request->date)
             ->orderBy('start_time')
             ->get()
             ->map(function ($slot) {

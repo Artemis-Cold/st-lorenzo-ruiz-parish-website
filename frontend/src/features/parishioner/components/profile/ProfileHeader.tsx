@@ -9,20 +9,29 @@ import {
 interface ProfileHeaderProps {
   fullName: string;
   phone: string;
-  email: string;
+  username: string;
   address: string;
   avatar?: string;
   onEdit?: () => void;
+  activeTab: "current" | "recent" | "documents";
+  onTabChange: (tab: "current" | "recent" | "documents") => void;
 }
 
 export default function ProfileHeader({
   fullName = "Juan Dela Cruz",
   phone = "0912 345 6789",
-  email = "juan@email.com",
+  username,
   address = "Dagatan, Taysan, Batangas",
   avatar,
   onEdit,
+  activeTab,
+  onTabChange,
 }: ProfileHeaderProps) {
+  const tabs = [
+    { id: "current" as const, label: "Current Bookings" },
+    { id: "recent" as const, label: "Recent Bookings" },
+    { id: "documents" as const, label: "Documents" },
+  ];
   return (
     <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
       {/* Red Header */}
@@ -60,7 +69,7 @@ export default function ProfileHeader({
 
               <div className="flex items-center gap-2">
                 <Mail size={18} />
-                <span>{email}</span>
+                <span>@{username}</span>
               </div>
 
               <div className="flex items-center gap-2">
@@ -83,17 +92,23 @@ export default function ProfileHeader({
 
       {/* Navigation */}
       <div className="grid grid-cols-3 border-t bg-white text-center">
-        <button className="border-r py-5 text-lg font-semibold transition hover:bg-gray-50">
-          Current Bookings
-        </button>
-
-        <button className="border-r py-5 text-lg font-semibold transition hover:bg-gray-50">
-          Recent Bookings
-        </button>
-
-        <button className="py-5 text-lg font-semibold transition hover:bg-gray-50">
-          Documents
-        </button>
+        {tabs.map((tab, index) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => onTabChange(tab.id)}
+            aria-pressed={activeTab === tab.id}
+            className={`py-5 text-sm font-semibold transition sm:text-lg ${
+              index < tabs.length - 1 ? "border-r" : ""
+            } ${
+              activeTab === tab.id
+                ? "bg-red-50 text-[#B22222] shadow-[inset_0_-3px_0_#B22222]"
+                : "hover:bg-gray-50"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
     </div>
   );

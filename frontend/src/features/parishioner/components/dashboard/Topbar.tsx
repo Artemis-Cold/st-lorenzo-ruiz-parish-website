@@ -1,4 +1,5 @@
-import { Bell, Menu } from "lucide-react";
+import { Menu, UserCircle2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface TopbarProps {
@@ -36,27 +37,27 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
 
       {/* Right */}
       <div className="flex items-center gap-3 md:gap-5">
-        {/* Notifications */}
-        <button className="relative rounded-full bg-gray-100 p-3 transition hover:bg-gray-200">
-          <Bell size={20} />
-
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-600" />
-        </button>
-
-        {/* User */}
-        <div className="flex items-center gap-3">
-          <img
-            src="https://ui-avatars.com/api/?name=Juan+Dela+Cruz"
-            alt="User"
-            className="h-10 w-10 rounded-full md:h-11 md:w-11"
-          />
+        <Link
+          to="/profile"
+          className="flex items-center gap-3 rounded-xl p-1.5 transition hover:bg-gray-100"
+          aria-label="Open profile"
+        >
+          {user.profile_photo_url ? (
+            <img
+              src={user.profile_photo_url}
+              alt={user.full_name}
+              className="h-10 w-10 rounded-full object-cover md:h-11 md:w-11"
+            />
+          ) : (
+            <UserCircle2 className="h-10 w-10 text-gray-400 md:h-11 md:w-11" />
+          )}
 
           <div className="hidden md:block">
             <p className="font-semibold">{user.full_name}</p>
 
             <p className="text-sm text-gray-500">Parishioner</p>
           </div>
-        </div>
+        </Link>
       </div>
     </header>
   );

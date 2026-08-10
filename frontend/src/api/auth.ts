@@ -45,3 +45,87 @@ export const completeProfile = async (
 
   return response.data;
 };
+
+export interface UpdateProfileData {
+  first_name: string;
+  middle_initial: string;
+  last_name: string;
+  suffix: string;
+  phone: string;
+  birth_date: string;
+  gender: "Male" | "Female";
+  house_no: string;
+  street: string;
+  barangay: string;
+  municipality: string;
+  province: string;
+  zip_code: string;
+}
+
+export const updateProfile = async (
+  data: UpdateProfileData,
+): Promise<{ message: string; user: User }> => {
+  const response = await api.patch<{ message: string; user: User }>(
+    "/profile",
+    data,
+  );
+
+  return response.data;
+};
+
+export interface ProfileBooking {
+  id: number;
+  booking_reference: string;
+  service: string;
+  package: string | null;
+  status: "pending" | "approved" | "rejected" | "cancelled" | "completed";
+  booking_date: string | null;
+  start_time: string | null;
+  end_time: string | null;
+  created_at: string;
+}
+
+export interface ProfileDocument {
+  id: number;
+  booking_reference: string;
+  document_type: string;
+  status: ProfileBooking["status"];
+  price: string;
+  requested_at: string;
+}
+
+export const getProfile = async (): Promise<{
+  user: User;
+  current_bookings: ProfileBooking[];
+  recent_bookings: ProfileBooking[];
+  documents: ProfileDocument[];
+}> => {
+  const response = await api.get<{
+    user: User;
+    current_bookings: ProfileBooking[];
+    recent_bookings: ProfileBooking[];
+    documents: ProfileDocument[];
+  }>("/profile");
+
+  return response.data;
+};
+
+export const updateProfilePhoto = async (
+  photo: File,
+): Promise<{ message: string; user: User }> => {
+  const formData = new FormData();
+  formData.append("profile_photo", photo);
+
+  const response = await api.post<{ message: string; user: User }>(
+    "/profile/photo",
+    formData,
+    {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "multipart/form-data",
+      },
+    },
+  );
+
+  return response.data;
+};

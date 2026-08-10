@@ -92,6 +92,6 @@ class Booking extends Model
 
     public function slot(): BelongsTo
     {
-        return $this->belongsTo(BookingSlot::class);
+        return $this->belongsTo(BookingSlot::class, 'booking_slot_id');
     }
 }

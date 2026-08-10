@@ -1,12 +1,13 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-import { calendarBookings } from "../../data/calendar";
 import type { BookingStatus, CalendarBooking } from "../../types/booking";
+import { getBookingAvailability } from "../../../../services/bookingSlotService";
 
 interface BookingCalendarProps {
   selectedDate: Date;
   onDateSelect: (date: Date) => void;
+  service?: string;
 }
 
 const statusColors: Record<BookingStatus, string> = {
@@ -18,6 +19,7 @@ const statusColors: Record<BookingStatus, string> = {
 export default function BookingCalendar({
   selectedDate,
   onDateSelect,
+  service,
 }: BookingCalendarProps) {
   const currentMonth = selectedDate.getMonth();
   const currentYear = selectedDate.getFullYear();
@@ -55,12 +57,41 @@ export default function BookingCalendar({
     calendar.push(week);
   }
 
+  const [availabilityResult, setAvailabilityResult] = useState<{
+    key: string;
+    days: CalendarBooking[];
+  }>({ key: "", days: [] });
+
+  const monthKey = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}`;
+  const requestKey = `${service ?? ""}:${monthKey}`;
+  const loading = !!service && availabilityResult.key !== requestKey;
+
+  useEffect(() => {
+    if (!service) return;
+
+    let active = true;
+
+    getBookingAvailability(service, monthKey)
+      .then((days) => {
+        if (active) setAvailabilityResult({ key: requestKey, days });
+      })
+      .catch(() => {
+        if (active) setAvailabilityResult({ key: requestKey, days: [] });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [service, monthKey, requestKey]);
+
   const bookings = useMemo<Record<string, CalendarBooking>>(
     () =>
-      Object.fromEntries(
-        calendarBookings.map((booking) => [booking.date, booking]),
-      ),
-    [],
+      availabilityResult.key === requestKey
+        ? Object.fromEntries(
+            availabilityResult.days.map((day) => [day.date, day]),
+          )
+        : {},
+    [availabilityResult, requestKey],
   );
 
   const changeMonth = (offset: number) => {
@@ -82,14 +113,21 @@ export default function BookingCalendar({
     return date < today;
   };
 
+  const today = new Date();
+  const isCurrentMonth =
+    currentMonth === today.getMonth() && currentYear === today.getFullYear();
+
   return (
     <div className="rounded-3xl bg-white p-6 shadow-lg">
       {/* Header */}
 
       <div className="mb-6 flex items-center justify-between">
         <button
+          type="button"
           onClick={() => changeMonth(-1)}
-          className="rounded-lg p-2 transition hover:bg-gray-100"
+          disabled={isCurrentMonth}
+          aria-label="Previous month"
+          className="rounded-lg p-2 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30"
         >
           <ChevronLeft />
         </button>
@@ -99,7 +137,9 @@ export default function BookingCalendar({
         </h2>
 
         <button
+          type="button"
           onClick={() => changeMonth(1)}
+          aria-label="Next month"
           className="rounded-lg p-2 transition hover:bg-gray-100"
         >
           <ChevronRight />
@@ -133,7 +173,8 @@ export default function BookingCalendar({
               const isToday = isSameDate(new Date(), cellDate);
 
               const disabled =
-                isPastDate(cellDate) || booking?.status === "full";
+                isPastDate(cellDate) ||
+                (!!service && (!booking || booking.status === "full"));
 
               return (
                 <button
@@ -181,20 +222,27 @@ export default function BookingCalendar({
       {/* Legend */}
 
       <div className="mt-8 flex flex-wrap justify-center gap-6 text-sm">
-        <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-green-500" />
-          <span>Available</span>
-        </div>
+        {service && loading && (
+          <span className="text-gray-500">Loading availability...</span>
+        )}
+        {service && (
+          <>
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-green-500" />
+              <span>Available</span>
+            </div>
 
-        <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-yellow-400" />
-          <span>Limited</span>
-        </div>
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-yellow-400" />
+              <span>Limited</span>
+            </div>
 
-        <div className="flex items-center gap-2">
-          <span className="h-3 w-3 rounded-full bg-[#B22222]" />
-          <span>Fully Booked</span>
-        </div>
+            <div className="flex items-center gap-2">
+              <span className="h-3 w-3 rounded-full bg-[#B22222]" />
+              <span>Fully Booked</span>
+            </div>
+          </>
+        )}
 
         <div className="flex items-center gap-2">
           <span className="h-3 w-3 rounded-full ring-2 ring-blue-500" />

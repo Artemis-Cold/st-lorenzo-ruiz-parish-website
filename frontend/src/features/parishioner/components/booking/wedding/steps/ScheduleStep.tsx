@@ -5,6 +5,7 @@ import type { Dispatch, SetStateAction } from "react";
 import type { WeddingBooking } from "../../../../types/wedding";
 import {
   getBookingSlots,
+  formatBookingDate,
   type BookingSlot,
 } from "../../../../../../services/bookingSlotService";
 
@@ -46,7 +47,7 @@ export default function ScheduleStep({
       try {
         setLoadingSlots(true);
 
-        const formattedDate = selectedDate.toISOString().split("T")[0];
+        const formattedDate = formatBookingDate(selectedDate);
 
         const slots = await getBookingSlots("wedding", formattedDate);
 
@@ -70,12 +71,18 @@ export default function ScheduleStep({
     if (match) {
       setSelectedSlot(match);
     }
-  }, [availableSlots]);
+  }, [
+    availableSlots,
+    booking.booking_slot_id,
+    selectedSlot,
+    setSelectedSlot,
+  ]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2">
         <BookingCalendar
+          service="wedding"
           selectedDate={selectedDate ?? new Date()}
           onDateSelect={handleDateSelect}
         />

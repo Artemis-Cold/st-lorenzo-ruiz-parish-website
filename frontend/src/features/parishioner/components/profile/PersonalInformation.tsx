@@ -5,7 +5,7 @@ import { BookingCard } from "../booking";
 interface PersonalInformationProps {
   fullName?: string;
   phone?: string;
-  email?: string;
+  username?: string;
   address?: string;
   onEdit?: () => void;
 }
@@ -13,7 +13,7 @@ interface PersonalInformationProps {
 export default function PersonalInformation({
   fullName = "Juan Dela Cruz",
   phone = "0912 345 6789",
-  email = "juan@email.com",
+  username,
   address = "Dagatan, Taysan, Batangas",
   onEdit,
 }: PersonalInformationProps) {
@@ -30,8 +30,8 @@ export default function PersonalInformation({
     },
     {
       icon: Mail,
-      label: "Email Address",
-      value: email,
+      label: "Username",
+      value: username,
     },
     {
       icon: MapPin,

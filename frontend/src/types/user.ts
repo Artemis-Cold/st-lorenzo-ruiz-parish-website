@@ -26,6 +26,7 @@ export interface User {
   gender: string | null;
 
   profile_photo: string | null;
+  profile_photo_url: string | null;
 
   role: "parishioner" | "staff" | "admin";
 

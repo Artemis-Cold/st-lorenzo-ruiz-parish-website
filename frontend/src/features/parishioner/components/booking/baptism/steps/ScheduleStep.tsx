@@ -3,7 +3,11 @@ import TimeSlotPanel from "../../baptism/summary/TimeSlotPanel";
 import type { Dispatch, SetStateAction } from "react";
 import type { BaptismBooking } from "../../../../types/baptism";
 import { useEffect, useState } from "react";
-import { getBookingSlots, type BookingSlot } from "../../../../../../services/bookingSlotService";
+import {
+  formatBookingDate,
+  getBookingSlots,
+  type BookingSlot,
+} from "../../../../../../services/bookingSlotService";
 
 interface ScheduleStepProps {
   booking: BaptismBooking;
@@ -43,7 +47,7 @@ export default function ScheduleStep({
       try {
         setLoadingSlots(true);
 
-        const formattedDate = selectedDate.toISOString().split("T")[0];
+        const formattedDate = formatBookingDate(selectedDate);
 
         const slots = await getBookingSlots("baptism", formattedDate);
 
@@ -67,12 +71,18 @@ export default function ScheduleStep({
     if (match) {
       setSelectedSlot(match);
     }
-  }, [availableSlots]);
+  }, [
+    availableSlots,
+    booking.booking_slot_id,
+    selectedSlot,
+    setSelectedSlot,
+  ]);
 
   return (
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2">
         <BookingCalendar
+          service="baptism"
           selectedDate={selectedDate ?? new Date()}
           onDateSelect={handleDateSelect}
         />

@@ -1,90 +1,66 @@
-import { CalendarDays, CreditCard, Upload } from "lucide-react";
+import { CalendarDays, Church } from "lucide-react";
 
 import { BookingCard } from "../booking";
+import type { ProfileBooking } from "@/api/auth";
 
-export default function CurrentBookings() {
+export default function CurrentBookings({
+  bookings,
+}: {
+  bookings: ProfileBooking[];
+}) {
   return (
-    <BookingCard title="Current Booking">
-      <div className="space-y-6 text-center">
-        {/* Service */}
-        <div>
-          <h2 className="text-3xl font-semibold tracking-widest">
-            WEDDING
-          </h2>
-
-          <div className="mt-2 flex items-center justify-center gap-2 text-gray-700">
-            <CalendarDays size={18} />
-
-            <span className="text-xl">
-              March 22, 2026 — 5:00 PM
-            </span>
-
-            <button className="text-xs italic text-[#B22222] hover:underline">
-              Reschedule
-            </button>
-          </div>
+    <BookingCard title="Current Bookings">
+      {bookings.length === 0 ? (
+        <div className="rounded-xl border border-dashed py-12 text-center text-gray-500">
+          <Church size={42} className="mx-auto mb-3 text-gray-300" />
+          You have no pending or approved bookings.
         </div>
-
-        {/* Booking Status */}
-        <div>
-          <h3 className="text-2xl font-semibold tracking-widest">
-            BOOKING STATUS
-          </h3>
-
-          <p className="mt-1 text-xl font-medium text-amber-600">
-            PENDING
-          </p>
-        </div>
-
-        {/* Actions */}
-        <div className="flex flex-wrap justify-center gap-4">
-          <button className="rounded-lg bg-[#B22222] px-5 py-2 text-sm font-medium text-white transition hover:bg-[#991B1B]">
-            <span className="flex items-center gap-2">
-              <Upload size={16} />
-              Upload Document
-            </span>
-          </button>
-
-          <button className="rounded-lg border border-[#B22222] px-5 py-2 text-sm font-medium text-[#B22222] transition hover:bg-red-50">
-            Cancel Booking
-          </button>
-        </div>
-
-        <div className="space-y-4 rounded-xl border bg-gray-50 p-5">
-          <div>
-            <h3 className="flex items-center justify-center gap-2 text-2xl font-semibold tracking-widest">
-              <CreditCard size={22} />
-              REQUEST STATUS
-            </h3>
-
-            <p className="mt-2 text-lg font-medium text-red-600">
-              UNPAID
-            </p>
-          </div>
-
-          <div className="mx-auto max-w-sm space-y-2 text-left">
-            <div className="flex justify-between">
-              <span>Certificate / Booking Fees</span>
-
-              <span>₱1000</span>
-            </div>
-
-            <div className="border-t pt-2 text-lg font-semibold">
-              <div className="flex justify-between">
-                <span>Total</span>
-
-                <span className="text-[#B22222]">
-                  ₱1000
+      ) : (
+        <div className="space-y-4">
+          {bookings.map((booking) => (
+            <div
+              key={booking.id}
+              className="rounded-xl border border-gray-200 p-5"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-xl font-semibold">{booking.service}</h3>
+                  <p className="text-sm text-gray-500">
+                    {booking.booking_reference}
+                  </p>
+                  {booking.package && (
+                    <p className="mt-1 text-sm">{booking.package}</p>
+                  )}
+                </div>
+                <span
+                  className={
+                    "rounded-full px-3 py-1 text-xs font-semibold uppercase " +
+                    (booking.status === "approved"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-amber-100 text-amber-700")
+                  }
+                >
+                  {booking.status}
                 </span>
               </div>
-            </div>
-          </div>
 
-          <button className="rounded-lg bg-[#B22222] px-8 py-2 text-white transition hover:bg-[#991B1B]">
-            Pay Now
-          </button>
+              <div className="mt-4 flex items-center gap-2 border-t pt-4 text-sm text-gray-600">
+                <CalendarDays size={16} />
+                {booking.booking_date
+                  ? new Date(
+                      booking.booking_date + "T00:00:00",
+                    ).toLocaleDateString("en-US", {
+                      month: "long",
+                      day: "numeric",
+                      year: "numeric",
+                    })
+                  : "No scheduled date"}
+                {booking.start_time && " • " + booking.start_time}
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
+      )}
     </BookingCard>
   );
 }

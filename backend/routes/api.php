@@ -2,11 +2,11 @@
 
 use App\Http\Controllers\Api\BaptismBookingController;
 use App\Http\Controllers\Api\BookingSlotController;
-use App\Http\Controllers\Api\ServicePackageController;
-use App\Http\Controllers\Api\WeddingBookingController;
+use App\Http\Controllers\Api\DocumentRequestBookingController;
 use App\Http\Controllers\Api\FuneralBookingController;
 use App\Http\Controllers\Api\MassIntentionBookingController;
-use App\Http\Controllers\Api\DocumentRequestBookingController;
+use App\Http\Controllers\Api\ServicePackageController;
+use App\Http\Controllers\Api\WeddingBookingController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\ProfileController;
@@ -57,6 +57,9 @@ Route::middleware('auth:sanctum')->group(function () {
     );
 
     Route::patch('/profile/complete', [ProfileController::class, 'complete']);
+    Route::patch('/profile', [ProfileController::class, 'update']);
+    Route::get('/profile', [ProfileController::class, 'show']);
+    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto']);
 
 });
 
