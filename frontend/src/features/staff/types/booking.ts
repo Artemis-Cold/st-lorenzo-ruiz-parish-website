@@ -58,6 +58,11 @@ export interface Booking {
         fatherName: string;
         motherName: string;
         spouseName: string;
+        characteristics: string | null;
+        churchLife: {
+          attendsMass: "regular" | "sometimes" | "never";
+          confesses: "regular" | "sometimes" | "never";
+        };
         sacraments: Record<string, boolean>;
         children: string[];
       };

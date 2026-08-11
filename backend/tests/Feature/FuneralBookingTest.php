@@ -59,5 +59,17 @@ class FuneralBookingTest extends TestCase
             'first_name' => 'Juan', 'spouse_first_name' => null, 'spouse_last_name' => null,
         ]);
         $this->assertDatabaseCount('booking_documents', 2);
+
+        Sanctum::actingAs(User::factory()->create(['role' => 'staff']));
+        $this->getJson('/api/staff/bookings')
+            ->assertOk()
+            ->assertJsonPath(
+                'data.0.details.serviceData.deceased.characteristics',
+                'A devoted parishioner.'
+            )
+            ->assertJsonPath(
+                'data.0.details.serviceData.deceased.churchLife.attendsMass',
+                'regular'
+            );
     }
 }

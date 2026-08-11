@@ -111,6 +111,14 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus }:
               <Detail label="Relationship" value={service.deceased.informantRelationship} /><Detail label="Informant contact" value={service.deceased.informantContactNumber} />
               <Detail label="Children" value={service.deceased.children.join(", ")} />
               <Detail label="Sacraments" value={Object.entries(service.deceased.sacraments).filter(([, received]) => received).map(([name]) => formatLabel(name)).join(", ")} />
+              <Detail label="Attends Mass" value={formatLabel(service.deceased.churchLife.attendsMass)} />
+              <Detail label="Confesses" value={formatLabel(service.deceased.churchLife.confesses)} />
+            </div>
+            <div className="mt-4 rounded-xl bg-[#FAF8F5] p-4">
+              <p className="text-sm text-gray-500">Characteristics</p>
+              <p className="mt-1 whitespace-pre-wrap text-sm font-medium leading-6 text-[#292524]">
+                {service.deceased.characteristics || "—"}
+              </p>
             </div>
           </section>
         )}

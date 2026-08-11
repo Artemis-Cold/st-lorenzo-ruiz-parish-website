@@ -1000,7 +1000,7 @@ ${
             <p className="mb-6 text-sm text-gray-500">
               {readOnly
                 ? "Review the uploaded documents before submitting your booking request."
-                : "Upload clear scanned copies or photos of the required documents. Accepted formats are PDF, JPG, JPEG, and PNG (maximum 2 MB per file)."}
+                : "Upload clear scanned copies or photos of the required documents. Accepted formats are PDF, JPG, JPEG, and PNG (maximum 5 MB per file)."}
             </p>
 
             <div className="grid grid-cols-12 gap-5">

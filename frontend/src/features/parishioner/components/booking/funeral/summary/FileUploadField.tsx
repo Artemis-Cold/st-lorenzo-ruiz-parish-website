@@ -20,7 +20,7 @@ export default function FileUploadField({
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [sizeError, setSizeError] = useState<string | null>(null);
-  const maxSize = 2 * 1024 * 1024;
+  const maxSize = 5 * 1024 * 1024;
 
   const openPicker = () => {
     if (readOnly) return;
@@ -44,7 +44,7 @@ export default function FileUploadField({
         onChange={(e) => {
           const selected = e.target.files?.[0] ?? null;
           if (selected && selected.size > maxSize) {
-            setSizeError("The file must not exceed 2 MB.");
+            setSizeError("The file must not exceed 5 MB.");
             onChange(null);
             e.target.value = "";
             return;
@@ -94,7 +94,7 @@ export default function FileUploadField({
 
           <p className="mt-1 text-sm text-gray-500">Click to browse</p>
 
-          <p className="mt-2 text-xs text-gray-400">PDF, JPG, PNG (Max 2 MB)</p>
+          <p className="mt-2 text-xs text-gray-400">PDF, JPG, PNG (Max 5 MB)</p>
         </button>
       ) : (
         <div className="rounded-2xl border border-green-300 bg-green-50 p-5">

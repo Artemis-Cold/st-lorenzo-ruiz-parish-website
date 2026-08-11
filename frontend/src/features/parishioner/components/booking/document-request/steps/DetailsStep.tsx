@@ -124,6 +124,20 @@ export default function DetailsStep({
 
   return (
     <div className="space-y-6">
+      {booking.requests.length === 0 && (
+        <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+          <p className="font-semibold text-red-700">No documents selected</p>
+          <p className="mt-1 text-sm text-red-600">
+            Go back to Selection and choose at least one document before
+            continuing to payment.
+          </p>
+          {errors?.requests?.[0] && (
+            <p className="mt-2 text-sm font-medium text-red-700">
+              {errors.requests[0]}
+            </p>
+          )}
+        </div>
+      )}
       {booking.requests.map((request, index) => (
         <BookingCard
           key={request.id}

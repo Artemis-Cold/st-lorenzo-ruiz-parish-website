@@ -169,6 +169,11 @@ class StaffBookingController extends Controller
                 'fatherName' => $this->personName($person->father_first_name, $person->father_middle_initial, $person->father_last_name),
                 'motherName' => $this->personName($person->mother_first_name, $person->mother_middle_initial, $person->mother_last_name),
                 'spouseName' => $this->personName($person->spouse_first_name, $person->spouse_middle_initial, $person->spouse_last_name),
+                'characteristics' => $person->characteristics,
+                'churchLife' => [
+                    'attendsMass' => $person->attends_mass,
+                    'confesses' => $person->confesses,
+                ],
                 'sacraments' => [
                     'baptized' => $person->baptized,
                     'confirmed' => $person->confirmed,

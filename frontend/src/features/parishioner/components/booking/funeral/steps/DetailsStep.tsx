@@ -1032,7 +1032,7 @@ ${
 
             <p className="mb-6 text-sm text-gray-500">
               Upload clear scanned copies or photos of the required documents.
-              Accepted formats are PDF, JPG, JPEG, and PNG (maximum 2 MB per
+              Accepted formats are PDF, JPG, JPEG, and PNG (maximum 5 MB per
               file).
             </p>
 

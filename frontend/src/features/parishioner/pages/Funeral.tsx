@@ -215,9 +215,9 @@ export default function Funeral() {
       ];
     }
     for (const document of booking.documents) {
-      if (document.file.size > 2 * 1024 * 1024) {
+      if (document.file.size > 5 * 1024 * 1024) {
         errors[`documents.${document.document_type}`] = [
-          `${document.document_type === "death_certificate" ? "Death Certificate" : "Biography"} must not exceed 2 MB.`,
+          `${document.document_type === "death_certificate" ? "Death Certificate" : "Biography"} must not exceed 5 MB.`,
         ];
       }
     }

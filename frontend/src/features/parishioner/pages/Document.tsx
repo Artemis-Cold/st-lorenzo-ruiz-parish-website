@@ -161,7 +161,7 @@ export default function Document() {
 
   const validateStep = (step: number): string | null => {
     let errors: Record<string, string[]> = {};
-    if (step === 1 && booking.requests.length === 0) {
+    if (booking.requests.length === 0) {
       errors.requests = ["Select at least one document."];
     } else if (step === 2) {
       errors = validateDetails();

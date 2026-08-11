@@ -51,7 +51,7 @@ class StoreFuneralBookingRequest extends FormRequest
                 'required',
                 'file',
                 'mimes:jpg,jpeg,png,pdf',
-                'max:2048',
+                'max:5120',
             ],
         ];
 
