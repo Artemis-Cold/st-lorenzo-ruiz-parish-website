@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Profile\CompleteProfileRequest;
 use App\Http\Requests\Profile\UpdateProfilePhotoRequest;
 use App\Http\Requests\Profile\UpdateProfileRequest;
+use App\Http\Requests\Profile\UpdatePasswordRequest;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -49,6 +50,21 @@ class ProfileController extends Controller
         return response()->json([
             'message' => 'Profile updated successfully.',
             'user' => new UserResource($user->fresh()),
+        ]);
+    }
+
+    public function updatePassword(UpdatePasswordRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        $user->update(['password' => $request->validated('password')]);
+
+        $currentTokenId = $user->currentAccessToken()?->id;
+        if ($currentTokenId) {
+            $user->tokens()->whereKeyNot($currentTokenId)->delete();
+        }
+
+        return response()->json([
+            'message' => 'Password updated successfully.',
         ]);
     }
 

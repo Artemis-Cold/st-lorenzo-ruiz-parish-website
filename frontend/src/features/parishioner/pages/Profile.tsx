@@ -9,6 +9,7 @@ import PersonalInformation from "../components/profile/PersonalInformation";
 import ProfileEditForm from "../components/profile/ProfileEditForm";
 import HelpCard from "../components/profile/HelpCard";
 import BookingDetailModal from "../components/profile/BookingDetailModal";
+import PasswordSettingsCard from "../components/profile/PasswordSettingsCard";
 import {
   getProfile,
   type ProfileBooking,
@@ -142,6 +143,7 @@ export default function Profile() {
             address={address || "Address not provided"}
             onEdit={() => setEditing(true)}
           />
+          <PasswordSettingsCard />
           <HelpCard />
         </div>
       </div>

@@ -100,6 +100,19 @@ export const updateProfile = async (
   return response.data;
 };
 
+export const updateParishionerPassword = async (data: {
+  current_password: string;
+  password: string;
+  password_confirmation: string;
+}): Promise<{ message: string }> => {
+  const response = await api.patch<{ message: string }>(
+    "/profile/password",
+    data,
+  );
+
+  return response.data;
+};
+
 export interface ProfileBooking {
   id: number;
   booking_reference: string;

@@ -111,7 +111,9 @@ export default function SignUp() {
             placeholder="Enter Username"
             icon={UserIcon}
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e) =>
+              setUsername(e.target.value.toLowerCase().replace(/\s+/g, ""))
+            }
             disabled={submitting}
           />
           {fieldErrors.username && (

@@ -4,9 +4,18 @@ namespace App\Http\Requests\Auth;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Str;
 
 class RegisterRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'username' => Str::lower(trim((string) $this->input('username'))),
+            'phone' => preg_replace('/\D+/', '', (string) $this->input('phone')),
+        ]);
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
