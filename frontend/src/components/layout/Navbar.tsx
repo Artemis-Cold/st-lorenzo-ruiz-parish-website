@@ -1,6 +1,6 @@
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, type MouseEvent } from "react";
 import logo from "../../assets/images/parish-logo.png";
 
 const navItems = [
@@ -14,11 +14,29 @@ const navItems = [
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const scrollToSection = (
+    event: MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) => {
+    event.preventDefault();
+    const section = document.querySelector(href);
+
+    if (!section) return;
+
+    setMobileOpen(false);
+    section.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.history.replaceState(null, "", href);
+  };
+
   return (
     <header className="fixed top-0 left-0 z-50 w-full border-b border-[#981B1B] bg-[#B22222]/95 backdrop-blur-xl shadow-lg">
       <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 lg:px-6">
         {/* Logo */}
-        <a href="#hero" className="flex min-w-0 items-center gap-3">
+        <a
+          href="#home"
+          onClick={(event) => scrollToSection(event, "#home")}
+          className="flex min-w-0 items-center gap-3"
+        >
           <img
             src={logo}
             alt="St. Lorenzo Ruiz Parish Logo"
@@ -48,6 +66,7 @@ export default function Navbar() {
             <a
               key={item.label}
               href={item.href}
+              onClick={(event) => scrollToSection(event, item.href)}
               className="font-medium text-white transition duration-200 hover:text-[#D4AF37]"
             >
               {item.label}
@@ -90,7 +109,7 @@ export default function Navbar() {
               <a
                 key={item.label}
                 href={item.href}
-                onClick={() => setMobileOpen(false)}
+                onClick={(event) => scrollToSection(event, item.href)}
                 className="px-6 py-4 font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#B22222]"
               >
                 {item.label}

@@ -87,8 +87,8 @@ export default function Schedule() {
   }
 
   return (
-    <section id="schedule" className="bg-[#F8F9FA] py-24">
-      <div className="mx-auto max-w-7xl px-6">
+    <section id="schedule" className="bg-[#F8F9FA] py-14 md:py-16 xl:py-20">
+      <div className="mx-auto max-w-6xl px-5 sm:px-6">
         {/* Heading */}
 
         <div className="mx-auto max-w-3xl text-center">
@@ -110,24 +110,24 @@ export default function Schedule() {
 
         {/* Calendar */}
 
-        <div className="mx-auto mt-16 max-w-5xl rounded-3xl bg-white p-8 shadow-xl">
+        <div className="mx-auto mt-8 max-w-4xl rounded-3xl bg-white p-4 shadow-lg sm:p-5 md:p-6">
           {/* Header */}
 
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-5 flex items-center justify-between">
             <button
               onClick={previousMonth}
-              className="rounded-xl border border-gray-200 p-3 transition hover:bg-gray-100"
+              className="rounded-xl border border-gray-200 p-2 transition hover:bg-gray-100"
             >
               <ChevronLeft />
             </button>
 
-            <h3 className="font-serif text-3xl font-bold">
+            <h3 className="font-serif text-xl font-bold sm:text-2xl">
               {monthName} {year}
             </h3>
 
             <button
               onClick={nextMonth}
-              className="rounded-xl border border-gray-200 p-3 transition hover:bg-gray-100"
+              className="rounded-xl border border-gray-200 p-2 transition hover:bg-gray-100"
             >
               <ChevronRight />
             </button>
@@ -135,7 +135,7 @@ export default function Schedule() {
 
           {/* Week Days */}
 
-          <div className="mb-4 grid grid-cols-7 text-center font-semibold text-gray-500">
+          <div className="mb-2 grid grid-cols-7 text-center text-xs font-semibold text-gray-500 sm:text-sm">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
               <span key={day}>{day}</span>
             ))}
@@ -143,9 +143,9 @@ export default function Schedule() {
 
           {/* Calendar */}
 
-          <div className="grid gap-3">
+          <div className="grid gap-1.5 sm:gap-2">
             {calendar.map((week, weekIndex) => (
-              <div key={weekIndex} className="grid grid-cols-7 gap-3">
+              <div key={weekIndex} className="grid grid-cols-7 gap-1.5 sm:gap-2">
                 {week.map((day, index) => {
                   if (day === null) {
                     return <div key={index} />;
@@ -163,20 +163,20 @@ export default function Schedule() {
                   return (
                     <button
                       key={index}
-                      className={`group relative aspect-square rounded-2xl border bg-white transition-all duration-300 hover:-translate-y-1 hover:border-[#B22222] hover:shadow-lg ${
+                      className={`group relative h-11 rounded-xl border bg-white transition-all duration-300 hover:border-[#B22222] hover:shadow-md sm:h-12 md:h-14 ${
                         isToday
                           ? "border-[#B22222] ring-2 ring-[#B22222]/20"
                           : "border-gray-200"
                       }`}
                     >
-                      <span className="text-lg font-semibold text-gray-800">
+                      <span className="text-sm font-semibold text-gray-800 sm:text-base">
                         {day}
                       </span>
 
                       {booking && (
                         <>
                           <span
-                            className={`absolute bottom-3 left-1/2 h-3 w-3 -translate-x-1/2 rounded-full ${colors[booking.status]}`}
+                            className={`absolute bottom-1.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full sm:h-2 sm:w-2 ${colors[booking.status]}`}
                           />
 
                           <span className="absolute top-2 right-2 text-[10px] text-gray-400 opacity-0 transition-opacity group-hover:opacity-100">
@@ -193,27 +193,27 @@ export default function Schedule() {
 
           {/* Legend */}
 
-          <div className="mt-10 flex flex-wrap justify-center gap-8">
+          <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs sm:text-sm">
             <div className="flex items-center gap-2">
-              <span className="h-4 w-4 rounded-full bg-green-500" />
+              <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
               <span>Available</span>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="h-4 w-4 rounded-full bg-yellow-400" />
+              <span className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
               <span>Limited Slots</span>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="h-4 w-4 rounded-full bg-[#B22222]" />
+              <span className="h-2.5 w-2.5 rounded-full bg-[#B22222]" />
               <span>Fully Booked</span>
             </div>
           </div>
 
           {/* CTA */}
 
-          <div className="mt-12 text-center">
-            <Link to="/login" className="inline-flex rounded-xl bg-[#B22222] px-8 py-4 font-semibold text-white shadow-lg transition hover:bg-[#981B1B]">
+          <div className="mt-7 text-center">
+            <Link to="/login" className="inline-flex rounded-xl bg-[#B22222] px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#981B1B]">
               Book a Parish Service
             </Link>
           </div>

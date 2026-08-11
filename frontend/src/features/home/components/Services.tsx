@@ -5,7 +5,9 @@ import {
   ScrollText,
   FileText,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import ServiceRequirementsModal from "./ServiceRequirementsModal";
 
 const services = [
   {
@@ -15,6 +17,12 @@ const services = [
       "Schedule baptism appointments online, submit documentary requirements, and receive updates about seminar schedules and appointment status.",
     color: "bg-sky-100 text-sky-600",
     path: "/services/baptism",
+    requirements: [
+      "Birth Certificate of the child to be baptized",
+      "Baptism Permit when outside the parish jurisdiction",
+      "Certificate of No Record of Baptism for adult baptism (7 years old and above)",
+      "Godparents' Marriage Contract if married in church, or Confirmation Certificate if unmarried in church",
+    ],
   },
   {
     icon: HeartHandshake,
@@ -23,6 +31,16 @@ const services = [
       "Reserve wedding dates, upload requirements, and receive notifications for interviews, seminars, and document verification.",
     color: "bg-rose-100 text-rose-600",
     path: "/services/wedding",
+    requirements: [
+      "Marriage License from the City Hall Civil Registrar",
+      "Certificate of No Marriage (CENOMAR)",
+      "Baptismal Certificate for marriage purposes",
+      "Confirmation Certificate for marriage purposes",
+      "Interview / Canonical Investigation and Four Pillars Pre-Cana Seminar when baptism or confirmation is still required",
+      "Permission of Parish and Publication of Banns when coming from another parish",
+      "Three copies of a 3R portrait photo showing the bride and groom together",
+      "Principal sponsors' Marriage Contract or Confirmation Certificate",
+    ],
   },
   {
     icon: Church,
@@ -31,6 +49,10 @@ const services = [
       "Coordinate funeral masses and burial services while communicating efficiently with the parish office.",
     color: "bg-violet-100 text-violet-600",
     path: "/services/funeral",
+    requirements: [
+      "Death Certificate",
+      "Written Memorial Biography honoring the deceased",
+    ],
   },
   {
     icon: ScrollText,
@@ -39,6 +61,10 @@ const services = [
       "Offer Mass intentions for thanksgiving, healing, birthdays, anniversaries, and prayers for departed loved ones.",
     color: "bg-amber-100 text-amber-600",
     path: "/services/mass-intention",
+    requirements: [
+      "GCash payment reference number",
+      "Clear photo or PDF of the GCash payment receipt",
+    ],
   },
   {
     icon: FileText,
@@ -47,10 +73,17 @@ const services = [
       "Request baptismal, confirmation, marriage, and other parish certificates while tracking your request status online.",
     color: "bg-emerald-100 text-emerald-600",
     path: "/services/document-request",
+    requirements: [
+      "GCash payment reference number",
+      "Clear photo or PDF of the GCash payment receipt",
+    ],
   },
 ];
 
 export default function Services() {
+  const { isAuthenticated } = useAuth();
+  const [selectedService, setSelectedService] = useState<(typeof services)[number] | null>(null);
+
   return (
     <section id="services" className="bg-[#F9FAFB] py-24">
       <div className="mx-auto max-w-7xl px-6">
@@ -97,12 +130,19 @@ export default function Services() {
                   {service.description}
                 </p>
 
-                <Link to="/login" state={{ redirectTo: service.path }} className="mt-8 inline-flex font-semibold text-[#B22222] transition-all group-hover:translate-x-2">Book this service →</Link>
+                <button type="button" onClick={() => setSelectedService(service)} className="mt-8 inline-flex font-semibold text-[#B22222] transition-all group-hover:translate-x-2">View requirements →</button>
               </div>
             );
           })}
         </div>
       </div>
+      {selectedService && (
+        <ServiceRequirementsModal
+          service={selectedService}
+          authenticated={isAuthenticated}
+          onClose={() => setSelectedService(null)}
+        />
+      )}
     </section>
   );
 }

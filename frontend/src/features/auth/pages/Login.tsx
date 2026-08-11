@@ -32,7 +32,11 @@ export default function Login() {
     try {
       await login({ username, password });
 
-      navigate("/dashboard");
+      const redirectTo =
+        typeof location.state?.redirectTo === "string"
+          ? location.state.redirectTo
+          : "/dashboard";
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       if (err instanceof AxiosError) {
         const status = err.response?.status;
