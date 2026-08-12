@@ -5,15 +5,15 @@ import church from "../../../assets/images/church.png";
 
 export default function About() {
   return (
-    <section id="about" className="bg-white py-24">
-      <div className="mx-auto max-w-7xl px-6">
+    <section id="about" className="bg-white py-14 md:py-16">
+      <div className="mx-auto max-w-6xl px-6">
         {/* Heading */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="mb-16 text-center"
+          className="mb-9 text-center"
         >
           <span className="font-semibold uppercase tracking-[0.3em] text-[#B22222]">
             About the Parish
@@ -23,11 +23,11 @@ export default function About() {
             St. Lorenzo Ruiz Parish
           </h2>
 
-          <div className="mx-auto mt-5 h-1 w-24 rounded-full bg-[#D4AF37]" />
+          <div className="mx-auto mt-4 h-1 w-24 rounded-full bg-[#D4AF37]" />
         </motion.div>
 
         {/* Content */}
-        <div className="grid items-center gap-16 lg:grid-cols-2">
+        <div className="grid items-center gap-9 lg:grid-cols-2 lg:gap-12">
           {/* Church Image */}
           <motion.div
             initial={{ opacity: 0, x: -40 }}
@@ -38,7 +38,7 @@ export default function About() {
             <img
               src={church}
               alt="St. Lorenzo Ruiz Parish"
-              className="rounded-3xl shadow-2xl"
+              className="h-72 w-full rounded-3xl object-cover shadow-xl sm:h-80 lg:h-[350px]"
             />
           </motion.div>
 
@@ -49,11 +49,11 @@ export default function About() {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <h3 className="font-serif text-3xl font-bold text-[#B22222]">
+            <h3 className="font-serif text-2xl font-bold text-[#B22222] lg:text-3xl">
               A Place of Faith, Prayer, and Community
             </h3>
 
-            <p className="mt-6 leading-8 text-gray-600">
+            <p className="mt-4 text-sm leading-6 text-gray-600 lg:text-base lg:leading-7">
               St. Lorenzo Ruiz Parish serves as a spiritual home for the
               faithful of Dagatan, Taysan, Batangas. Guided by the teachings of
               Christ and inspired by the life of St. Lorenzo Ruiz, the parish
@@ -61,17 +61,17 @@ export default function About() {
               service.
             </p>
 
-            <p className="mt-5 leading-8 text-gray-600">
+            <p className="mt-3 text-sm leading-6 text-gray-600 lg:text-base lg:leading-7">
               The parish provides sacramental celebrations, spiritual formation,
               and pastoral programs that strengthen the relationship between God
               and His people while promoting unity among the community.
             </p>
 
             {/* Information Cards */}
-            <div className="mt-10 grid gap-5 sm:grid-cols-2">
-              <div className="rounded-2xl bg-[#FAF7F2] p-5">
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[#B22222] text-white">
-                  <MapPin size={22} />
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="rounded-2xl bg-[#FAF7F2] p-4">
+                <div className="mb-2.5 flex h-10 w-10 items-center justify-center rounded-xl bg-[#B22222] text-white">
+                  <MapPin size={19} />
                 </div>
 
                 <h4 className="font-semibold text-[#222]">Location</h4>
@@ -81,9 +81,9 @@ export default function About() {
                 </p>
               </div>
 
-              <div className="rounded-2xl bg-[#FAF7F2] p-5">
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-[#D4AF37] text-white">
-                  <CalendarDays size={22} />
+              <div className="rounded-2xl bg-[#FAF7F2] p-4">
+                <div className="mb-2.5 flex h-10 w-10 items-center justify-center rounded-xl bg-[#D4AF37] text-white">
+                  <CalendarDays size={19} />
                 </div>
 
                 <h4 className="font-semibold text-[#222]">Patron Saint</h4>

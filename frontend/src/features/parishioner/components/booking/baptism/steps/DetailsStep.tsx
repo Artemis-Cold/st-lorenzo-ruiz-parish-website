@@ -288,28 +288,7 @@ ${
                 <FieldError message={getError("baptizand.address")} />
               </div>
 
-              <div className="col-span-12 md:col-span-3">
-                <label className="mb-2 block text-sm font-medium">
-                  Age <span className="text-red-600">*</span>
-                </label>
-
-                <input
-                  type="number"
-                  value={booking.baptizand.age ?? ""}
-                  onChange={(e) =>
-                    updateBaptizand(
-                      "age",
-                      e.target.value === "" ? null : Number(e.target.value),
-                    )
-                  }
-                  placeholder="00"
-                  readOnly={readOnly}
-                  className={inputClass(!!getError("baptizand.age"))}
-                />
-                <FieldError message={getError("baptizand.age")} />
-              </div>
-
-              <div className="col-span-12 md:col-span-4">
+              <div className="col-span-12 md:col-span-5">
                 <label className="mb-2 block text-sm font-medium">
                   Birthday <span className="text-red-600">*</span>
                 </label>
@@ -333,7 +312,7 @@ ${
                 <FieldError message={getError("baptizand.birth_date")} />
               </div>
 
-              <div className="col-span-12 md:col-span-5">
+              <div className="col-span-12 md:col-span-7">
                 <label className="mb-2 block text-sm font-medium">
                   Place of Birth<span className="text-red-600">*</span>
                 </label>

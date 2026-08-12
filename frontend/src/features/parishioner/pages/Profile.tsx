@@ -7,9 +7,9 @@ import RecentBookings from "../components/profile/RecentBookings";
 import Documents from "../components/profile/Documents";
 import PersonalInformation from "../components/profile/PersonalInformation";
 import ProfileEditForm from "../components/profile/ProfileEditForm";
-import HelpCard from "../components/profile/HelpCard";
 import BookingDetailModal from "../components/profile/BookingDetailModal";
 import PasswordSettingsCard from "../components/profile/PasswordSettingsCard";
+import ProfilePhotoModal from "../components/profile/ProfilePhotoModal";
 import {
   getProfile,
   type ProfileBooking,
@@ -28,6 +28,9 @@ export default function Profile() {
     "current" | "recent" | "documents"
   >("current");
   const [editing, setEditing] = useState(false);
+  const [editingPhoto, setEditingPhoto] = useState(false);
+  const [viewingInformation, setViewingInformation] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -114,38 +117,54 @@ export default function Profile() {
         address={address || "Address not provided"}
         avatar={user.profile_photo_url ?? undefined}
         onEdit={() => setEditing(true)}
+        onChangePhoto={() => setEditingPhoto(true)}
+        onViewInformation={() => setViewingInformation(true)}
+        onChangePassword={() => setChangingPassword(true)}
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
 
       {editing && (
-        <div className="mt-8">
-          <ProfileEditForm
-            user={user}
-            onSaved={saved}
-            onCancel={() => setEditing(false)}
-          />
-        </div>
+        <ProfileEditForm
+          user={user}
+          onSaved={saved}
+          onCancel={() => setEditing(false)}
+        />
       )}
 
-      <div className="mt-8 grid gap-8 xl:grid-cols-[2fr_1fr]">
+      {editingPhoto && (
+        <ProfilePhotoModal
+          currentPhoto={user.profile_photo_url ?? undefined}
+          onSaved={async () => {
+            await Promise.all([loadProfile(), refreshUser()]);
+          }}
+          onClose={() => setEditingPhoto(false)}
+        />
+      )}
+
+      {viewingInformation && (
+        <PersonalInformation
+          user={user}
+          address={address || "Address not provided"}
+          onClose={() => setViewingInformation(false)}
+          onEdit={() => {
+            setViewingInformation(false);
+            setEditing(true);
+          }}
+        />
+      )}
+
+      {changingPassword && (
+        <PasswordSettingsCard onClose={() => setChangingPassword(false)} />
+      )}
+
+      <div className="mt-8">
         {activeTab === "current" && <CurrentBookings bookings={bookings} onView={setSelectedBookingId} />}
         {activeTab === "recent" && (
           <RecentBookings bookings={recentBookings} onView={setSelectedBookingId} />
         )}
         {activeTab === "documents" && <Documents documents={documents} onView={setSelectedBookingId} />}
 
-        <div className="space-y-8">
-          <PersonalInformation
-            fullName={user.full_name}
-            phone={user.phone}
-            username={user.username}
-            address={address || "Address not provided"}
-            onEdit={() => setEditing(true)}
-          />
-          <PasswordSettingsCard />
-          <HelpCard />
-        </div>
       </div>
       <BookingDetailModal bookingId={selectedBookingId} onClose={() => setSelectedBookingId(null)} />
     </DashboardLayout>

@@ -1,8 +1,11 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-import type { BookingStatus, CalendarBooking } from "../../types/booking";
-import { getBookingAvailability } from "../../../../services/bookingSlotService";
+import type { BookingStatus } from "../../types/booking";
+import {
+  getBookingAvailability,
+  type BookingAvailability,
+} from "../../../../services/bookingSlotService";
 
 interface BookingCalendarProps {
   selectedDate: Date;
@@ -59,7 +62,7 @@ export default function BookingCalendar({
 
   const [availabilityResult, setAvailabilityResult] = useState<{
     key: string;
-    days: CalendarBooking[];
+    days: BookingAvailability[];
   }>({ key: "", days: [] });
 
   const monthKey = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}`;
@@ -84,7 +87,7 @@ export default function BookingCalendar({
     };
   }, [service, monthKey, requestKey]);
 
-  const bookings = useMemo<Record<string, CalendarBooking>>(
+  const bookings = useMemo<Record<string, BookingAvailability>>(
     () =>
       availabilityResult.key === requestKey
         ? Object.fromEntries(
@@ -118,10 +121,10 @@ export default function BookingCalendar({
     currentMonth === today.getMonth() && currentYear === today.getFullYear();
 
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-lg">
+    <div className="rounded-3xl bg-white p-4 shadow-lg sm:p-5">
       {/* Header */}
 
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-4 flex items-center justify-between">
         <button
           type="button"
           onClick={() => changeMonth(-1)}
@@ -132,7 +135,7 @@ export default function BookingCalendar({
           <ChevronLeft />
         </button>
 
-        <h2 className="font-serif text-2xl font-bold text-[#B22222]">
+        <h2 className="font-serif text-xl font-bold text-[#B22222] sm:text-2xl">
           {monthName} {currentYear}
         </h2>
 
@@ -148,7 +151,7 @@ export default function BookingCalendar({
 
       {/* Weekdays */}
 
-      <div className="mb-3 grid grid-cols-7 text-center text-sm font-semibold text-gray-500">
+      <div className="mb-2 grid grid-cols-7 text-center text-xs font-semibold text-gray-500 sm:text-sm">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((weekday) => (
           <div key={weekday}>{weekday}</div>
         ))}
@@ -156,9 +159,9 @@ export default function BookingCalendar({
 
       {/* Calendar */}
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         {calendar.map((week, weekIndex) => (
-          <div key={weekIndex} className="grid grid-cols-7 gap-2">
+          <div key={weekIndex} className="grid grid-cols-7 gap-1.5">
             {week.map((day, index) => {
               if (day === null) {
                 return <div key={index} />;
@@ -182,7 +185,7 @@ export default function BookingCalendar({
                   disabled={disabled}
                   onClick={() => onDateSelect(cellDate)}
                   className={`
-                    relative aspect-square rounded-xl border
+                    relative h-10 rounded-lg border sm:h-11 md:h-12
                     transition-all duration-200
                     hover:-translate-y-0.5 hover:shadow-md
 
@@ -203,7 +206,8 @@ export default function BookingCalendar({
 
                   {booking && (
                     <span
-                      className={`absolute bottom-2 left-1/2 h-2.5 w-2.5 -translate-x-1/2 rounded-full ${
+                      title={`${booking.remaining} of ${booking.capacity} slots remaining`}
+                      className={`absolute bottom-1.5 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full ${
                         statusColors[booking.status]
                       }`}
                     />
@@ -221,7 +225,7 @@ export default function BookingCalendar({
 
       {/* Legend */}
 
-      <div className="mt-8 flex flex-wrap justify-center gap-6 text-sm">
+      <div className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs sm:text-sm">
         {service && loading && (
           <span className="text-gray-500">Loading availability...</span>
         )}
@@ -234,7 +238,7 @@ export default function BookingCalendar({
 
             <div className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-full bg-yellow-400" />
-              <span>Limited</span>
+              <span>Limited (25% or less)</span>
             </div>
 
             <div className="flex items-center gap-2">

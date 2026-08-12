@@ -27,7 +27,6 @@ export interface Informant extends PersonName {
 export interface Deceased extends PersonName {
   address: string;
   death_cause: string;
-  age: number | null;
   birth_date: Date | null;
   father: PersonName;
   mother: PersonName;

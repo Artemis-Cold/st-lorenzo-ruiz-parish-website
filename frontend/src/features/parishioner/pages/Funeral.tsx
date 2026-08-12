@@ -40,7 +40,6 @@ export default function Funeral() {
       ...emptyName(),
       address: "",
       death_cause: "",
-      age: null,
       birth_date: null,
       father: emptyName(),
       mother: emptyName(),
@@ -133,7 +132,6 @@ export default function Funeral() {
     required("deceased.first_name", deceased.first_name, "First name");
     required("deceased.last_name", deceased.last_name, "Last name");
     required("deceased.address", deceased.address, "Address");
-    required("deceased.age", deceased.age, "Age");
     required("deceased.birth_date", deceased.birth_date, "Birthday");
     required("deceased.death_cause", deceased.death_cause, "Cause of death");
     for (const parent of ["father", "mother"] as const) {
@@ -203,8 +201,8 @@ export default function Funeral() {
         "Enter a valid 11-digit mobile number.",
       ];
     }
-    if (deceased.age !== null && deceased.age < 0) {
-      errors["deceased.age"] = ["Age cannot be negative."];
+    if (deceased.birth_date && deceased.birth_date > new Date()) {
+      errors["deceased.birth_date"] = ["Birthday cannot be in the future."];
     }
     if (!booking.documents.some((item) => item.document_type === "death_certificate")) {
       errors["documents.death_certificate"] = ["Death Certificate is required."];

@@ -315,28 +315,7 @@ ${
                 <FieldError message={getError("deceased.address")} />
               </div>
 
-              <div className="col-span-12 md:col-span-3">
-                <label className="mb-2 block text-sm font-medium">
-                  Age <span className="text-red-600">*</span>
-                </label>
-
-                <input
-                  type="number"
-                  value={booking.deceased.age ?? ""}
-                  onChange={(e) =>
-                    updateDeceased(
-                      "age",
-                      e.target.value === "" ? null : Number(e.target.value),
-                    )
-                  }
-                  placeholder="00"
-                  readOnly={readOnly}
-                  className={inputClass}
-                />
-                <FieldError message={getError("deceased.age")} />
-              </div>
-
-              <div className="col-span-12 md:col-span-4">
+              <div className="col-span-12 md:col-span-5">
                 <label className="mb-2 block text-sm font-medium">
                   Birthday <span className="text-red-600">*</span>
                 </label>
@@ -360,7 +339,7 @@ ${
                 <FieldError message={getError("deceased.birth_date")} />
               </div>
 
-              <div className="col-span-12 md:col-span-5">
+              <div className="col-span-12 md:col-span-7">
                 <label className="mb-2 block text-sm font-medium">
                   Cause of Death <span className="text-red-600">*</span>
                 </label>

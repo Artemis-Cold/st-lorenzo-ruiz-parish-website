@@ -76,17 +76,12 @@ class StoreBaptismBookingRequest extends FormRequest
             'baptizand.birth_date' => [
                 'required',
                 'date',
+                'before_or_equal:today',
             ],
 
             'baptizand.birth_place' => [
                 'required',
                 'string',
-            ],
-
-            'baptizand.age' => [
-                'required',
-                'integer',
-                'min:0',
             ],
 
             'baptizand.gender' => [

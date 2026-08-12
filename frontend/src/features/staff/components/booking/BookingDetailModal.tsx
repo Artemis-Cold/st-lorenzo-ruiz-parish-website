@@ -16,9 +16,11 @@ interface Props {
 
 function Detail({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-start justify-between gap-4 text-sm">
-      <span className="shrink-0 text-gray-500">{label}</span>
-      <span className="text-right font-medium text-[#292524]">{value || "—"}</span>
+    <div className="grid min-w-0 grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start gap-3 text-sm">
+      <span className="break-words text-gray-500">{label}</span>
+      <span className="min-w-0 break-words text-right font-medium leading-5 text-[#292524]">
+        {value || "—"}
+      </span>
     </div>
   );
 }
@@ -43,9 +45,9 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus }:
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
       <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-7 shadow-lg">
         <div className="mb-6 flex items-start justify-between">
-          <div>
+          <div className="min-w-0 pr-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{booking.reference}</p>
-            <h2 className="mt-1 font-serif text-xl font-bold text-[#292524]">{booking.names}</h2>
+            <h2 className="mt-1 break-words font-serif text-xl font-bold text-[#292524]">{booking.names}</h2>
           </div>
           <button onClick={onClose} aria-label="Close" className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100"><X size={20} /></button>
         </div>

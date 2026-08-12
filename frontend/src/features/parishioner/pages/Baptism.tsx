@@ -28,6 +28,21 @@ const stepLabels = [
   "Confirmation",
 ];
 
+function ageFromBirthDate(birthDate: Date | null): number | null {
+  if (!birthDate || Number.isNaN(birthDate.getTime())) return null;
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const birthdayHasPassed =
+    today.getMonth() > birthDate.getMonth() ||
+    (today.getMonth() === birthDate.getMonth() &&
+      today.getDate() >= birthDate.getDate());
+
+  if (!birthdayHasPassed) age -= 1;
+
+  return age >= 0 ? age : null;
+}
+
 export default function Baptism() {
   const [booking, setBooking] = useState<BaptismBooking>({
     booking_slot_id: 0,
@@ -42,8 +57,6 @@ export default function Baptism() {
 
       birth_date: null,
       birth_place: "",
-
-      age: null,
 
       gender: "",
 
@@ -220,7 +233,6 @@ export default function Baptism() {
       booking.baptizand.birth_place,
       "Place of birth",
     );
-    requireField("baptizand.age", booking.baptizand.age, "Age");
     requireField("baptizand.address", booking.baptizand.address, "Address");
     requireField(
       "baptizand.contact_number",
@@ -229,13 +241,6 @@ export default function Baptism() {
     );
 
     requireField("seminar_date", booking.seminar_date, "Seminar Date");
-
-    validateIf(
-      "baptizand.age",
-      booking.baptizand.age,
-      booking.baptizand.age !== null && booking.baptizand.age < 0,
-      "Age cannot be negative.",
-    );
 
     validateIf(
       "baptizand.birth_date",
@@ -326,8 +331,8 @@ export default function Baptism() {
     if (!hasBirthCertificate) {
       addError("documents.birth_certificate", "Birth certificate is required.");
     }
-    const isAdultBaptism =
-      booking.baptizand.age !== null && booking.baptizand.age >= 7;
+    const calculatedAge = ageFromBirthDate(booking.baptizand.birth_date);
+    const isAdultBaptism = calculatedAge !== null && calculatedAge >= 7;
 
     const hasNoRecordCertificate = booking.documents.some(
       (d) => d.document_type === "no_record_certificate",

@@ -87,7 +87,7 @@ export default function Schedule() {
   }
 
   return (
-    <section id="schedule" className="bg-[#F8F9FA] py-14 md:py-16 xl:py-20">
+    <section id="schedule" className="bg-[#F8F9FA] py-12 md:py-14">
       <div className="mx-auto max-w-6xl px-5 sm:px-6">
         {/* Heading */}
 
@@ -100,20 +100,20 @@ export default function Schedule() {
             Monthly Booking Schedule
           </h2>
 
-          <p className="mt-6 text-lg leading-8 text-gray-600">
+          <p className="mt-3 text-base leading-6 text-gray-600">
             View the current booking availability before submitting your
             request.
           </p>
 
-          <div className="mx-auto mt-6 h-1 w-24 rounded-full bg-[#D4AF37]" />
+          <div className="mx-auto mt-4 h-1 w-24 rounded-full bg-[#D4AF37]" />
         </div>
 
         {/* Calendar */}
 
-        <div className="mx-auto mt-8 max-w-4xl rounded-3xl bg-white p-4 shadow-lg sm:p-5 md:p-6">
+        <div className="mx-auto mt-6 max-w-3xl rounded-3xl bg-white p-4 shadow-lg sm:p-5">
           {/* Header */}
 
-          <div className="mb-5 flex items-center justify-between">
+          <div className="mb-3 flex items-center justify-between">
             <button
               onClick={previousMonth}
               className="rounded-xl border border-gray-200 p-2 transition hover:bg-gray-100"
@@ -121,7 +121,7 @@ export default function Schedule() {
               <ChevronLeft />
             </button>
 
-            <h3 className="font-serif text-xl font-bold sm:text-2xl">
+            <h3 className="font-serif text-xl font-bold">
               {monthName} {year}
             </h3>
 
@@ -143,9 +143,9 @@ export default function Schedule() {
 
           {/* Calendar */}
 
-          <div className="grid gap-1.5 sm:gap-2">
+          <div className="grid gap-1.5">
             {calendar.map((week, weekIndex) => (
-              <div key={weekIndex} className="grid grid-cols-7 gap-1.5 sm:gap-2">
+              <div key={weekIndex} className="grid grid-cols-7 gap-1.5">
                 {week.map((day, index) => {
                   if (day === null) {
                     return <div key={index} />;
@@ -163,7 +163,7 @@ export default function Schedule() {
                   return (
                     <button
                       key={index}
-                      className={`group relative h-11 rounded-xl border bg-white transition-all duration-300 hover:border-[#B22222] hover:shadow-md sm:h-12 md:h-14 ${
+                      className={`group relative h-10 rounded-lg border bg-white transition-all duration-300 hover:border-[#B22222] hover:shadow-md sm:h-11 ${
                         isToday
                           ? "border-[#B22222] ring-2 ring-[#B22222]/20"
                           : "border-gray-200"
@@ -193,7 +193,7 @@ export default function Schedule() {
 
           {/* Legend */}
 
-          <div className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs sm:text-sm">
+          <div className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs">
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-green-500" />
               <span>Available</span>
@@ -201,7 +201,7 @@ export default function Schedule() {
 
             <div className="flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-yellow-400" />
-              <span>Limited Slots</span>
+              <span>Limited (25% or less)</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -212,8 +212,8 @@ export default function Schedule() {
 
           {/* CTA */}
 
-          <div className="mt-7 text-center">
-            <Link to="/login" className="inline-flex rounded-xl bg-[#B22222] px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#981B1B]">
+          <div className="mt-5 text-center">
+            <Link to="/login" className="inline-flex rounded-xl bg-[#B22222] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-[#981B1B]">
               Book a Parish Service
             </Link>
           </div>

@@ -26,9 +26,13 @@ export default function CurrentBookings({
   onView: (id: number) => void;
 }) {
   return (
-    <BookingCard title="Current Bookings">
+    <BookingCard
+      title="Current Bookings"
+      className="flex h-[34rem] flex-col lg:h-[clamp(32rem,62vh,44rem)]"
+      contentClassName="min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-smooth p-4 pr-3 sm:p-6 sm:pr-4 [scrollbar-color:#D6CEC4_transparent] [scrollbar-width:thin]"
+    >
       {bookings.length === 0 ? (
-        <div className="rounded-xl border border-dashed py-12 text-center text-gray-500">
+        <div className="flex h-full min-h-64 flex-col items-center justify-center rounded-xl border border-dashed px-6 py-12 text-center text-gray-500">
           <Church size={42} className="mx-auto mb-3 text-gray-300" />
           You have no pending or approved bookings.
         </div>

@@ -20,7 +20,6 @@ function buildFormData(booking: BaptismBooking): FormData {
     b.birth_date ? b.birth_date.toISOString().split("T")[0] : "",
   );
   formData.append("baptizand[birth_place]", b.birth_place ?? "");
-  formData.append("baptizand[age]", b.age !== null ? String(b.age) : "");
   formData.append("baptizand[gender]", b.gender);
   formData.append("baptizand[address]", b.address);
   formData.append("baptizand[contact_number]", b.contact_number ?? "");

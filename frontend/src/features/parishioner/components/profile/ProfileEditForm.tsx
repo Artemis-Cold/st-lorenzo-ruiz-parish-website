@@ -2,13 +2,9 @@ import { useState, type FormEvent } from "react";
 import { AxiosError } from "axios";
 import { toast } from "sonner";
 
-import { BookingCard } from "../booking";
-import {
-  updateProfile,
-  updateProfilePhoto,
-  type UpdateProfileData,
-} from "@/api/auth";
+import { updateProfile, type UpdateProfileData } from "@/api/auth";
 import type { User } from "@/types/user";
+import ProfileModal from "./ProfileModal";
 
 interface Props {
   user: User;
@@ -34,7 +30,6 @@ export default function ProfileEditForm({ user, onSaved, onCancel }: Props) {
   });
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [saving, setSaving] = useState(false);
-  const [photo, setPhoto] = useState<File | null>(null);
 
   const update = <K extends keyof UpdateProfileData>(
     field: K,
@@ -50,9 +45,6 @@ export default function ProfileEditForm({ user, onSaved, onCancel }: Props) {
         ...form,
         phone: form.phone.replace(/\s+/g, ""),
       });
-      if (photo) {
-        await updateProfilePhoto(photo);
-      }
       toast.success(response.message);
       await onSaved();
     } catch (error) {
@@ -105,27 +97,13 @@ export default function ProfileEditForm({ user, onSaved, onCancel }: Props) {
   );
 
   return (
-    <BookingCard title="Edit Personal Information">
-      <form onSubmit={submit} className="space-y-6">
-        <div>
-          <label className="mb-2 block text-sm font-medium">
-            Profile Photo
-          </label>
-          <input
-            type="file"
-            accept=".jpg,.jpeg,.png,.webp"
-            onChange={(event) => setPhoto(event.target.files?.[0] ?? null)}
-            className="w-full rounded-xl border border-gray-300 px-4 py-3"
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            JPG, PNG, or WebP; maximum 2 MB.
-          </p>
-          {errors.profile_photo?.[0] && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.profile_photo[0]}
-            </p>
-          )}
-        </div>
+    <ProfileModal
+      title="Edit Personal Information"
+      description="Keep your contact details and parish records up to date."
+      onClose={onCancel}
+      maxWidth="max-w-4xl"
+    >
+      <form onSubmit={submit} noValidate className="space-y-6">
         <div className="grid gap-4 md:grid-cols-3">
           {field("first_name", "First Name")}
           {field("middle_initial", "Middle Initial", {
@@ -167,7 +145,7 @@ export default function ProfileEditForm({ user, onSaved, onCancel }: Props) {
           {field("zip_code", "ZIP Code", { required: false, placeholder: "e.g. 4000" })}
         </div>
 
-        <div className="flex justify-end gap-3">
+        <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
           <button
             type="button"
             onClick={onCancel}
@@ -184,6 +162,6 @@ export default function ProfileEditForm({ user, onSaved, onCancel }: Props) {
           </button>
         </div>
       </form>
-    </BookingCard>
+    </ProfileModal>
   );
 }

@@ -33,7 +33,7 @@ class FuneralBookingTest extends TestCase
             'deceased' => [
                 'first_name' => 'Juan', 'middle_initial' => '', 'last_name' => 'Dela Cruz',
                 'address' => 'Dagatan, Taysan', 'death_cause' => 'Natural causes',
-                'age' => 80, 'birth_date' => '1946-01-01', 'has_spouse' => false,
+                'birth_date' => today()->subYears(80)->toDateString(), 'has_spouse' => false,
                 'father' => ['first_name' => 'Pedro', 'middle_initial' => '', 'last_name' => 'Dela Cruz'],
                 'mother' => ['first_name' => 'Ana', 'middle_initial' => '', 'last_name' => 'Santos'],
                 'spouse' => ['first_name' => '', 'middle_initial' => '', 'last_name' => ''],
@@ -56,7 +56,8 @@ class FuneralBookingTest extends TestCase
 
         $response->assertCreated();
         $this->assertDatabaseHas('funeral_deceased', [
-            'first_name' => 'Juan', 'spouse_first_name' => null, 'spouse_last_name' => null,
+            'first_name' => 'Juan', 'age' => 80,
+            'spouse_first_name' => null, 'spouse_last_name' => null,
         ]);
         $this->assertDatabaseCount('booking_documents', 2);
 

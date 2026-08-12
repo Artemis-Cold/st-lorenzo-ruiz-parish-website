@@ -4,6 +4,9 @@ import {
   Mail,
   MapPin,
   Pencil,
+  Camera,
+  KeyRound,
+  ContactRound,
 } from "lucide-react";
 
 interface ProfileHeaderProps {
@@ -13,6 +16,9 @@ interface ProfileHeaderProps {
   address: string;
   avatar?: string;
   onEdit?: () => void;
+  onChangePhoto?: () => void;
+  onViewInformation?: () => void;
+  onChangePassword?: () => void;
   activeTab: "current" | "recent" | "documents";
   onTabChange: (tab: "current" | "recent" | "documents") => void;
 }
@@ -24,6 +30,9 @@ export default function ProfileHeader({
   address = "Dagatan, Taysan, Batangas",
   avatar,
   onEdit,
+  onChangePhoto,
+  onViewInformation,
+  onChangePassword,
   activeTab,
   onTabChange,
 }: ProfileHeaderProps) {
@@ -38,7 +47,7 @@ export default function ProfileHeader({
       <div className="bg-[#C32020] px-10 py-8">
         <div className="flex flex-col gap-6 md:flex-row md:items-center">
           {/* Avatar */}
-          <div className="flex-shrink-0">
+          <div className="relative mx-auto flex-shrink-0 md:mx-0">
             {avatar ? (
               <img
                 src={avatar}
@@ -53,39 +62,65 @@ export default function ProfileHeader({
                 />
               </div>
             )}
+            <button
+              type="button"
+              onClick={onChangePhoto}
+              aria-label="Change profile photo"
+              className="absolute bottom-1 right-1 grid size-11 place-items-center rounded-full border-2 border-white bg-white text-[#B22222] shadow-lg transition hover:scale-105 hover:bg-red-50"
+            >
+              <Camera size={20} />
+            </button>
           </div>
 
           {/* User Info */}
-          <div className="flex-1 text-white">
-            <h1 className="text-4xl font-bold">
+          <div className="min-w-0 flex-1 text-center text-white md:text-left">
+            <h1 className="break-words text-3xl font-bold sm:text-4xl">
               {fullName}
             </h1>
 
-            <div className="mt-3 space-y-2 text-white/90">
-              <div className="flex items-center gap-2">
+            <div className="mt-3 space-y-2 text-left text-white/90">
+              <div className="flex items-start gap-2">
                 <Phone size={18} />
                 <span>{phone}</span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-start gap-2">
                 <Mail size={18} />
                 <span>@{username}</span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex items-start gap-2">
                 <MapPin size={18} />
-                <span>{address}</span>
+                <span className="break-words">{address}</span>
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={onEdit}
-              className="mt-6 inline-flex items-center gap-2 rounded-xl border border-white px-6 py-2 font-medium text-white transition hover:bg-white hover:text-[#B22222]"
-            >
-              <Pencil size={18} />
-              Edit Profile
-            </button>
+            <div className="mt-6 flex flex-wrap justify-center gap-3 md:justify-start">
+              <button
+                type="button"
+                onClick={onViewInformation}
+                className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-2.5 font-semibold text-[#B22222] transition hover:bg-red-50"
+              >
+                <ContactRound size={18} />
+                Personal Information
+              </button>
+              <button
+                type="button"
+                onClick={onEdit}
+                className="inline-flex items-center gap-2 rounded-xl border border-white px-5 py-2.5 font-medium text-white transition hover:bg-white hover:text-[#B22222]"
+              >
+                <Pencil size={18} />
+                Edit Profile
+              </button>
+              <button
+                type="button"
+                onClick={onChangePassword}
+                className="inline-flex items-center gap-2 rounded-xl border border-white px-5 py-2.5 font-medium text-white transition hover:bg-white hover:text-[#B22222]"
+              >
+                <KeyRound size={18} />
+                Change Password
+              </button>
+            </div>
           </div>
         </div>
       </div>

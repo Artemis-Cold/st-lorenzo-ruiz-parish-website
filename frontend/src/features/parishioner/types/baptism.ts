@@ -28,8 +28,6 @@ export interface Baptizand extends PersonName {
 
   birth_place: string | null;
 
-  age: number | null;
-
   gender: "" | "Male" | "Female";
 
   address: string;

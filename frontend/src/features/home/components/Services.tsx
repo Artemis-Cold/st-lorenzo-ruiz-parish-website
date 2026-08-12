@@ -82,13 +82,15 @@ const services = [
 
 export default function Services() {
   const { isAuthenticated } = useAuth();
-  const [selectedService, setSelectedService] = useState<(typeof services)[number] | null>(null);
+  const [selectedService, setSelectedService] = useState<
+    (typeof services)[number] | null
+  >(null);
 
   return (
-    <section id="services" className="bg-[#F9FAFB] py-24">
-      <div className="mx-auto max-w-7xl px-6">
+    <section id="services" className="bg-[#F9FAFB] py-12 md:py-14">
+      <div className="mx-auto max-w-6xl px-6">
         {/* Heading */}
-        <div className="mx-auto mb-16 max-w-3xl text-center">
+        <div className="mx-auto mb-7 max-w-3xl text-center">
           <span className="font-semibold uppercase tracking-[0.3em] text-[#B22222]">
             Parish Services
           </span>
@@ -97,40 +99,46 @@ export default function Services() {
             Serving the Community with Faith and Convenience
           </h2>
 
-          <p className="mt-6 text-lg leading-8 text-gray-600">
+          <p className="mt-3 text-sm leading-6 text-gray-600 md:text-base">
             Access essential parish services online with a faster, more
             convenient, and organized way of connecting with St. Lorenzo Ruiz
             Parish.
           </p>
 
-          <div className="mx-auto mt-6 h-1 w-24 rounded-full bg-[#D4AF37]" />
+          <div className="mx-auto mt-4 h-1 w-24 rounded-full bg-[#D4AF37]" />
         </div>
 
         {/* Cards */}
-        <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {services.map((service) => {
             const Icon = service.icon;
 
             return (
               <div
                 key={service.title}
-                className="group rounded-3xl bg-white p-8 shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl"
+                className="group flex flex-col rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
               >
                 <div
-                  className={`mb-6 flex h-16 w-16 items-center justify-center rounded-2xl ${service.color}`}
+                  className={`mb-3 flex h-11 w-11 items-center justify-center rounded-xl ${service.color}`}
                 >
-                  <Icon size={30} />
+                  <Icon size={22} />
                 </div>
 
-                <h3 className="text-2xl font-bold text-gray-900 transition-colors group-hover:text-[#B22222]">
+                <h3 className="text-xl font-bold text-gray-900 transition-colors group-hover:text-[#B22222]">
                   {service.title}
                 </h3>
 
-                <p className="mt-4 leading-7 text-gray-600">
+                <p className="mt-2 text-sm leading-5 text-gray-600">
                   {service.description}
                 </p>
 
-                <button type="button" onClick={() => setSelectedService(service)} className="mt-8 inline-flex font-semibold text-[#B22222] transition-all group-hover:translate-x-2">View requirements →</button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedService(service)}
+                  className="mt-4 inline-flex self-start text-sm font-semibold text-[#B22222] transition-all group-hover:translate-x-1.5"
+                >
+                  View requirements →
+                </button>
               </div>
             );
           })}

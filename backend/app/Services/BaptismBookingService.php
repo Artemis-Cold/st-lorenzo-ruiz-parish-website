@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Baptizand;
 use App\Models\Booking;
 use App\Models\BookingSlot;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -80,6 +81,7 @@ class BaptismBookingService
         Booking $booking,
         array $data
     ): Baptizand {
+        $data['age'] = CarbonImmutable::parse($data['birth_date'])->age;
 
         return $booking->baptizand()->create($data);
 

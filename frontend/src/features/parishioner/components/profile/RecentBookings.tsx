@@ -32,26 +32,30 @@ export default function RecentBookings({
   onView: (id: number) => void;
 }) {
   return (
-    <BookingCard title="Recent Bookings">
-      <div className="space-y-4">
+    <BookingCard
+      title="Recent Bookings"
+      className="flex h-[34rem] flex-col lg:h-[clamp(32rem,62vh,44rem)]"
+      contentClassName="min-h-0 flex-1 overflow-y-auto overscroll-contain scroll-smooth p-4 pr-3 sm:p-6 sm:pr-4 [scrollbar-color:#D6CEC4_transparent] [scrollbar-width:thin]"
+    >
+      <div className="h-full space-y-4">
         {bookings.map((booking) => (
           <div
             key={booking.id}
-            className="rounded-xl border border-gray-200 p-4 transition hover:border-[#B22222]"
+            className="cursor-pointer rounded-xl border border-gray-200 p-4 transition hover:border-[#B22222] hover:shadow-sm"
             onClick={() => onView(booking.id)}
           >
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="flex gap-3">
-                <div className="rounded-xl bg-red-50 p-3">
+              <div className="flex min-w-0 flex-1 gap-3">
+                <div className="flex size-12 shrink-0 items-center justify-center self-start rounded-xl bg-red-50">
                   {booking.service === "Document Request" ? (
                     <FileText size={22} className="text-[#B22222]" />
                   ) : (
                     <Church size={22} className="text-[#B22222]" />
                   )}
                 </div>
-                <div>
-                  <h3 className="font-semibold">{booking.service}</h3>
-                  <p className="text-sm text-gray-500">
+                <div className="min-w-0">
+                  <h3 className="break-words font-semibold">{booking.service}</h3>
+                  <p className="break-all text-sm text-gray-500">
                     {booking.booking_reference}
                   </p>
                   {booking.package && (
@@ -77,7 +81,7 @@ export default function RecentBookings({
         ))}
 
         {bookings.length === 0 && (
-          <div className="rounded-xl border border-dashed py-12 text-center text-gray-500">
+          <div className="flex h-full min-h-64 flex-col items-center justify-center rounded-xl border border-dashed px-6 py-12 text-center text-gray-500">
             No completed, cancelled, or rejected bookings found.
           </div>
         )}

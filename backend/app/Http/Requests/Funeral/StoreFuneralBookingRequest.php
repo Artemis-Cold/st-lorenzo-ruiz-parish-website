@@ -3,8 +3,8 @@
 namespace App\Http\Requests\Funeral;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreFuneralBookingRequest extends FormRequest
 {
@@ -29,7 +29,6 @@ class StoreFuneralBookingRequest extends FormRequest
             'deceased' => ['required', 'array'],
             'deceased.address' => ['required', 'string'],
             'deceased.death_cause' => ['required', 'string', 'max:255'],
-            'deceased.age' => ['required', 'integer', 'min:0', 'max:150'],
             'deceased.birth_date' => ['required', 'date', 'before_or_equal:today'],
             'deceased.has_spouse' => ['required', 'boolean'],
             'deceased.children' => ['nullable', 'array'],

@@ -6,6 +6,7 @@ use App\Models\Booking;
 use App\Models\BookingSlot;
 use App\Models\PackageAddon;
 use App\Models\ServicePackage;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -57,7 +58,7 @@ class FuneralBookingService
                 'last_name' => $person['last_name'],
                 'address' => $person['address'],
                 'death_cause' => $person['death_cause'],
-                'age' => $person['age'],
+                'age' => CarbonImmutable::parse($person['birth_date'])->age,
                 'birth_date' => $person['birth_date'],
                 ...$this->relativeColumns($person),
                 ...$person['sacraments'],

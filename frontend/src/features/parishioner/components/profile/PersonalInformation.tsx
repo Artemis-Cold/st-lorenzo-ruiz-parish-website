@@ -1,48 +1,78 @@
-import { Mail, MapPin, Phone, User } from "lucide-react";
+import { BadgeCheck, CalendarDays, ContactRound, Mail, MapPin, Phone, UserRound } from "lucide-react";
 
-import { BookingCard } from "../booking";
+import type { User } from "@/types/user";
+import ProfileModal from "./ProfileModal";
 
 interface PersonalInformationProps {
-  fullName?: string;
-  phone?: string;
-  username?: string;
-  address?: string;
-  onEdit?: () => void;
+  user: User;
+  address: string;
+  onClose: () => void;
+  onEdit: () => void;
 }
 
 export default function PersonalInformation({
-  fullName = "Juan Dela Cruz",
-  phone = "0912 345 6789",
-  username,
-  address = "Dagatan, Taysan, Batangas",
+  user,
+  address,
+  onClose,
   onEdit,
 }: PersonalInformationProps) {
   const rows = [
     {
-      icon: User,
+      icon: UserRound,
       label: "Full Name",
-      value: fullName,
+      value: user.full_name,
+    },
+    {
+      icon: ContactRound,
+      label: "Parishioner ID",
+      value: user.parishioner_id,
     },
     {
       icon: Phone,
       label: "Contact Number",
-      value: phone,
+      value: user.phone,
     },
     {
       icon: Mail,
       label: "Username",
-      value: username,
+      value: `@${user.username}`,
+    },
+    {
+      icon: CalendarDays,
+      label: "Birth Date",
+      value: user.birth_date
+        ? new Date(`${user.birth_date.slice(0, 10)}T00:00:00`).toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+            year: "numeric",
+          })
+        : "Not provided",
+    },
+    {
+      icon: UserRound,
+      label: "Gender",
+      value: user.gender || "Not provided",
     },
     {
       icon: MapPin,
       label: "Address",
       value: address,
     },
+    {
+      icon: BadgeCheck,
+      label: "Phone Verification",
+      value: user.phone_verified ? "Verified" : "Not verified",
+    },
   ];
 
   return (
-    <BookingCard title="Personal Information">
-      <div className="space-y-4">
+    <ProfileModal
+      title="Personal Information"
+      description="Review the information saved in your parish account."
+      onClose={onClose}
+      maxWidth="max-w-2xl"
+    >
+      <div className="grid gap-4 sm:grid-cols-2">
         {rows.map((item) => {
           const Icon = item.icon;
 
@@ -51,19 +81,19 @@ export default function PersonalInformation({
               key={item.label}
               className="flex items-start gap-4 rounded-xl border border-gray-100 p-4"
             >
-              <div className="rounded-lg bg-red-50 p-3">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-red-50">
                 <Icon
                   size={18}
                   className="text-[#B22222]"
                 />
               </div>
 
-              <div className="flex-1">
+              <div className="min-w-0 flex-1">
                 <p className="text-xs uppercase tracking-wide text-gray-400">
                   {item.label}
                 </p>
 
-                <p className="mt-1 font-medium">
+                <p className="mt-1 break-words font-medium">
                   {item.value}
                 </p>
               </div>
@@ -71,13 +101,17 @@ export default function PersonalInformation({
           );
         })}
 
+      </div>
+      <div className="mt-6 flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
+        <button type="button" onClick={onClose} className="rounded-xl border border-gray-300 px-5 py-3 font-medium text-gray-700 hover:bg-gray-50">Close</button>
         <button
+          type="button"
           onClick={onEdit}
-          className="w-full rounded-xl border border-[#B22222] py-3 font-medium text-[#B22222] transition hover:bg-[#B22222] hover:text-white"
+          className="rounded-xl bg-[#B22222] px-5 py-3 font-semibold text-white transition hover:bg-[#991B1B]"
         >
           Edit Information
         </button>
       </div>
-    </BookingCard>
+    </ProfileModal>
   );
 }
