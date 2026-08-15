@@ -68,8 +68,8 @@ export default function CompleteProfileModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-8 shadow-lg">
+    <div data-app-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div data-modal-scroll="true" className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-8 shadow-lg">
         <h2 className="mb-2 font-serif text-2xl font-bold text-[#B22222]">
           Complete Your Profile
         </h2>

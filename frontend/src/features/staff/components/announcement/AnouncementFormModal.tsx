@@ -64,8 +64,8 @@ export default function AnnouncementFormModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-7 shadow-lg sm:p-8">
+    <div data-app-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div data-modal-scroll="true" className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-7 shadow-lg sm:p-8">
         <div className="mb-6 flex items-start justify-between">
           <div>
             <h2 className="font-serif text-xl font-bold text-[#292524]">

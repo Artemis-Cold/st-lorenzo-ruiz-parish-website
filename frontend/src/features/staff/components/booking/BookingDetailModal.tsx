@@ -42,8 +42,8 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus }:
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-7 shadow-lg">
+    <div data-app-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div data-modal-scroll="true" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-7 shadow-lg">
         <div className="mb-6 flex items-start justify-between">
           <div className="min-w-0 pr-4">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">{booking.reference}</p>

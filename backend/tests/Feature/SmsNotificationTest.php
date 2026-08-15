@@ -57,6 +57,12 @@ class SmsNotificationTest extends TestCase
 
         (new SendSmsMessage($sms->id))->handle();
 
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.semaphore.co/api/v4/messages'
+            && $request['apikey'] === 'secret-key'
+            && $request['number'] === '639171234567'
+            && $request['message'] === 'Your request is approved.'
+        );
+
         $this->assertDatabaseHas('sms_messages', [
             'id' => $sms->id, 'status' => 'sent', 'provider_message_id' => '123',
         ]);

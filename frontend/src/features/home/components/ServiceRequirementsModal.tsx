@@ -32,6 +32,7 @@ export default function ServiceRequirementsModal({
 
   return (
     <div
+      data-app-modal="true"
       className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm"
       role="presentation"
       onMouseDown={(event) => {
@@ -39,6 +40,7 @@ export default function ServiceRequirementsModal({
       }}
     >
       <div
+        data-modal-scroll="true"
         role="dialog"
         aria-modal="true"
         aria-labelledby="service-requirements-title"

@@ -4,12 +4,13 @@ use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\BaptismBookingController;
 use App\Http\Controllers\Api\BookingSlotController;
 use App\Http\Controllers\Api\DocumentRequestBookingController;
+use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\FuneralBookingController;
 use App\Http\Controllers\Api\MassIntentionBookingController;
 use App\Http\Controllers\Api\ParishionerBookingController;
 use App\Http\Controllers\Api\ServicePackageController;
-use App\Http\Controllers\Api\Staff\StaffBookingController;
 use App\Http\Controllers\Api\Staff\StaffAvailabilityController;
+use App\Http\Controllers\Api\Staff\StaffBookingController;
 use App\Http\Controllers\Api\Staff\StaffDashboardController;
 use App\Http\Controllers\Api\Staff\StaffDocumentRequestController;
 use App\Http\Controllers\Api\Staff\StaffMassIntentionController;
@@ -18,8 +19,8 @@ use App\Http\Controllers\Api\Staff\StaffTransactionController;
 use App\Http\Controllers\Api\Staff\WeddingAppointmentController;
 use App\Http\Controllers\Api\WeddingBookingController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\PasswordResetOtpController;
 use App\Http\Controllers\Auth\LogoutController;
+use App\Http\Controllers\Auth\PasswordResetOtpController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\StaffLoginController;
@@ -78,6 +79,7 @@ Route::middleware('auth:sanctum')->group(function () {
     );
 
     Route::get('/bookings/{booking}', [ParishionerBookingController::class, 'show']);
+    Route::patch('/bookings/{booking}/reschedule', [ParishionerBookingController::class, 'reschedule']);
 
     Route::patch('/profile/complete', [ProfileController::class, 'complete']);
     Route::patch('/profile', [ProfileController::class, 'update']);
@@ -88,11 +90,13 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 Route::get('/announcements', [AnnouncementController::class, 'publicIndex']);
+Route::get('/events', [EventController::class, 'publicIndex']);
 
 Route::middleware(['auth:sanctum', 'staff'])
     ->prefix('staff')
     ->group(function () {
         Route::apiResource('announcements', AnnouncementController::class);
+        Route::apiResource('events', EventController::class);
         Route::get('/dashboard', StaffDashboardController::class);
         Route::patch('/settings/profile', [StaffSettingsController::class, 'updateProfile']);
         Route::patch('/settings/password', [StaffSettingsController::class, 'updatePassword']);

@@ -18,8 +18,8 @@ export default function MassIntentionDetailModal({
   if (!intention) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-3xl bg-white p-7 shadow-lg">
+    <div data-app-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div data-modal-scroll="true" className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-7 shadow-lg">
         <div className="mb-6 flex items-start justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">

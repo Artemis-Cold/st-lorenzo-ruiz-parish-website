@@ -147,18 +147,19 @@ export default function Announcements() {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-[#E7E2DA] bg-white p-6 shadow-sm sm:p-7">
-          <h2 className="mb-6 font-serif text-lg font-bold text-[#292524] sm:text-xl">Recent Announcements</h2>
-          {loading ? (
-            <div className="py-16 text-center"><p className="text-sm text-gray-400">Loading announcements...</p></div>
-          ) : sortedAnnouncements.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#E7E2DA] py-16 text-center">
-              <Bell className="mx-auto mb-3 text-gray-300" size={28} />
-              <p className="text-sm text-gray-400">No announcements yet. Add one to get started.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {sortedAnnouncements.map((item) => (
+        <div className="flex h-[34rem] flex-col rounded-3xl border border-[#E7E2DA] bg-white shadow-sm lg:h-[clamp(34rem,68vh,44rem)]">
+          <h2 className="shrink-0 border-b border-gray-100 px-6 py-5 font-serif text-lg font-bold text-[#292524] sm:px-7 sm:text-xl">Recent Announcements</h2>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pr-3 sm:p-6 sm:pr-4 [scrollbar-color:#D6CEC4_transparent] [scrollbar-width:thin]">
+            {loading ? (
+              <div className="flex h-full items-center justify-center text-center"><p className="text-sm text-gray-400">Loading announcements...</p></div>
+            ) : sortedAnnouncements.length === 0 ? (
+              <div className="flex h-full min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-[#E7E2DA] px-6 text-center">
+                <Bell className="mb-3 text-gray-300" size={28} />
+                <p className="text-sm text-gray-400">No announcements yet. Add one to get started.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {sortedAnnouncements.map((item) => (
                 <div key={item.id} className="flex flex-col gap-4 rounded-2xl border border-[#E7E2DA] p-4 transition hover:border-[#B22222]/30 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex min-w-0 items-start gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#B22222] text-white"><Bell size={16} /></div>
@@ -176,9 +177,10 @@ export default function Announcements() {
                     <button onClick={() => setDeleting(item)} aria-label="Delete" className="rounded-lg p-2 text-gray-500 transition hover:bg-red-50 hover:text-red-600"><Trash2 size={16} /></button>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

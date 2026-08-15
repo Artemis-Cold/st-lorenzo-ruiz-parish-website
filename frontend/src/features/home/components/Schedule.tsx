@@ -1,7 +1,9 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
 import { getBookingAvailability } from "@/services/bookingSlotService";
+import { getPublicEvents, type ParishEvent } from "@/services/eventService";
+import { eventsByDate } from "@/utils/eventCalendar";
+import CalendarEventTooltip from "@/components/events/CalendarEventTooltip";
 
 type BookingStatus = "available" | "limited" | "full";
 
@@ -19,6 +21,7 @@ const colors: Record<BookingStatus, string> = {
 export default function Schedule() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [schedule, setSchedule] = useState<Record<number, CalendarDayStatus>>({});
+  const [events, setEvents] = useState<ParishEvent[]>([]);
 
   const monthName = currentDate.toLocaleString("en-US", {
     month: "long",
@@ -28,8 +31,11 @@ export default function Schedule() {
 
   useEffect(() => {
     const month = `${year}-${String(currentDate.getMonth() + 1).padStart(2, "0")}`;
-    Promise.all(["wedding", "baptism", "funeral"].map((service) => getBookingAvailability(service, month)))
-      .then((results) => {
+    Promise.all([
+      Promise.all(["wedding", "baptism", "funeral"].map((service) => getBookingAvailability(service, month))),
+      getPublicEvents(month),
+    ])
+      .then(([results, publicEvents]) => {
         const days: Record<number, { capacity: number; remaining: number }> = {};
         results.flat().forEach((availability) => {
           const day = Number(availability.date.slice(-2));
@@ -41,9 +47,15 @@ export default function Schedule() {
           slots: value.remaining,
           status: value.remaining === 0 ? "full" : value.remaining / value.capacity <= 0.25 ? "limited" : "available",
         }])));
+        setEvents(publicEvents);
       })
-      .catch(() => setSchedule({}));
+      .catch(() => {
+        setSchedule({});
+        setEvents([]);
+      });
   }, [currentDate, year]);
+
+  const calendarEvents = useMemo(() => eventsByDate(events), [events]);
 
   const previousMonth = () => {
     setCurrentDate(
@@ -97,12 +109,11 @@ export default function Schedule() {
           </span>
 
           <h2 className="mt-4 font-serif text-4xl font-bold text-gray-900 md:text-5xl">
-            Monthly Booking Schedule
+            Parish Calendar &amp; Booking Schedule
           </h2>
 
           <p className="mt-3 text-base leading-6 text-gray-600">
-            View the current booking availability before submitting your
-            request.
+            View parish events alongside the current service availability.
           </p>
 
           <div className="mx-auto mt-4 h-1 w-24 rounded-full bg-[#D4AF37]" />
@@ -152,6 +163,9 @@ export default function Schedule() {
                   }
 
                   const booking = schedule[day];
+                  const cellDate = new Date(year, currentDate.getMonth(), day);
+                  const key = `${year}-${String(currentDate.getMonth() + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+                  const dayEvents = calendarEvents[key] ?? [];
 
                   const today = new Date();
 
@@ -163,6 +177,8 @@ export default function Schedule() {
                   return (
                     <button
                       key={index}
+                      type="button"
+                      aria-label={`${cellDate.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}${dayEvents.length ? `, ${dayEvents.length} parish event${dayEvents.length === 1 ? "" : "s"}` : ""}`}
                       className={`group relative h-10 rounded-lg border bg-white transition-all duration-300 hover:border-[#B22222] hover:shadow-md sm:h-11 ${
                         isToday
                           ? "border-[#B22222] ring-2 ring-[#B22222]/20"
@@ -176,7 +192,7 @@ export default function Schedule() {
                       {booking && (
                         <>
                           <span
-                            className={`absolute bottom-1.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full sm:h-2 sm:w-2 ${colors[booking.status]}`}
+                            className={`absolute bottom-1.5 h-1.5 w-1.5 rounded-full sm:h-2 sm:w-2 ${dayEvents.length ? "left-[calc(50%_-_5px)]" : "left-1/2 -translate-x-1/2"} ${colors[booking.status]}`}
                           />
 
                           <span className="absolute top-2 right-2 text-[10px] text-gray-400 opacity-0 transition-opacity group-hover:opacity-100">
@@ -184,6 +200,15 @@ export default function Schedule() {
                           </span>
                         </>
                       )}
+
+                      {dayEvents.length > 0 && (
+                        <span className={`absolute bottom-1.5 size-2 rounded-full bg-violet-600 ring-2 ring-white ${booking ? "left-[calc(50%_+_5px)]" : "left-1/2 -translate-x-1/2"}`} />
+                      )}
+
+                      <CalendarEventTooltip
+                        events={dayEvents}
+                        alignment={cellDate.getDay() === 0 ? "left" : cellDate.getDay() === 6 ? "right" : "center"}
+                      />
                     </button>
                   );
                 })}
@@ -208,14 +233,10 @@ export default function Schedule() {
               <span className="h-2.5 w-2.5 rounded-full bg-[#B22222]" />
               <span>Fully Booked</span>
             </div>
-          </div>
-
-          {/* CTA */}
-
-          <div className="mt-5 text-center">
-            <Link to="/login" className="inline-flex rounded-xl bg-[#B22222] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:bg-[#981B1B]">
-              Book a Parish Service
-            </Link>
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-violet-600" />
+              <span>Parish Event</span>
+            </div>
           </div>
         </div>
       </div>

@@ -25,6 +25,7 @@ import ARTest from "./features/ar-navigation/ARTest";
 
 import StaffDashboard from "./features/staff/pages/Dashboard";
 import Announcements from "./features/staff/pages/Announcement";
+import Events from "./features/staff/pages/Events";
 import MassIntentions from "./features/staff/pages/MassIntentions";
 import BookingManagement from "./features/staff/pages/BookingManagement";
 import Requests from "./features/staff/pages/Request";
@@ -71,6 +72,7 @@ function App() {
         <Route element={<StaffProtectedRoute />}>
           <Route path="/staff/dashboard" element={<StaffDashboard />} />
           <Route path="/staff/announcements" element={<Announcements />} />
+          <Route path="/staff/events" element={<Events />} />
           <Route path="/staff/mass-intentions" element={<MassIntentions />} />
           <Route path="/staff/bookings" element={<BookingManagement />} />
           <Route path="/staff/requests" element={<Requests />} />

@@ -1,7 +1,10 @@
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { ProfileBooking } from "@/api/auth";
+import { getPublicEvents, type ParishEvent } from "@/services/eventService";
+import { eventsByDate } from "@/utils/eventCalendar";
+import CalendarEventTooltip from "@/components/events/CalendarEventTooltip";
 
 export default function CalendarCard({ bookings }: { bookings: ProfileBooking[] }) {
   const [displayedMonth, setDisplayedMonth] = useState(() => new Date());
@@ -9,6 +12,31 @@ export default function CalendarCard({ bookings }: { bookings: ProfileBooking[] 
   const month = displayedMonth.getMonth();
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthKey = `${year}-${String(month + 1).padStart(2, "0")}`;
+  const [eventResult, setEventResult] = useState<{
+    month: string;
+    events: ParishEvent[];
+  }>({ month: "", events: [] });
+
+  useEffect(() => {
+    let active = true;
+    getPublicEvents(monthKey)
+      .then((events) => {
+        if (active) setEventResult({ month: monthKey, events });
+      })
+      .catch(() => {
+        if (active) setEventResult({ month: monthKey, events: [] });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [monthKey]);
+
+  const calendarEvents = useMemo(
+    () => eventsByDate(eventResult.month === monthKey ? eventResult.events : []),
+    [eventResult, monthKey],
+  );
 
   const bookingsByDate = useMemo(
     () =>
@@ -69,19 +97,32 @@ export default function CalendarCard({ bookings }: { bookings: ProfileBooking[] 
         ))}
         {cells.map((day, index) => {
           const dayBookings = day ? bookingsByDate[dateKey(day)] : undefined;
+          const dayEvents = day ? calendarEvents[dateKey(day)] ?? [] : [];
           return day ? (
-            <div
+            <button
+              type="button"
               key={day}
-              title={dayBookings?.map((booking) => booking.service).join(", ")}
-              className={`relative flex aspect-square items-center justify-center rounded-lg ${
-                dayBookings ? "bg-red-50 font-bold text-[#B22222]" : "text-gray-700"
+              aria-label={`${new Date(year, month, day).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}${dayEvents.length ? `, ${dayEvents.length} parish event${dayEvents.length === 1 ? "" : "s"}` : ""}`}
+              className={`group relative flex aspect-square items-center justify-center rounded-lg transition hover:ring-1 hover:ring-[#B22222]/30 ${
+                dayBookings
+                  ? "bg-red-50 font-bold text-[#B22222]"
+                  : dayEvents.length
+                    ? "bg-violet-50 font-semibold text-violet-700"
+                    : "text-gray-700"
               }`}
             >
               {day}
               {dayBookings && (
-                <span className="absolute bottom-1 h-1.5 w-1.5 rounded-full bg-[#B22222]" />
+                <span className={`absolute bottom-1 size-1.5 rounded-full bg-[#B22222] ${dayEvents.length ? "left-[calc(50%_-_4px)]" : "left-1/2 -translate-x-1/2"}`} />
               )}
-            </div>
+              {dayEvents.length > 0 && (
+                <span className={`absolute bottom-1 size-1.5 rounded-full bg-violet-600 ${dayBookings ? "left-[calc(50%_+_4px)]" : "left-1/2 -translate-x-1/2"}`} />
+              )}
+              <CalendarEventTooltip
+                events={dayEvents}
+                alignment={new Date(year, month, day).getDay() === 0 ? "left" : new Date(year, month, day).getDay() === 6 ? "right" : "center"}
+              />
+            </button>
           ) : (
             <div key={`empty-${index}`} />
           );
@@ -89,6 +130,7 @@ export default function CalendarCard({ bookings }: { bookings: ProfileBooking[] 
       </div>
       <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500">
         <span className="h-2 w-2 rounded-full bg-[#B22222]" /> Your scheduled booking
+        <span className="ml-2 h-2 w-2 rounded-full bg-violet-600" /> Parish event
       </div>
     </div>
   );

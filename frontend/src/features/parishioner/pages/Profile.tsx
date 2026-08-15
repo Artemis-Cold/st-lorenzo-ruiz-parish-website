@@ -166,7 +166,11 @@ export default function Profile() {
         {activeTab === "documents" && <Documents documents={documents} onView={setSelectedBookingId} />}
 
       </div>
-      <BookingDetailModal bookingId={selectedBookingId} onClose={() => setSelectedBookingId(null)} />
+      <BookingDetailModal
+        bookingId={selectedBookingId}
+        onClose={() => setSelectedBookingId(null)}
+        onRescheduled={loadProfile}
+      />
     </DashboardLayout>
   );
 }

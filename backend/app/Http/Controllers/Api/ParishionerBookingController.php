@@ -3,13 +3,17 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Booking\RescheduleBookingRequest;
 use App\Models\Booking;
+use App\Services\BookingReschedulingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class ParishionerBookingController extends Controller
 {
+    private const RESCHEDULABLE_SERVICES = ['baptism', 'wedding', 'funeral'];
+
     public function show(Request $request, Booking $booking): JsonResponse
     {
         abort_unless($booking->user_id === $request->user()->id, 404);
@@ -28,6 +32,9 @@ class ParishionerBookingController extends Controller
             'service' => $booking->service?->name,
             'serviceCode' => $booking->service?->code,
             'status' => $booking->status,
+            'bookingSlotId' => $booking->booking_slot_id,
+            'canReschedule' => in_array($booking->service?->code, self::RESCHEDULABLE_SERVICES, true)
+                && in_array($booking->status, ['pending', 'approved'], true),
             'submittedAt' => $booking->created_at->toIso8601String(),
             'remarks' => $booking->remarks,
             'schedule' => [
@@ -54,6 +61,34 @@ class ParishionerBookingController extends Controller
                 'url' => Storage::disk('public')->url($document->file_path),
             ])->values(),
         ]]);
+    }
+
+    public function reschedule(
+        RescheduleBookingRequest $request,
+        Booking $booking,
+        BookingReschedulingService $service
+    ): JsonResponse {
+        abort_unless($booking->user_id === $request->user()->id, 404);
+
+        $updated = $service->reschedule(
+            $booking,
+            (int) $request->validated('booking_slot_id'),
+            $request->user()->id,
+        );
+
+        return response()->json([
+            'message' => 'Booking rescheduled successfully and submitted for staff review.',
+            'data' => [
+                'id' => $updated->id,
+                'status' => $updated->status,
+                'bookingSlotId' => $updated->booking_slot_id,
+                'schedule' => [
+                    'date' => $updated->slot?->booking_date?->toDateString(),
+                    'startTime' => $updated->slot?->start_time,
+                    'endTime' => $updated->slot?->end_time,
+                ],
+            ],
+        ]);
     }
 
     private function sections(Booking $booking): array
@@ -100,7 +135,9 @@ class ParishionerBookingController extends Controller
     private function funeralSections(Booking $booking): array
     {
         $person = $booking->funeralDeceased;
-        if (! $person) return [];
+        if (! $person) {
+            return [];
+        }
 
         return [[
             'title' => 'Deceased information',
@@ -124,7 +161,9 @@ class ParishionerBookingController extends Controller
     private function baptismSections(Booking $booking): array
     {
         $person = $booking->baptizand;
-        if (! $person) return [];
+        if (! $person) {
+            return [];
+        }
 
         return [[
             'title' => 'Baptizand information',
@@ -145,7 +184,9 @@ class ParishionerBookingController extends Controller
     private function massIntentionSections(Booking $booking): array
     {
         $intention = $booking->massIntention;
-        if (! $intention) return [];
+        if (! $intention) {
+            return [];
+        }
 
         return [[
             'title' => 'Mass intention details',
@@ -161,7 +202,9 @@ class ParishionerBookingController extends Controller
     private function documentRequestSections(Booking $booking): array
     {
         $request = $booking->documentRequest;
-        if (! $request) return [];
+        if (! $request) {
+            return [];
+        }
 
         return [[
             'title' => 'Requested documents',
@@ -188,6 +231,7 @@ class ParishionerBookingController extends Controller
     private function name(?string $first, ?string $middle, ?string $last, ?string $suffix = null): string
     {
         $initial = $middle ? rtrim($middle, '.').'.' : null;
+
         return trim(implode(' ', array_filter([$first, $initial, $last, $suffix])));
     }
 }

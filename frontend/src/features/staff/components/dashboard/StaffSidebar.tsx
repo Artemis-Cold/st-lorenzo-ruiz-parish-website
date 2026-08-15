@@ -1,6 +1,7 @@
 import {
   LayoutGrid,
   Megaphone,
+  CalendarHeart,
   ClipboardList,
   CalendarRange,
   FileText,
@@ -25,6 +26,12 @@ const navItems = [
     to: "/staff/announcements",
     icon: Megaphone,
     color: "#B22222",
+  },
+  {
+    label: "Events",
+    to: "/staff/events",
+    icon: CalendarHeart,
+    color: "#D4AF37",
   },
   {
     label: "Availability",

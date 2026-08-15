@@ -32,6 +32,7 @@ export default function ProfileModal({
 
   return (
     <div
+      data-app-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm"
       onMouseDown={onClose}
     >
@@ -63,7 +64,7 @@ export default function ProfileModal({
             <X size={20} />
           </button>
         </header>
-        <div className="overflow-y-auto px-6 py-6 sm:px-8">{children}</div>
+        <div data-modal-scroll="true" className="overflow-y-auto px-6 py-6 sm:px-8">{children}</div>
       </section>
     </div>
   );

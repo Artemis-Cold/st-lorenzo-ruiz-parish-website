@@ -7,6 +7,8 @@ export interface ParishionerBookingDetail {
   service: string;
   serviceCode: string;
   status: ProfileBooking["status"];
+  bookingSlotId: number | null;
+  canReschedule: boolean;
   submittedAt: string;
   remarks: string | null;
   schedule: { date: string | null; startTime: string | null; endTime: string | null };
@@ -34,4 +36,29 @@ export async function getParishionerBooking(id: number) {
     `/bookings/${id}`,
   );
   return response.data.data;
+}
+
+export interface RescheduledBooking {
+  id: number;
+  status: ProfileBooking["status"];
+  bookingSlotId: number;
+  schedule: {
+    date: string;
+    startTime: string;
+    endTime: string;
+  };
+}
+
+export async function rescheduleParishionerBooking(
+  id: number,
+  bookingSlotId: number,
+) {
+  const response = await api.patch<{
+    message: string;
+    data: RescheduledBooking;
+  }>(`/bookings/${id}/reschedule`, {
+    booking_slot_id: bookingSlotId,
+  });
+
+  return response.data;
 }

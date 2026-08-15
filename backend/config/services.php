@@ -39,6 +39,8 @@ return [
         'endpoint' => env('SEMAPHORE_ENDPOINT', 'https://api.semaphore.co/api/v4/messages'),
         'api_key' => env('SEMAPHORE_API_KEY'),
         'sender_name' => env('SEMAPHORE_SENDER_NAME'),
+        'connect_timeout' => (int) env('SEMAPHORE_CONNECT_TIMEOUT', 5),
+        'request_timeout' => (int) env('SEMAPHORE_REQUEST_TIMEOUT', 15),
     ],
 
     'sms' => [
