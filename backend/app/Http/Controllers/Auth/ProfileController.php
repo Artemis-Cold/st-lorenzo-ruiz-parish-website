@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Profile\CompleteProfileRequest;
+use App\Http\Requests\Profile\UpdatePasswordRequest;
 use App\Http\Requests\Profile\UpdateProfilePhotoRequest;
 use App\Http\Requests\Profile\UpdateProfileRequest;
-use App\Http\Requests\Profile\UpdatePasswordRequest;
 use App\Http\Resources\UserResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -75,7 +75,7 @@ class ProfileController extends Controller
             ->with(['service', 'package', 'slot', 'massIntention']);
 
         $currentBookings = (clone $bookingQuery)
-            ->whereIn('status', ['pending', 'approved', 'ready_for_pickup'])
+            ->whereIn('status', ['pending', 'paid', 'approved', 'ready_for_pickup'])
             ->latest()
             ->get()
             ->map(fn ($booking) => $this->bookingData($booking));

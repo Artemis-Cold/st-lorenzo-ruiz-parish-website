@@ -65,7 +65,7 @@ class BookingSlotController extends Controller
                             'remaining' => $remaining,
                             'status' => $remaining === 0
                                 ? 'full'
-                                : ($remaining / $capacity <= 0.25 ? 'limited' : 'available'),
+                                : ($remaining / $capacity <= 0.5 ? 'limited' : 'available'),
                         ];
                     })->values()
             );

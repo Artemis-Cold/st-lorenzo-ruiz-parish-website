@@ -74,16 +74,22 @@ export default function BookingCalendar({
 
     let active = true;
 
-    getBookingAvailability(service, monthKey)
-      .then((days) => {
-        if (active) setAvailabilityResult({ key: requestKey, days });
-      })
-      .catch(() => {
-        if (active) setAvailabilityResult({ key: requestKey, days: [] });
-      });
+    const loadAvailability = () => {
+      getBookingAvailability(service, monthKey)
+        .then((days) => {
+          if (active) setAvailabilityResult({ key: requestKey, days });
+        })
+        .catch(() => {
+          if (active) setAvailabilityResult({ key: requestKey, days: [] });
+        });
+    };
+
+    loadAvailability();
+    window.addEventListener("focus", loadAvailability);
 
     return () => {
       active = false;
+      window.removeEventListener("focus", loadAvailability);
     };
   }, [service, monthKey, requestKey]);
 
@@ -207,7 +213,7 @@ export default function BookingCalendar({
                   {booking && (
                     <span
                       title={`${booking.remaining} of ${booking.capacity} slots remaining`}
-                      className={`absolute bottom-1.5 left-1/2 h-2 w-2 -translate-x-1/2 rounded-full ${
+                      className={`absolute bottom-1.5 left-1/2 h-1.5 w-5 -translate-x-1/2 rounded-full shadow-sm ${
                         statusColors[booking.status]
                       }`}
                     />
@@ -238,7 +244,7 @@ export default function BookingCalendar({
 
             <div className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-full bg-yellow-400" />
-              <span>Limited (25% or less)</span>
+              <span>Limited (50% or less)</span>
             </div>
 
             <div className="flex items-center gap-2">

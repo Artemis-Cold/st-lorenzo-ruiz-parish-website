@@ -1,5 +1,4 @@
 export type IntentionType =
-  | "Special Intention"
   | "Thanksgiving"
   | "Birthday"
   | "Anniversary"

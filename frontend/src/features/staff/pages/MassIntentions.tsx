@@ -3,19 +3,18 @@ import { toast } from "sonner";
 import { ClipboardList, Search, Printer, Info } from "lucide-react";
 
 import StaffDashboardLayout from "../components/dashboard/StaffDashboardLayout";
-import StatusBadge, { type IntentionStatus } from "../components/StatusBadge";
+import StatusBadge from "../components/StatusBadge";
 import MassIntentionDetailModal from "../components/mass-intentions/MassIntentionDetailModal";
 import type { MassIntention, IntentionType } from "../types/massIntention";
 import {
   getStaffMassIntentions,
-  updateMassIntentionStatus,
 } from "@/services/staffManagementService";
 
 const intentionTypes: IntentionType[] = [
   "Anniversary",
   "Birthday",
+  "Petition",
   "Soul",
-  "Special Intention",
   "Thanksgiving",
 ];
 
@@ -67,21 +66,6 @@ export default function MassIntentions() {
   const handleTypeChange = (type: IntentionType) => {
     setActiveType(type);
     setPage(1);
-  };
-
-  const handleUpdateStatus = async (id: number, status: IntentionStatus) => {
-    try {
-      const updated = await updateMassIntentionStatus(id, status);
-      setIntentions((items) =>
-        items.map((item) =>
-          item.bookingId === updated.bookingId ? { ...item, status } : item,
-        ),
-      );
-      toast.success(`Mass intention for "${updated.names}" has been ${status}.`);
-      setSelected(null);
-    } catch {
-      toast.error("Unable to update the mass intention status.");
-    }
   };
 
   return (
@@ -272,7 +256,6 @@ export default function MassIntentions() {
       <MassIntentionDetailModal
         intention={selected}
         onClose={() => setSelected(null)}
-        onUpdateStatus={handleUpdateStatus}
       />
     </StaffDashboardLayout>
   );

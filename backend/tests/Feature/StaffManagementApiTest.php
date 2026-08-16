@@ -74,13 +74,14 @@ class StaffManagementApiTest extends TestCase
         Sanctum::actingAs($staff);
 
         $booking = $this->booking($parishioner, 'mass-intention');
+        $booking->update(['status' => 'paid']);
         $intention = MassIntention::create([
             'booking_id' => $booking->id,
             'intention_date' => '2026-08-20',
             'payment_reference' => 'MASS-PAYMENT-1',
             'total_amount' => 100,
         ]);
-        $entry = MassIntentionEntry::create([
+        MassIntentionEntry::create([
             'mass_intention_id' => $intention->id,
             'intention_type' => 'Thanksgiving',
             'names' => ['Juan Dela Cruz'],
@@ -98,7 +99,8 @@ class StaffManagementApiTest extends TestCase
             ->assertJsonPath('data.0.names', 'Juan Dela Cruz')
             ->assertJsonPath('data.0.paymentReference', 'MASS-PAYMENT-1')
             ->assertJsonPath('data.0.receipt.fileName', 'mass-receipt.jpg')
-            ->assertJsonPath('data.0.type', 'Thanksgiving');
+            ->assertJsonPath('data.0.type', 'Thanksgiving')
+            ->assertJsonPath('data.0.status', 'paid');
 
         $transaction = $this->getJson('/api/staff/transactions')
             ->assertOk()
@@ -110,9 +112,11 @@ class StaffManagementApiTest extends TestCase
             'status' => 'confirmed',
         ])->assertOk()->assertJsonPath('data.status', 'confirmed');
 
-        $this->patchJson("/api/staff/mass-intentions/{$entry->id}/status", [
-            'status' => 'approved',
-        ])->assertOk()->assertJsonPath('data.status', 'approved');
+        $this->assertDatabaseHas('bookings', [
+            'id' => $booking->id,
+            'status' => 'paid',
+            'processed_by' => $staff->id,
+        ]);
     }
 
     public function test_staff_can_list_and_process_document_requests(): void

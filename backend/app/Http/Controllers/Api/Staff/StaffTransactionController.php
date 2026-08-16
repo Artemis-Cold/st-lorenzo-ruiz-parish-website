@@ -32,6 +32,14 @@ class StaffTransactionController extends Controller
 
         $bookingDocument->load(['booking.service', 'booking.user', 'booking.massIntention', 'booking.documentRequest']);
 
+        if ($bookingDocument->booking->service->code === 'mass-intention') {
+            $bookingDocument->booking->update([
+                'status' => $data['status'] === 'confirmed' ? 'paid' : 'rejected',
+                'processed_by' => $request->user()->id,
+                'processed_at' => now(),
+            ]);
+        }
+
         return response()->json(['data' => $this->serialize($bookingDocument)]);
     }
 

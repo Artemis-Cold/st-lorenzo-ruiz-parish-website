@@ -3,15 +3,12 @@
 namespace App\Http\Controllers\Api\Staff;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Staff\UpdateBookingStatusRequest;
 use App\Models\MassIntentionEntry;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 
 class StaffMassIntentionController extends Controller
 {
-    use ManagesBookingStatus;
-
     public function index(): JsonResponse
     {
         $entries = MassIntentionEntry::query()
@@ -21,26 +18,6 @@ class StaffMassIntentionController extends Controller
             ->map(fn (MassIntentionEntry $entry) => $this->serialize($entry));
 
         return response()->json(['data' => $entries]);
-    }
-
-    public function updateStatus(
-        UpdateBookingStatusRequest $request,
-        MassIntentionEntry $massIntentionEntry
-    ): JsonResponse {
-        $entry = $massIntentionEntry->load([
-            'massIntention.booking.user', 'massIntention.booking.documents',
-        ]);
-        $booking = $entry->massIntention->booking;
-
-        $this->changeStatus($booking, $request->validated('status'), [
-            'pending' => ['approved', 'rejected'],
-        ]);
-
-        $entry->load([
-            'massIntention.booking.user', 'massIntention.booking.documents',
-        ]);
-
-        return response()->json(['data' => $this->serialize($entry)]);
     }
 
     private function serialize(MassIntentionEntry $entry): array

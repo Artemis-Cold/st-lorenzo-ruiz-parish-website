@@ -118,7 +118,7 @@ export interface ProfileBooking {
   booking_reference: string;
   service: string;
   package: string | null;
-  status: "pending" | "approved" | "ready_for_pickup" | "rejected" | "cancelled" | "completed";
+  status: "pending" | "paid" | "approved" | "ready_for_pickup" | "rejected" | "cancelled" | "completed";
   booking_date: string | null;
   start_time: string | null;
   end_time: string | null;

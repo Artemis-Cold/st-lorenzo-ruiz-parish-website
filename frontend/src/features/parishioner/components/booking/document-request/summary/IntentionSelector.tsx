@@ -2,7 +2,6 @@ import { format } from "date-fns";
 import type { Dispatch, SetStateAction } from "react";
 import {
   Gift,
-  HeartHandshake,
   Cake,
   CalendarHeart,
   HandHelping,
@@ -24,11 +23,6 @@ interface Props {
 }
 
 const intentionOptions = [
-  {
-    type: "Special Intention",
-    icon: HeartHandshake,
-    color: "text-red-500",
-  },
   {
     type: "Thanksgiving",
     icon: Gift,

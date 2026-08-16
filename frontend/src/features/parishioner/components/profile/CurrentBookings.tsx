@@ -5,6 +5,7 @@ import type { ProfileBooking } from "@/api/auth";
 
 const statusStyles: Record<ProfileBooking["status"], string> = {
   pending: "bg-amber-100 text-amber-700",
+  paid: "bg-emerald-100 text-emerald-700",
   approved: "bg-green-100 text-green-700",
   ready_for_pickup: "bg-purple-100 text-purple-700",
   completed: "bg-green-100 text-green-700",
@@ -34,7 +35,7 @@ export default function CurrentBookings({
       {bookings.length === 0 ? (
         <div className="flex h-full min-h-64 flex-col items-center justify-center rounded-xl border border-dashed px-6 py-12 text-center text-gray-500">
           <Church size={42} className="mx-auto mb-3 text-gray-300" />
-          You have no pending or approved bookings.
+          You have no active bookings.
         </div>
       ) : (
         <div className="space-y-4">

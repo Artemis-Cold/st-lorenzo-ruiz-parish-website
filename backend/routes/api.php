@@ -111,7 +111,6 @@ Route::middleware(['auth:sanctum', 'staff'])
         Route::patch('/bookings/{booking}/status', [StaffBookingController::class, 'updateStatus']);
         Route::post('/bookings/{booking}/appointments', [WeddingAppointmentController::class, 'store']);
         Route::get('/mass-intentions', [StaffMassIntentionController::class, 'index']);
-        Route::patch('/mass-intentions/{massIntentionEntry}/status', [StaffMassIntentionController::class, 'updateStatus']);
         Route::get('/document-requests', [StaffDocumentRequestController::class, 'index']);
         Route::patch('/document-requests/{documentRequestBooking}/status', [StaffDocumentRequestController::class, 'updateStatus']);
     });

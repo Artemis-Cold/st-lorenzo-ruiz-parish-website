@@ -8,7 +8,6 @@ import type {
   RequestStatus,
   ServiceRequest,
 } from "@/features/staff/types/request";
-import type { IntentionStatus } from "@/features/staff/components/StatusBadge";
 
 interface CollectionResponse<T> {
   data: T[];
@@ -37,17 +36,6 @@ export async function updateStaffBookingStatus(
 export async function getStaffMassIntentions(): Promise<MassIntention[]> {
   const response = await api.get<CollectionResponse<MassIntention>>(
     "/staff/mass-intentions",
-  );
-  return response.data.data;
-}
-
-export async function updateMassIntentionStatus(
-  id: number,
-  status: IntentionStatus,
-): Promise<MassIntention> {
-  const response = await api.patch<ItemResponse<MassIntention>>(
-    `/staff/mass-intentions/${id}/status`,
-    { status },
   );
   return response.data.data;
 }

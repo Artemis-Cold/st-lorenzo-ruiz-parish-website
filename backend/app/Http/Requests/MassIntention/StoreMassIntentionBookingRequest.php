@@ -19,7 +19,7 @@ class StoreMassIntentionBookingRequest extends FormRequest
             'groups.*.type' => [
                 'required',
                 'distinct',
-                'in:Special Intention,Thanksgiving,Birthday,Anniversary,Petition,Soul',
+                'in:Thanksgiving,Birthday,Anniversary,Petition,Soul',
             ],
             'groups.*.entries' => ['required', 'array', 'min:1'],
             'groups.*.entries.*.names' => ['required', 'array', 'min:1', 'max:3'],

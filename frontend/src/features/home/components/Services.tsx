@@ -58,7 +58,7 @@ const services = [
     icon: ScrollText,
     title: "Mass Intentions",
     description:
-      "Offer Mass intentions for thanksgiving, healing, birthdays, anniversaries, and prayers for departed loved ones.",
+      "Offer Mass intentions for thanksgiving, petitions, birthdays, anniversaries, and prayers for departed loved ones.",
     color: "bg-amber-100 text-amber-600",
     path: "/services/mass-intention",
     requirements: [

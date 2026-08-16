@@ -1,19 +1,16 @@
-import { X, Check } from "lucide-react";
+import { X } from "lucide-react";
 
-import StatusBadge, { type IntentionStatus } from "../StatusBadge";
+import StatusBadge from "../StatusBadge";
 import type { MassIntention } from "../../types/massIntention";
-import RejectConfirmationButton from "../RejectConfirmationButton";
 
 interface Props {
   intention: MassIntention | null;
   onClose: () => void;
-  onUpdateStatus: (id: number, status: IntentionStatus) => void;
 }
 
 export default function MassIntentionDetailModal({
   intention,
   onClose,
-  onUpdateStatus,
 }: Props) {
   if (!intention) return null;
 
@@ -102,22 +99,6 @@ export default function MassIntentionDetailModal({
           </div>
         </div>
 
-        {intention.status === "pending" && (
-          <div className="mt-6 flex gap-3">
-            <RejectConfirmationButton
-              itemLabel="mass intention"
-              onConfirm={() => onUpdateStatus(intention.id, "rejected")}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 py-3 font-semibold text-red-600 transition hover:bg-red-50"
-            />
-            <button
-              onClick={() => onUpdateStatus(intention.id, "approved")}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B22222] py-3 font-semibold text-white transition hover:bg-[#8B1C1C]"
-            >
-              <Check size={18} />
-              Approve
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
