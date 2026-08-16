@@ -24,7 +24,7 @@ import type { WeddingBooking, Person } from "../types/wedding";
 const stepLabels = [
   "Requirements",
   "Schedule",
-  "Packages",
+  "Wedding Options",
   "Details",
   "Confirmation",
 ];
@@ -301,7 +301,7 @@ export default function Wedding() {
     }
 
     if (step === 3 && booking.service_package_id === 0) {
-      return "Please select a package before continuing.";
+      return "Wedding inclusions are still loading. Please try again.";
     }
 
     if (step === 4) {

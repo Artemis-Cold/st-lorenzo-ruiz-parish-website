@@ -22,39 +22,49 @@ export default function PackagesStep({
   selectedPackage,
   setSelectedPackage,
 }: PackagesStepProps) {
-  const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
+    let active = true;
+
     const loadPackages = async () => {
       try {
         const data = await getServicePackages("wedding");
-        setPackages(data);
+        if (!active) return;
+
+        const defaultPackage =
+          data.find((pkg) => pkg.recommended) ?? data[0] ?? null;
+
+        if (!defaultPackage) {
+          setLoadError(true);
+          return;
+        }
+
+        setSelectedPackage(defaultPackage);
+        setBooking((previous) =>
+          previous.service_package_id === defaultPackage.id
+            ? previous
+            : {
+                ...previous,
+                service_package_id: defaultPackage.id,
+                selected_addon_ids: [],
+              },
+        );
       } catch (error) {
         console.error(error);
+        if (active) setLoadError(true);
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     loadPackages();
-  }, []);
 
-  useEffect(() => {
-    if (selectedPackage || booking.service_package_id === 0) return;
-
-    const match = packages.find((pkg) => pkg.id === booking.service_package_id);
-    if (match) setSelectedPackage(match);
-  }, [booking.service_package_id, packages, selectedPackage, setSelectedPackage]);
-
-  const selectPackage = (pkg: ServicePackage) => {
-    setBooking((prev) => ({
-      ...prev,
-      service_package_id: pkg.id,
-      selected_addon_ids: [], // reset add-ons when switching packages
-    }));
-    setSelectedPackage(pkg);
-  };
+    return () => {
+      active = false;
+    };
+  }, [setBooking, setSelectedPackage]);
 
   const toggleAddOn = (addonId: number) => {
     setBooking((prev) => {
@@ -82,55 +92,37 @@ export default function PackagesStep({
 
   if (loading) {
     return (
-      <BookingCard title="Wedding Package">
+      <BookingCard title="Wedding Fees & Add-ons">
         <div className="rounded-2xl border py-10 text-center text-gray-500">
-          Loading packages...
+          Loading wedding inclusions...
+        </div>
+      </BookingCard>
+    );
+  }
+
+  if (loadError || !selectedPackage) {
+    return (
+      <BookingCard title="Wedding Fees & Add-ons">
+        <div className="rounded-2xl border border-dashed border-red-200 bg-red-50 py-10 text-center text-red-600">
+          Wedding inclusions are currently unavailable. Please try again.
         </div>
       </BookingCard>
     );
   }
 
   return (
-    <BookingCard title="Wedding Package">
+    <BookingCard title="Wedding Fees & Add-ons">
       <div className="space-y-8">
-        {/* Package selection */}
-        <div>
-          <h3 className="mb-5 text-center text-xl font-bold text-[#B22222]">
-            Choose a Package
-          </h3>
-
-          <div className="space-y-3">
-            {packages.map((pkg) => (
-              <label
-                key={pkg.id}
-                className={`flex cursor-pointer items-center justify-between rounded-xl border p-4 transition ${
-                  booking.service_package_id === pkg.id
-                    ? "border-[#B22222] bg-red-50"
-                    : "hover:border-[#B22222]"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <input
-                    type="radio"
-                    checked={booking.service_package_id === pkg.id}
-                    onChange={() => selectPackage(pkg)}
-                    className="h-5 w-5 accent-[#B22222]"
-                  />
-
-                  <span>{pkg.name}</span>
-                </div>
-
-                <span className="font-semibold text-[#B22222]">
-                  ₱{Number(pkg.base_price).toLocaleString()}
-                </span>
-              </label>
-            ))}
-          </div>
+        <div className="rounded-2xl border border-red-100 bg-red-50 px-5 py-4 text-center">
+          <p className="font-semibold text-[#B22222]">
+            Parish wedding inclusions are automatically included.
+          </p>
+          <p className="mt-1 text-sm text-gray-600">
+            Review the standard fees below and select optional add-ons if needed.
+          </p>
         </div>
 
-        {selectedPackage && (
-          <>
-            {/* Included */}
+        {/* Included */}
             {selectedPackage.inclusions.length > 0 && (
               <div>
                 <h3 className="mb-5 text-center text-xl font-bold text-[#B22222]">
@@ -203,8 +195,6 @@ export default function PackagesStep({
                 </span>
               </div>
             </div>
-          </>
-        )}
       </div>
     </BookingCard>
   );

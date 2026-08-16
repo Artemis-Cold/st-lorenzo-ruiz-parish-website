@@ -34,7 +34,10 @@ export default function ConfirmationStep({
 
       <ScheduleSummary selectedDate={selectedDate} selectedSlot={selectedSlot} />
 
-      <PackageSummary selectedPackage={selectedPackage} />
+      <PackageSummary
+        selectedPackage={selectedPackage}
+        selectedAddonIds={booking.selected_addon_ids}
+      />
 
       <DetailsStep
         booking={booking}
