@@ -167,6 +167,7 @@ export default function Profile() {
 
       </div>
       <BookingDetailModal
+        key={selectedBookingId ?? "closed-booking-detail"}
         bookingId={selectedBookingId}
         onClose={() => setSelectedBookingId(null)}
         onRescheduled={loadProfile}

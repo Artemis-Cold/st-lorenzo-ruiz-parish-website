@@ -92,7 +92,7 @@ export default function PackagesStep({
 
   if (loading) {
     return (
-      <BookingCard title="Wedding Fees & Add-ons">
+      <BookingCard title="Wedding Package & Add-ons">
         <div className="rounded-2xl border py-10 text-center text-gray-500">
           Loading wedding inclusions...
         </div>
@@ -102,7 +102,7 @@ export default function PackagesStep({
 
   if (loadError || !selectedPackage) {
     return (
-      <BookingCard title="Wedding Fees & Add-ons">
+      <BookingCard title="Wedding Package & Add-ons">
         <div className="rounded-2xl border border-dashed border-red-200 bg-red-50 py-10 text-center text-red-600">
           Wedding inclusions are currently unavailable. Please try again.
         </div>
@@ -111,90 +111,91 @@ export default function PackagesStep({
   }
 
   return (
-    <BookingCard title="Wedding Fees & Add-ons">
+    <BookingCard title="Wedding Package & Add-ons">
       <div className="space-y-8">
         <div className="rounded-2xl border border-red-100 bg-red-50 px-5 py-4 text-center">
           <p className="font-semibold text-[#B22222]">
-            Parish wedding inclusions are automatically included.
+            Wedding package includes the following.
           </p>
           <p className="mt-1 text-sm text-gray-600">
-            Review the standard fees below and select optional add-ons if needed.
+            Review the standard fees below and select optional add-ons if
+            needed.
           </p>
         </div>
 
         {/* Included */}
-            {selectedPackage.inclusions.length > 0 && (
-              <div>
-                <h3 className="mb-5 text-center text-xl font-bold text-[#B22222]">
-                  Included
-                </h3>
+        {selectedPackage.inclusions.length > 0 && (
+          <div>
+            <h3 className="mb-5 text-center text-xl font-bold text-[#B22222]">
+              Included
+            </h3>
 
-                <div className="space-y-3">
-                  {selectedPackage.inclusions.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between rounded-xl border p-4"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="rounded bg-[#B22222] p-1 text-white">
-                          <Check size={16} />
-                        </div>
-
-                        <span>{item.name}</span>
-                      </div>
-
-                      <span className="font-semibold text-[#B22222]">
-                        ₱{Number(item.price).toLocaleString()}
-                      </span>
+            <div className="space-y-3">
+              {selectedPackage.inclusions.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between rounded-xl border p-4"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded bg-[#B22222] p-1 text-white">
+                      <Check size={16} />
                     </div>
-                  ))}
+
+                    <span>{item.name}</span>
+                  </div>
+
+                  <span className="font-semibold text-[#B22222]">
+                    ₱{Number(item.price).toLocaleString()}
+                  </span>
                 </div>
-              </div>
-            )}
-
-            {/* Optional Add-ons */}
-            {selectedPackage.addons.length > 0 && (
-              <div>
-                <h3 className="mb-5 text-center text-xl font-bold text-[#B22222]">
-                  Optional Add-ons
-                </h3>
-
-                <div className="space-y-3">
-                  {selectedPackage.addons.map((item) => (
-                    <label
-                      key={item.id}
-                      className="flex cursor-pointer items-center justify-between rounded-xl border p-4 transition hover:border-[#B22222]"
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={booking.selected_addon_ids.includes(item.id)}
-                          onChange={() => toggleAddOn(item.id)}
-                          className="h-5 w-5 accent-[#B22222]"
-                        />
-
-                        <span>{item.name}</span>
-                      </div>
-
-                      <span className="font-semibold">
-                        ₱{Number(item.price).toLocaleString()}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Total */}
-            <div className="rounded-2xl bg-[#B22222] p-6 text-white">
-              <div className="flex items-center justify-between">
-                <span className="text-xl font-semibold">Total Package</span>
-
-                <span className="text-3xl font-bold">
-                  ₱{total.toLocaleString()}
-                </span>
-              </div>
+              ))}
             </div>
+          </div>
+        )}
+
+        {/* Optional Add-ons */}
+        {selectedPackage.addons.length > 0 && (
+          <div>
+            <h3 className="mb-5 text-center text-xl font-bold text-[#B22222]">
+              Optional Add-ons
+            </h3>
+
+            <div className="space-y-3">
+              {selectedPackage.addons.map((item) => (
+                <label
+                  key={item.id}
+                  className="flex cursor-pointer items-center justify-between rounded-xl border p-4 transition hover:border-[#B22222]"
+                >
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="checkbox"
+                      checked={booking.selected_addon_ids.includes(item.id)}
+                      onChange={() => toggleAddOn(item.id)}
+                      className="h-5 w-5 accent-[#B22222]"
+                    />
+
+                    <span>{item.name}</span>
+                  </div>
+
+                  <span className="font-semibold">
+                    ₱{Number(item.price).toLocaleString()}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Total */}
+        <div className="rounded-2xl bg-[#B22222] p-6 text-white">
+          <div className="flex items-center justify-between">
+            <span className="text-xl font-semibold">Total Package</span>
+
+            <span className="text-3xl font-bold">
+              ₱{total.toLocaleString()}
+            </span>
+          </div>
+        </div>
       </div>
     </BookingCard>
   );

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CalendarClock, CalendarDays, ExternalLink, FileUp, LoaderCircle, X } from "lucide-react";
+import { CalendarClock, CalendarDays, ExternalLink, FileText, FileUp, LoaderCircle, Trash2, X } from "lucide-react";
 
 import {
   getParishionerBooking,
@@ -11,6 +11,15 @@ import RescheduleBookingModal from "./RescheduleBookingModal";
 
 const label = (value: string) =>
   value.split("_").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_FILE_PATTERN = /\.(pdf|jpe?g|png)$/i;
+
+function withoutKey<T>(record: Record<string, T>, key: string) {
+  const next = { ...record };
+  delete next[key];
+  return next;
+}
 
 export default function BookingDetailModal({
   bookingId,
@@ -28,7 +37,8 @@ export default function BookingDetailModal({
   }>({ bookingId: 0, booking: null, error: "" });
   const [rescheduling, setRescheduling] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
-  const [uploadError, setUploadError] = useState("");
+  const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
+  const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
   const [selectedTypes, setSelectedTypes] = useState<Record<string, string>>({});
   const booking = result.bookingId === bookingId ? result.booking : null;
   const error = result.bookingId === bookingId ? result.error : "";
@@ -65,21 +75,53 @@ export default function BookingDetailModal({
 
   const closeDetail = () => {
     setRescheduling(false);
+    setPendingFiles({});
+    setUploadErrors({});
+    setSelectedTypes({});
     onClose();
+  };
+
+  const selectRequirementFile = (
+    requirement: ParishionerBookingDetail["missingRequirements"][number],
+    file: File,
+  ) => {
+    if (!ALLOWED_FILE_PATTERN.test(file.name)) {
+      setPendingFiles((current) => withoutKey(current, requirement.key));
+      setUploadErrors((current) => ({
+        ...current,
+        [requirement.key]: "Select a PDF, JPG, JPEG, or PNG file.",
+      }));
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setPendingFiles((current) => withoutKey(current, requirement.key));
+      setUploadErrors((current) => ({
+        ...current,
+        [requirement.key]: "The selected file must not exceed 5 MB.",
+      }));
+      return;
+    }
+
+    setPendingFiles((current) => ({ ...current, [requirement.key]: file }));
+    setUploadErrors((current) => withoutKey(current, requirement.key));
   };
 
   const uploadRequirement = async (
     requirement: ParishionerBookingDetail["missingRequirements"][number],
-    file: File,
   ) => {
-    if (file.size > 5 * 1024 * 1024) {
-      setUploadError("Each file must not exceed 5 MB.");
+    const file = pendingFiles[requirement.key];
+    if (!file) {
+      setUploadErrors((current) => ({
+        ...current,
+        [requirement.key]: "Choose a file before submitting this requirement.",
+      }));
       return;
     }
 
     const documentType = selectedTypes[requirement.key] ?? requirement.types[0];
     setUploading(requirement.key);
-    setUploadError("");
+    setUploadErrors((current) => withoutKey(current, requirement.key));
 
     try {
       const uploaded = await uploadParishionerBookingDocument(
@@ -97,9 +139,14 @@ export default function BookingDetailModal({
             }
           : null,
       }));
+      setPendingFiles((current) => withoutKey(current, requirement.key));
+      setSelectedTypes((current) => withoutKey(current, requirement.key));
       void onRescheduled?.();
     } catch {
-      setUploadError("Unable to upload this requirement. Please try again.");
+      setUploadErrors((current) => ({
+        ...current,
+        [requirement.key]: "Unable to submit this requirement. Please try again.",
+      }));
     } finally {
       setUploading(null);
     }
@@ -172,14 +219,16 @@ export default function BookingDetailModal({
                   <FileUp className="mt-0.5 shrink-0 text-amber-700" size={21} />
                   <div>
                     <h3 className="font-semibold text-amber-900">Requirements to follow</h3>
-                    <p className="mt-1 text-sm leading-5 text-amber-800">Your booking remains pending until these documents are submitted.</p>
+                    <p className="mt-1 text-sm leading-5 text-amber-800">Your booking remains pending until these documents are submitted. Choosing a file will not upload it immediately; review the file first, then select Submit requirement.</p>
                   </div>
                 </div>
 
-                {uploadError && <p className="mt-3 rounded-lg bg-red-100 px-3 py-2 text-sm text-red-700">{uploadError}</p>}
-
                 <div className="mt-4 space-y-3">
-                  {booking.missingRequirements.map((requirement) => (
+                  {booking.missingRequirements.map((requirement) => {
+                    const pendingFile = pendingFiles[requirement.key];
+                    const isUploading = uploading === requirement.key;
+
+                    return (
                     <div key={requirement.key} className="rounded-xl border border-amber-200 bg-white p-4">
                       <p className="text-sm font-semibold text-gray-800">{requirement.label}</p>
                       {requirement.types.length > 1 && (
@@ -192,24 +241,64 @@ export default function BookingDetailModal({
                         </select>
                       )}
                       {booking.canUploadDocuments && (
-                        <label className={`mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#B22222] px-4 py-2 text-sm font-semibold text-white ${uploading ? "pointer-events-none opacity-60" : ""}`}>
-                          <FileUp size={16} />
-                          {uploading === requirement.key ? "Uploading..." : "Upload file"}
-                          <input
-                            type="file"
-                            className="hidden"
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            disabled={uploading !== null}
-                            onChange={(event) => {
-                              const file = event.target.files?.[0];
-                              if (file) void uploadRequirement(requirement, file);
-                              event.target.value = "";
-                            }}
-                          />
-                        </label>
+                        <div className="mt-3 space-y-3">
+                          <label className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#B22222] px-4 py-2 text-sm font-semibold text-[#B22222] transition hover:bg-red-50 ${uploading ? "pointer-events-none opacity-60" : ""}`}>
+                            <FileUp size={16} />
+                            {pendingFile ? "Replace selected file" : "Choose file"}
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              disabled={uploading !== null}
+                              onChange={(event) => {
+                                const file = event.target.files?.[0];
+                                if (file) selectRequirementFile(requirement, file);
+                                event.target.value = "";
+                              }}
+                            />
+                          </label>
+
+                          {pendingFile && (
+                            <div className="rounded-xl border border-green-200 bg-green-50 p-3">
+                              <div className="flex items-start gap-3">
+                                <FileText className="mt-0.5 shrink-0 text-green-700" size={20} />
+                                <div className="min-w-0 flex-1">
+                                  <p className="break-words text-sm font-semibold text-green-900">{pendingFile.name}</p>
+                                  <p className="mt-0.5 text-xs text-green-700">{(pendingFile.size / 1024 / 1024).toFixed(2)} MB · Ready for submission</p>
+                                </div>
+                                <button
+                                  type="button"
+                                  aria-label={`Remove ${pendingFile.name}`}
+                                  disabled={isUploading}
+                                  onClick={() => setPendingFiles((current) => withoutKey(current, requirement.key))}
+                                  className="rounded-lg p-1.5 text-green-700 transition hover:bg-green-100 disabled:opacity-50"
+                                >
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
+
+                              <button
+                                type="button"
+                                disabled={uploading !== null}
+                                onClick={() => void uploadRequirement(requirement)}
+                                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#B22222] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                              >
+                                {isUploading ? <LoaderCircle className="animate-spin" size={16} /> : <FileUp size={16} />}
+                                {isUploading ? "Submitting..." : "Submit requirement"}
+                              </button>
+                            </div>
+                          )}
+
+                          {uploadErrors[requirement.key] && (
+                            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                              {uploadErrors[requirement.key]}
+                            </p>
+                          )}
+                        </div>
                       )}
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </section>
             )}

@@ -70,7 +70,7 @@ export default function FileUploadField({
                 </p>
 
                 <span className="mt-2 inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
-                  ✓ Uploaded
+                  Ready to submit
                 </span>
               </div>
             </div>
@@ -90,7 +90,7 @@ export default function FileUploadField({
         >
           <Upload size={40} className="mb-3 text-[#B22222]" />
 
-          <p className="font-semibold">Upload Document</p>
+          <p className="font-semibold">Select Document</p>
 
           <p className="mt-1 text-sm text-gray-500">Click to browse</p>
 
@@ -110,7 +110,7 @@ export default function FileUploadField({
                 </p>
 
                 <span className="mt-2 inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
-                  ✓ Uploaded
+                  Ready to submit
                 </span>
               </div>
             </div>
