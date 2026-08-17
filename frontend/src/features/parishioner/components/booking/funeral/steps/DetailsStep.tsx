@@ -1010,16 +1010,14 @@ ${
             </h3>
 
             <p className="mb-6 text-sm text-gray-500">
-              Upload clear scanned copies or photos of the required documents.
-              Accepted formats are PDF, JPG, JPEG, and PNG (maximum 5 MB per
-              file).
+              Upload the files you currently have. Missing requirements may be
+              submitted later from My Profile while the booking remains pending.
             </p>
 
             <div className="grid grid-cols-12 gap-5">
               <div className="col-span-12 md:col-span-6">
                 <FileUploadField
                   label="Death Certificate"
-                  required
                   file={getDocument("death_certificate")}
                   onChange={(file) =>
                     updateDocument("death_certificate", file)
@@ -1034,7 +1032,6 @@ ${
               <div className="col-span-12 md:col-span-6">
                 <FileUploadField
                   label="Biography of the Deceased"
-                  required
                   file={getDocument("biography")}
                   onChange={(file) => updateDocument("biography", file)}
                   readOnly={readOnly}

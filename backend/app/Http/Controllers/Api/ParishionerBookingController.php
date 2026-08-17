@@ -5,17 +5,24 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Booking\RescheduleBookingRequest;
 use App\Models\Booking;
+use App\Services\BookingRequirementService;
 use App\Services\BookingReschedulingService;
+use App\Services\SmsNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class ParishionerBookingController extends Controller
 {
     private const RESCHEDULABLE_SERVICES = ['baptism', 'wedding', 'funeral'];
 
-    public function show(Request $request, Booking $booking): JsonResponse
-    {
+    public function show(
+        Request $request,
+        Booking $booking,
+        BookingRequirementService $requirements
+    ): JsonResponse {
         abort_unless($booking->user_id === $request->user()->id, 404);
 
         $booking->load([
@@ -35,6 +42,9 @@ class ParishionerBookingController extends Controller
             'bookingSlotId' => $booking->booking_slot_id,
             'canReschedule' => in_array($booking->service?->code, self::RESCHEDULABLE_SERVICES, true)
                 && in_array($booking->status, ['pending', 'approved'], true),
+            'canUploadDocuments' => in_array($booking->service?->code, self::RESCHEDULABLE_SERVICES, true)
+                && $booking->status === 'pending',
+            'missingRequirements' => $requirements->missing($booking),
             'submittedAt' => $booking->created_at->toIso8601String(),
             'remarks' => $booking->remarks,
             'schedule' => [
@@ -61,6 +71,61 @@ class ParishionerBookingController extends Controller
                 'url' => Storage::disk('public')->url($document->file_path),
             ])->values(),
         ]]);
+    }
+
+    public function uploadDocument(
+        Request $request,
+        Booking $booking,
+        BookingRequirementService $requirements,
+        SmsNotificationService $sms
+    ): JsonResponse {
+        abort_unless($booking->user_id === $request->user()->id, 404);
+        abort_unless(in_array($booking->service()->value('code'), self::RESCHEDULABLE_SERVICES, true), 404);
+
+        if ($booking->status !== 'pending') {
+            throw ValidationException::withMessages([
+                'file' => 'Documents can only be added while the booking is pending.',
+            ]);
+        }
+
+        $data = $request->validate([
+            'document_type' => ['required', 'string', Rule::in($requirements->allowedTypes($booking))],
+            'file' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+        ]);
+
+        if ($booking->documents()->where('document_type', $data['document_type'])->exists()) {
+            throw ValidationException::withMessages([
+                'file' => 'This requirement has already been uploaded.',
+            ]);
+        }
+
+        $file = $data['file'];
+        $document = $booking->documents()->create([
+            'document_type' => $data['document_type'],
+            'file_name' => $file->getClientOriginalName(),
+            'file_path' => $file->store('booking-documents', 'public'),
+            'status' => 'pending',
+        ]);
+        $booking->load(['service', 'documents', 'baptizand', 'user']);
+        $missing = $requirements->missing($booking);
+
+        if ($missing === []) {
+            $sms->queue(
+                $booking,
+                'booking_requirements_complete',
+                "St. Lorenzo Parish: All requirements for booking {$booking->booking_reference} are now submitted and ready for parish review."
+            );
+        }
+
+        return response()->json(['data' => [
+            'document' => [
+                'type' => $document->document_type,
+                'fileName' => $document->file_name,
+                'status' => $document->status,
+                'url' => Storage::disk('public')->url($document->file_path),
+            ],
+            'missingRequirements' => $missing,
+        ]], 201);
     }
 
     public function reschedule(

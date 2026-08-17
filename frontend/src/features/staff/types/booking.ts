@@ -29,6 +29,7 @@ export interface Booking {
     };
     remarks: string | null;
     documents: Array<{ type: string; fileName: string; status: string; url: string }>;
+    missingRequirements?: Array<{ key: string; label: string; types: string[] }>;
     serviceData: {
       applicants?: Array<{
         role: string;

@@ -5,12 +5,16 @@ namespace App\Http\Controllers\Api\Staff;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Staff\UpdateBookingStatusRequest;
 use App\Models\Booking;
+use App\Services\BookingRequirementService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class StaffBookingController extends Controller
 {
     use ManagesBookingStatus;
+
+    public function __construct(private BookingRequirementService $requirements) {}
 
     public function index(): JsonResponse
     {
@@ -41,6 +45,16 @@ class StaffBookingController extends Controller
             404
         );
 
+        if (
+            $booking->status === 'pending'
+            && $request->validated('status') === 'approved'
+            && $this->requirements->missing($booking) !== []
+        ) {
+            throw ValidationException::withMessages([
+                'documents' => 'This booking cannot be approved until all required documents are submitted.',
+            ]);
+        }
+
         $this->changeStatus($booking, $request->validated('status'), [
             'pending' => ['approved', 'rejected', 'cancelled'],
             'approved' => ['completed', 'cancelled'],
@@ -55,6 +69,24 @@ class StaffBookingController extends Controller
         ]);
 
         return response()->json(['data' => $this->serialize($booking)]);
+    }
+
+    public function remindRequirements(Booking $booking): JsonResponse
+    {
+        abort_unless(
+            in_array($booking->service()->value('code'), ['wedding', 'funeral', 'baptism'], true),
+            404
+        );
+
+        if (! $this->requirements->notifyIfIncomplete($booking)) {
+            throw ValidationException::withMessages([
+                'documents' => 'This booking has no missing requirements.',
+            ]);
+        }
+
+        return response()->json([
+            'message' => 'The missing-requirements SMS reminder has been queued.',
+        ]);
     }
 
     private function serialize(Booking $booking): array
@@ -119,6 +151,7 @@ class StaffBookingController extends Controller
                     'status' => $document->status,
                     'url' => Storage::disk('public')->url($document->file_path),
                 ])->values(),
+                'missingRequirements' => $this->requirements->missing($booking),
                 'serviceData' => $this->serviceData($booking),
                 'appointments' => $booking->weddingAppointments->map(fn ($appointment) => [
                     'id' => $appointment->id,

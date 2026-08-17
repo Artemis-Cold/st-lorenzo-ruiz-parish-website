@@ -16,10 +16,11 @@ class FuneralBookingTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_funeral_can_be_submitted_without_a_spouse_and_with_valid_files(): void
+    public function test_incomplete_funeral_accepts_requirements_to_follow_and_blocks_approval_until_uploaded(): void
     {
         Storage::fake('public');
-        Sanctum::actingAs(User::factory()->create());
+        $parishioner = User::factory()->create();
+        Sanctum::actingAs($parishioner);
         $service = Service::create(['code' => 'funeral', 'name' => 'Funeral', 'description' => 'Funeral']);
         $package = ServicePackage::create(['service_id' => $service->id, 'name' => 'Standard', 'base_price' => 1000]);
         $slot = BookingSlot::create([
@@ -47,23 +48,27 @@ class FuneralBookingTest extends TestCase
                     'date_provided' => now()->toDateString(),
                 ],
             ],
-            'documents' => [
-                ['document_type' => 'death_certificate', 'file' => UploadedFile::fake()->create('death.pdf', 500, 'application/pdf')],
-                ['document_type' => 'biography', 'file' => UploadedFile::fake()->create('biography.pdf', 500, 'application/pdf')],
-            ],
             'remarks' => '',
         ]);
 
         $response->assertCreated();
+        $bookingId = $response->json('data.id');
+        $this->assertDatabaseHas('bookings', ['id' => $bookingId, 'status' => 'pending']);
         $this->assertDatabaseHas('funeral_deceased', [
             'first_name' => 'Juan', 'age' => 80,
             'spouse_first_name' => null, 'spouse_last_name' => null,
         ]);
-        $this->assertDatabaseCount('booking_documents', 2);
+        $this->assertDatabaseCount('booking_documents', 0);
+        $this->assertDatabaseHas('sms_messages', [
+            'booking_id' => $bookingId,
+            'category' => 'booking_requirements',
+        ]);
 
-        Sanctum::actingAs(User::factory()->create(['role' => 'staff']));
+        $staff = User::factory()->create(['role' => 'staff']);
+        Sanctum::actingAs($staff);
         $this->getJson('/api/staff/bookings')
             ->assertOk()
+            ->assertJsonCount(2, 'data.0.details.missingRequirements')
             ->assertJsonPath(
                 'data.0.details.serviceData.deceased.characteristics',
                 'A devoted parishioner.'
@@ -72,5 +77,38 @@ class FuneralBookingTest extends TestCase
                 'data.0.details.serviceData.deceased.churchLife.attendsMass',
                 'regular'
             );
+
+        $this->patchJson("/api/staff/bookings/{$bookingId}/status", ['status' => 'approved'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('documents');
+
+        $this->postJson("/api/staff/bookings/{$bookingId}/requirements/remind")
+            ->assertOk()
+            ->assertJsonPath('message', 'The missing-requirements SMS reminder has been queued.');
+        $this->assertDatabaseCount('sms_messages', 2);
+
+        Sanctum::actingAs($parishioner);
+        $this->post("/api/bookings/{$bookingId}/documents", [
+            'document_type' => 'death_certificate',
+            'file' => UploadedFile::fake()->create('death.pdf', 500, 'application/pdf'),
+        ], ['Accept' => 'application/json'])
+            ->assertCreated()
+            ->assertJsonCount(1, 'data.missingRequirements');
+        $this->post("/api/bookings/{$bookingId}/documents", [
+            'document_type' => 'biography',
+            'file' => UploadedFile::fake()->create('biography.pdf', 500, 'application/pdf'),
+        ], ['Accept' => 'application/json'])
+            ->assertCreated()
+            ->assertJsonCount(0, 'data.missingRequirements');
+
+        $this->assertDatabaseHas('sms_messages', [
+            'booking_id' => $bookingId,
+            'category' => 'booking_requirements_complete',
+        ]);
+
+        Sanctum::actingAs($staff);
+        $this->patchJson("/api/staff/bookings/{$bookingId}/status", ['status' => 'approved'])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'approved');
     }
 }

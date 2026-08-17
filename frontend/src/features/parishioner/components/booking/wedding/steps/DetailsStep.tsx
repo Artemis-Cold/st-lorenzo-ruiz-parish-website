@@ -1000,14 +1000,13 @@ ${
             <p className="mb-6 text-sm text-gray-500">
               {readOnly
                 ? "Review the uploaded documents before submitting your booking request."
-                : "Upload clear scanned copies or photos of the required documents. Accepted formats are PDF, JPG, JPEG, and PNG (maximum 5 MB per file)."}
+                : "Upload the files you currently have. Missing requirements may be submitted later from My Profile while the booking remains pending."}
             </p>
 
             <div className="grid grid-cols-12 gap-5">
               <div className="col-span-12 md:col-span-6">
                 <FileUploadField
                   label="Marriage License"
-                  required
                   file={getDocument("marriage_license")}
                   onChange={(file) => updateDocument("marriage_license", file)}
                   readOnly={readOnly}
@@ -1018,7 +1017,6 @@ ${
               <div className="col-span-12 md:col-span-6">
                 <FileUploadField
                   label="Certificate of No Marriage (CENOMAR)"
-                  required
                   file={getDocument("cenomar")}
                   onChange={(file) => updateDocument("cenomar", file)}
                   readOnly={readOnly}
@@ -1029,7 +1027,6 @@ ${
               <div className="col-span-12 md:col-span-6">
                 <FileUploadField
                   label="Baptismal Certificate"
-                  required
                   file={getDocument("baptismal_certificate")}
                   onChange={(file) =>
                     updateDocument("baptismal_certificate", file)
@@ -1044,7 +1041,6 @@ ${
               <div className="col-span-12 md:col-span-6">
                 <FileUploadField
                   label="Confirmation Certificate"
-                  required
                   file={getDocument("confirmation_certificate")}
                   onChange={(file) =>
                     updateDocument("confirmation_certificate", file)
@@ -1059,7 +1055,6 @@ ${
               <div className="col-span-12">
                 <FileUploadField
                   label="Three (3) Copies of 3R Couple Photo"
-                  required
                   file={getDocument("couple_photo")}
                   onChange={(file) => updateDocument("couple_photo", file)}
                   readOnly={readOnly}

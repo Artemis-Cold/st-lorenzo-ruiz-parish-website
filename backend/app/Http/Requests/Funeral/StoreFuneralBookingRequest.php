@@ -4,7 +4,6 @@ namespace App\Http\Requests\Funeral;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Validator;
 
 class StoreFuneralBookingRequest extends FormRequest
 {
@@ -40,14 +39,14 @@ class StoreFuneralBookingRequest extends FormRequest
             'deceased.informant.relationship' => ['required', 'string', 'max:100'],
             'deceased.informant.contact_number' => ['required', 'regex:/^09\d{9}$/'],
             'deceased.informant.date_provided' => ['required', 'date'],
-            'documents' => ['required', 'array'],
+            'documents' => ['nullable', 'array'],
             'documents.*.document_type' => [
-                'required',
+                'required_with:documents',
                 'distinct',
                 'in:death_certificate,biography',
             ],
             'documents.*.file' => [
-                'required',
+                'required_with:documents',
                 'file',
                 'mimes:jpg,jpeg,png,pdf',
                 'max:5120',
@@ -68,28 +67,5 @@ class StoreFuneralBookingRequest extends FormRequest
         $rules['deceased.spouse.last_name'] = ['nullable', Rule::requiredIf(fn () => $this->boolean('deceased.has_spouse')), 'string', 'max:100'];
 
         return $rules;
-    }
-
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $validator) {
-            $types = collect($this->input('documents', []))
-                ->pluck('document_type');
-            $hasDeathCertificate = $types->contains('death_certificate');
-
-            if (! $hasDeathCertificate) {
-                $validator->errors()->add(
-                    'documents.death_certificate',
-                    'Death Certificate is required.'
-                );
-            }
-
-            if (! $types->contains('biography')) {
-                $validator->errors()->add(
-                    'documents.biography',
-                    'Biography of the Deceased is required.'
-                );
-            }
-        });
     }
 }

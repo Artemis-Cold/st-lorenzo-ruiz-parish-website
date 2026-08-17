@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import { CalendarClock, CalendarDays, ExternalLink, LoaderCircle, X } from "lucide-react";
+import { CalendarClock, CalendarDays, ExternalLink, FileUp, LoaderCircle, X } from "lucide-react";
 
 import {
   getParishionerBooking,
+  uploadParishionerBookingDocument,
   type ParishionerBookingDetail,
   type RescheduledBooking,
 } from "@/services/parishionerBookingService";
@@ -26,6 +27,9 @@ export default function BookingDetailModal({
     error: string;
   }>({ bookingId: 0, booking: null, error: "" });
   const [rescheduling, setRescheduling] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState("");
+  const [selectedTypes, setSelectedTypes] = useState<Record<string, string>>({});
   const booking = result.bookingId === bookingId ? result.booking : null;
   const error = result.bookingId === bookingId ? result.error : "";
 
@@ -62,6 +66,43 @@ export default function BookingDetailModal({
   const closeDetail = () => {
     setRescheduling(false);
     onClose();
+  };
+
+  const uploadRequirement = async (
+    requirement: ParishionerBookingDetail["missingRequirements"][number],
+    file: File,
+  ) => {
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError("Each file must not exceed 5 MB.");
+      return;
+    }
+
+    const documentType = selectedTypes[requirement.key] ?? requirement.types[0];
+    setUploading(requirement.key);
+    setUploadError("");
+
+    try {
+      const uploaded = await uploadParishionerBookingDocument(
+        bookingId,
+        documentType,
+        file,
+      );
+      setResult((current) => ({
+        ...current,
+        booking: current.booking
+          ? {
+              ...current.booking,
+              documents: [...current.booking.documents, uploaded.document],
+              missingRequirements: uploaded.missingRequirements,
+            }
+          : null,
+      }));
+      void onRescheduled?.();
+    } catch {
+      setUploadError("Unable to upload this requirement. Please try again.");
+    } finally {
+      setUploading(null);
+    }
   };
 
   return (
@@ -122,6 +163,54 @@ export default function BookingDetailModal({
               <section className="rounded-2xl border p-5">
                 <h3 className="font-semibold">Submitted files</h3>
                 <div className="mt-3 space-y-2">{booking.documents.map((document) => <a key={`${document.type}-${document.fileName}`} href={document.url} target="_blank" rel="noreferrer" className="flex items-center justify-between rounded-xl bg-gray-50 p-3 text-sm text-[#B22222] hover:bg-red-50"><span>{label(document.type)} — {document.fileName}</span><ExternalLink size={16} /></a>)}</div>
+              </section>
+            )}
+
+            {booking.missingRequirements.length > 0 && (
+              <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                <div className="flex items-start gap-3">
+                  <FileUp className="mt-0.5 shrink-0 text-amber-700" size={21} />
+                  <div>
+                    <h3 className="font-semibold text-amber-900">Requirements to follow</h3>
+                    <p className="mt-1 text-sm leading-5 text-amber-800">Your booking remains pending until these documents are submitted.</p>
+                  </div>
+                </div>
+
+                {uploadError && <p className="mt-3 rounded-lg bg-red-100 px-3 py-2 text-sm text-red-700">{uploadError}</p>}
+
+                <div className="mt-4 space-y-3">
+                  {booking.missingRequirements.map((requirement) => (
+                    <div key={requirement.key} className="rounded-xl border border-amber-200 bg-white p-4">
+                      <p className="text-sm font-semibold text-gray-800">{requirement.label}</p>
+                      {requirement.types.length > 1 && (
+                        <select
+                          value={selectedTypes[requirement.key] ?? requirement.types[0]}
+                          onChange={(event) => setSelectedTypes((current) => ({ ...current, [requirement.key]: event.target.value }))}
+                          className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#B22222]"
+                        >
+                          {requirement.types.map((type) => <option key={type} value={type}>{label(type)}</option>)}
+                        </select>
+                      )}
+                      {booking.canUploadDocuments && (
+                        <label className={`mt-3 inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#B22222] px-4 py-2 text-sm font-semibold text-white ${uploading ? "pointer-events-none opacity-60" : ""}`}>
+                          <FileUp size={16} />
+                          {uploading === requirement.key ? "Uploading..." : "Upload file"}
+                          <input
+                            type="file"
+                            className="hidden"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            disabled={uploading !== null}
+                            onChange={(event) => {
+                              const file = event.target.files?.[0];
+                              if (file) void uploadRequirement(requirement, file);
+                              event.target.value = "";
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </section>
             )}
 

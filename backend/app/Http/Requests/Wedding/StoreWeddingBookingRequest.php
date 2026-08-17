@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Wedding;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
 
 class StoreWeddingBookingRequest extends FormRequest
 {
@@ -23,14 +22,14 @@ class StoreWeddingBookingRequest extends FormRequest
             'applicant' => ['required', 'array:groom,bride'],
             'applicant.groom' => ['required', 'array'],
             'applicant.bride' => ['required', 'array'],
-            'documents' => ['required', 'array'],
+            'documents' => ['nullable', 'array'],
             'documents.*.document_type' => [
-                'required',
+                'required_with:documents',
                 'distinct',
                 'in:marriage_license,cenomar,baptismal_certificate,confirmation_certificate,couple_photo,sponsor_marriage_contract,sponsor_confirmation_certificate',
             ],
             'documents.*.file' => [
-                'required',
+                'required_with:documents',
                 'file',
                 'mimes:jpg,jpeg,png,pdf',
                 'max:5120',
@@ -63,40 +62,5 @@ class StoreWeddingBookingRequest extends FormRequest
         }
 
         return $rules;
-    }
-
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $validator) {
-            $types = collect($this->input('documents', []))
-                ->pluck('document_type');
-
-            $required = [
-                'marriage_license' => 'Marriage License',
-                'cenomar' => 'Certificate of No Marriage (CENOMAR)',
-                'baptismal_certificate' => 'Baptismal Certificate',
-                'confirmation_certificate' => 'Confirmation Certificate',
-                'couple_photo' => 'Couple Photo',
-            ];
-
-            foreach ($required as $type => $label) {
-                if (! $types->contains($type)) {
-                    $validator->errors()->add(
-                        "documents.$type",
-                        "$label is required."
-                    );
-                }
-            }
-
-            if (
-                ! $types->contains('sponsor_marriage_contract')
-                && ! $types->contains('sponsor_confirmation_certificate')
-            ) {
-                $validator->errors()->add(
-                    'documents.sponsor',
-                    'Upload either the sponsors\' Marriage Contract or Confirmation Certificate.'
-                );
-            }
-        });
     }
 }

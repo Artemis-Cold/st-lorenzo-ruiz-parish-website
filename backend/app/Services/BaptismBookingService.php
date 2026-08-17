@@ -12,7 +12,10 @@ use Illuminate\Support\Str;
 
 class BaptismBookingService
 {
-    public function __construct(private BookingSlotAvailabilityService $availability) {}
+    public function __construct(
+        private BookingSlotAvailabilityService $availability,
+        private BookingRequirementService $requirements
+    ) {}
 
     public function store(array $data): Booking
     {
@@ -28,15 +31,21 @@ class BaptismBookingService
 
             $this->createGodParentPairs($baptizand, $data['god_parents']);
 
-            $this->uploadDocuments($booking, $data['documents']);
+            $this->uploadDocuments($booking, $data['documents'] ?? []);
 
-            return $booking->load([
+            $booking->load([
                 'baptizand.parents',
                 'baptizand.godParentPairs.godParents',
                 'documents',
                 'package',
                 'selectedAddons',
+                'service',
+                'user',
             ]);
+
+            $this->requirements->notifyIfIncomplete($booking);
+
+            return $booking;
         });
     }
 

@@ -13,7 +13,10 @@ use Illuminate\Validation\ValidationException;
 
 class WeddingBookingService
 {
-    public function __construct(private BookingSlotAvailabilityService $availability) {}
+    public function __construct(
+        private BookingSlotAvailabilityService $availability,
+        private BookingRequirementService $requirements
+    ) {}
 
     public function store(array $data): Booking
     {
@@ -46,14 +49,20 @@ class WeddingBookingService
             }
 
             $booking->selectedAddons()->sync($addonIds);
-            $this->uploadDocuments($booking, $data['documents']);
+            $this->uploadDocuments($booking, $data['documents'] ?? []);
 
-            return $booking->load([
+            $booking->load([
                 'weddingApplicants',
                 'documents',
                 'package',
                 'selectedAddons',
+                'service',
+                'user',
             ]);
+
+            $this->requirements->notifyIfIncomplete($booking);
+
+            return $booking;
         });
     }
 

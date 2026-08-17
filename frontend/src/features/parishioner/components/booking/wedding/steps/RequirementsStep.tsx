@@ -5,16 +5,16 @@ export default function RequirementsStep() {
     <BookingCard title="Requirements">
       <div className="space-y-6">
         <p className="text-gray-600">
-          Please prepare the following requirements before proceeding with your
-          booking request.
+          Prepare the following requirements. You may submit unavailable files
+          later while your booking remains pending.
         </p>
 
         <div className="rounded-xl border border-yellow-300 bg-yellow-50 p-4">
           <p className="font-semibold text-yellow-800">Important Reminder</p>
 
           <p className="mt-2 text-sm text-yellow-700">
-            All documents must be clear, complete, and valid. Incomplete
-            submissions may delay the approval of your booking.
+            Incomplete bookings can be submitted, but cannot be approved until
+            all requirements are uploaded. You will receive an SMS reminder.
           </p>
         </div>
 
@@ -55,7 +55,6 @@ export default function RequirementsStep() {
 
               <ul className="mt-4 list-disc space-y-2 pl-6 text-gray-700">
                 <li>Interview / Canonical Investigation</li>
-                <li>Four Pillars Pre-Cana Seminar</li>
               </ul>
             </div>
 

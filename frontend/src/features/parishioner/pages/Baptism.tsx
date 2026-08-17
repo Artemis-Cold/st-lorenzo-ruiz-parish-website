@@ -28,21 +28,6 @@ const stepLabels = [
   "Confirmation",
 ];
 
-function ageFromBirthDate(birthDate: Date | null): number | null {
-  if (!birthDate || Number.isNaN(birthDate.getTime())) return null;
-
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const birthdayHasPassed =
-    today.getMonth() > birthDate.getMonth() ||
-    (today.getMonth() === birthDate.getMonth() &&
-      today.getDate() >= birthDate.getDate());
-
-  if (!birthdayHasPassed) age -= 1;
-
-  return age >= 0 ? age : null;
-}
-
 export default function Baptism() {
   const [booking, setBooking] = useState<BaptismBooking>({
     booking_slot_id: 0,
@@ -311,39 +296,16 @@ export default function Baptism() {
         "Residence",
       );
 
-      const hasMarriageContract = pair.requirements.marriage_contract !== null;
-      const hasConfirmationCert =
-        pair.requirements.confirmation_certificate !== null;
+    });
 
-      if (!hasMarriageContract && !hasConfirmationCert) {
+    booking.documents.forEach((document) => {
+      if (document.file.size > 5 * 1024 * 1024) {
         addError(
-          `god_parents.${i}.requirements.marriage_contract`,
-          "Upload either a Marriage Contract or Confirmation Certificate.",
+          `documents.${document.document_type}`,
+          `${document.file.name} must not exceed 5 MB.`,
         );
       }
     });
-
-    // Documents
-    const hasBirthCertificate = booking.documents.some(
-      (d) => d.document_type === "birth_certificate",
-    );
-
-    if (!hasBirthCertificate) {
-      addError("documents.birth_certificate", "Birth certificate is required.");
-    }
-    const calculatedAge = ageFromBirthDate(booking.baptizand.birth_date);
-    const isAdultBaptism = calculatedAge !== null && calculatedAge >= 7;
-
-    const hasNoRecordCertificate = booking.documents.some(
-      (d) => d.document_type === "no_record_certificate",
-    );
-
-    if (isAdultBaptism && !hasNoRecordCertificate) {
-      addError(
-        "documents.no_record_certificate",
-        "Certificate of No Record of Baptism is required for baptizands 7 years old and above.",
-      );
-    }
 
     return errors;
   };
@@ -383,9 +345,13 @@ export default function Baptism() {
     try {
       await submitBooking(booking);
       setSubmitted(true);
-    } catch (err: any) {
-      if (err?.validationErrors) {
-        setFieldErrors(err.validationErrors);
+    } catch (error: unknown) {
+      const failure = error as {
+        validationErrors?: Record<string, string[]>;
+      };
+
+      if (failure.validationErrors) {
+        setFieldErrors(failure.validationErrors);
         setSubmitError("Please review the highlighted fields and try again.");
       } else {
         setSubmitError(
@@ -427,7 +393,7 @@ export default function Baptism() {
         {submitted ? (
           <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-green-800">
             Your baptism booking has been submitted. We'll notify you once it's
-            reviewed.
+            reviewed. Any missing requirements can be uploaded from My Profile.
           </div>
         ) : (
           <>

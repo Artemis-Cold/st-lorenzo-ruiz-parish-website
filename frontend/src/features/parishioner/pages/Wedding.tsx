@@ -252,14 +252,6 @@ export default function Wedding() {
       }
     });
 
-    const requiredDocuments = [
-      ["marriage_license", "Marriage License"],
-      ["cenomar", "Certificate of No Marriage (CENOMAR)"],
-      ["baptismal_certificate", "Baptismal Certificate"],
-      ["confirmation_certificate", "Confirmation Certificate"],
-      ["couple_photo", "Couple Photo"],
-    ] as const;
-
     currentBooking.documents.forEach((document) => {
       if (document.file.size > 5 * 1024 * 1024) {
         addError(
@@ -268,29 +260,6 @@ export default function Wedding() {
         );
       }
     });
-
-    requiredDocuments.forEach(([documentType, label]) => {
-      if (
-        !currentBooking.documents.some(
-          (document) => document.document_type === documentType,
-        )
-      ) {
-        addError(`documents.${documentType}`, `${label} is required.`);
-      }
-    });
-
-    const hasSponsorDocument = currentBooking.documents.some(
-      (document) =>
-        document.document_type === "sponsor_marriage_contract" ||
-        document.document_type === "sponsor_confirmation_certificate",
-    );
-
-    if (!hasSponsorDocument) {
-      addError(
-        "documents.sponsor",
-        "Upload either the sponsors' Marriage Contract or Confirmation Certificate.",
-      );
-    }
 
     return errors;
   };
@@ -378,7 +347,7 @@ export default function Wedding() {
         {submitted ? (
           <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-green-800">
             Your wedding booking has been submitted. We'll notify you once it's
-            reviewed.
+            reviewed. Any missing requirements can be uploaded from My Profile.
           </div>
         ) : (
           <>

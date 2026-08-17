@@ -47,6 +47,21 @@ class StaffManagementApiTest extends TestCase
         ]);
         $booking->update(['service_package_id' => $package->id]);
         $booking->selectedAddons()->attach($addon->id);
+        foreach ([
+            'marriage_license',
+            'cenomar',
+            'baptismal_certificate',
+            'confirmation_certificate',
+            'couple_photo',
+            'sponsor_marriage_contract',
+        ] as $documentType) {
+            BookingDocument::create([
+                'booking_id' => $booking->id,
+                'document_type' => $documentType,
+                'file_name' => $documentType.'.pdf',
+                'file_path' => 'booking-documents/'.$documentType.'.pdf',
+            ]);
+        }
 
         $this->getJson('/api/staff/bookings')
             ->assertOk()

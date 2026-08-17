@@ -9,6 +9,8 @@ export interface ParishionerBookingDetail {
   status: ProfileBooking["status"];
   bookingSlotId: number | null;
   canReschedule: boolean;
+  canUploadDocuments: boolean;
+  missingRequirements: MissingRequirement[];
   submittedAt: string;
   remarks: string | null;
   schedule: { date: string | null; startTime: string | null; endTime: string | null };
@@ -31,10 +33,35 @@ export interface ParishionerBookingDetail {
   }>;
 }
 
+export interface MissingRequirement {
+  key: string;
+  label: string;
+  types: string[];
+}
+
 export async function getParishionerBooking(id: number) {
   const response = await api.get<{ data: ParishionerBookingDetail }>(
     `/bookings/${id}`,
   );
+  return response.data.data;
+}
+
+export async function uploadParishionerBookingDocument(
+  bookingId: number,
+  documentType: string,
+  file: File,
+) {
+  const formData = new FormData();
+  formData.append("document_type", documentType);
+  formData.append("file", file);
+
+  const response = await api.post<{
+    data: {
+      document: ParishionerBookingDetail["documents"][number];
+      missingRequirements: MissingRequirement[];
+    };
+  }>(`/bookings/${bookingId}/documents`, formData);
+
   return response.data.data;
 }
 

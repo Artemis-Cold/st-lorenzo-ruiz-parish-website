@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from "react";
-import { Ban, CheckCircle2, X } from "lucide-react";
+import { Ban, BellRing, CheckCircle2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import type { Booking, BookingStatus } from "../../types/booking";
 import BookingStatusBadge from "./BookingStatusBadge";
 import { formatLabel } from "../../utils/formatLabel";
-import { scheduleWeddingAppointment } from "@/services/staffManagementService";
+import { scheduleWeddingAppointment, sendBookingRequirementsReminder } from "@/services/staffManagementService";
 import RejectConfirmationButton from "../RejectConfirmationButton";
 
 interface Props {
@@ -28,10 +28,12 @@ function Detail({ label, value }: { label: string; value: React.ReactNode }) {
 export default function BookingDetailModal({ booking, onClose, onUpdateStatus }: Props) {
   const [appointments, setAppointments] = useState(booking?.details.appointments ?? []);
   const [appointment, setAppointment] = useState({ type: "seminar" as "seminar" | "priest_interview", scheduledAt: "", venue: "", notes: "" });
+  const [reminding, setReminding] = useState(false);
   if (!booking) return null;
 
   const { details } = booking;
   const service = details.serviceData;
+  const missingRequirements = details.missingRequirements ?? [];
   const schedule = async (event: FormEvent) => {
     event.preventDefault();
     try {
@@ -39,6 +41,17 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus }:
       setAppointments((items) => [...items.filter((item) => item.type !== saved.type), saved]);
       toast.success("Schedule saved and SMS queued.");
     } catch { toast.error("Unable to save schedule."); }
+  };
+  const remind = async () => {
+    setReminding(true);
+    try {
+      await sendBookingRequirementsReminder(booking.id);
+      toast.success("Missing-requirements SMS reminder queued.");
+    } catch {
+      toast.error("Unable to send the SMS reminder.");
+    } finally {
+      setReminding(false);
+    }
   };
 
   return (
@@ -143,11 +156,24 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus }:
           {details.documents.length ? details.documents.map((document) => <Detail key={`${document.type}-${document.fileName}`} label={formatLabel(document.type)} value={<a href={document.url} target="_blank" rel="noreferrer" className="text-[#B22222] hover:underline">{document.fileName} ({formatLabel(document.status)})</a>} />) : <p className="text-sm text-gray-400">No documents attached.</p>}
         </section>
 
+        {missingRequirements.length > 0 && (
+          <section className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+            <h3 className="font-semibold text-amber-900">Missing requirements</h3>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-800">
+              {missingRequirements.map((requirement) => <li key={requirement.key}>{requirement.label}</li>)}
+            </ul>
+            <p className="mt-3 text-xs font-medium text-amber-900">Approval is disabled until all required files are submitted.</p>
+            <button type="button" disabled={reminding} onClick={remind} className="mt-4 inline-flex items-center gap-2 rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60">
+              <BellRing size={16} /> {reminding ? "Sending..." : "Send SMS Reminder"}
+            </button>
+          </section>
+        )}
+
         {(booking.status === "pending" || booking.status === "approved") && (
           <div className="mt-6 space-y-2.5">
             {booking.status === "pending" && <div className="flex gap-2.5">
               <RejectConfirmationButton itemLabel="booking" onConfirm={() => onUpdateStatus(booking.id, "rejected")} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 py-3 font-semibold text-red-600 transition hover:bg-red-50" />
-              <button onClick={() => onUpdateStatus(booking.id, "approved")} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B22222] py-3 font-semibold text-white"><CheckCircle2 size={18} /> Approve</button>
+              <button disabled={missingRequirements.length > 0} onClick={() => onUpdateStatus(booking.id, "approved")} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B22222] py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"><CheckCircle2 size={18} /> Approve</button>
             </div>}
             {booking.status === "approved" && <button onClick={() => onUpdateStatus(booking.id, "completed")} className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 font-semibold text-white"><CheckCircle2 size={18} /> Mark as Completed</button>}
             <button onClick={() => onUpdateStatus(booking.id, "cancelled")} className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-3 font-semibold text-red-600"><Ban size={18} /> Cancel Booking</button>

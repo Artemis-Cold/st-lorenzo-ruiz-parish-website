@@ -950,16 +950,14 @@ ${
             </h3>
 
             <p className="mb-6 text-sm text-gray-500">
-              Upload clear scanned copies or photos of the required documents.
-              Accepted formats are PDF, JPG, JPEG, and PNG (maximum 5 MB per
-              file).
+              Upload the files you currently have. Missing requirements may be
+              submitted later from My Profile while the booking remains pending.
             </p>
 
             <div className="grid grid-cols-12 gap-5">
               <div className="col-span-12">
                 <FileUploadField
                   label="Birth Certificate of the Child"
-                  required
                   file={getDocument("birth_certificate")}
                   onChange={(file) => updateDocument("birth_certificate", file)}
                   readOnly={readOnly}

@@ -204,14 +204,6 @@ export default function Funeral() {
     if (deceased.birth_date && deceased.birth_date > new Date()) {
       errors["deceased.birth_date"] = ["Birthday cannot be in the future."];
     }
-    if (!booking.documents.some((item) => item.document_type === "death_certificate")) {
-      errors["documents.death_certificate"] = ["Death Certificate is required."];
-    }
-    if (!booking.documents.some((item) => item.document_type === "biography")) {
-      errors["documents.biography"] = [
-        "Biography of the Deceased is required.",
-      ];
-    }
     for (const document of booking.documents) {
       if (document.file.size > 5 * 1024 * 1024) {
         errors[`documents.${document.document_type}`] = [
@@ -281,7 +273,7 @@ export default function Funeral() {
         {submitted ? (
           <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-green-800">
             Your funeral booking has been submitted. We'll notify you once it is
-            reviewed.
+            reviewed. Any missing requirements can be uploaded from My Profile.
           </div>
         ) : (
           <>
