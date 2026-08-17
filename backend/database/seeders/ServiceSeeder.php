@@ -9,8 +9,7 @@ class ServiceSeeder extends Seeder
 {
     public function run(): void
     {
-        Service::insert([
-
+        $services = [
             [
                 'code' => 'baptism',
                 'name' => 'Baptism',
@@ -40,7 +39,13 @@ class ServiceSeeder extends Seeder
                 'name' => 'Document Request',
                 'description' => 'Certificates and Parish Documents',
             ],
+        ];
 
-        ]);
+        foreach ($services as $service) {
+            Service::updateOrCreate(
+                ['code' => $service['code']],
+                $service,
+            );
+        }
     }
 }
