@@ -46,9 +46,16 @@ class StaffDocumentRequestController extends Controller
             ->unique()
             ->values()
             ->join(', ', ' and ');
-        $message = $status === 'ready_for_pickup'
-            ? "St. Lorenzo Parish: Your {$documentTypes} request ({$booking->booking_reference}) is ready for pickup. Please visit the parish office during office hours."
-            : "St. Lorenzo Parish: Your {$documentTypes} request ({$booking->booking_reference}) is now ".str_replace('_', ' ', $status).'.';
+        $documentTypes = $documentTypes ?: 'parish document';
+        $reference = $booking->booking_reference;
+        $message = match ($status) {
+            'approved' => "St. Lorenzo Ruiz Parish: Your request for {$documentTypes} (Ref: {$reference}) has been approved. We will notify you when it is ready for pickup.",
+            'ready_for_pickup' => "St. Lorenzo Ruiz Parish: Your request for {$documentTypes} (Ref: {$reference}) is ready for pickup. Please claim it at the parish office during office hours. Thank you.",
+            'completed' => "St. Lorenzo Ruiz Parish: Your request for {$documentTypes} (Ref: {$reference}) has been completed. Thank you for coordinating with the parish office.",
+            'rejected' => "St. Lorenzo Ruiz Parish: Your request for {$documentTypes} (Ref: {$reference}) could not be approved. Please contact the parish office for assistance.",
+            'cancelled' => "St. Lorenzo Ruiz Parish: Your request for {$documentTypes} (Ref: {$reference}) has been cancelled. Please contact the parish office if you have questions.",
+            default => "St. Lorenzo Ruiz Parish: The status of your request for {$documentTypes} (Ref: {$reference}) has been updated.",
+        };
 
         app(SmsNotificationService::class)->queue(
             $booking->loadMissing('user'),

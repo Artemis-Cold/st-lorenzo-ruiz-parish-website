@@ -39,7 +39,7 @@ class PasswordResetOtpService
             $this->sms->queueToUser(
                 $user,
                 'password_reset_otp',
-                "St. Lorenzo Parish: Your password reset code is {$code}. It expires in 10 minutes. Do not share this code."
+                "St. Lorenzo Ruiz Parish: Use OTP {$code} to reset your password. This code expires in 10 minutes. Do not share it with anyone."
             );
         });
 
@@ -68,12 +68,14 @@ class PasswordResetOtpService
 
             if (! hash_equals($otp->code_hash, hash('sha256', $code))) {
                 $otp->increment('attempts');
+
                 return false;
             }
 
             $otp->update(['consumed_at' => now()]);
             $user->update(['password' => Hash::make($password)]);
             $user->tokens()->delete();
+
             return true;
         });
 

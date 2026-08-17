@@ -47,7 +47,7 @@ export default function Dashboard() {
             Loading dashboard...
           </div>
         ) : (
-          <div className="grid gap-6 sm:gap-8 xl:grid-cols-[2fr_1fr]">
+          <div className="grid items-start gap-6 sm:gap-8 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
             <AnnouncementsCard announcements={dashboard?.announcements ?? []} />
             <RecentActivityCard activity={dashboard?.recentActivity ?? []} />
           </div>

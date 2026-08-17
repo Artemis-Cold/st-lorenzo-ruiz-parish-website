@@ -36,7 +36,7 @@ interface Props {
 
 export default function RecentActivityCard({ activity }: Props) {
   return (
-    <div className="rounded-3xl border border-[#E7E2DA] bg-white p-6 shadow-sm sm:p-7">
+    <div className="min-w-0 self-start rounded-3xl border border-[#E7E2DA] bg-white p-6 shadow-sm sm:p-7">
       <div className="mb-6 flex items-center gap-2.5">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#B22222]/10 text-[#B22222]">
           <Bell size={18} />

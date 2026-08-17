@@ -36,10 +36,11 @@ class BookingRequirementService
         }
 
         $labels = collect($missing)->pluck('label')->join(', ', ' and ');
+        $serviceName = $booking->service?->name ?? 'service';
         $this->sms->queue(
             $booking->loadMissing('user'),
             'booking_requirements',
-            "St. Lorenzo Parish: Booking {$booking->booking_reference} is pending. Missing: {$labels}. Upload the files in My Profile."
+            "St. Lorenzo Ruiz Parish: Reminder for your {$serviceName} booking (Ref: {$booking->booking_reference}). Missing requirements: {$labels}. Please upload them under My Profile for parish staff review. Thank you."
         );
 
         return true;

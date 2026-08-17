@@ -186,7 +186,7 @@ class StaffManagementApiTest extends TestCase
         $this->assertDatabaseHas('sms_messages', [
             'booking_id' => $booking->id,
             'category' => 'document_status',
-            'message' => "St. Lorenzo Parish: Your Baptismal Certificate and Confirmation Certificate request ({$booking->booking_reference}) is ready for pickup. Please visit the parish office during office hours.",
+            'message' => "St. Lorenzo Ruiz Parish: Your request for Baptismal Certificate and Confirmation Certificate (Ref: {$booking->booking_reference}) is ready for pickup. Please claim it at the parish office during office hours. Thank you.",
         ]);
 
         $this->patchJson("/api/staff/document-requests/{$request->id}/status", [

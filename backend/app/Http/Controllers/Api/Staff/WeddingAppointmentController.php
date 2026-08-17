@@ -32,11 +32,11 @@ class WeddingAppointmentController extends Controller
         );
 
         $label = $appointment->type === 'seminar' ? 'wedding seminar' : 'interview with the parish priest';
-        $when = $appointment->scheduled_at->format('M j, Y g:i A');
+        $when = $appointment->scheduled_at->format('F j, Y \a\t g:i A');
         $sms->queue(
             $booking->loadMissing('user'),
             $appointment->type,
-            "St. Lorenzo Parish: Your {$label} is scheduled on {$when} at {$appointment->venue}. Ref: {$booking->booking_reference}."
+            "St. Lorenzo Ruiz Parish: Your {$label} (Ref: {$booking->booking_reference}) is scheduled for {$when} at {$appointment->venue}. Please arrive on time. Thank you."
         );
 
         return response()->json(['data' => [

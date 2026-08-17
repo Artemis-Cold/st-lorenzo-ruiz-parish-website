@@ -13,7 +13,7 @@ interface Props {
 
 export default function AnnouncementCard({ announcements }: Props) {
   return (
-    <div className="rounded-3xl border border-[#E7E2DA] bg-white p-6 shadow-sm sm:p-7">
+    <div className="min-w-0 self-start overflow-hidden rounded-3xl border border-[#E7E2DA] bg-white p-6 shadow-sm sm:p-7">
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#B22222]/10 text-[#B22222]">
@@ -43,7 +43,7 @@ export default function AnnouncementCard({ announcements }: Props) {
             <Link
               key={item.id}
               to="/staff/announcements"
-              className="group flex w-full items-center gap-4 rounded-2xl border border-[#E7E2DA] p-4 text-left transition hover:border-[#B22222]/30 hover:bg-[#B22222]/[0.03]"
+              className="group flex min-w-0 w-full items-center gap-4 overflow-hidden rounded-2xl border border-[#E7E2DA] p-4 text-left transition hover:border-[#B22222]/30 hover:bg-[#B22222]/[0.03]"
             >
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#B22222] text-white">
                 <Megaphone size={18} />

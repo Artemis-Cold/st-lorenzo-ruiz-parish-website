@@ -110,10 +110,11 @@ class ParishionerBookingController extends Controller
         $missing = $requirements->missing($booking);
 
         if ($missing === []) {
+            $serviceName = $booking->service?->name ?? 'service';
             $sms->queue(
                 $booking,
                 'booking_requirements_complete',
-                "St. Lorenzo Parish: All requirements for booking {$booking->booking_reference} are now submitted and ready for parish review."
+                "St. Lorenzo Ruiz Parish: We have received all requirements for your {$serviceName} booking (Ref: {$booking->booking_reference}). Your documents are now awaiting parish staff review. Thank you."
             );
         }
 
