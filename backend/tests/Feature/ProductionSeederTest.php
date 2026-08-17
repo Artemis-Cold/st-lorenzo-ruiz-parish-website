@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\ProductionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -46,5 +47,19 @@ class ProductionSeederTest extends TestCase
             'username' => 'parishadmin',
             'password' => '11111111',
         ])->assertOk()->assertJsonPath('user.full_name', 'Parish Admin');
+    }
+
+    public function test_default_seeder_does_not_create_manual_test_accounts_in_production(): void
+    {
+        $this->app->detectEnvironment(fn () => 'production');
+
+        $this->artisan('db:seed', [
+            '--class' => DatabaseSeeder::class,
+            '--force' => true,
+        ])->assertSuccessful();
+
+        $this->assertDatabaseHas('users', ['username' => 'parishadmin']);
+        $this->assertDatabaseMissing('users', ['username' => 'johndoe']);
+        $this->assertDatabaseMissing('users', ['username' => 'mariaclara']);
     }
 }

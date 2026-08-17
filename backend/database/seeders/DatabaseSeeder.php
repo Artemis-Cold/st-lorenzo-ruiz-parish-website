@@ -14,6 +14,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $this->call(FreshManualTestingSeeder::class);
+        $this->call(
+            app()->environment('production')
+                ? ProductionSeeder::class
+                : FreshManualTestingSeeder::class,
+        );
     }
 }
