@@ -2,7 +2,9 @@
 builder = "RAILPACK"
 
 [deploy]
-preDeployCommand = "php artisan migrate --force && php artisan db:seed --class=ProductionSeeder --force && php artisan optimize:clear && php artisan storage:link && php artisan config:cache && php artisan event:cache && php artisan route:cache && php artisan view:cache"
+preDeployCommand = "php artisan migrate --force && php artisan db:seed --class=ProductionSeeder --force && php artisan optimize:clear && php artisan config:cache && php artisan event:cache && php artisan route:cache && php artisan view:cache"
+
+startCommand = "php artisan storage:link --force && php artisan serve --host=0.0.0.0 --port=$PORT"
 
 healthcheckPath = "/api"
 healthcheckTimeout = 100
