@@ -79,8 +79,8 @@ export default function ScheduleStep({
   ]);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-3">
-      <div className="lg:col-span-2">
+    <div className="grid gap-6 lg:h-[31rem] lg:grid-cols-3 lg:items-stretch">
+      <div className="min-h-0 lg:col-span-2">
         <BookingCalendar
           service="wedding"
           selectedDate={selectedDate ?? new Date()}

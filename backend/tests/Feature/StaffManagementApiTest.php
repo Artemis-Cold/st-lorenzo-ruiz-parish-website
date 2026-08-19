@@ -15,6 +15,8 @@ use App\Models\Service;
 use App\Models\ServicePackage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -136,6 +138,9 @@ class StaffManagementApiTest extends TestCase
 
     public function test_staff_can_list_and_process_document_requests(): void
     {
+        config()->set('services.sms.driver', 'database');
+        Http::fake();
+        Queue::fake();
         $staff = User::factory()->create(['role' => 'staff']);
         $parishioner = User::factory()->create();
         Sanctum::actingAs($staff);
@@ -186,8 +191,11 @@ class StaffManagementApiTest extends TestCase
         $this->assertDatabaseHas('sms_messages', [
             'booking_id' => $booking->id,
             'category' => 'document_status',
+            'status' => 'pending',
             'message' => "St. Lorenzo Ruiz Parish: Your request for Baptismal Certificate and Confirmation Certificate (Ref: {$booking->booking_reference}) is ready for pickup. Please claim it at the parish office during office hours. Thank you.",
         ]);
+        Http::assertNothingSent();
+        Queue::assertNothingPushed();
 
         $this->patchJson("/api/staff/document-requests/{$request->id}/status", [
             'status' => 'completed',

@@ -7,6 +7,8 @@ use App\Models\Service;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Sanctum\Sanctum;
@@ -40,6 +42,9 @@ class MassIntentionTypeValidationTest extends TestCase
 
     public function test_new_mass_intention_is_paid_while_its_receipt_awaits_verification(): void
     {
+        config()->set('services.sms.driver', 'database');
+        Http::fake();
+        Queue::fake();
         Storage::fake('public');
         Sanctum::actingAs(User::factory()->create());
         Service::create([
@@ -65,5 +70,8 @@ class MassIntentionTypeValidationTest extends TestCase
             'document_type' => 'payment_receipt',
             'status' => 'pending',
         ]);
+        $this->assertDatabaseCount('sms_messages', 0);
+        Http::assertNothingSent();
+        Queue::assertNothingPushed();
     }
 }

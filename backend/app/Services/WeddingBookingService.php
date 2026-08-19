@@ -68,11 +68,7 @@ class WeddingBookingService
 
     private function validateSlot(int $slotId): BookingSlot
     {
-        $slot = BookingSlot::query()->lockForUpdate()->findOrFail($slotId);
-
-        $this->availability->ensureBookable($slot);
-
-        return $slot;
+        return $this->availability->lockBookable($slotId, 'wedding');
     }
 
     private function validatePackage(

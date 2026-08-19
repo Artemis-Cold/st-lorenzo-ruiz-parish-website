@@ -54,8 +54,9 @@ class ParishionerBookingRescheduleTest extends TestCase
         $originalSlot = $this->slot($baptism, 7, '09:00', '10:00');
         $booking = $this->booking($user, $baptism, $originalSlot);
         $otherServiceSlot = $this->slot($funeral, 8, '09:00', '10:00');
-        $fullSlot = $this->slot($baptism, 9, '09:00', '10:00');
-        $this->booking($otherUser, $baptism, $fullSlot);
+        $lockedBaptismSlot = $this->slot($baptism, 9, '09:00', '10:00');
+        $lockingFuneralSlot = $this->slot($funeral, 9, '09:00', '10:00');
+        $this->booking($otherUser, $funeral, $lockingFuneralSlot);
 
         Sanctum::actingAs($user);
 
@@ -65,7 +66,7 @@ class ParishionerBookingRescheduleTest extends TestCase
             ->assertJsonValidationErrors('booking_slot_id');
 
         $this->patchJson("/api/bookings/{$booking->id}/reschedule", [
-            'booking_slot_id' => $fullSlot->id,
+            'booking_slot_id' => $lockedBaptismSlot->id,
         ])->assertUnprocessable()
             ->assertJsonValidationErrors('booking_slot_id');
 

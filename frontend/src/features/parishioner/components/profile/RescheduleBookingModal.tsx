@@ -181,7 +181,7 @@ export default function RescheduleBookingModal({
                       }`}
                     >
                       <span className="font-semibold">{formatTime(slot.start_time)} – {formatTime(slot.end_time)}</span>
-                      {selected ? <Check size={18} /> : <span className="text-xs">{isCurrent ? "Current" : slot.available ? `${slot.capacity - slot.booked} left` : "Full"}</span>}
+                      {selected ? <Check size={18} /> : <span className="text-xs">{isCurrent ? "Current" : slot.available ? "Available" : slot.availability_status === "locked" ? `Reserved for ${slot.locked_by_service ?? "another service"}` : "Full"}</span>}
                     </button>
                   );
                 })

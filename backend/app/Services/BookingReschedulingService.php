@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Booking;
-use App\Models\BookingSlot;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -51,24 +50,17 @@ class BookingReschedulingService
                 ]);
             }
 
-            $slot = BookingSlot::query()
-                ->with('service')
-                ->lockForUpdate()
-                ->findOrFail($slotId);
-
-            if ($slot->service_id !== $lockedBooking->service_id) {
-                throw ValidationException::withMessages([
-                    'booking_slot_id' => 'The selected schedule does not belong to this service.',
-                ]);
-            }
+            $slot = $this->availability->lockBookable(
+                $slotId,
+                $lockedBooking->service->code,
+                $lockedBooking->id,
+            );
 
             if ($slot->booking_date->isBefore(today())) {
                 throw ValidationException::withMessages([
                     'booking_slot_id' => 'The selected schedule must not be in the past.',
                 ]);
             }
-
-            $this->availability->ensureBookable($slot);
 
             $lockedBooking->update([
                 'booking_slot_id' => $slot->id,

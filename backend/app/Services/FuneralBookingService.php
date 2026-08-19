@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Booking;
-use App\Models\BookingSlot;
 use App\Models\PackageAddon;
 use App\Models\ServicePackage;
 use Carbon\CarbonImmutable;
@@ -22,9 +21,10 @@ class FuneralBookingService
     public function store(array $data): Booking
     {
         return DB::transaction(function () use ($data) {
-            $slot = BookingSlot::query()->lockForUpdate()
-                ->findOrFail($data['booking_slot_id']);
-            $this->availability->ensureBookable($slot);
+            $slot = $this->availability->lockBookable(
+                $data['booking_slot_id'],
+                'funeral',
+            );
 
             $package = ServicePackage::findOrFail($data['service_package_id']);
             if (! $package->is_active || $package->service_id !== $slot->service_id) {

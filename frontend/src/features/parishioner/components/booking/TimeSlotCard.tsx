@@ -15,6 +15,7 @@ export default function TimeSlotCard({
 }: TimeSlotCardProps) {
   return (
     <button
+      type="button"
       disabled={!slot.available}
       onClick={onSelect}
       className={`w-full rounded-2xl border p-4 text-left transition-all duration-200
@@ -51,6 +52,10 @@ export default function TimeSlotCard({
       <div className="mt-3 text-sm">
         {slot.available ? (
           <span className="text-green-600">Available</span>
+        ) : slot.availability_status === "locked" ? (
+          <span className="text-[#B22222]">
+            Reserved for {slot.locked_by_service ?? "another service"}
+          </span>
         ) : (
           <span className="text-[#B22222]">Fully Booked</span>
         )}

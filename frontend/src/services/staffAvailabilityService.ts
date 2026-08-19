@@ -2,13 +2,11 @@ import api from "@/api/axios";
 
 export interface StaffAvailabilitySlot {
   id: number;
-  serviceCode: "wedding" | "baptism" | "funeral";
-  serviceName: string;
   date: string;
   startTime: string;
   endTime: string;
-  capacity: number;
   booked: number;
+  lockedByService: string | null;
   isActive: boolean;
 }
 
@@ -17,20 +15,25 @@ export async function getStaffAvailability() {
   return response.data.data;
 }
 
-export async function createStaffAvailability(input: {
-  serviceCode: "wedding" | "baptism" | "funeral";
-  date: string;
-  startTime: string;
-  endTime: string;
-  capacity: number;
-}) {
-  const response = await api.post<{ data: StaffAvailabilitySlot }>("/staff/availability", input);
-  return response.data.data;
+export async function createStaffAvailability(dates: string[]) {
+  const response = await api.post<{
+    message: string;
+    datesCreated: number;
+    datesRestored: number;
+    datesUnchanged: number;
+  }>(
+    "/staff/availability",
+    { dates },
+  );
+  return response.data;
 }
 
-export async function updateStaffAvailability(id: number, input: { capacity?: number; isActive?: boolean }) {
-  const response = await api.patch<{ data: StaffAvailabilitySlot }>(`/staff/availability/${id}`, input);
-  return response.data.data;
+export async function updateStaffAvailability(id: number, isActive: boolean) {
+  const response = await api.patch<{ message: string }>(
+    `/staff/availability/${id}`,
+    { isActive },
+  );
+  return response.data;
 }
 
 export async function deleteStaffAvailability(id: number) {

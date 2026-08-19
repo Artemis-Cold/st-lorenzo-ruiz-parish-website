@@ -127,7 +127,7 @@ export default function BookingCalendar({
     currentMonth === today.getMonth() && currentYear === today.getFullYear();
 
   return (
-    <div className="rounded-3xl bg-white p-4 shadow-lg sm:p-5">
+    <div className="h-full rounded-3xl bg-white p-4 shadow-lg sm:p-5">
       {/* Header */}
 
       <div className="mb-4 flex items-center justify-between">

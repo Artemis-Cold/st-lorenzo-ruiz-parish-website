@@ -7,6 +7,7 @@ use App\Models\Booking;
 use App\Models\Service;
 use App\Models\SmsMessage;
 use App\Models\User;
+use App\Services\SmsNotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -84,6 +85,49 @@ class SmsNotificationTest extends TestCase
             'id' => $sms->id, 'status' => 'sent',
             'provider_message_id' => 'log-'.$sms->id,
         ]);
+    }
+
+    public function test_database_driver_stores_pending_sms_without_dispatching_a_job(): void
+    {
+        Queue::fake();
+        config()->set('services.sms.driver', 'database');
+        $user = User::factory()->create(['phone' => '09171234567']);
+
+        app(SmsNotificationService::class)->queueToUser(
+            $user,
+            'booking_requirements',
+            'Your booking has incomplete requirements.',
+        );
+
+        $this->assertDatabaseHas('sms_messages', [
+            'user_id' => $user->id,
+            'recipient' => '639171234567',
+            'status' => 'pending',
+        ]);
+        Queue::assertNothingPushed();
+    }
+
+    public function test_semaphore_failure_does_not_break_a_sync_web_request(): void
+    {
+        config()->set('queue.default', 'sync');
+        config()->set('services.sms.driver', 'semaphore');
+        config()->set('services.semaphore.api_key', 'secret-key');
+        Http::fake(['api.semaphore.co/*' => Http::response([
+            ['senderName' => 'No active sender name found.'],
+        ], 500)]);
+        $sms = SmsMessage::create([
+            'category' => 'booking_requirements',
+            'recipient' => '639171234567',
+            'message' => 'Your booking has incomplete requirements.',
+        ]);
+
+        (new SendSmsMessage($sms->id))->handle();
+
+        $this->assertDatabaseHas('sms_messages', [
+            'id' => $sms->id,
+            'status' => 'failed',
+        ]);
+        $this->assertNotNull($sms->fresh()->error_message);
     }
 
     public function test_signup_rejects_a_duplicate_contact_number(): void

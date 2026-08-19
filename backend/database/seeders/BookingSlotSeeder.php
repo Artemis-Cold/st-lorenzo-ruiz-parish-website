@@ -4,127 +4,40 @@ namespace Database\Seeders;
 
 use App\Models\BookingSlot;
 use App\Models\Service;
-use Carbon\Carbon;
+use App\Services\BookingSlotScheduleService;
 use Illuminate\Database\Seeder;
 
 class BookingSlotSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->generateWeddingSlots();
+        $schedule = app(BookingSlotScheduleService::class);
 
-        // Future
-        $this->generateBaptismSlots();
-        // $this->generateFuneralSlots();
-        // $this->generateMassSlots();
-        // $this->generateDocumentSlots();
-    }
+        foreach (config('booking-slots.services', []) as $code) {
+            $service = Service::firstWhere('code', $code);
 
-    private function generateWeddingSlots(): void
-    {
-        $service = Service::firstWhere('code', 'wedding');
-
-        if (! $service) {
-            return;
-        }
-
-        $timeSlots = [
-
-            ['07:00', '09:00'],
-            ['09:00', '11:00'],
-            ['11:00', '13:00'],
-            ['13:00', '15:00'],
-            ['15:00', '17:00'],
-
-        ];
-
-        $start = Carbon::today();
-
-        $end = Carbon::today()->addYear();
-
-        while ($start->lte($end)) {
-
-            /*
-            |--------------------------------------------------------------------------
-            | Monday - Saturday only
-            |--------------------------------------------------------------------------
-            */
-
-            if (! $start->isSunday()) {
-
-                foreach ($timeSlots as [$from, $to]) {
-
-                    BookingSlot::create([
-
-                        'service_id' => $service->id,
-
-                        'booking_date' => $start->toDateString(),
-
-                        'start_time' => $from,
-
-                        'end_time' => $to,
-
-                        'capacity' => 1,
-
-                        'is_active' => true,
-
-                    ]);
-
-                }
+            if (! $service) {
+                continue;
             }
 
-            $start->addDay();
-        }
-    }
+            $date = today();
+            $endDate = today()->addYear();
 
-    private function generateBaptismSlots(): void
-    {
-        $service = Service::firstWhere('code', 'baptism');
-
-        if (! $service) {
-            return;
-        }
-
-        $timeSlots = [
-
-            ['09:00', '11:00'],
-
-            ['14:00', '16:00'],
-
-        ];
-
-        $start = Carbon::today();
-
-        $end = Carbon::today()->addYear();
-
-        while ($start->lte($end)) {
-
-
-            if ($start->isSaturday()) {
-
-                foreach ($timeSlots as [$from, $to]) {
-
-                    BookingSlot::create([
-
+            while ($date->lte($endDate)) {
+                foreach ($schedule->startTimesFor($date) as $startTime) {
+                    BookingSlot::updateOrCreate([
                         'service_id' => $service->id,
-
-                        'booking_date' => $start->toDateString(),
-
-                        'start_time' => $from,
-
-                        'end_time' => $to,
-
-                        'capacity' => 1,
-
+                        'booking_date' => $date->toDateString(),
+                        'start_time' => $startTime,
+                    ], [
+                        'end_time' => $schedule->endTimeFor($startTime),
+                        'capacity' => $schedule->capacityFor($code),
                         'is_active' => true,
-
                     ]);
-
                 }
 
+                $date->addDay();
             }
-
-            $start->addDay();
         }
     }
 }

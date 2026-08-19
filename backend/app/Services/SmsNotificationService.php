@@ -24,7 +24,9 @@ class SmsNotificationService
             'message' => $message,
         ]);
 
-        SendSmsMessage::dispatch($sms->id)->afterCommit();
+        if (config('services.sms.driver', 'log') !== 'database') {
+            SendSmsMessage::dispatch($sms->id)->afterCommit();
+        }
 
         return $sms;
     }

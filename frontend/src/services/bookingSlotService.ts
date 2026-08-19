@@ -4,9 +4,11 @@ export interface BookingSlot {
   id: number;
   start_time: string;
   end_time: string;
-  capacity: number;
+  capacity: number | null;
   booked: number;
   available: boolean;
+  availability_status: "available" | "full" | "locked" | "inactive" | "past";
+  locked_by_service: string | null;
 }
 
 export interface BookingAvailability {

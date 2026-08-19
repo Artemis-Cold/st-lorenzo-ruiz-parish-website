@@ -15,12 +15,12 @@ interface Props {
 
 export default function TimeSlotPanel(props: Props) {
   if (props.loading) {
-    return <div className="rounded-2xl border py-10 text-center">Loading slots...</div>;
+    return <div className="h-full rounded-3xl border bg-white py-10 text-center shadow-lg">Loading slots...</div>;
   }
 
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-lg">
-      <div className="mb-6 flex items-center gap-3">
+    <div className="flex h-full min-h-0 flex-col rounded-3xl bg-white p-6 shadow-lg">
+      <div className="mb-6 flex shrink-0 items-center gap-3">
         <CalendarDays className="text-[#B22222]" />
         <div>
           <h2 className="font-serif text-xl font-bold">Available Time Slots</h2>
@@ -34,7 +34,7 @@ export default function TimeSlotPanel(props: Props) {
           </p>
         </div>
       </div>
-      <div className="space-y-4">
+      <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pr-2 [scrollbar-color:#D6CEC4_transparent] [scrollbar-width:thin]">
         {props.slots.length === 0 ? (
           <div className="rounded-2xl border border-dashed py-10 text-center text-gray-500">
             No schedules available.

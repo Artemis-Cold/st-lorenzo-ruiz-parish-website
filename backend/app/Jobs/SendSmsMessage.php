@@ -26,34 +26,70 @@ class SendSmsMessage implements ShouldQueue
         $sms = SmsMessage::findOrFail($this->smsMessageId);
         $driver = config('services.sms.driver', 'log');
 
-        if ($driver === 'log') {
-            Log::info('SMS notification (log driver)', [
-                'sms_message_id' => $sms->id,
-                'recipient' => $sms->recipient,
-                'category' => $sms->category,
-                'message' => $sms->message,
-            ]);
+        try {
+            if ($driver === 'database') {
+                Log::info('SMS notification stored for later delivery (database driver).', [
+                    'sms_message_id' => $sms->id,
+                    'recipient' => $sms->recipient,
+                    'category' => $sms->category,
+                ]);
 
-            $sms->update([
-                'status' => 'sent',
-                'provider_message_id' => 'log-'.$sms->id,
-                'sent_at' => now(),
-                'error_message' => null,
-            ]);
+                return;
+            }
 
-            return;
+            if ($driver === 'log') {
+                $this->sendToLog($sms);
+
+                return;
+            }
+
+            if ($driver !== 'semaphore') {
+                throw new RuntimeException("Unsupported SMS driver [{$driver}].");
+            }
+
+            $this->sendToSemaphore($sms);
+        } catch (Throwable $exception) {
+            $this->recordFailure($sms, $exception);
+
+            // With the sync driver, this job runs inside the web request. The
+            // notification must fail independently instead of turning an
+            // already-saved booking into an HTTP 500 response.
+            if (config('queue.default') !== 'sync') {
+                throw $exception;
+            }
         }
+    }
 
-        if ($driver !== 'semaphore') {
-            throw new RuntimeException("Unsupported SMS driver [{$driver}].");
-        }
+    public function failed(Throwable $exception): void
+    {
+        SmsMessage::whereKey($this->smsMessageId)->update([
+            'status' => 'failed', 'error_message' => $exception->getMessage(),
+        ]);
+    }
 
+    private function sendToLog(SmsMessage $sms): void
+    {
+        Log::info('SMS notification (log driver)', [
+            'sms_message_id' => $sms->id,
+            'recipient' => $sms->recipient,
+            'category' => $sms->category,
+            'message' => $sms->message,
+        ]);
+
+        $sms->update([
+            'status' => 'sent',
+            'provider_message_id' => 'log-'.$sms->id,
+            'sent_at' => now(),
+            'error_message' => null,
+        ]);
+    }
+
+    private function sendToSemaphore(SmsMessage $sms): void
+    {
         $apiKey = config('services.semaphore.api_key');
 
         if (! $apiKey) {
-            $sms->update(['status' => 'failed', 'error_message' => 'Semaphore API key is not configured.']);
-
-            return;
+            throw new RuntimeException('Semaphore API key is not configured.');
         }
 
         $response = Http::asForm()
@@ -82,10 +118,17 @@ class SendSmsMessage implements ShouldQueue
         ]);
     }
 
-    public function failed(Throwable $exception): void
+    private function recordFailure(SmsMessage $sms, Throwable $exception): void
     {
-        SmsMessage::whereKey($this->smsMessageId)->update([
-            'status' => 'failed', 'error_message' => $exception->getMessage(),
+        $sms->update([
+            'status' => 'failed',
+            'error_message' => $exception->getMessage(),
+        ]);
+
+        Log::warning('SMS notification failed without interrupting the request.', [
+            'sms_message_id' => $sms->id,
+            'driver' => config('services.sms.driver', 'log'),
+            'error' => $exception->getMessage(),
         ]);
     }
 }
