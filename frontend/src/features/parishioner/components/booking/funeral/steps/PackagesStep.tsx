@@ -38,9 +38,9 @@ export default function PackagesStep(props: Props) {
   }
 
   return (
-    <BookingCard title="Packages">
-      <div className="space-y-8">
-        <div className="grid gap-6 md:grid-cols-2">
+    <BookingCard title="Packages" contentClassName="p-4 sm:p-8">
+      <div className="space-y-5 sm:space-y-8">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6">
           {packages.map((item) => {
             const selected = booking.service_package_id === item.id;
             return (
@@ -63,29 +63,29 @@ export default function PackagesStep(props: Props) {
                 }
               >
                 {item.recommended && (
-                  <div className="absolute left-4 right-4 top-0 rounded-b-xl bg-[#B22222] py-1 text-xs font-semibold text-white">
+                  <div className="absolute left-2 right-2 top-0 rounded-b-lg bg-[#B22222] py-1 text-[10px] font-semibold text-white sm:left-4 sm:right-4 sm:rounded-b-xl sm:text-xs">
                     Recommended
                   </div>
                 )}
                 {selected && (
-                  <div className="absolute right-4 top-4 rounded-full bg-[#B22222] p-2 text-white">
-                    <Check size={16} />
+                  <div className="absolute right-2 top-2 rounded-full bg-[#B22222] p-1.5 text-white sm:right-4 sm:top-4 sm:p-2">
+                    <Check className="size-3.5 sm:size-4" />
                   </div>
                 )}
-                <div className="px-8 pb-8 pt-10">
-                  <div className="flex items-center justify-center gap-4">
+                <div className="px-2.5 pb-4 pt-8 sm:px-8 sm:pb-8 sm:pt-10">
+                  <div className="flex flex-col items-center justify-center gap-1.5 sm:flex-row sm:gap-4">
                     {item.name === "With Choir" ? (
-                      <Music2 size={48} className="text-[#B22222]" />
+                      <Music2 className="size-7 shrink-0 text-[#B22222] sm:size-12" />
                     ) : (
-                      <Cross size={48} className="text-[#B22222]" />
+                      <Cross className="size-7 shrink-0 text-[#B22222] sm:size-12" />
                     )}
-                    <h2 className="text-3xl font-light text-[#B22222]">
+                    <h2 className="min-h-10 text-center text-base font-medium leading-5 text-[#B22222] sm:min-h-0 sm:text-left sm:text-3xl sm:font-light sm:leading-normal">
                       {item.name}
                     </h2>
                   </div>
-                  <div className="my-5 border-b border-red-300" />
-                  <p className="text-lg text-[#B22222]">From</p>
-                  <p className="text-5xl font-light text-[#B22222]">
+                  <div className="my-3 border-b border-red-300 sm:my-5" />
+                  <p className="text-xs text-[#B22222] sm:text-lg">From</p>
+                  <p className="text-xl font-semibold text-[#B22222] sm:text-5xl sm:font-light">
                     ₱{Number(item.base_price).toLocaleString()}
                   </p>
                 </div>
@@ -93,14 +93,14 @@ export default function PackagesStep(props: Props) {
             );
           })}
         </div>
-        <div className="max-w-xl rounded-2xl border border-red-200 p-6">
-          <div className="flex gap-4">
-            <div className="rounded-full bg-red-50 p-3">
-              <CircleHelp size={36} className="text-[#B22222]" />
+        <div className="max-w-xl rounded-2xl border border-red-200 p-4 sm:p-6">
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div className="grid size-11 shrink-0 place-items-center rounded-full bg-red-50 sm:size-14">
+              <CircleHelp className="size-6 text-[#B22222] sm:size-8" />
             </div>
-            <div>
-              <h3 className="text-2xl font-semibold">Need help choosing?</h3>
-              <p className="mt-1 text-[#B22222]">
+            <div className="min-w-0">
+              <h3 className="text-lg font-semibold sm:text-2xl">Need help choosing?</h3>
+              <p className="mt-1 text-sm leading-5 text-[#B22222] sm:text-base">
                 Contact the Parish Office for assistance with your package.
               </p>
             </div>

@@ -43,7 +43,6 @@ class BaptismBookingAgeTest extends TestCase
         $response = $this->post('/api/bookings/baptism', [
             'booking_slot_id' => $slot->id,
             'service_package_id' => $package->id,
-            'seminar_date' => today()->addDays(2)->toDateString(),
             'baptizand' => [
                 'first_name' => 'John',
                 'middle_initial' => '',

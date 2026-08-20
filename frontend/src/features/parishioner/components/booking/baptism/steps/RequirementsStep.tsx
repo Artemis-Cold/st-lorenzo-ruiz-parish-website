@@ -81,6 +81,10 @@ export default function RequirementsStep() {
               <p className="mt-2 text-sm text-yellow-700">
                 If the child to be baptized is 12 years old and above, the seminar lasts for 2 full days, and those required to attend are both parents and the godparents.
               </p>
+
+              <p className="mt-3 border-t border-yellow-200 pt-3 text-sm font-medium text-yellow-800">
+                The Parish Office will set the seminar schedule after your booking is submitted. You will receive the date, time, and venue through SMS.
+              </p>
             </div>
           </div>
         </div>

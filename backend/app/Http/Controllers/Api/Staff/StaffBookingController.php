@@ -27,7 +27,7 @@ class StaffBookingController extends Controller
                 'documents', 'weddingApplicants', 'baptizand.parents',
                 'baptizand.godParentPairs.godParents',
                 'funeralDeceased.children',
-                'weddingAppointments',
+                'appointments',
             ])
             ->latest()
             ->get()
@@ -65,7 +65,7 @@ class StaffBookingController extends Controller
             'documents', 'weddingApplicants', 'baptizand.parents',
             'baptizand.godParentPairs.godParents',
             'funeralDeceased.children',
-            'weddingAppointments',
+            'appointments',
         ]);
 
         return response()->json(['data' => $this->serialize($booking)]);
@@ -153,7 +153,7 @@ class StaffBookingController extends Controller
                 ])->values(),
                 'missingRequirements' => $this->requirements->missing($booking),
                 'serviceData' => $this->serviceData($booking),
-                'appointments' => $booking->weddingAppointments->map(fn ($appointment) => [
+                'appointments' => $booking->appointments->map(fn ($appointment) => [
                     'id' => $appointment->id,
                     'type' => $appointment->type,
                     'scheduledAt' => $appointment->scheduled_at->toIso8601String(),

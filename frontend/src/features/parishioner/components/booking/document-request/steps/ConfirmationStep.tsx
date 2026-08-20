@@ -105,7 +105,7 @@ export default function ConfirmationStep({
                   </p>
                 )}
 
-                <p className="text-sm text-gray-500">
+                <p className="break-all text-sm text-gray-500">
                   {booking.receipt.name}
                 </p>
               </div>

@@ -15,7 +15,11 @@ interface Props {
 
 export default function TimeSlotPanel(props: Props) {
   if (props.loading) {
-    return <div className="h-full rounded-3xl border bg-white py-10 text-center shadow-lg">Loading slots...</div>;
+    return (
+      <div className="h-full rounded-3xl border bg-white py-10 text-center shadow-lg">
+        Loading slots...
+      </div>
+    );
   }
 
   return (
@@ -44,7 +48,7 @@ export default function TimeSlotPanel(props: Props) {
             <TimeSlotCard
               key={slot.id}
               slot={slot}
-              label="Funeral Schedule"
+              label="Schedule"
               selected={props.booking.booking_slot_id === slot.id}
               onSelect={() => {
                 props.setBooking((previous) => ({

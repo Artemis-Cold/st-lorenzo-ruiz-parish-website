@@ -68,6 +68,65 @@ class EventApiTest extends TestCase
             ->assertJsonPath('data.0.title', 'September Event');
     }
 
+    public function test_staff_event_schedule_is_grouped_searchable_and_paginated(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        Sanctum::actingAs($staff);
+
+        foreach (range(1, 7) as $day) {
+            Event::create([
+                'created_by' => $staff->id,
+                'category' => 'event',
+                'title' => $day === 4 ? 'Parish Choir Practice' : "Community Activity {$day}",
+                'details' => 'An upcoming parish event.',
+                'location' => 'Parish Hall',
+                'starts_at' => now()->addDays($day),
+            ]);
+        }
+
+        Event::create([
+            'created_by' => $staff->id,
+            'category' => 'mass',
+            'title' => 'Daily Mass',
+            'details' => 'Regular daily Mass.',
+            'location' => 'Parish Church',
+            'starts_at' => now()->addHour(),
+        ]);
+
+        foreach (['event', 'mass'] as $category) {
+            Event::create([
+                'created_by' => $staff->id,
+                'category' => $category,
+                'title' => "Past {$category}",
+                'details' => 'A completed parish schedule.',
+                'starts_at' => now()->subDays(2),
+            ]);
+        }
+
+        $this->getJson('/api/staff/events?group=events&perPage=5')
+            ->assertOk()
+            ->assertJsonCount(5, 'data')
+            ->assertJsonPath('meta.total', 7)
+            ->assertJsonPath('meta.last_page', 2)
+            ->assertJsonPath('data.0.category', 'event');
+
+        $this->getJson('/api/staff/events?group=masses&perPage=5')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.category', 'mass')
+            ->assertJsonPath('data.0.title', 'Daily Mass');
+
+        $this->getJson('/api/staff/events?group=past&perPage=5')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('meta.total', 2);
+
+        $this->getJson('/api/staff/events?group=events&search=choir&perPage=5')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.title', 'Parish Choir Practice');
+    }
+
     public function test_parishioners_cannot_manage_events(): void
     {
         Sanctum::actingAs(User::factory()->create(['role' => 'parishioner']));

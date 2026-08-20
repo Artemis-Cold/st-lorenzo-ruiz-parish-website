@@ -34,11 +34,6 @@ class StoreBaptismBookingRequest extends FormRequest
                 'exists:service_packages,id',
             ],
 
-            'seminar_date' => [
-                'nullable',
-                'date',
-            ],
-
             'remarks' => [
                 'nullable',
                 'string',

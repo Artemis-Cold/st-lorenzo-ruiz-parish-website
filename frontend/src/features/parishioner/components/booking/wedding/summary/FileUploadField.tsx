@@ -63,11 +63,11 @@ export default function FileUploadField({
       {readOnly ? (
         <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
           {file ? (
-            <div className="flex items-start gap-3">
-              <FileText className="mt-1 text-green-600" size={28} />
+            <div className="flex min-w-0 items-start gap-3">
+              <FileText className="mt-1 shrink-0 text-green-600" size={28} />
 
-              <div className="flex-1">
-                <p className="font-semibold text-gray-800">{file.name}</p>
+              <div className="min-w-0 flex-1">
+                <p className="break-all font-semibold text-gray-800">{file.name}</p>
 
                 <p className="text-sm text-gray-500">
                   {(file.size / 1024 / 1024).toFixed(2)} MB
@@ -102,12 +102,12 @@ export default function FileUploadField({
         </button>
       ) : (
         <div className="rounded-2xl border border-green-300 bg-green-50 p-5">
-          <div className="flex items-start justify-between">
-            <div className="flex gap-3">
-              <FileText className="mt-1 text-green-600" size={28} />
+          <div className="flex min-w-0 items-start justify-between gap-2">
+            <div className="flex min-w-0 flex-1 gap-3">
+              <FileText className="mt-1 shrink-0 text-green-600" size={28} />
 
-              <div>
-                <p className="font-semibold">{file.name}</p>
+              <div className="min-w-0">
+                <p className="break-all font-semibold">{file.name}</p>
 
                 <p className="text-sm text-gray-500">
                   {(file.size / 1024 / 1024).toFixed(2)} MB
@@ -125,7 +125,7 @@ export default function FileUploadField({
                 setSizeError(null);
                 onChange(null);
               }}
-              className="rounded-lg p-2 transition hover:bg-red-100"
+              className="shrink-0 rounded-lg p-2 transition hover:bg-red-100"
             >
               <X size={18} />
             </button>

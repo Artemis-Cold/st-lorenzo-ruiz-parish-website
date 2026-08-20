@@ -26,11 +26,31 @@ export async function getPublicAnnouncements(): Promise<Announcement[]> {
   return response.data.data;
 }
 
-export async function getStaffAnnouncements(): Promise<Announcement[]> {
-  const response = await api.get<{ data: Announcement[] }>(
+export type StaffAnnouncementGroup = "all" | "scheduled" | "past";
+
+export interface StaffAnnouncementPage {
+  data: Announcement[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+  };
+}
+
+export async function getStaffAnnouncements(params: {
+  group?: StaffAnnouncementGroup;
+  search?: string;
+  page?: number;
+  perPage?: number;
+} = {}): Promise<StaffAnnouncementPage> {
+  const response = await api.get<StaffAnnouncementPage>(
     "/staff/announcements",
+    { params },
   );
-  return response.data.data;
+  return response.data;
 }
 
 export async function createAnnouncement(

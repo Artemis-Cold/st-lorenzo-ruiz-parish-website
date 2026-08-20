@@ -49,8 +49,6 @@ export interface BaptismBooking {
 
   service_package_id: number;
 
-  seminar_date: Date| null;
-
   baptizand: Baptizand;
 
   parents: Parent[];

@@ -42,16 +42,6 @@ ${
 }
 `;
 
-  const updateBooking = <K extends keyof BaptismBooking>(
-    field: K,
-    value: BaptismBooking[K],
-  ) => {
-    setBooking((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
   const updateBaptizand = <K extends keyof Baptizand>(
     field: K,
     value: Baptizand[K],
@@ -543,29 +533,6 @@ ${
                 <FieldError message={getError("baptizand.contact_number")} />
               </div>
 
-              <div className="col-span-12 md:col-span-6">
-                <label className="mb-2 block text-sm font-medium">
-                  Seminar Date <span className="text-red-600">*</span>
-                </label>
-
-                <input
-                  type="date"
-                  value={
-                    booking.seminar_date
-                      ? booking.seminar_date.toISOString().split("T")[0]
-                      : ""
-                  }
-                  onChange={(e) =>
-                    updateBooking(
-                      "seminar_date",
-                      e.target.value ? new Date(e.target.value) : null,
-                    )
-                  }
-                  readOnly={readOnly}
-                  className={inputClass(!!getError("baptizand.seminar_date"))}
-                />
-                <FieldError message={getError("seminar_date")} />
-              </div>
             </div>
           </section>
 

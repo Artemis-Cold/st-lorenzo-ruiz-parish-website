@@ -9,19 +9,25 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
-class WeddingAppointmentController extends Controller
+class BookingAppointmentController extends Controller
 {
     public function store(Request $request, Booking $booking, SmsNotificationService $sms): JsonResponse
     {
-        abort_unless($booking->service()->value('code') === 'wedding', 404);
+        $serviceCode = $booking->service()->value('code');
+        abort_unless(in_array($serviceCode, ['wedding', 'baptism'], true), 404);
+
+        $allowedTypes = $serviceCode === 'wedding'
+            ? ['seminar', 'priest_interview']
+            : ['seminar'];
+
         $data = $request->validate([
-            'type' => ['required', Rule::in(['seminar', 'priest_interview'])],
+            'type' => ['required', Rule::in($allowedTypes)],
             'scheduledAt' => ['required', 'date', 'after:now'],
             'venue' => ['required', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $appointment = $booking->weddingAppointments()->updateOrCreate(
+        $appointment = $booking->appointments()->updateOrCreate(
             ['type' => $data['type']],
             [
                 'created_by' => $request->user()->id,
@@ -31,11 +37,16 @@ class WeddingAppointmentController extends Controller
             ]
         );
 
-        $label = $appointment->type === 'seminar' ? 'wedding seminar' : 'interview with the parish priest';
+        $label = match ([$serviceCode, $appointment->type]) {
+            ['baptism', 'seminar'] => 'baptism seminar',
+            ['wedding', 'seminar'] => 'wedding seminar',
+            default => 'interview with the parish priest',
+        };
         $when = $appointment->scheduled_at->format('F j, Y \a\t g:i A');
+
         $sms->queue(
             $booking->loadMissing('user'),
-            $appointment->type,
+            $serviceCode === 'baptism' ? 'baptism_seminar' : $appointment->type,
             "St. Lorenzo Ruiz Parish: Your {$label} (Ref: {$booking->booking_reference}) is scheduled for {$when} at {$appointment->venue}. Please arrive on time. Thank you."
         );
 

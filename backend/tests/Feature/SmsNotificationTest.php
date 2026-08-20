@@ -44,6 +44,61 @@ class SmsNotificationTest extends TestCase
         Queue::assertPushed(SendSmsMessage::class);
     }
 
+    public function test_baptism_seminar_is_set_by_staff_and_sms_is_queued(): void
+    {
+        Queue::fake();
+        Sanctum::actingAs(User::factory()->create(['role' => 'staff']));
+        $parishioner = User::factory()->create(['phone' => '09181234567']);
+        $service = Service::create(['code' => 'baptism', 'name' => 'Baptism', 'description' => 'Baptism']);
+        $booking = Booking::create([
+            'booking_reference' => 'BPT-SMS-1', 'user_id' => $parishioner->id,
+            'service_id' => $service->id, 'booking_slot_id' => null,
+        ]);
+
+        $this->postJson("/api/staff/bookings/{$booking->id}/appointments", [
+            'type' => 'seminar',
+            'scheduledAt' => now()->addDays(2)->toIso8601String(),
+            'venue' => 'Parish Formation Hall',
+            'notes' => 'Parents and godparents must attend.',
+        ])->assertCreated()
+            ->assertJsonPath('data.type', 'seminar')
+            ->assertJsonPath('data.venue', 'Parish Formation Hall');
+
+        $this->assertDatabaseHas('booking_appointments', [
+            'booking_id' => $booking->id,
+            'type' => 'seminar',
+            'venue' => 'Parish Formation Hall',
+        ]);
+        $this->assertDatabaseHas('sms_messages', [
+            'booking_id' => $booking->id,
+            'recipient' => '639181234567',
+            'category' => 'baptism_seminar',
+        ]);
+        $this->assertStringContainsString(
+            'Your baptism seminar',
+            SmsMessage::query()->where('booking_id', $booking->id)->value('message')
+        );
+        Queue::assertPushed(SendSmsMessage::class);
+    }
+
+    public function test_baptism_cannot_be_given_a_priest_interview_schedule(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['role' => 'staff']));
+        $parishioner = User::factory()->create();
+        $service = Service::create(['code' => 'baptism', 'name' => 'Baptism', 'description' => 'Baptism']);
+        $booking = Booking::create([
+            'booking_reference' => 'BPT-SMS-2', 'user_id' => $parishioner->id,
+            'service_id' => $service->id, 'booking_slot_id' => null,
+        ]);
+
+        $this->postJson("/api/staff/bookings/{$booking->id}/appointments", [
+            'type' => 'priest_interview',
+            'scheduledAt' => now()->addDays(2)->toIso8601String(),
+            'venue' => 'Parish Office',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('type');
+    }
+
     public function test_semaphore_job_records_a_successful_send(): void
     {
         config()->set('services.sms.driver', 'semaphore');

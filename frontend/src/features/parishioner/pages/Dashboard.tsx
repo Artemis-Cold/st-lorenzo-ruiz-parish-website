@@ -41,7 +41,7 @@ export default function Dashboard() {
           <EventsCard announcements={announcements} />
         )}
 
-        <div className="space-y-8">
+        <div className="space-y-8 md:grid md:grid-cols-2 md:items-start md:gap-6 md:space-y-0 xl:block xl:space-y-8">
           {loading ? (
             <>
               <div className="h-96 animate-pulse rounded-3xl bg-white shadow-lg" />

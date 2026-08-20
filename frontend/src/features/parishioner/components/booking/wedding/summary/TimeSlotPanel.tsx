@@ -65,7 +65,7 @@ export default function TimeSlotPanel({
             <TimeSlotCard
               key={slot.id}
               slot={slot}
-              label="Wedding Schedule"
+              label="Schedule"
               selected={booking.booking_slot_id === slot.id}
               onSelect={() => {
                 setBooking((prev) => ({

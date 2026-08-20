@@ -36,13 +36,6 @@ function buildFormData(booking: BaptismBooking): FormData {
     formData.append(`parents[${i}][birth_place]`, parent.birth_place);
   });
 
-  formData.append(
-    "seminar_date",
-    booking.seminar_date
-      ? booking.seminar_date.toISOString().split("T")[0]
-      : "",
-  );
-
   // Godparent pairs
   booking.god_parents.forEach((pair, i) => {
     (["god_father", "god_mother"] as const).forEach((key) => {

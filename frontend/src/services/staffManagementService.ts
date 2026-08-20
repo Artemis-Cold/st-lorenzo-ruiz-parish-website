@@ -65,7 +65,7 @@ export async function updateDocumentRequestStatus(
   return response.data.data;
 }
 
-export async function scheduleWeddingAppointment(
+export async function scheduleBookingAppointment(
   bookingId: number,
   data: { type: "seminar" | "priest_interview"; scheduledAt: string; venue: string; notes: string },
 ) {

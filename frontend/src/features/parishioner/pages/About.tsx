@@ -6,7 +6,7 @@ import parishLogo from "@/assets/images/parish-logo.png";
 
 const capabilities = [
   [Smartphone, "Online parish services", "Submit sacramental bookings, Mass intentions, and document requests from one secure account."],
-  [BellRing, "Timely notifications", "Receive updates for document readiness, wedding seminars, and interviews with the parish priest."],
+  [BellRing, "Timely notifications", "Receive updates for document readiness, baptism and wedding seminars, and interviews with the parish priest."],
   [FileText, "Clear request tracking", "Review schedules, requirements, payments, submitted files, and processing status."],
   [ShieldCheck, "Protected information", "Role-based access keeps parishioner records separate from staff administration."],
 ] as const;

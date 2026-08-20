@@ -67,6 +67,51 @@ class AnnouncementApiTest extends TestCase
             ->assertJsonPath('data.0.title', 'Published');
     }
 
+    public function test_staff_announcements_are_searchable_grouped_and_paginated(): void
+    {
+        $staff = User::factory()->create(['role' => 'staff']);
+        Sanctum::actingAs($staff, ['staff']);
+
+        foreach (range(1, 7) as $day) {
+            Announcement::create([
+                'created_by' => $staff->id,
+                'title' => $day === 3 ? 'Choir Ministry Update' : "Published Notice {$day}",
+                'details' => 'Previously published parish information.',
+                'posted_at' => now()->subDays($day),
+            ]);
+        }
+
+        Announcement::create([
+            'created_by' => $staff->id,
+            'title' => 'Scheduled Parish Notice',
+            'details' => 'This announcement will be published later.',
+            'posted_at' => now()->addDay(),
+        ]);
+
+        $this->getJson('/api/staff/announcements?group=all&perPage=5')
+            ->assertOk()
+            ->assertJsonCount(5, 'data')
+            ->assertJsonPath('meta.total', 8)
+            ->assertJsonPath('meta.last_page', 2);
+
+        $this->getJson('/api/staff/announcements?group=scheduled&perPage=5')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.status', 'scheduled')
+            ->assertJsonPath('data.0.title', 'Scheduled Parish Notice');
+
+        $this->getJson('/api/staff/announcements?group=past&perPage=5')
+            ->assertOk()
+            ->assertJsonCount(5, 'data')
+            ->assertJsonPath('meta.total', 7)
+            ->assertJsonPath('data.0.status', 'published');
+
+        $this->getJson('/api/staff/announcements?group=all&search=choir&perPage=5')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.title', 'Choir Ministry Update');
+    }
+
     public function test_parishioners_cannot_manage_announcements(): void
     {
         Sanctum::actingAs(User::factory()->create(['role' => 'parishioner']));

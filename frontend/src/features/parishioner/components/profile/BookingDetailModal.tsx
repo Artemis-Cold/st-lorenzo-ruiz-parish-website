@@ -263,7 +263,7 @@ export default function BookingDetailModal({
                               <div className="flex items-start gap-3">
                                 <FileText className="mt-0.5 shrink-0 text-green-700" size={20} />
                                 <div className="min-w-0 flex-1">
-                                  <p className="break-words text-sm font-semibold text-green-900">{pendingFile.name}</p>
+                                  <p className="break-all text-sm font-semibold text-green-900">{pendingFile.name}</p>
                                   <p className="mt-0.5 text-xs text-green-700">{(pendingFile.size / 1024 / 1024).toFixed(2)} MB · Ready for submission</p>
                                 </div>
                                 <button

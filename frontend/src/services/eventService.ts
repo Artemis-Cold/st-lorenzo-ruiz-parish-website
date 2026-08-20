@@ -2,6 +2,7 @@ import api from "@/api/axios";
 
 export interface ParishEvent {
   id: number;
+  category: "event" | "mass";
   title: string;
   details: string;
   location: string | null;
@@ -28,9 +29,28 @@ export async function getPublicEvents(month?: string): Promise<ParishEvent[]> {
   return response.data.data;
 }
 
-export async function getStaffEvents(): Promise<ParishEvent[]> {
-  const response = await api.get<{ data: ParishEvent[] }>("/staff/events");
-  return response.data.data;
+export type StaffEventGroup = "events" | "masses" | "past";
+
+export interface StaffEventPage {
+  data: ParishEvent[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+  };
+}
+
+export async function getStaffEvents(params: {
+  group?: StaffEventGroup;
+  search?: string;
+  page?: number;
+  perPage?: number;
+} = {}): Promise<StaffEventPage> {
+  const response = await api.get<StaffEventPage>("/staff/events", { params });
+  return response.data;
 }
 
 export async function createEvent(input: ParishEventInput): Promise<ParishEvent> {
@@ -45,4 +65,26 @@ export async function updateEvent(id: number, input: ParishEventInput): Promise<
 
 export async function deleteEvent(id: number): Promise<void> {
   await api.delete(`/staff/events/${id}`);
+}
+
+export interface MassScheduleInput {
+  month: string;
+  location: string;
+}
+
+export interface MassScheduleResult {
+  message: string;
+  created: number;
+  skipped: number;
+}
+
+export async function createMassSchedule(
+  input: MassScheduleInput,
+): Promise<MassScheduleResult> {
+  const response = await api.post<MassScheduleResult>(
+    "/staff/events/mass-schedule",
+    input,
+  );
+
+  return response.data;
 }

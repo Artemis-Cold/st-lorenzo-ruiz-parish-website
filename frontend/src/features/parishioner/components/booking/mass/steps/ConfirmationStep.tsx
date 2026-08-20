@@ -105,8 +105,8 @@ export default function ConfirmationStep({
                 className="max-h-full max-w-full rounded-lg object-contain"
               />
             ) : (
-              <div className="text-center">
-                <p className="font-medium">
+              <div className="min-w-0 max-w-full px-4 text-center">
+                <p className="break-all font-medium">
                   {booking.receipt.name}
                 </p>
 

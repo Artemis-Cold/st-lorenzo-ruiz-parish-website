@@ -57,11 +57,11 @@ export default function CalendarCard({ bookings }: { bookings: ProfileBooking[] 
   );
 
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-lg">
-      <div className="mb-5 flex items-center justify-between">
+    <div className="rounded-3xl bg-white p-4 shadow-lg sm:p-5 xl:p-6">
+      <div className="mb-4 flex items-center justify-between xl:mb-5">
         <div className="flex items-center gap-2">
           <Calendar className="text-[#B22222]" />
-          <h2 className="font-serif text-xl font-bold">My Calendar</h2>
+          <h2 className="font-serif text-lg font-bold xl:text-xl">My Calendar</h2>
         </div>
         <div className="flex gap-1">
           <button
@@ -83,7 +83,7 @@ export default function CalendarCard({ bookings }: { bookings: ProfileBooking[] 
         </div>
       </div>
 
-      <p className="mb-4 text-center font-semibold text-[#B22222]">
+      <p className="mb-3 text-center text-sm font-semibold text-[#B22222] xl:mb-4 xl:text-base">
         {displayedMonth.toLocaleDateString("en-US", {
           month: "long",
           year: "numeric",
@@ -128,7 +128,7 @@ export default function CalendarCard({ bookings }: { bookings: ProfileBooking[] 
           );
         })}
       </div>
-      <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500">
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] text-gray-500 xl:mt-4 xl:text-xs">
         <span className="h-2 w-2 rounded-full bg-[#B22222]" /> Your scheduled booking
         <span className="ml-2 h-2 w-2 rounded-full bg-violet-600" /> Parish event
       </div>

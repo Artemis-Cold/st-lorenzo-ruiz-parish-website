@@ -8,7 +8,9 @@ use App\Http\Requests\Announcement\UpdateAnnouncementRequest;
 use App\Http\Resources\AnnouncementResource;
 use App\Models\Announcement;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Validation\Rule;
 
 class AnnouncementController extends Controller
 {
@@ -23,12 +25,28 @@ class AnnouncementController extends Controller
         return AnnouncementResource::collection($announcements);
     }
 
-    public function index(): AnonymousResourceCollection
+    public function index(Request $request): AnonymousResourceCollection
     {
+        $data = $request->validate([
+            'group' => ['nullable', Rule::in(['all', 'scheduled', 'past'])],
+            'search' => ['nullable', 'string', 'max:100'],
+            'perPage' => ['nullable', 'integer', 'min:5', 'max:25'],
+        ]);
+        $group = $data['group'] ?? 'all';
+
         $announcements = Announcement::query()
             ->with('creator')
+            ->when($group === 'scheduled', fn ($query) => $query->where('posted_at', '>', now()))
+            ->when($group === 'past', fn ($query) => $query->where('posted_at', '<=', now()))
+            ->when(isset($data['search']), function ($query) use ($data) {
+                $search = '%'.$data['search'].'%';
+                $query->where(fn ($query) => $query
+                    ->where('title', 'like', $search)
+                    ->orWhere('details', 'like', $search));
+            })
             ->latest('posted_at')
-            ->get();
+            ->paginate($data['perPage'] ?? 10)
+            ->withQueryString();
 
         return AnnouncementResource::collection($announcements);
     }

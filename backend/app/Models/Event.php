@@ -9,6 +9,7 @@ class Event extends Model
 {
     protected $fillable = [
         'created_by',
+        'category',
         'title',
         'details',
         'location',

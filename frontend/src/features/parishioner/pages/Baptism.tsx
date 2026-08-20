@@ -33,8 +33,6 @@ export default function Baptism() {
     booking_slot_id: 0,
     service_package_id: 0,
 
-    seminar_date: null,
-
     baptizand: {
       first_name: "",
       middle_initial: "",
@@ -225,8 +223,6 @@ export default function Baptism() {
       "Contact number",
     );
 
-    requireField("seminar_date", booking.seminar_date, "Seminar Date");
-
     validateIf(
       "baptizand.birth_date",
       booking.baptizand.birth_date,
@@ -242,13 +238,6 @@ export default function Baptism() {
         (booking.baptizand.contact_number ?? "").replace(/\s+/g, ""),
       ),
       "Enter a valid 11-digit mobile number (e.g. 09171234567).",
-    );
-
-    validateIf(
-      "seminar_date",
-      booking.seminar_date,
-      booking.seminar_date !== null && booking.seminar_date < new Date(),
-      "Seminar date cannot be in the past.",
     );
 
     // Parents

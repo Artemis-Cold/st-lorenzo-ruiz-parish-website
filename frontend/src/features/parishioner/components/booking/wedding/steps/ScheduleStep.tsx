@@ -34,7 +34,7 @@ export default function ScheduleStep({
 
     setBooking((prev) => ({
       ...prev,
-      booking_slot_id: 0, // previous slot no longer applies to the new date
+      booking_slot_id: 0,
     }));
 
     setSelectedSlot(null);
@@ -62,7 +62,7 @@ export default function ScheduleStep({
     loadSlots();
   }, [selectedDate]);
 
-  // Restore selectedSlot on remount if booking still points at a valid slot
+
   useEffect(() => {
     if (selectedSlot || booking.booking_slot_id === 0) return;
 
@@ -71,12 +71,7 @@ export default function ScheduleStep({
     if (match) {
       setSelectedSlot(match);
     }
-  }, [
-    availableSlots,
-    booking.booking_slot_id,
-    selectedSlot,
-    setSelectedSlot,
-  ]);
+  }, [availableSlots, booking.booking_slot_id, selectedSlot, setSelectedSlot]);
 
   return (
     <div className="grid gap-6 lg:h-[31rem] lg:grid-cols-3 lg:items-stretch">

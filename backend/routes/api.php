@@ -7,8 +7,10 @@ use App\Http\Controllers\Api\DocumentRequestBookingController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\FuneralBookingController;
 use App\Http\Controllers\Api\MassIntentionBookingController;
+use App\Http\Controllers\Api\ParishCalendarController;
 use App\Http\Controllers\Api\ParishionerBookingController;
 use App\Http\Controllers\Api\ServicePackageController;
+use App\Http\Controllers\Api\Staff\BookingAppointmentController;
 use App\Http\Controllers\Api\Staff\StaffAvailabilityController;
 use App\Http\Controllers\Api\Staff\StaffBookingController;
 use App\Http\Controllers\Api\Staff\StaffDashboardController;
@@ -16,7 +18,6 @@ use App\Http\Controllers\Api\Staff\StaffDocumentRequestController;
 use App\Http\Controllers\Api\Staff\StaffMassIntentionController;
 use App\Http\Controllers\Api\Staff\StaffSettingsController;
 use App\Http\Controllers\Api\Staff\StaffTransactionController;
-use App\Http\Controllers\Api\Staff\WeddingAppointmentController;
 use App\Http\Controllers\Api\WeddingBookingController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
@@ -92,11 +93,13 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::get('/announcements', [AnnouncementController::class, 'publicIndex']);
 Route::get('/events', [EventController::class, 'publicIndex']);
+Route::get('/parish-calendar/bookings', [ParishCalendarController::class, 'bookedServices']);
 
 Route::middleware(['auth:sanctum', 'staff'])
     ->prefix('staff')
     ->group(function () {
         Route::apiResource('announcements', AnnouncementController::class);
+        Route::post('/events/mass-schedule', [EventController::class, 'storeMassSchedule']);
         Route::apiResource('events', EventController::class);
         Route::get('/dashboard', StaffDashboardController::class);
         Route::patch('/settings/profile', [StaffSettingsController::class, 'updateProfile']);
@@ -111,7 +114,7 @@ Route::middleware(['auth:sanctum', 'staff'])
         Route::delete('/availability/{bookingSlot}', [StaffAvailabilityController::class, 'destroy']);
         Route::patch('/bookings/{booking}/status', [StaffBookingController::class, 'updateStatus']);
         Route::post('/bookings/{booking}/requirements/remind', [StaffBookingController::class, 'remindRequirements']);
-        Route::post('/bookings/{booking}/appointments', [WeddingAppointmentController::class, 'store']);
+        Route::post('/bookings/{booking}/appointments', [BookingAppointmentController::class, 'store']);
         Route::get('/mass-intentions', [StaffMassIntentionController::class, 'index']);
         Route::get('/document-requests', [StaffDocumentRequestController::class, 'index']);
         Route::patch('/document-requests/{documentRequestBooking}/status', [StaffDocumentRequestController::class, 'updateStatus']);

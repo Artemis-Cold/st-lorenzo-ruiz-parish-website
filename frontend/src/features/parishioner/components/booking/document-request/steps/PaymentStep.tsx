@@ -121,72 +121,62 @@ ${
       </BookingCard>
 
       {/* Payment Details */}
-      <BookingCard title="GCash Payment">
-        <div className="space-y-6">
-          <div className="flex items-center gap-4 rounded-2xl border p-5">
-            <div className="flex h-15 w-15 items-center justify-center rounded-full p-2">
-              <img
-                src={gcashLogo}
-                alt="GCash"
-                className="h-12 w-12 object-contain"
-              />
-            </div>
-
-            <div>
-              <h3 className="font-semibold">St. Lorenzo Ruiz Parish</h3>
-
-              <p className="text-sm text-gray-500">0912 345 6789</p>
-            </div>
-          </div>
-
-          <div className="flex justify-center">
+      <BookingCard title="GCash Payment" contentClassName="p-5 sm:p-6 lg:p-5 xl:p-6">
+        <div className="space-y-4">
+          <div className="grid gap-4 lg:grid-cols-[11rem_minmax(0,1fr)] lg:items-center">
+            <div className="flex justify-center rounded-2xl bg-gray-50 p-2 lg:p-1">
             <img
               //src="/images/gcash-qr.png"
               src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=GCASH-QR-PLACEHOLDER"
               alt="GCash QR Code"
-              className="h-64 w-64 rounded-2xl border bg-white p-2 object-contain"
+                className="size-52 rounded-xl border bg-white p-2 object-contain lg:size-40 xl:size-44"
             />
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 rounded-xl border p-3">
+                <div className="grid size-11 shrink-0 place-items-center rounded-full bg-blue-50">
+                  <img src={gcashLogo} alt="GCash" className="size-9 object-contain" />
+                </div>
+
+                <div className="min-w-0">
+                  <h3 className="truncate text-sm font-semibold sm:text-base">St. Lorenzo Ruiz Parish</h3>
+                  <p className="text-sm text-gray-500">0912 345 6789</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium">
+                  GCash Reference Number <span className="text-red-600">*</span>
+                </label>
+
+                <input
+                  type="text"
+                  value={booking.reference_number}
+                  onChange={(e) => updateBooking("reference_number", e.target.value)}
+                  readOnly={readOnly}
+                  placeholder="Enter GCash Reference Number"
+                  className={inputClass + (getError("reference_number") ? " border-red-400" : "")}
+                />
+                <FieldError message={getError("reference_number")} />
+              </div>
+            </div>
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">
-              GCash Reference Number <span className="text-red-600">*</span>
-            </label>
-
-            <input
-              type="text"
-              value={booking.reference_number}
-              onChange={(e) => updateBooking("reference_number", e.target.value)}
-              readOnly={readOnly}
-              placeholder="Enter GCash Reference Number"
-              className={
-                inputClass +
-                (getError("reference_number") ? " border-red-400" : "")
-              }
-            />
-            <FieldError message={getError("reference_number")} />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium">
+            <label className="mb-1.5 block text-sm font-medium">
               Payment Receipt <span className="text-red-600">*</span>
             </label>
             <FieldError message={getError("receipt")} />
 
-            <label className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-red-300 bg-red-50 px-6 py-10 transition hover:border-[#B22222] hover:bg-red-100">
-              <UploadCloud size={48} className="mb-3 text-[#B22222]" />
+            <label className="flex min-w-0 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-red-300 bg-red-50 px-4 py-7 text-center transition hover:border-[#B22222] hover:bg-red-100 sm:px-6 lg:flex-row lg:justify-start lg:gap-4 lg:px-5 lg:py-4 lg:text-left">
+              <UploadCloud className="mb-3 size-10 shrink-0 text-[#B22222] lg:mb-0 lg:size-8" />
 
-              <p className="font-semibold">Upload GCash Receipt</p>
-
-              <p className="mt-1 text-sm text-gray-500">
-                PDF, JPG, JPEG or PNG (Max 5 MB)
-              </p>
-
-              {booking.receipt && (
-                <p className="mt-4 text-sm font-medium text-green-600">
-                  {booking.receipt.name}
-                </p>
-              )}
+              <div className="min-w-0">
+                <p className="font-semibold">Upload GCash Receipt</p>
+                <p className="mt-1 text-xs text-gray-500 sm:text-sm">PDF, JPG, JPEG or PNG (Max 5 MB)</p>
+                {booking.receipt && <p className="mt-2 max-w-full break-all text-sm font-medium text-green-600 lg:mt-1">{booking.receipt.name}</p>}
+              </div>
 
               <input
                 hidden

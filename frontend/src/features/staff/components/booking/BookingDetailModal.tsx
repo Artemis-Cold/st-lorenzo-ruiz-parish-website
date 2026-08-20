@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import type { Booking, BookingStatus } from "../../types/booking";
 import BookingStatusBadge from "./BookingStatusBadge";
 import { formatLabel } from "../../utils/formatLabel";
-import { scheduleWeddingAppointment, sendBookingRequirementsReminder } from "@/services/staffManagementService";
+import { scheduleBookingAppointment, sendBookingRequirementsReminder } from "@/services/staffManagementService";
 import RejectConfirmationButton from "../RejectConfirmationButton";
 
 interface Props {
@@ -37,7 +37,7 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus }:
   const schedule = async (event: FormEvent) => {
     event.preventDefault();
     try {
-      const saved = await scheduleWeddingAppointment(booking.id, appointment);
+      const saved = await scheduleBookingAppointment(booking.id, appointment);
       setAppointments((items) => [...items.filter((item) => item.type !== saved.type), saved]);
       toast.success("Schedule saved and SMS queued.");
     } catch { toast.error("Unable to save schedule."); }
@@ -100,12 +100,19 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus }:
           </section>
         ))}
 
-        {booking.type === "Marriage" && (
+        {(booking.type === "Marriage" || booking.type === "Baptism") && (
           <section className="mt-4 space-y-4 rounded-2xl border border-[#E7E2DA] p-5">
-            <h3 className="font-semibold text-[#292524]">Wedding schedules and SMS</h3>
-            {appointments.map((item) => <Detail key={item.type} label={formatLabel(item.type)} value={`${new Date(item.scheduledAt).toLocaleString()} — ${item.venue}`} />)}
+            <div>
+              <h3 className="font-semibold text-[#292524]">{booking.type === "Baptism" ? "Baptism seminar and SMS" : "Wedding schedules and SMS"}</h3>
+              <p className="mt-1 text-xs text-gray-500">Saving a schedule queues an SMS notification for the parishioner.</p>
+            </div>
+            {appointments.map((item) => <Detail key={item.type} label={booking.type === "Baptism" ? "Baptism seminar" : formatLabel(item.type)} value={`${new Date(item.scheduledAt).toLocaleString()} — ${item.venue}`} />)}
             <form onSubmit={schedule} className="grid gap-3 sm:grid-cols-2">
-              <select value={appointment.type} onChange={(e) => setAppointment({...appointment, type: e.target.value as typeof appointment.type})} className="rounded-xl border px-3 py-2"><option value="seminar">Wedding Seminar</option><option value="priest_interview">Priest Interview</option></select>
+              {booking.type === "Marriage" ? (
+                <select value={appointment.type} onChange={(e) => setAppointment({...appointment, type: e.target.value as typeof appointment.type})} className="rounded-xl border px-3 py-2"><option value="seminar">Wedding Seminar</option><option value="priest_interview">Priest Interview</option></select>
+              ) : (
+                <div className="rounded-xl border bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700">Baptism Seminar</div>
+              )}
               <input type="datetime-local" required value={appointment.scheduledAt} onChange={(e) => setAppointment({...appointment, scheduledAt: e.target.value})} className="rounded-xl border px-3 py-2" />
               <input required placeholder="Venue" value={appointment.venue} onChange={(e) => setAppointment({...appointment, venue: e.target.value})} className="rounded-xl border px-3 py-2" />
               <input placeholder="Notes (optional)" value={appointment.notes} onChange={(e) => setAppointment({...appointment, notes: e.target.value})} className="rounded-xl border px-3 py-2" />

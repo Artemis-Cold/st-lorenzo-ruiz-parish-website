@@ -27,7 +27,7 @@ class ParishionerBookingController extends Controller
 
         $booking->load([
             'service', 'package.inclusions', 'selectedAddons', 'slot', 'documents',
-            'weddingApplicants', 'weddingAppointments',
+            'weddingApplicants', 'appointments',
             'baptizand.parents', 'baptizand.godParentPairs.godParents',
             'funeralDeceased.children', 'massIntention.entries',
             'documentRequest.items',
@@ -185,10 +185,10 @@ class ParishionerBookingController extends Controller
             ]),
         ])->values()->all();
 
-        if ($booking->weddingAppointments->isNotEmpty()) {
+        if ($booking->appointments->isNotEmpty()) {
             $sections[] = [
                 'title' => 'Appointments',
-                'fields' => $booking->weddingAppointments->map(fn ($appointment) => [
+                'fields' => $booking->appointments->map(fn ($appointment) => [
                     'label' => $appointment->type === 'seminar' ? 'Wedding seminar' : 'Priest interview',
                     'value' => $appointment->scheduled_at->format('F j, Y g:i A').' — '.$appointment->venue,
                 ])->values(),
@@ -231,7 +231,7 @@ class ParishionerBookingController extends Controller
             return [];
         }
 
-        return [[
+        $sections = [[
             'title' => 'Baptizand information',
             'fields' => $this->fields([
                 'Name' => $this->name($person->first_name, $person->middle_initial, $person->last_name, $person->suffix),
@@ -245,6 +245,18 @@ class ParishionerBookingController extends Controller
                 'Godparents' => $person->godParentPairs->flatMap(fn ($pair) => $pair->godParents)->map(fn ($godParent) => ucfirst($godParent->role).': '.$this->name($godParent->first_name, $godParent->middle_initial, $godParent->last_name, $godParent->suffix))->join(', '),
             ]),
         ]];
+
+        if ($booking->appointments->isNotEmpty()) {
+            $sections[] = [
+                'title' => 'Seminar schedule',
+                'fields' => $booking->appointments->map(fn ($appointment) => [
+                    'label' => 'Baptism seminar',
+                    'value' => $appointment->scheduled_at->format('F j, Y g:i A').' — '.$appointment->venue,
+                ])->values(),
+            ];
+        }
+
+        return $sections;
     }
 
     private function massIntentionSections(Booking $booking): array

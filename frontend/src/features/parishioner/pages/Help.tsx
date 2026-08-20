@@ -6,7 +6,7 @@ import DashboardLayout from "../components/DashboardLayout";
 
 const faqs = [
   ["How can I track my booking?", "Open My Profile and select Current Bookings or Recent Bookings. Click a booking card to view its status, schedule, submitted files, payment information, and service-specific details."],
-  ["When will I receive an SMS?", "SMS notifications are sent for document status updates and scheduled wedding seminars or priest interviews. Make sure the mobile number in your profile is current."],
+  ["When will I receive an SMS?", "SMS notifications are sent for document status updates, baptism or wedding seminar schedules, and priest interviews. Make sure the mobile number in your profile is current."],
   ["How do I know when a requested document is ready?", "The request status changes to Ready for Pickup and an SMS is sent to your registered mobile number. The status also appears under My Profile → Documents."],
   ["Can I submit multiple document requests together?", "Yes. Select the documents you need in one request. Their individual prices and the combined total are shown before submission."],
   ["Can I change a submitted booking?", "Contact the parish office and provide your booking reference. Changes depend on availability and the current processing status."],
