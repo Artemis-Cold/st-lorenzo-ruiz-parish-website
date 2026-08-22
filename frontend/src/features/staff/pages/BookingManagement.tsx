@@ -134,7 +134,7 @@ export default function BookingManagement() {
         <div className="relative overflow-hidden rounded-3xl bg-[#B22222] px-6 py-8 text-white shadow-lg sm:px-10 sm:py-10">
           <div
             aria-hidden
-            className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/[0.06]"
+            className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/6"
           />
 
           <div className="relative flex items-start justify-between gap-4">
@@ -213,7 +213,7 @@ export default function BookingManagement() {
         {/* Table */}
         <div className="overflow-hidden rounded-3xl border border-[#E7E2DA] bg-white shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left text-sm">
+            <table className="w-full min-w-180 text-left text-sm">
               <thead>
                 <tr className="bg-[#B22222] text-xs font-semibold uppercase tracking-wide text-white">
                   <th className="px-5 py-4">ID</th>

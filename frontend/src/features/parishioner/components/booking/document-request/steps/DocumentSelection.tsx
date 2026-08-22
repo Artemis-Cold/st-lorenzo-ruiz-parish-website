@@ -1,5 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
-import { Check, FileText } from "lucide-react";
+import { Circle, CircleCheck } from "lucide-react";
 
 import { BookingCard } from "../..";
 
@@ -94,9 +94,9 @@ export default function DocumentSelectionStep({
   };
 
   return (
-    <BookingCard title="Select Documents">
-      <div className="space-y-6">
-        <div className="divide-y rounded-xl border">
+    <BookingCard title="Select Documents" contentClassName="p-4 sm:p-6 md:p-8">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="divide-y overflow-hidden rounded-xl border">
           {DOCUMENT_PRICES.map((document) => {
             const selected = booking.requests.some(
               (request) => request.document_type === document.type,
@@ -107,39 +107,27 @@ export default function DocumentSelectionStep({
                 key={document.type}
                 type="button"
                 onClick={() => toggleDocument(document.type)}
+                aria-pressed={selected}
                 className={`
-                  flex w-full items-center justify-between
-                  px-5 py-4 transition
+                  grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3
+                  px-3 py-3 text-left transition sm:gap-4 sm:px-5 sm:py-4
 
                   ${selected ? "bg-red-50" : "hover:bg-gray-50"}
                 `}
               >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`
-                    flex h-10 w-10 items-center justify-center
-                    rounded-lg border
+                <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                  {selected ? (
+                    <CircleCheck size={22} className="shrink-0 text-[#B22222]" />
+                  ) : (
+                    <Circle size={22} className="shrink-0 text-gray-400" />
+                  )}
 
-                    ${
-                      selected
-                        ? "border-[#B22222] bg-[#B22222]"
-                        : "border-red-200 bg-white"
-                    }
-                  `}
-                  >
-                    {selected ? (
-                      <Check size={18} className="text-white" />
-                    ) : (
-                      <FileText size={18} className="text-[#B22222]" />
-                    )}
-                  </div>
-
-                  <span className="text-lg tracking-wide">
+                  <span className="min-w-0 wrap-break-word text-sm leading-5 tracking-wide md:text-lg md:leading-normal">
                     {document.type.toUpperCase()}
                   </span>
                 </div>
 
-                <span className="text-xl font-semibold text-[#B22222]">
+                <span className="shrink-0 whitespace-nowrap font-semibold text-[#B22222] md:text-xl">
                   ₱{document.price.toFixed(2)}
                 </span>
               </button>
@@ -151,7 +139,7 @@ export default function DocumentSelectionStep({
         )}
 
         {booking.requests.length > 0 && (
-          <div className="rounded-lg bg-red-50 p-4 text-sm text-[#B22222]">
+          <div className="rounded-lg bg-red-50 p-3 text-sm text-[#B22222] sm:p-4">
             <strong>{booking.requests.length}</strong> document
             {booking.requests.length > 1 ? "s" : ""} selected.
           </div>

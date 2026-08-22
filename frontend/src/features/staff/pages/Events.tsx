@@ -173,7 +173,7 @@ export default function Events() {
     <StaffDashboardLayout>
       <div className="space-y-6 sm:space-y-8">
         <div className="relative overflow-hidden rounded-3xl bg-[#B22222] px-6 py-8 text-white shadow-lg sm:px-10 sm:py-10">
-          <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-white/[0.06]" />
+          <div aria-hidden className="pointer-events-none absolute -right-16 -top-16 size-56 rounded-full bg-white/6" />
           <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
               <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/10"><CalendarDays size={22} /></div>
@@ -189,7 +189,7 @@ export default function Events() {
           </div>
         </div>
 
-        <section className="flex h-[38rem] flex-col overflow-hidden rounded-3xl border border-[#E7E2DA] bg-white shadow-sm lg:h-[clamp(38rem,72vh,48rem)]">
+        <section className="flex h-152 flex-col overflow-hidden rounded-3xl border border-[#E7E2DA] bg-white shadow-sm lg:h-[clamp(38rem,72vh,48rem)]">
           <div className="shrink-0 border-b border-gray-100 px-5 pt-5 sm:px-7 sm:pt-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
@@ -227,7 +227,7 @@ export default function Events() {
               </label>
             </div>
 
-            <div className="mt-5 flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Event schedule groups">
+            <div className="mt-5 flex gap-1 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Event schedule groups">
               {eventGroups.map((item) => {
                 const Icon = item.icon;
                 const active = group === item.value;
@@ -255,7 +255,7 @@ export default function Events() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pr-3 sm:p-6 sm:pr-4 [scrollbar-color:#D6CEC4_transparent] [scrollbar-width:thin]">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pr-3 sm:p-6 sm:pr-4 [scrollbar-color:#D6CEC4_transparent] scrollbar-thin">
             {loading ? (
               <div className="flex h-full items-center justify-center"><p className="text-sm text-gray-400">Loading schedule...</p></div>
             ) : events.length === 0 ? (
@@ -282,11 +282,11 @@ export default function Events() {
                     </div>
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="break-words font-semibold text-[#292524]">{event.title}</h3>
+                        <h3 className="wrap-break-word font-semibold text-[#292524]">{event.title}</h3>
                         <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${event.category === "mass" ? "bg-amber-50 text-amber-700" : "bg-red-50 text-[#B22222]"}`}>{event.category === "mass" ? "Mass" : "Event"}</span>
                         <span className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize ${event.status === "past" ? "bg-gray-100 text-gray-600" : event.status === "ongoing" ? "bg-green-100 text-green-700" : "bg-blue-50 text-blue-700"}`}>{event.status}</span>
                       </div>
-                      <p className="mt-1.5 line-clamp-2 break-words text-sm leading-6 text-gray-600">{event.details}</p>
+                      <p className="mt-1.5 line-clamp-2 wrap-break-word text-sm leading-6 text-gray-600">{event.details}</p>
                       <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs text-gray-500"><span className="flex items-center gap-1.5"><Clock3 className="shrink-0" size={14} />{formatDateTime(event.startsAt)}{event.endsAt ? ` – ${formatDateTime(event.endsAt)}` : ""}</span>{event.location && <span className="flex min-w-0 items-center gap-1.5"><MapPin className="shrink-0" size={14} /><span className="truncate">{event.location}</span></span>}</div>
                     </div>
                   </div>

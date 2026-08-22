@@ -38,9 +38,9 @@ export default function PackagesStep(props: Props) {
   }
 
   return (
-    <BookingCard title="Packages" contentClassName="p-4 sm:p-8">
-      <div className="space-y-5 sm:space-y-8">
-        <div className="grid grid-cols-2 gap-3 sm:gap-6">
+    <BookingCard title="Packages" contentClassName="p-4 sm:p-6 lg:p-7">
+      <div className="space-y-5 sm:space-y-6">
+        <div className="mx-auto grid w-full max-w-4xl grid-cols-2 gap-3 sm:gap-5">
           {packages.map((item) => {
             const selected = booking.service_package_id === item.id;
             return (
@@ -63,29 +63,29 @@ export default function PackagesStep(props: Props) {
                 }
               >
                 {item.recommended && (
-                  <div className="absolute left-2 right-2 top-0 rounded-b-lg bg-[#B22222] py-1 text-[10px] font-semibold text-white sm:left-4 sm:right-4 sm:rounded-b-xl sm:text-xs">
+                  <div className="absolute left-2 top-2 rounded-full bg-[#B22222] px-2 py-1 text-[9px] font-semibold leading-none text-white sm:left-3 sm:top-3 sm:px-2.5 sm:text-[11px]">
                     Recommended
                   </div>
                 )}
                 {selected && (
-                  <div className="absolute right-2 top-2 rounded-full bg-[#B22222] p-1.5 text-white sm:right-4 sm:top-4 sm:p-2">
+                  <div className="absolute right-2 top-2 rounded-full bg-[#B22222] p-1.5 text-white sm:right-3 sm:top-3">
                     <Check className="size-3.5 sm:size-4" />
                   </div>
                 )}
-                <div className="px-2.5 pb-4 pt-8 sm:px-8 sm:pb-8 sm:pt-10">
-                  <div className="flex flex-col items-center justify-center gap-1.5 sm:flex-row sm:gap-4">
+                <div className="px-2.5 pb-4 pt-10 sm:px-5 sm:pb-5 sm:pt-12 lg:px-6">
+                  <div className="flex flex-col items-center justify-center gap-1.5 sm:flex-row sm:gap-3">
                     {item.name === "With Choir" ? (
-                      <Music2 className="size-7 shrink-0 text-[#B22222] sm:size-12" />
+                      <Music2 className="size-7 shrink-0 text-[#B22222] sm:size-9" />
                     ) : (
-                      <Cross className="size-7 shrink-0 text-[#B22222] sm:size-12" />
+                      <Cross className="size-7 shrink-0 text-[#B22222] sm:size-9" />
                     )}
-                    <h2 className="min-h-10 text-center text-base font-medium leading-5 text-[#B22222] sm:min-h-0 sm:text-left sm:text-3xl sm:font-light sm:leading-normal">
+                    <h2 className="min-h-10 text-center text-base font-medium leading-5 text-[#B22222] sm:min-h-0 sm:text-left sm:text-xl sm:font-light sm:leading-normal lg:text-2xl">
                       {item.name}
                     </h2>
                   </div>
-                  <div className="my-3 border-b border-red-300 sm:my-5" />
-                  <p className="text-xs text-[#B22222] sm:text-lg">From</p>
-                  <p className="text-xl font-semibold text-[#B22222] sm:text-5xl sm:font-light">
+                  <div className="my-3 border-b border-red-300 sm:my-4" />
+                  <p className="text-xs text-[#B22222] sm:text-sm">From</p>
+                  <p className="text-xl font-semibold text-[#B22222] sm:text-3xl sm:font-light lg:text-4xl">
                     ₱{Number(item.base_price).toLocaleString()}
                   </p>
                 </div>

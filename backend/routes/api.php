@@ -132,7 +132,7 @@ Route::get(
 
 Route::get('/', function () {
     return response()->json([
-        'name' => 'ParishConnect API',
+        'name' => 'SLR Parish API',
         'version' => '1.0.0',
         'status' => 'OK',
     ]);
