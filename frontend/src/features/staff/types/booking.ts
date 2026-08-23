@@ -47,6 +47,13 @@ export interface Booking {
           churchAddress: string;
         };
       }>;
+      sponsorPairs?: Array<{
+        sponsors: Array<{
+          role: "godfather" | "godmother";
+          name: string;
+          residence: string;
+        }>;
+      }>;
       deceased?: {
         name: string;
         age: number;

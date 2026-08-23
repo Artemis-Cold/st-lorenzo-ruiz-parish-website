@@ -1,7 +1,85 @@
-import { MapPin, CalendarDays } from "lucide-react";
+import { useState } from "react";
+import { ChevronLeft, ChevronRight, Cross, MapPin } from "lucide-react";
 import { motion } from "framer-motion";
 
-import church from "../../../assets/images/church.png";
+import { parishImages } from "../data/images";
+
+function ParishImageCarousel() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeImage = parishImages[activeIndex];
+  const hasMultipleImages = parishImages.length > 1;
+
+  const showPrevious = () => {
+    setActiveIndex((current) =>
+      current === 0 ? parishImages.length - 1 : current - 1,
+    );
+  };
+
+  const showNext = () => {
+    setActiveIndex((current) =>
+      current === parishImages.length - 1 ? 0 : current + 1,
+    );
+  };
+
+  return (
+    <div className="relative overflow-hidden rounded-3xl bg-[#2A0909] shadow-xl">
+      <motion.img
+        key={activeImage.src}
+        initial={{ opacity: 0.75, scale: 1.02 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.45 }}
+        src={activeImage.src}
+        alt={activeImage.alt}
+        className="h-72 w-full object-cover sm:h-80 lg:h-87.5"
+      />
+
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-black/75 to-transparent"
+      />
+      <p className="absolute bottom-5 left-5 right-5 text-sm font-semibold text-white sm:text-base">
+        {activeImage.caption}
+      </p>
+
+      {hasMultipleImages && (
+        <>
+          <button
+            type="button"
+            onClick={showPrevious}
+            aria-label="Show previous parish image"
+            className="absolute left-3 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-full border border-white/25 bg-black/35 text-white backdrop-blur-md transition hover:bg-black/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          >
+            <ChevronLeft size={20} />
+          </button>
+          <button
+            type="button"
+            onClick={showNext}
+            aria-label="Show next parish image"
+            className="absolute right-3 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-full border border-white/25 bg-black/35 text-white backdrop-blur-md transition hover:bg-black/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+          >
+            <ChevronRight size={20} />
+          </button>
+
+          <div
+            className="absolute bottom-5 right-5 flex gap-1.5"
+            aria-label="Choose parish image"
+          >
+            {parishImages.map((image, index) => (
+              <button
+                key={image.src}
+                type="button"
+                onClick={() => setActiveIndex(index)}
+                aria-label={`Show parish image ${index + 1}`}
+                aria-current={activeIndex === index}
+                className={`h-1.5 rounded-full transition-all ${activeIndex === index ? "w-6 bg-[#F5D76E]" : "w-1.5 bg-white/60 hover:bg-white"}`}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
 
 export default function About() {
   return (
@@ -35,11 +113,7 @@ export default function About() {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <img
-              src={church}
-              alt="St. Lorenzo Ruiz Parish"
-              className="h-72 w-full rounded-3xl object-cover shadow-xl sm:h-80 lg:h-[350px]"
-            />
+            <ParishImageCarousel />
           </motion.div>
 
           {/* About Text */}
@@ -50,24 +124,30 @@ export default function About() {
             transition={{ duration: 0.7 }}
           >
             <h3 className="font-serif text-2xl font-bold text-[#B22222] lg:text-3xl">
-              A Place of Faith, Prayer, and Community
+              Kasaysayang Hinubog ng Pananampalataya
             </h3>
 
             <p className="mt-4 text-sm leading-6 text-gray-600 lg:text-base lg:leading-7">
-              St. Lorenzo Ruiz Parish serves as a spiritual home for the
-              faithful of Dagatan, Taysan, Batangas. Guided by the teachings of
-              Christ and inspired by the life of St. Lorenzo Ruiz, the parish
-              continues to foster a community rooted in faith, compassion, and
-              service.
+              Itinatag ang Parokya ng San Lorenzo Ruiz noong Setyembre 19, 2010
+              sa pangunguna ni Arsobispo Ramon C. Argüelles, kasama si Rdo. P.
+              Benedicto Ortega Malaluan bilang unang kura paroko. Saklaw nito
+              ang mga barangay ng Bacao, Piña, Laurel, Dagatan, at Mapulo, na
+              sama-samang kinikilala bilang BAPILADAMA.
             </p>
 
             <p className="mt-3 text-sm leading-6 text-gray-600 lg:text-base lg:leading-7">
-              The parish provides sacramental celebrations, spiritual formation,
-              and pastoral programs that strengthen the relationship between God
-              and His people while promoting unity among the community.
+              Sa 1.2 ektaryang lupang ipinagkaloob nina Gregoria Natividad
+              Flores Chavez at Julia Flores Panganiban, inilagay ang panulukang
+              bato noong Mayo 12, 2013. Sa pagtutulungan ng mga parokyano,
+              layko, kaibigan, at mga paring diyosesano, naitayo ang simbahan sa
+              panahon ni Reb. P. Estelito Lontoc Africa Jr. Naglaan din ang
+              Arsidiyosesis ng Lipa ng karagdagang tatlong ektarya para sa mga
+              susunod na gawain ng parokya. Dinisenyo ang simbahan nina
+              Architect Suzette Chua-Caringal, Architect Joseph M. Villanueva,
+              at Engr. Luigi H. Montenegro, at kinonsagra noong Setyembre 26,
+              2016, sa Taon ng Hubileo ng Awa.
             </p>
 
-            {/* Information Cards */}
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <div className="rounded-2xl bg-[#FAF7F2] p-4">
                 <div className="mb-2.5 flex h-10 w-10 items-center justify-center rounded-xl bg-[#B22222] text-white">
@@ -83,7 +163,7 @@ export default function About() {
 
               <div className="rounded-2xl bg-[#FAF7F2] p-4">
                 <div className="mb-2.5 flex h-10 w-10 items-center justify-center rounded-xl bg-[#D4AF37] text-white">
-                  <CalendarDays size={19} />
+                  <Cross size={19} />
                 </div>
 
                 <h4 className="font-semibold text-[#222]">Patron Saint</h4>

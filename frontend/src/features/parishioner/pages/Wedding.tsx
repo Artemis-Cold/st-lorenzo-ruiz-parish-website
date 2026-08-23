@@ -75,6 +75,29 @@ export default function Wedding() {
       bride: emptyPerson(),
     },
 
+    sponsors: [
+      {
+        god_father: {
+          role: "godfather",
+          first_name: "",
+          middle_initial: "",
+          last_name: "",
+          residence: "",
+        },
+        god_mother: {
+          role: "godmother",
+          first_name: "",
+          middle_initial: "",
+          last_name: "",
+          residence: "",
+        },
+        requirements: {
+          marriage_contract: null,
+          confirmation_certificate: null,
+        },
+      },
+    ],
+
     documents: [],
 
     remarks: "",
@@ -259,6 +282,26 @@ export default function Wedding() {
           `${document.file.name} must not exceed 5 MB.`,
         );
       }
+
+      if (
+        document.document_type.startsWith("couple_photo_") &&
+        !["image/jpeg", "image/png"].includes(document.file.type)
+      ) {
+        addError(
+          `documents.${document.document_type}`,
+          `${document.file.name} must be a JPG or PNG image.`,
+        );
+      }
+    });
+
+    currentBooking.sponsors.forEach((pair, index) => {
+      (["god_father", "god_mother"] as const).forEach((role) => {
+        const sponsor = pair[role];
+        const label = role === "god_father" ? "Godfather" : "Godmother";
+        requireField(`sponsors.${index}.${role}.first_name`, sponsor.first_name, `${label}'s first name`);
+        requireField(`sponsors.${index}.${role}.last_name`, sponsor.last_name, `${label}'s last name`);
+        requireField(`sponsors.${index}.${role}.residence`, sponsor.residence, `${label}'s residence`);
+      });
     });
 
     return errors;

@@ -1,4 +1,4 @@
-import church from "@/assets/images/church.png";
+import church from "@/assets/images/church.jpg";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function WelcomeBanner() {
@@ -13,7 +13,6 @@ export default function WelcomeBanner() {
         backgroundImage: `url(${church})`,
       }}
     >
-      {/* Overlay */}
       <div className="absolute inset-0 bg-linear-to-r from-black/70 via-black/45 to-black/20" />
 
       <div className="relative z-10 flex min-h-60 flex-col justify-center px-6 py-10 text-white sm:px-10">

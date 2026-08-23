@@ -27,7 +27,7 @@ class ParishionerBookingController extends Controller
 
         $booking->load([
             'service', 'package.inclusions', 'selectedAddons', 'slot', 'documents',
-            'weddingApplicants', 'appointments',
+            'weddingApplicants', 'weddingSponsorPairs.sponsors', 'appointments',
             'baptizand.parents', 'baptizand.godParentPairs.godParents',
             'funeralDeceased.children', 'massIntention.entries',
             'documentRequest.items',
@@ -88,9 +88,14 @@ class ParishionerBookingController extends Controller
             ]);
         }
 
+        $documentType = (string) $request->input('document_type');
+        $fileTypes = str_starts_with($documentType, 'couple_photo')
+            ? 'jpg,jpeg,png'
+            : 'jpg,jpeg,png,pdf';
+
         $data = $request->validate([
             'document_type' => ['required', 'string', Rule::in($requirements->allowedTypes($booking))],
-            'file' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+            'file' => ['required', 'file', 'mimes:'.$fileTypes, 'max:5120'],
         ]);
 
         if ($booking->documents()->where('document_type', $data['document_type'])->exists()) {
@@ -184,6 +189,16 @@ class ParishionerBookingController extends Controller
                 "Mother's name" => $this->name($person->mother_first_name, $person->mother_middle_initial, $person->mother_last_name),
             ]),
         ])->values()->all();
+
+        foreach ($booking->weddingSponsorPairs as $index => $pair) {
+            $sections[] = [
+                'title' => 'Principal sponsor pair '.($index + 1),
+                'fields' => $pair->sponsors->map(fn ($sponsor) => [
+                    'label' => $sponsor->role === 'godfather' ? 'Godfather (Ninong)' : 'Godmother (Ninang)',
+                    'value' => $this->name($sponsor->first_name, $sponsor->middle_initial, $sponsor->last_name).' — '.$sponsor->residence,
+                ])->values(),
+            ];
+        }
 
         if ($booking->appointments->isNotEmpty()) {
             $sections[] = [

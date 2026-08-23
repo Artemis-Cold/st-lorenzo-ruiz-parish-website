@@ -100,6 +100,15 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus }:
           </section>
         ))}
 
+        {service.sponsorPairs?.map((pair, index) => (
+          <section key={index} className="mt-4 space-y-3 rounded-2xl border border-[#E7E2DA] p-5">
+            <h3 className="font-semibold text-[#292524]">Principal sponsor pair {index + 1}</h3>
+            {pair.sponsors.map((sponsor) => (
+              <Detail key={sponsor.role} label={sponsor.role === "godfather" ? "Godfather (Ninong)" : "Godmother (Ninang)"} value={`${sponsor.name} — ${sponsor.residence}`} />
+            ))}
+          </section>
+        ))}
+
         {(booking.type === "Marriage" || booking.type === "Baptism") && (
           <section className="mt-4 space-y-4 rounded-2xl border border-[#E7E2DA] p-5">
             <div>

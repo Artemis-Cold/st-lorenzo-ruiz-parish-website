@@ -10,7 +10,12 @@ class BookingRequirementService
 
     public function missing(Booking $booking): array
     {
-        $booking->loadMissing(['service', 'documents', 'baptizand.godParentPairs']);
+        $booking->loadMissing([
+            'service',
+            'documents',
+            'baptizand.godParentPairs',
+            'weddingSponsorPairs',
+        ]);
         $uploaded = $booking->documents->pluck('document_type')->all();
 
         return collect($this->definitions($booking))
@@ -49,18 +54,7 @@ class BookingRequirementService
     private function definitions(Booking $booking): array
     {
         return match ($booking->service?->code) {
-            'wedding' => [
-                ['key' => 'marriage_license', 'label' => 'Marriage License', 'types' => ['marriage_license']],
-                ['key' => 'cenomar', 'label' => 'CENOMAR', 'types' => ['cenomar']],
-                ['key' => 'baptismal_certificate', 'label' => 'Baptismal Certificate', 'types' => ['baptismal_certificate']],
-                ['key' => 'confirmation_certificate', 'label' => 'Confirmation Certificate', 'types' => ['confirmation_certificate']],
-                ['key' => 'couple_photo', 'label' => 'Couple Photo', 'types' => ['couple_photo']],
-                [
-                    'key' => 'sponsor_document',
-                    'label' => 'Sponsor Marriage Contract or Confirmation Certificate',
-                    'types' => ['sponsor_marriage_contract', 'sponsor_confirmation_certificate'],
-                ],
-            ],
+            'wedding' => $this->weddingDefinitions($booking),
             'funeral' => [
                 ['key' => 'death_certificate', 'label' => 'Death Certificate', 'types' => ['death_certificate']],
                 ['key' => 'biography', 'label' => 'Memorial Biography', 'types' => ['biography']],
@@ -68,6 +62,46 @@ class BookingRequirementService
             'baptism' => $this->baptismDefinitions($booking),
             default => [],
         };
+    }
+
+    private function weddingDefinitions(Booking $booking): array
+    {
+        $definitions = [
+            ['key' => 'marriage_license', 'label' => 'Marriage License', 'types' => ['marriage_license']],
+            ['key' => 'cenomar', 'label' => 'CENOMAR', 'types' => ['cenomar']],
+            ['key' => 'baptismal_certificate', 'label' => 'Baptismal Certificate', 'types' => ['baptismal_certificate']],
+            ['key' => 'confirmation_certificate', 'label' => 'Confirmation Certificate', 'types' => ['confirmation_certificate']],
+            ['key' => 'couple_photo_1', 'label' => '3R Couple Photo 1', 'types' => ['couple_photo_1', 'couple_photo']],
+            ['key' => 'couple_photo_2', 'label' => '3R Couple Photo 2', 'types' => ['couple_photo_2', 'couple_photo']],
+            ['key' => 'couple_photo_3', 'label' => '3R Couple Photo 3', 'types' => ['couple_photo_3', 'couple_photo']],
+        ];
+
+        if ($booking->weddingSponsorPairs->isEmpty()) {
+            $definitions[] = [
+                'key' => 'sponsor_document',
+                'label' => 'Sponsor Marriage Contract or Confirmation Certificate',
+                'types' => ['sponsor_marriage_contract', 'sponsor_confirmation_certificate'],
+            ];
+
+            return $definitions;
+        }
+
+        foreach ($booking->weddingSponsorPairs as $index => $pair) {
+            if ($pair->marriage_contract || $pair->confirmation_certificate) {
+                continue;
+            }
+
+            $definitions[] = [
+                'key' => 'wedding_sponsor_document_'.$pair->id,
+                'label' => 'Wedding sponsor pair '.($index + 1).' supporting document',
+                'types' => [
+                    'wedding_sponsor_marriage_contract_'.$pair->id,
+                    'wedding_sponsor_confirmation_certificate_'.$pair->id,
+                ],
+            ];
+        }
+
+        return $definitions;
     }
 
     private function baptismDefinitions(Booking $booking): array

@@ -48,11 +48,14 @@ class WeddingBookingService
                 );
             }
 
+            $this->createSponsorPairs($booking, $data['sponsors']);
+
             $booking->selectedAddons()->sync($addonIds);
             $this->uploadDocuments($booking, $data['documents'] ?? []);
 
             $booking->load([
                 'weddingApplicants',
+                'weddingSponsorPairs.sponsors',
                 'documents',
                 'package',
                 'selectedAddons',
@@ -145,6 +148,37 @@ class WeddingBookingService
                 'file_path' => $path,
                 'status' => 'pending',
             ]);
+        }
+    }
+
+    private function createSponsorPairs(Booking $booking, array $pairs): void
+    {
+        foreach ($pairs as $pair) {
+            $marriageContractPath = isset($pair['requirements']['marriage_contract'])
+                ? $pair['requirements']['marriage_contract']->store('wedding-sponsor-documents', 'public')
+                : null;
+            $confirmationCertificatePath = isset($pair['requirements']['confirmation_certificate'])
+                ? $pair['requirements']['confirmation_certificate']->store('wedding-sponsor-documents', 'public')
+                : null;
+
+            $sponsorPair = $booking->weddingSponsorPairs()->create([
+                'marriage_contract' => $marriageContractPath,
+                'confirmation_certificate' => $confirmationCertificatePath,
+            ]);
+
+            foreach ([
+                'god_father' => 'godfather',
+                'god_mother' => 'godmother',
+            ] as $key => $role) {
+                $sponsor = $pair[$key];
+                $sponsorPair->sponsors()->create([
+                    'role' => $role,
+                    'first_name' => $sponsor['first_name'],
+                    'middle_initial' => $sponsor['middle_initial'] ?? null,
+                    'last_name' => $sponsor['last_name'],
+                    'residence' => $sponsor['residence'],
+                ]);
+            }
         }
     }
 

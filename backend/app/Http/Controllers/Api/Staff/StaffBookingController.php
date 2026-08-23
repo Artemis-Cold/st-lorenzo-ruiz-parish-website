@@ -24,7 +24,7 @@ class StaffBookingController extends Controller
             ]))
             ->with([
                 'user', 'service', 'package.inclusions', 'selectedAddons', 'slot',
-                'documents', 'weddingApplicants', 'baptizand.parents',
+                'documents', 'weddingApplicants', 'weddingSponsorPairs.sponsors', 'baptizand.parents',
                 'baptizand.godParentPairs.godParents',
                 'funeralDeceased.children',
                 'appointments',
@@ -62,7 +62,7 @@ class StaffBookingController extends Controller
 
         $booking->load([
             'user', 'service', 'package.inclusions', 'selectedAddons', 'slot',
-            'documents', 'weddingApplicants', 'baptizand.parents',
+            'documents', 'weddingApplicants', 'weddingSponsorPairs.sponsors', 'baptizand.parents',
             'baptizand.godParentPairs.godParents',
             'funeralDeceased.children',
             'appointments',
@@ -183,6 +183,13 @@ class StaffBookingController extends Controller
                         'priest' => $person->priest,
                         'churchAddress' => $person->church_address,
                     ],
+                ])->values(),
+                'sponsorPairs' => $booking->weddingSponsorPairs->map(fn ($pair) => [
+                    'sponsors' => $pair->sponsors->map(fn ($sponsor) => [
+                        'role' => $sponsor->role,
+                        'name' => $this->personName($sponsor->first_name, $sponsor->middle_initial, $sponsor->last_name),
+                        'residence' => $sponsor->residence,
+                    ])->values(),
                 ])->values(),
             ];
         }

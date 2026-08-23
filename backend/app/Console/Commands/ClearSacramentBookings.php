@@ -7,6 +7,7 @@ use App\Models\Service;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class ClearSacramentBookings extends Command
@@ -110,8 +111,16 @@ class ClearSacramentBookings extends Command
             ->get(['god_parent_pairs.marriage_contract', 'god_parent_pairs.confirmation_certificate'])
             ->flatMap(fn ($pair) => [$pair->marriage_contract, $pair->confirmation_certificate]);
 
+        $weddingSponsorDocuments = Schema::hasTable('wedding_sponsor_pairs')
+            ? DB::table('wedding_sponsor_pairs')
+                ->whereIn('booking_id', $bookingIds)
+                ->get(['marriage_contract', 'confirmation_certificate'])
+                ->flatMap(fn ($pair) => [$pair->marriage_contract, $pair->confirmation_certificate])
+            : collect();
+
         return $bookingDocuments
             ->merge($godparentDocuments)
+            ->merge($weddingSponsorDocuments)
             ->filter(fn ($path) => is_string($path) && $path !== '')
             ->unique()
             ->values();

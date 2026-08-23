@@ -4,8 +4,11 @@ import type {
   Person,
   WeddingBooking,
   WeddingDocument,
+  WeddingSponsor,
+  WeddingSponsorPair,
 } from "../../../../types/wedding";
 import type { Dispatch, SetStateAction } from "react";
+import { Plus, Trash2 } from "lucide-react";
 import FileUploadField from "../summary/FileUploadField";
 
 interface DetailsStepProps {
@@ -144,6 +147,9 @@ ${
     booking.documents.find((document) => document.document_type === type)
       ?.file ?? null;
 
+  const getDocumentIndex = (type: WeddingDocument["document_type"]) =>
+    booking.documents.findIndex((document) => document.document_type === type);
+
   const updateDocument = (
     type: WeddingDocument["document_type"],
     file: File | null,
@@ -158,6 +164,76 @@ ${
             { document_type: type, file },
           ]
         : prev.documents.filter((document) => document.document_type !== type),
+    }));
+  };
+
+  const addSponsorPair = () => {
+    setBooking((prev) => ({
+      ...prev,
+      sponsors: [
+        ...prev.sponsors,
+        {
+          god_father: {
+            role: "godfather",
+            first_name: "",
+            middle_initial: "",
+            last_name: "",
+            residence: "",
+          },
+          god_mother: {
+            role: "godmother",
+            first_name: "",
+            middle_initial: "",
+            last_name: "",
+            residence: "",
+          },
+          requirements: {
+            marriage_contract: null,
+            confirmation_certificate: null,
+          },
+        },
+      ],
+    }));
+  };
+
+  const removeSponsorPair = (index: number) => {
+    setBooking((prev) => ({
+      ...prev,
+      sponsors: prev.sponsors.filter((_, pairIndex) => pairIndex !== index),
+    }));
+  };
+
+  const updateSponsor = (
+    index: number,
+    role: "god_father" | "god_mother",
+    field: keyof Omit<WeddingSponsor, "role">,
+    value: string,
+  ) => {
+    setBooking((prev) => ({
+      ...prev,
+      sponsors: prev.sponsors.map((pair, pairIndex) =>
+        pairIndex === index
+          ? { ...pair, [role]: { ...pair[role], [field]: value } }
+          : pair,
+      ),
+    }));
+  };
+
+  const updateSponsorRequirement = (
+    index: number,
+    field: keyof WeddingSponsorPair["requirements"],
+    file: File | null,
+  ) => {
+    setBooking((prev) => ({
+      ...prev,
+      sponsors: prev.sponsors.map((pair, pairIndex) =>
+        pairIndex === index
+          ? {
+              ...pair,
+              requirements: { ...pair.requirements, [field]: file },
+            }
+          : pair,
+      ),
     }));
   };
 
@@ -1052,51 +1128,104 @@ ${
                 />
               </div>
 
-              <div className="col-span-12">
-                <FileUploadField
-                  label="Three (3) Copies of 3R Couple Photo"
-                  file={getDocument("couple_photo")}
-                  onChange={(file) => updateDocument("couple_photo", file)}
-                  readOnly={readOnly}
-                />
-                <FieldError message={getError("documents.couple_photo")} />
+              <div className="col-span-12 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                <h4 className="font-semibold text-blue-900">Three 3R Couple Photos</h4>
+                <p className="mt-1 text-sm text-blue-700">Attach three separate JPG or PNG image files. PDF files are not accepted for these photo fields.</p>
               </div>
+
+              {(["couple_photo_1", "couple_photo_2", "couple_photo_3"] as const).map((type, index) => (
+                <div key={type} className="col-span-12 md:col-span-4">
+                  <FileUploadField
+                    label={`3R Couple Photo ${index + 1}`}
+                    file={getDocument(type)}
+                    onChange={(file) => updateDocument(type, file)}
+                    accept=".jpg,.jpeg,.png"
+                    readOnly={readOnly}
+                  />
+                  <FieldError message={getError(`documents.${type}`) ?? getError(`documents.${getDocumentIndex(type)}.file`)} />
+                </div>
+              ))}
             </div>
           </section>
 
           <section>
-            <h3 className="mb-2 border-b pb-2 text-lg font-semibold text-[#B22222]">
-              Principal Sponsors
-            </h3>
-
-            <p className="mb-6 text-sm text-gray-500">
-              Upload either the Marriage Contract or the Confirmation
-              Certificate of the principal sponsors.
-            </p>
-
-            <div className="grid grid-cols-12 gap-5">
-              <div className="col-span-12 md:col-span-6">
-                <FileUploadField
-                  label="Marriage Contract"
-                  file={getDocument("sponsor_marriage_contract")}
-                  onChange={(file) =>
-                    updateDocument("sponsor_marriage_contract", file)
-                  }
-                  readOnly={readOnly}
-                />
-                <FieldError message={getError("documents.sponsor")} />
+            <div className="mb-5 flex items-center justify-between gap-4 border-b pb-3">
+              <div>
+                <h3 className="text-lg font-semibold text-[#B22222]">Principal Sponsors</h3>
+                <p className="mt-1 text-sm text-gray-500">Add each sponsor pair and their supporting requirement.</p>
               </div>
+              {!readOnly && (
+                <button type="button" onClick={addSponsorPair} className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#B22222] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#8B1C1C]">
+                  <Plus size={16} /> Add Pair
+                </button>
+              )}
+            </div>
 
-              <div className="col-span-12 md:col-span-6">
-                <FileUploadField
-                  label="Confirmation Certificate"
-                  file={getDocument("sponsor_confirmation_certificate")}
-                  onChange={(file) =>
-                    updateDocument("sponsor_confirmation_certificate", file)
-                  }
-                  readOnly={readOnly}
-                />
-              </div>
+            <div className="space-y-5">
+              {booking.sponsors.map((pair, index) => (
+                <div key={index} className="rounded-2xl border border-gray-200 p-4 sm:p-5">
+                  <div className="mb-5 flex items-center justify-between gap-3">
+                    <h4 className="font-semibold text-[#B22222]">Sponsor Pair #{index + 1}</h4>
+                    {!readOnly && booking.sponsors.length > 1 && (
+                      <button type="button" onClick={() => removeSponsorPair(index)} aria-label={`Remove sponsor pair ${index + 1}`} className="rounded-lg p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-600">
+                        <Trash2 size={17} />
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid gap-5 lg:grid-cols-2">
+                    {(["god_father", "god_mother"] as const).map((role) => {
+                      const sponsor = pair[role];
+                      const label = role === "god_father" ? "Godfather (Ninong)" : "Godmother (Ninang)";
+
+                      return (
+                        <div key={role} className="rounded-xl bg-gray-50 p-4">
+                          <h5 className="mb-4 font-semibold text-gray-700">{label}</h5>
+                          <div className="grid grid-cols-12 gap-3">
+                            <div className="col-span-12 sm:col-span-5">
+                              <label className="mb-1.5 block text-sm font-medium">Last Name <span className="text-red-600">*</span></label>
+                              <input value={sponsor.last_name} onChange={(event) => updateSponsor(index, role, "last_name", event.target.value)} readOnly={readOnly} placeholder="Last name" className={inputClass} />
+                              <FieldError message={getError(`sponsors.${index}.${role}.last_name`)} />
+                            </div>
+                            <div className="col-span-12 sm:col-span-5">
+                              <label className="mb-1.5 block text-sm font-medium">First Name <span className="text-red-600">*</span></label>
+                              <input value={sponsor.first_name} onChange={(event) => updateSponsor(index, role, "first_name", event.target.value)} readOnly={readOnly} placeholder="First name" className={inputClass} />
+                              <FieldError message={getError(`sponsors.${index}.${role}.first_name`)} />
+                            </div>
+                            <div className="col-span-12 sm:col-span-2">
+                              <label className="mb-1.5 block text-sm font-medium">MI</label>
+                              <input maxLength={1} value={sponsor.middle_initial} onChange={(event) => updateSponsor(index, role, "middle_initial", event.target.value)} readOnly={readOnly} placeholder="M" className={inputClass} />
+                              <FieldError message={getError(`sponsors.${index}.${role}.middle_initial`)} />
+                            </div>
+                            <div className="col-span-12">
+                              <label className="mb-1.5 block text-sm font-medium">Residence <span className="text-red-600">*</span></label>
+                              <input value={sponsor.residence} onChange={(event) => updateSponsor(index, role, "residence", event.target.value)} readOnly={readOnly} placeholder="Complete residence" className={inputClass} />
+                              <FieldError message={getError(`sponsors.${index}.${role}.residence`)} />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                    <h5 className="font-semibold text-amber-900">Sponsor Pair Requirement</h5>
+                    <p className="mt-1 text-sm text-amber-700">Upload either a Marriage Contract or Confirmation Certificate for this pair. It may also be submitted later while the booking is pending.</p>
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                      <div>
+                        <FileUploadField label="Marriage Contract" file={pair.requirements.marriage_contract} onChange={(file) => updateSponsorRequirement(index, "marriage_contract", file)} readOnly={readOnly} />
+                        <FieldError message={getError(`sponsors.${index}.requirements.marriage_contract`)} />
+                      </div>
+                      <div>
+                        <FileUploadField label="Confirmation Certificate" file={pair.requirements.confirmation_certificate} onChange={(file) => updateSponsorRequirement(index, "confirmation_certificate", file)} readOnly={readOnly} />
+                        <FieldError message={getError(`sponsors.${index}.requirements.confirmation_certificate`)} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              {errors?.sponsors?.[0] && <FieldError message={errors.sponsors[0]} />}
             </div>
           </section>
         </form>

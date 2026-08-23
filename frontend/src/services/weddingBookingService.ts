@@ -56,6 +56,30 @@ function buildFormData(booking: WeddingBooking): FormData {
     );
   });
 
+  booking.sponsors.forEach((pair, index) => {
+    (["god_father", "god_mother"] as const).forEach((role) => {
+      const sponsor = pair[role];
+      const prefix = `sponsors[${index}][${role}]`;
+      formData.append(`${prefix}[first_name]`, sponsor.first_name);
+      formData.append(`${prefix}[middle_initial]`, sponsor.middle_initial);
+      formData.append(`${prefix}[last_name]`, sponsor.last_name);
+      formData.append(`${prefix}[residence]`, sponsor.residence);
+    });
+
+    if (pair.requirements.marriage_contract) {
+      formData.append(
+        `sponsors[${index}][requirements][marriage_contract]`,
+        pair.requirements.marriage_contract,
+      );
+    }
+    if (pair.requirements.confirmation_certificate) {
+      formData.append(
+        `sponsors[${index}][requirements][confirmation_certificate]`,
+        pair.requirements.confirmation_certificate,
+      );
+    }
+  });
+
   booking.documents.forEach((document, index) => {
     formData.append(
       "documents[" + index + "][document_type]",

@@ -36,11 +36,25 @@ export interface WeddingDocument {
     | "cenomar"
     | "baptismal_certificate"
     | "confirmation_certificate"
-    | "couple_photo"
-    | "sponsor_marriage_contract"
-    | "sponsor_confirmation_certificate";
+    | "couple_photo_1"
+    | "couple_photo_2"
+    | "couple_photo_3";
 
   file: File;
+}
+
+export interface WeddingSponsor extends PersonName {
+  role: "godfather" | "godmother";
+  residence: string;
+}
+
+export interface WeddingSponsorPair {
+  god_father: WeddingSponsor;
+  god_mother: WeddingSponsor;
+  requirements: {
+    marriage_contract: File | null;
+    confirmation_certificate: File | null;
+  };
 }
 
 export interface WeddingBooking {
@@ -54,6 +68,8 @@ export interface WeddingBooking {
     groom: Person;
     bride: Person;
   };
+
+  sponsors: WeddingSponsorPair[];
 
   documents: WeddingDocument[];
 

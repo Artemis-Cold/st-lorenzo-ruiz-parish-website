@@ -78,6 +78,11 @@ class Booking extends Model
         return $this->hasMany(WeddingApplicant::class);
     }
 
+    public function weddingSponsorPairs(): HasMany
+    {
+        return $this->hasMany(WeddingSponsorPair::class);
+    }
+
     public function funeralDeceased(): HasOne
     {
         return $this->hasOne(FuneralDeceased::class);
