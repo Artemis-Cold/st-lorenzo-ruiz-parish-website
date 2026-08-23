@@ -40,6 +40,13 @@ export async function sendBookingRequirementsReminder(id: number): Promise<strin
   return response.data.message;
 }
 
+export async function sendBookingPaymentReminder(id: number): Promise<string> {
+  const response = await api.post<{ message: string }>(
+    `/staff/bookings/${id}/payment/remind`,
+  );
+  return response.data.message;
+}
+
 export async function getStaffMassIntentions(): Promise<MassIntention[]> {
   const response = await api.get<CollectionResponse<MassIntention>>(
     "/staff/mass-intentions",

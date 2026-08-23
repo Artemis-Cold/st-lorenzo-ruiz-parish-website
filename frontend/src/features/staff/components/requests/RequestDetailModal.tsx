@@ -20,6 +20,7 @@ export default function RequestDetailModal({
 
   const isActionable =
     request.status === "pending" ||
+    request.status === "paid" ||
     request.status === "approved" ||
     request.status === "ready_for_pickup";
 
@@ -134,7 +135,7 @@ export default function RequestDetailModal({
 
         {isActionable && (
           <div className="mt-6 space-y-2.5">
-            {request.status === "pending" && (
+            {request.status === "paid" && (
               <button
                 onClick={() => onUpdateStatus(request.id, "approved")}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#B22222] py-3 font-semibold text-white transition hover:bg-[#8B1C1C]"
@@ -164,7 +165,7 @@ export default function RequestDetailModal({
               </button>
             )}
 
-            {request.status === "pending" && (
+            {(request.status === "pending" || request.status === "paid") && (
               <RejectConfirmationButton
                 label="Reject Request"
                 itemLabel="document request"

@@ -8,6 +8,7 @@ use App\Models\DocumentRequestBooking;
 use App\Services\SmsNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class StaffDocumentRequestController extends Controller
 {
@@ -33,8 +34,23 @@ class StaffDocumentRequestController extends Controller
         ]);
         $booking = $documentRequest->booking;
 
+        if ($request->validated('status') === 'approved') {
+            if (! in_array($booking->status, ['pending', 'paid'], true)) {
+                throw ValidationException::withMessages([
+                    'status' => "A {$booking->status} request cannot be changed to approved.",
+                ]);
+            }
+
+            if ($booking->status === 'pending') {
+                throw ValidationException::withMessages([
+                    'payment' => 'This request cannot be approved until its payment is confirmed.',
+                ]);
+            }
+        }
+
         $this->changeStatus($booking, $request->validated('status'), [
-            'pending' => ['approved', 'rejected', 'cancelled'],
+            'pending' => ['rejected', 'cancelled'],
+            'paid' => ['approved', 'rejected', 'cancelled'],
             'approved' => ['ready_for_pickup', 'cancelled'],
             'ready_for_pickup' => ['completed', 'cancelled'],
         ]);

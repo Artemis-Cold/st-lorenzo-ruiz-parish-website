@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { CalendarClock, CalendarDays, ExternalLink, FileText, FileUp, LoaderCircle, Trash2, X } from "lucide-react";
+import { AxiosError } from "axios";
+import { CalendarClock, CalendarDays, CreditCard, ExternalLink, FileText, FileUp, LoaderCircle, Trash2, X } from "lucide-react";
 
 import {
   getParishionerBooking,
+  submitParishionerBookingPayment,
   uploadParishionerBookingDocument,
   type ParishionerBookingDetail,
   type RescheduledBooking,
@@ -40,13 +42,22 @@ export default function BookingDetailModal({
   const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
   const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
   const [selectedTypes, setSelectedTypes] = useState<Record<string, string>>({});
+  const [paymentReference, setPaymentReference] = useState("");
+  const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
+  const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>({});
+  const [submittingPayment, setSubmittingPayment] = useState(false);
   const booking = result.bookingId === bookingId ? result.booking : null;
   const error = result.bookingId === bookingId ? result.error : "";
 
   useEffect(() => {
     if (!bookingId) return;
     getParishionerBooking(bookingId)
-      .then((booking) => setResult({ bookingId, booking, error: "" }))
+      .then((booking) => {
+        setResult({ bookingId, booking, error: "" });
+        setPaymentReference(booking.payment.referenceNumber ?? "");
+        setPaymentReceipt(null);
+        setPaymentErrors({});
+      })
       .catch(() =>
         setResult({
           bookingId,
@@ -78,7 +89,58 @@ export default function BookingDetailModal({
     setPendingFiles({});
     setUploadErrors({});
     setSelectedTypes({});
+    setPaymentReference("");
+    setPaymentReceipt(null);
+    setPaymentErrors({});
     onClose();
+  };
+
+  const selectPaymentReceipt = (file: File) => {
+    if (!ALLOWED_FILE_PATTERN.test(file.name)) {
+      setPaymentReceipt(null);
+      setPaymentErrors((current) => ({ ...current, receipt: "Select a PDF, JPG, JPEG, or PNG file." }));
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setPaymentReceipt(null);
+      setPaymentErrors((current) => ({ ...current, receipt: "The selected receipt must not exceed 5 MB." }));
+      return;
+    }
+
+    setPaymentReceipt(file);
+    setPaymentErrors((current) => withoutKey(current, "receipt"));
+  };
+
+  const submitPayment = async () => {
+    const errors: Record<string, string> = {};
+    if (!paymentReference.trim()) errors.reference_number = "Enter the GCash reference number.";
+    if (!paymentReceipt) errors.receipt = "Choose the GCash receipt before submitting.";
+    setPaymentErrors(errors);
+    if (Object.keys(errors).length > 0 || !paymentReceipt) return;
+
+    setSubmittingPayment(true);
+    try {
+      await submitParishionerBookingPayment(bookingId, paymentReference.trim(), paymentReceipt);
+      const refreshed = await getParishionerBooking(bookingId);
+      setResult({ bookingId, booking: refreshed, error: "" });
+      setPaymentReference(refreshed.payment.referenceNumber ?? "");
+      setPaymentReceipt(null);
+      setPaymentErrors({});
+      void onRescheduled?.();
+    } catch (requestError) {
+      if (requestError instanceof AxiosError && requestError.response?.status === 422) {
+        const serverErrors = requestError.response.data?.errors as Record<string, string[]> | undefined;
+        setPaymentErrors({
+          reference_number: serverErrors?.reference_number?.[0] ?? "",
+          receipt: serverErrors?.receipt?.[0] ?? "",
+        });
+      } else {
+        setPaymentErrors({ receipt: "Unable to submit the payment. Please try again." });
+      }
+    } finally {
+      setSubmittingPayment(false);
+    }
   };
 
   const selectRequirementFile = (
@@ -194,6 +256,54 @@ export default function BookingDetailModal({
                 <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2"><p><span className="text-gray-500">Package:</span> {booking.package.name}</p><p><span className="text-gray-500">Total:</span> ₱{booking.package.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p></div>
                 {booking.package.inclusions.length > 0 && <p className="mt-2 text-sm"><span className="text-gray-500">Inclusions:</span> {booking.package.inclusions.join(", ")}</p>}
                 {booking.package.addons.length > 0 && <p className="mt-2 text-sm"><span className="text-gray-500">Add-ons:</span> {booking.package.addons.map((addon) => addon.name).join(", ")}</p>}
+              </section>
+            )}
+
+            {booking.payment.required && (
+              <section className="rounded-2xl border border-[#E7E2DA] p-5">
+                <div className="flex items-start gap-3">
+                  <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-red-50 text-[#B22222]"><CreditCard size={21} /></div>
+                  <div className="min-w-0">
+                    <h3 className="font-semibold text-[#292524]">GCash payment</h3>
+                    <p className="mt-1 text-sm leading-5 text-gray-500">Amount due: <span className="font-semibold text-[#B22222]">₱{booking.payment.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span></p>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-xl bg-[#FAF8F5] p-4 text-sm">
+                  <p className="font-semibold text-[#292524]">St. Lorenzo Ruiz Parish</p>
+                  <p className="mt-1 text-gray-500">GCash: 09945697318</p>
+                  <p className="mt-2 text-xs font-medium text-gray-500">Payment status: <span className="text-[#B22222]">{label(booking.payment.status)}</span></p>
+                  {booking.payment.referenceNumber && <p className="mt-1 break-all text-xs text-gray-500">Reference: {booking.payment.referenceNumber}</p>}
+                  {booking.payment.receipt && <a href={booking.payment.receipt.url} target="_blank" rel="noreferrer" className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#B22222] hover:underline">View submitted receipt <ExternalLink size={13} /></a>}
+                </div>
+
+                {booking.payment.status === "pending" && <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-800">Your payment is awaiting parish staff verification. The booking will be marked as paid after confirmation.</p>}
+                {booking.payment.status === "confirmed" && <p className="mt-3 rounded-xl border border-green-200 bg-green-50 p-3 text-sm leading-5 text-green-800">Your payment has been confirmed by the parish staff.</p>}
+                {booking.payment.status === "rejected" && <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm leading-5 text-red-700">The previous payment could not be verified. Submit a corrected reference number and receipt below.</p>}
+
+                {booking.payment.canSubmit && (
+                  <div className="mt-4 space-y-4 border-t border-[#E7E2DA] pt-4">
+                    <div>
+                      <label className="mb-1.5 block text-sm font-medium text-[#292524]">GCash reference number <span className="text-red-600">*</span></label>
+                      <input value={paymentReference} onChange={(event) => { setPaymentReference(event.target.value); setPaymentErrors((current) => withoutKey(current, "reference_number")); }} placeholder="Enter the reference number" className={`w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-[#B22222] ${paymentErrors.reference_number ? "border-red-400" : "border-gray-300"}`} />
+                      {paymentErrors.reference_number && <p className="mt-1 text-sm text-red-600">{paymentErrors.reference_number}</p>}
+                    </div>
+
+                    <div>
+                      <label className="inline-flex max-w-full cursor-pointer items-center gap-2 rounded-xl border border-[#B22222] px-4 py-2.5 text-sm font-semibold text-[#B22222] transition hover:bg-red-50">
+                        <FileUp size={16} /> {paymentReceipt ? "Replace receipt" : "Choose receipt"}
+                        <input type="file" className="hidden" accept=".pdf,.jpg,.jpeg,.png" disabled={submittingPayment} onChange={(event) => { const file = event.target.files?.[0]; if (file) selectPaymentReceipt(file); event.target.value = ""; }} />
+                      </label>
+                      {paymentReceipt && <p className="mt-2 break-all text-sm font-medium text-green-700">{paymentReceipt.name} · {(paymentReceipt.size / 1024 / 1024).toFixed(2)} MB</p>}
+                      {paymentErrors.receipt && <p className="mt-1 text-sm text-red-600">{paymentErrors.receipt}</p>}
+                    </div>
+
+                    <button type="button" disabled={submittingPayment} onClick={() => void submitPayment()} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#B22222] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto">
+                      {submittingPayment ? <LoaderCircle className="animate-spin" size={17} /> : <CreditCard size={17} />}
+                      {submittingPayment ? "Submitting payment..." : "Submit payment for verification"}
+                    </button>
+                  </div>
+                )}
               </section>
             )}
 

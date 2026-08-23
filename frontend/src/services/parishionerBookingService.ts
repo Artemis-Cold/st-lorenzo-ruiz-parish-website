@@ -21,6 +21,14 @@ export interface ParishionerBookingDetail {
     addons: Array<{ name: string; price: number }>;
     totalAmount: number;
   } | null;
+  payment: {
+    required: boolean;
+    referenceNumber: string | null;
+    amount: number;
+    status: "not_submitted" | "pending" | "confirmed" | "rejected";
+    receipt: { fileName: string; url: string } | null;
+    canSubmit: boolean;
+  };
   sections: Array<{
     title: string;
     fields: Array<{ label: string; value: string }>;
@@ -31,6 +39,23 @@ export interface ParishionerBookingDetail {
     status: string;
     url: string;
   }>;
+}
+
+export async function submitParishionerBookingPayment(
+  bookingId: number,
+  referenceNumber: string,
+  receipt: File,
+) {
+  const formData = new FormData();
+  formData.append("reference_number", referenceNumber);
+  formData.append("receipt", receipt);
+
+  const response = await api.post<{
+    message: string;
+    data: ParishionerBookingDetail["payment"];
+  }>(`/bookings/${bookingId}/payment`, formData);
+
+  return response.data;
 }
 
 export interface MissingRequirement {

@@ -11,7 +11,7 @@ class BookingReschedulingService
 {
     private const ELIGIBLE_SERVICES = ['baptism', 'wedding', 'funeral'];
 
-    private const ELIGIBLE_STATUSES = ['pending', 'approved'];
+    private const ELIGIBLE_STATUSES = ['pending', 'paid', 'approved'];
 
     public function __construct(
         private BookingSlotAvailabilityService $availability
@@ -40,7 +40,7 @@ class BookingReschedulingService
 
             if (! in_array($lockedBooking->status, self::ELIGIBLE_STATUSES, true)) {
                 throw ValidationException::withMessages([
-                    'booking_slot_id' => 'Only pending or approved bookings can be rescheduled.',
+                    'booking_slot_id' => 'Only pending, paid, or approved bookings can be rescheduled.',
                 ]);
             }
 
@@ -62,9 +62,14 @@ class BookingReschedulingService
                 ]);
             }
 
+            $hasConfirmedPayment = $lockedBooking->documents()
+                ->where('document_type', 'payment_receipt')
+                ->where('status', 'approved')
+                ->exists();
+
             $lockedBooking->update([
                 'booking_slot_id' => $slot->id,
-                'status' => 'pending',
+                'status' => $hasConfirmedPayment ? 'paid' : 'pending',
                 'processed_by' => null,
                 'processed_at' => null,
             ]);

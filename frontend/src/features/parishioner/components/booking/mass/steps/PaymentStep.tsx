@@ -120,7 +120,7 @@ ${
 
                 <div className="min-w-0">
                   <h3 className="truncate text-sm font-semibold sm:text-base">St. Lorenzo Ruiz Parish</h3>
-                  <p className="text-sm text-gray-500">0912 345 6789</p>
+                  <p className="text-sm text-gray-500">09945697318</p>
                 </div>
               </div>
 

@@ -33,6 +33,8 @@ class StoreDocumentRequestBookingRequest extends FormRequest
                 'required',
                 'string',
                 'max:100',
+                'unique:bookings,payment_reference',
+                'unique:mass_intentions,payment_reference',
                 'unique:document_request_bookings,payment_reference',
             ],
             'receipt' => [

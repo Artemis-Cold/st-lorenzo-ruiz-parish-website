@@ -64,6 +64,7 @@ class StaffManagementApiTest extends TestCase
                 'file_path' => 'booking-documents/'.$documentType.'.pdf',
             ]);
         }
+        $booking->update(['status' => 'paid']);
 
         $this->getJson('/api/staff/bookings')
             ->assertOk()
@@ -164,7 +165,7 @@ class StaffManagementApiTest extends TestCase
             'price' => 100,
         ]);
         $request->update(['total_amount' => 200]);
-        BookingDocument::create([
+        $receipt = BookingDocument::create([
             'booking_id' => $booking->id,
             'document_type' => 'payment_receipt',
             'file_name' => 'document-receipt.jpg',
@@ -179,6 +180,15 @@ class StaffManagementApiTest extends TestCase
             ->assertJsonPath('data.0.paymentReference', 'DOCUMENT-PAYMENT-1')
             ->assertJsonPath('data.0.receipt.fileName', 'document-receipt.jpg')
             ->assertJsonPath('data.0.name', $parishioner->full_name);
+
+        $this->patchJson("/api/staff/transactions/{$receipt->id}/status", [
+            'status' => 'confirmed',
+        ])->assertOk()->assertJsonPath('data.status', 'confirmed');
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $booking->id,
+            'status' => 'paid',
+        ]);
 
         $this->patchJson("/api/staff/document-requests/{$request->id}/status", [
             'status' => 'approved',

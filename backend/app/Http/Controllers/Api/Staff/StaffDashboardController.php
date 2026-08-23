@@ -17,7 +17,7 @@ class StaffDashboardController extends Controller
         );
 
         $pendingDocuments = Booking::query()
-            ->where('status', 'pending')
+            ->whereIn('status', ['pending', 'paid'])
             ->whereHas('service', fn ($query) => $query->where('code', 'document-request'))
             ->count();
 
@@ -56,7 +56,7 @@ class StaffDashboardController extends Controller
         return response()->json(['data' => [
             'stats' => [
                 'bookingsToday' => (clone $serviceBookings)->whereDate('created_at', today())->count(),
-                'pendingBookings' => (clone $serviceBookings)->where('status', 'pending')->count(),
+                'pendingBookings' => (clone $serviceBookings)->whereIn('status', ['pending', 'paid'])->count(),
                 'pendingDocumentRequests' => $pendingDocuments,
                 'massIntentions' => $massIntentions,
             ],

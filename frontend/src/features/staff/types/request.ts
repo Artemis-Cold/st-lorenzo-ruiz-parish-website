@@ -2,6 +2,7 @@ export type RequestCategory = "Document";
 
 export type RequestStatus =
   | "pending"
+  | "paid"
   | "approved"
   | "ready_for_pickup"
   | "completed"

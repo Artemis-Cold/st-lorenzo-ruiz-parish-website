@@ -3,7 +3,7 @@ import api from "@/api/axios";
 export type TransactionStatus = "pending" | "confirmed" | "rejected";
 export interface StaffTransaction {
   id: number; date: string; name: string; contactNumber: string;
-  type: "Mass Intention" | "Document Request"; reference: string;
+  type: "Mass Intention" | "Document Request" | "Baptism" | "Wedding" | "Funeral"; reference: string;
   amount: number; receipt: { fileName: string; url: string }; status: TransactionStatus;
 }
 

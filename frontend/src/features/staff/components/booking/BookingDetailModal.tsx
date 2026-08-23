@@ -1,11 +1,11 @@
 import { useState, type FormEvent } from "react";
-import { Ban, BellRing, CheckCircle2, X } from "lucide-react";
+import { Ban, BellRing, CheckCircle2, ExternalLink, X } from "lucide-react";
 import { toast } from "sonner";
 
 import type { Booking, BookingStatus } from "../../types/booking";
 import BookingStatusBadge from "./BookingStatusBadge";
 import { formatLabel } from "../../utils/formatLabel";
-import { scheduleBookingAppointment, sendBookingRequirementsReminder } from "@/services/staffManagementService";
+import { scheduleBookingAppointment, sendBookingPaymentReminder, sendBookingRequirementsReminder } from "@/services/staffManagementService";
 import RejectConfirmationButton from "../RejectConfirmationButton";
 
 interface Props {
@@ -29,6 +29,7 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus }:
   const [appointments, setAppointments] = useState(booking?.details.appointments ?? []);
   const [appointment, setAppointment] = useState({ type: "seminar" as "seminar" | "priest_interview", scheduledAt: "", venue: "", notes: "" });
   const [reminding, setReminding] = useState(false);
+  const [paymentReminding, setPaymentReminding] = useState(false);
   if (!booking) return null;
 
   const { details } = booking;
@@ -51,6 +52,17 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus }:
       toast.error("Unable to send the SMS reminder.");
     } finally {
       setReminding(false);
+    }
+  };
+  const remindPayment = async () => {
+    setPaymentReminding(true);
+    try {
+      await sendBookingPaymentReminder(booking.id);
+      toast.success("Payment SMS reminder queued.");
+    } catch {
+      toast.error("Unable to send the payment reminder.");
+    } finally {
+      setPaymentReminding(false);
     }
   };
 
@@ -84,6 +96,25 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus }:
             {details.inclusions.map((inclusion) => <Detail key={inclusion.name} label={inclusion.name} value={`₱${inclusion.price.toLocaleString()}.00`} />)}
             {details.addons.map((addon) => <Detail key={addon.name} label={addon.name} value={`₱${addon.price.toLocaleString()}.00`} />)}
             <div className="border-t border-[#E7E2DA] pt-3"><Detail label="Total" value={<span className="text-[#B22222]">₱{booking.amount.toLocaleString()}.00</span>} /></div>
+            <Detail label="Payment status" value={formatLabel(details.payment.status)} />
+            <Detail label="GCash reference" value={details.payment.referenceNumber} />
+            {details.payment.receipt && (
+              <Detail
+                label="Receipt"
+                value={
+                  <a href={details.payment.receipt.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[#B22222] hover:underline">
+                    View receipt <ExternalLink size={13} />
+                  </a>
+                }
+              />
+            )}
+            {details.payment.status === "pending" && <p className="rounded-xl bg-amber-50 p-3 text-xs leading-5 text-amber-800">The submitted payment is awaiting verification in Transactions.</p>}
+            {details.payment.status === "rejected" && <p className="rounded-xl bg-red-50 p-3 text-xs leading-5 text-red-700">The payment was rejected. The parishioner may submit a corrected reference and receipt.</p>}
+            {details.payment.canRemind && (
+              <button type="button" disabled={paymentReminding} onClick={remindPayment} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#B22222] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-60">
+                <BellRing size={16} /> {paymentReminding ? "Sending..." : "Send Payment SMS Reminder"}
+              </button>
+            )}
           </section>
         </div>
 
@@ -185,11 +216,11 @@ export default function BookingDetailModal({ booking, onClose, onUpdateStatus }:
           </section>
         )}
 
-        {(booking.status === "pending" || booking.status === "approved") && (
+        {(booking.status === "pending" || booking.status === "paid" || booking.status === "approved") && (
           <div className="mt-6 space-y-2.5">
-            {booking.status === "pending" && <div className="flex gap-2.5">
+            {(booking.status === "pending" || booking.status === "paid") && <div className="flex gap-2.5">
               <RejectConfirmationButton itemLabel="booking" onConfirm={() => onUpdateStatus(booking.id, "rejected")} className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 py-3 font-semibold text-red-600 transition hover:bg-red-50" />
-              <button disabled={missingRequirements.length > 0} onClick={() => onUpdateStatus(booking.id, "approved")} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B22222] py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"><CheckCircle2 size={18} /> Approve</button>
+              {booking.status === "paid" && <button disabled={missingRequirements.length > 0} onClick={() => onUpdateStatus(booking.id, "approved")} className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B22222] py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"><CheckCircle2 size={18} /> Approve</button>}
             </div>}
             {booking.status === "approved" && <button onClick={() => onUpdateStatus(booking.id, "completed")} className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 py-3 font-semibold text-white"><CheckCircle2 size={18} /> Mark as Completed</button>}
             <button onClick={() => onUpdateStatus(booking.id, "cancelled")} className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-3 font-semibold text-red-600"><Ban size={18} /> Cancel Booking</button>

@@ -10,6 +10,7 @@ use App\Services\BookingReschedulingService;
 use App\Services\SmsNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -17,6 +18,10 @@ use Illuminate\Validation\ValidationException;
 class ParishionerBookingController extends Controller
 {
     private const RESCHEDULABLE_SERVICES = ['baptism', 'wedding', 'funeral'];
+
+    private const PAYMENT_SERVICES = [
+        'baptism', 'wedding', 'funeral', 'mass-intention', 'document-request',
+    ];
 
     public function show(
         Request $request,
@@ -41,9 +46,9 @@ class ParishionerBookingController extends Controller
             'status' => $booking->status,
             'bookingSlotId' => $booking->booking_slot_id,
             'canReschedule' => in_array($booking->service?->code, self::RESCHEDULABLE_SERVICES, true)
-                && in_array($booking->status, ['pending', 'approved'], true),
+                && in_array($booking->status, ['pending', 'paid', 'approved'], true),
             'canUploadDocuments' => in_array($booking->service?->code, self::RESCHEDULABLE_SERVICES, true)
-                && $booking->status === 'pending',
+                && in_array($booking->status, ['pending', 'paid'], true),
             'missingRequirements' => $requirements->missing($booking),
             'submittedAt' => $booking->created_at->toIso8601String(),
             'remarks' => $booking->remarks,
@@ -63,6 +68,7 @@ class ParishionerBookingController extends Controller
                 ])->values(),
                 'totalAmount' => $booking->total_amount,
             ] : null,
+            'payment' => $this->paymentData($booking),
             'sections' => $this->sections($booking),
             'documents' => $booking->documents->map(fn ($document) => [
                 'type' => $document->document_type,
@@ -80,11 +86,14 @@ class ParishionerBookingController extends Controller
         SmsNotificationService $sms
     ): JsonResponse {
         abort_unless($booking->user_id === $request->user()->id, 404);
-        abort_unless(in_array($booking->service()->value('code'), self::RESCHEDULABLE_SERVICES, true), 404);
+        $serviceCode = $booking->service()->value('code');
+        abort_unless(in_array($serviceCode, self::PAYMENT_SERVICES, true), 404);
 
-        if ($booking->status !== 'pending') {
+        $booking->loadMissing(['massIntention', 'documentRequest']);
+
+        if (! in_array($booking->status, ['pending', 'paid'], true)) {
             throw ValidationException::withMessages([
-                'file' => 'Documents can only be added while the booking is pending.',
+                'file' => 'Documents can only be added while the booking is pending staff approval.',
             ]);
         }
 
@@ -134,6 +143,85 @@ class ParishionerBookingController extends Controller
         ]], 201);
     }
 
+    public function submitPayment(Request $request, Booking $booking): JsonResponse
+    {
+        abort_unless($booking->user_id === $request->user()->id, 404);
+        abort_unless(in_array($booking->service()->value('code'), self::RESCHEDULABLE_SERVICES, true), 404);
+
+        if (! in_array($booking->status, ['pending', 'paid'], true)) {
+            throw ValidationException::withMessages([
+                'receipt' => 'Payment can no longer be submitted for this booking.',
+            ]);
+        }
+
+        $existingReceipt = $booking->documents()
+            ->where('document_type', 'payment_receipt')
+            ->first();
+
+        if ($existingReceipt?->status === 'approved' || $booking->status === 'paid') {
+            throw ValidationException::withMessages([
+                'receipt' => 'Payment for this booking has already been confirmed.',
+            ]);
+        }
+
+        if ($existingReceipt?->status === 'pending') {
+            throw ValidationException::withMessages([
+                'receipt' => 'Your submitted payment is already awaiting parish staff verification.',
+            ]);
+        }
+
+        $data = $request->validate([
+            'reference_number' => [
+                'required',
+                'string',
+                'max:100',
+                Rule::unique('bookings', 'payment_reference')->ignore($booking->id),
+                Rule::unique('mass_intentions', 'payment_reference')->ignore($booking->massIntention?->id),
+                Rule::unique('document_request_bookings', 'payment_reference')->ignore($booking->documentRequest?->id),
+            ],
+            'receipt' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+        ]);
+
+        $file = $data['receipt'];
+        $newPath = $file->store('booking-documents', 'public');
+        $oldPath = $existingReceipt?->file_path;
+
+        DB::transaction(function () use ($booking, $data, $file, $newPath, $existingReceipt) {
+            $booking->update(['payment_reference' => $data['reference_number']]);
+            $booking->massIntention?->update(['payment_reference' => $data['reference_number']]);
+            $booking->documentRequest?->update(['payment_reference' => $data['reference_number']]);
+
+            if ($existingReceipt) {
+                $existingReceipt->update([
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_path' => $newPath,
+                    'status' => 'pending',
+                    'remarks' => null,
+                ]);
+
+                return;
+            }
+
+            $booking->documents()->create([
+                'document_type' => 'payment_receipt',
+                'file_name' => $file->getClientOriginalName(),
+                'file_path' => $newPath,
+                'status' => 'pending',
+            ]);
+        });
+
+        if ($oldPath && $oldPath !== $newPath) {
+            Storage::disk('public')->delete($oldPath);
+        }
+
+        $booking->load(['service', 'package.inclusions', 'selectedAddons', 'documents']);
+
+        return response()->json([
+            'message' => 'Payment submitted and is awaiting parish staff verification.',
+            'data' => $this->paymentData($booking),
+        ], 201);
+    }
+
     public function reschedule(
         RescheduleBookingRequest $request,
         Booking $booking,
@@ -172,6 +260,41 @@ class ParishionerBookingController extends Controller
             'document-request' => $this->documentRequestSections($booking),
             default => [],
         };
+    }
+
+    private function paymentData(Booking $booking): array
+    {
+        $receipt = $booking->documents->firstWhere('document_type', 'payment_receipt');
+        $serviceCode = $booking->service?->code;
+        $isSacrament = in_array($serviceCode, self::RESCHEDULABLE_SERVICES, true);
+        $requiresPayment = in_array($serviceCode, self::PAYMENT_SERVICES, true);
+        $reference = $booking->payment_reference
+            ?? $booking->massIntention?->payment_reference
+            ?? $booking->documentRequest?->payment_reference;
+        $amount = $isSacrament
+            ? $booking->total_amount
+            : (float) ($booking->massIntention?->total_amount
+                ?? $booking->documentRequest?->total_amount
+                ?? 0);
+
+        return [
+            'required' => $requiresPayment,
+            'referenceNumber' => $reference,
+            'amount' => $amount,
+            'status' => match ($receipt?->status) {
+                'approved' => 'confirmed',
+                'rejected' => 'rejected',
+                'pending' => 'pending',
+                default => 'not_submitted',
+            },
+            'receipt' => $receipt ? [
+                'fileName' => $receipt->file_name,
+                'url' => Storage::disk('public')->url($receipt->file_path),
+            ] : null,
+            'canSubmit' => $requiresPayment
+                && $booking->status === 'pending'
+                && (! $receipt || $receipt->status === 'rejected'),
+        ];
     }
 
     private function weddingSections(Booking $booking): array

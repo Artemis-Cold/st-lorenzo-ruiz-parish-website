@@ -40,7 +40,7 @@ class MassIntentionTypeValidationTest extends TestCase
         $this->assertTrue(Validator::make($payload, $request->rules())->passes());
     }
 
-    public function test_new_mass_intention_is_paid_while_its_receipt_awaits_verification(): void
+    public function test_new_mass_intention_is_pending_while_its_receipt_awaits_verification(): void
     {
         config()->set('services.sms.driver', 'database');
         Http::fake();
@@ -63,9 +63,9 @@ class MassIntentionTypeValidationTest extends TestCase
             'receipt' => UploadedFile::fake()->image('receipt.jpg'),
         ], ['Accept' => 'application/json']);
 
-        $response->assertCreated()->assertJsonPath('data.status', 'paid');
+        $response->assertCreated()->assertJsonPath('data.status', 'pending');
 
-        $this->assertDatabaseHas('bookings', ['status' => 'paid']);
+        $this->assertDatabaseHas('bookings', ['status' => 'pending']);
         $this->assertDatabaseHas('booking_documents', [
             'document_type' => 'payment_receipt',
             'status' => 'pending',

@@ -33,7 +33,8 @@ class MassIntentionBookingService
                 'service_id' => $service->id,
                 'service_package_id' => null,
                 'booking_slot_id' => null,
-                'status' => 'paid',
+                'payment_reference' => $data['reference_number'],
+                'status' => 'pending',
                 'remarks' => $data['remarks'] ?? null,
             ]);
 

@@ -106,7 +106,22 @@ class FuneralBookingTest extends TestCase
             'category' => 'booking_requirements_complete',
         ]);
 
+        $this->post("/api/bookings/{$bookingId}/payment", [
+            'reference_number' => 'FUNERAL-PAYMENT-001',
+            'receipt' => UploadedFile::fake()->image('gcash-receipt.jpg'),
+        ], ['Accept' => 'application/json'])
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'pending');
+
         Sanctum::actingAs($staff);
+        $receiptId = $this->getJson('/api/staff/transactions')
+            ->assertOk()
+            ->assertJsonPath('data.0.type', 'Funeral')
+            ->json('data.0.id');
+        $this->patchJson("/api/staff/transactions/{$receiptId}/status", [
+            'status' => 'confirmed',
+        ])->assertOk()->assertJsonPath('data.status', 'confirmed');
+
         $this->patchJson("/api/staff/bookings/{$bookingId}/status", ['status' => 'approved'])
             ->assertOk()
             ->assertJsonPath('data.status', 'approved');

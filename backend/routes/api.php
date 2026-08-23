@@ -81,6 +81,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/bookings/{booking}', [ParishionerBookingController::class, 'show']);
     Route::post('/bookings/{booking}/documents', [ParishionerBookingController::class, 'uploadDocument']);
+    Route::post('/bookings/{booking}/payment', [ParishionerBookingController::class, 'submitPayment']);
     Route::patch('/bookings/{booking}/reschedule', [ParishionerBookingController::class, 'reschedule']);
 
     Route::patch('/profile/complete', [ProfileController::class, 'complete']);
@@ -114,6 +115,7 @@ Route::middleware(['auth:sanctum', 'staff'])
         Route::delete('/availability/{bookingSlot}', [StaffAvailabilityController::class, 'destroy']);
         Route::patch('/bookings/{booking}/status', [StaffBookingController::class, 'updateStatus']);
         Route::post('/bookings/{booking}/requirements/remind', [StaffBookingController::class, 'remindRequirements']);
+        Route::post('/bookings/{booking}/payment/remind', [StaffBookingController::class, 'remindPayment']);
         Route::post('/bookings/{booking}/appointments', [BookingAppointmentController::class, 'store']);
         Route::get('/mass-intentions', [StaffMassIntentionController::class, 'index']);
         Route::get('/document-requests', [StaffDocumentRequestController::class, 'index']);

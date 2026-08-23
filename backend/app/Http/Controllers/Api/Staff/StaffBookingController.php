@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Staff\UpdateBookingStatusRequest;
 use App\Models\Booking;
 use App\Services\BookingRequirementService;
+use App\Services\SmsNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -45,18 +46,29 @@ class StaffBookingController extends Controller
             404
         );
 
-        if (
-            $booking->status === 'pending'
-            && $request->validated('status') === 'approved'
-            && $this->requirements->missing($booking) !== []
-        ) {
-            throw ValidationException::withMessages([
-                'documents' => 'This booking cannot be approved until all required documents are submitted.',
-            ]);
+        if ($request->validated('status') === 'approved') {
+            if (! in_array($booking->status, ['pending', 'paid'], true)) {
+                throw ValidationException::withMessages([
+                    'status' => "A {$booking->status} booking cannot be changed to approved.",
+                ]);
+            }
+
+            if ($this->requirements->missing($booking) !== []) {
+                throw ValidationException::withMessages([
+                    'documents' => 'This booking cannot be approved until all required documents are submitted.',
+                ]);
+            }
+
+            if ($booking->status === 'pending') {
+                throw ValidationException::withMessages([
+                    'payment' => 'This booking cannot be approved until its payment is confirmed.',
+                ]);
+            }
         }
 
         $this->changeStatus($booking, $request->validated('status'), [
-            'pending' => ['approved', 'rejected', 'cancelled'],
+            'pending' => ['rejected', 'cancelled'],
+            'paid' => ['approved', 'rejected', 'cancelled'],
             'approved' => ['completed', 'cancelled'],
         ]);
 
@@ -86,6 +98,46 @@ class StaffBookingController extends Controller
 
         return response()->json([
             'message' => 'The missing-requirements SMS reminder has been queued.',
+        ]);
+    }
+
+    public function remindPayment(
+        Booking $booking,
+        SmsNotificationService $sms
+    ): JsonResponse {
+        abort_unless(
+            in_array($booking->service()->value('code'), ['wedding', 'funeral', 'baptism'], true),
+            404
+        );
+
+        $receipt = $booking->documents()
+            ->where('document_type', 'payment_receipt')
+            ->first();
+
+        if ($booking->status === 'paid' || $receipt?->status === 'approved') {
+            throw ValidationException::withMessages([
+                'payment' => 'This booking payment has already been confirmed.',
+            ]);
+        }
+
+        if ($receipt?->status === 'pending') {
+            throw ValidationException::withMessages([
+                'payment' => 'This payment is already awaiting staff verification.',
+            ]);
+        }
+
+        $booking->loadMissing(['user', 'service', 'package.inclusions', 'selectedAddons']);
+        $amount = number_format($booking->total_amount, 2);
+        $service = $booking->service->name;
+        $reference = $booking->booking_reference;
+        $sms->queue(
+            $booking,
+            'payment_reminder',
+            "St. Lorenzo Ruiz Parish: Payment reminder for your {$service} booking (Ref: {$reference}). Amount due: PHP {$amount}. Please submit your GCash reference number and receipt through My Profile. Thank you."
+        );
+
+        return response()->json([
+            'message' => 'The payment SMS reminder has been queued.',
         ]);
     }
 
@@ -145,6 +197,7 @@ class StaffBookingController extends Controller
                     'endTime' => $booking->slot?->end_time,
                 ],
                 'remarks' => $booking->remarks,
+                'payment' => $this->paymentData($booking),
                 'documents' => $booking->documents->map(fn ($document) => [
                     'type' => $document->document_type,
                     'fileName' => $document->file_name,
@@ -161,6 +214,27 @@ class StaffBookingController extends Controller
                     'notes' => $appointment->notes,
                 ])->values(),
             ],
+        ];
+    }
+
+    private function paymentData(Booking $booking): array
+    {
+        $receipt = $booking->documents->firstWhere('document_type', 'payment_receipt');
+
+        return [
+            'referenceNumber' => $booking->payment_reference,
+            'status' => match ($receipt?->status) {
+                'approved' => 'confirmed',
+                'rejected' => 'rejected',
+                'pending' => 'pending',
+                default => 'not_submitted',
+            },
+            'receipt' => $receipt ? [
+                'fileName' => $receipt->file_name,
+                'url' => Storage::disk('public')->url($receipt->file_path),
+            ] : null,
+            'canRemind' => $booking->status === 'pending'
+                && (! $receipt || $receipt->status === 'rejected'),
         ];
     }
 

@@ -1,5 +1,6 @@
 export type BookingStatus =
   | "pending"
+  | "paid"
   | "approved"
   | "rejected"
   | "cancelled"
@@ -28,6 +29,12 @@ export interface Booking {
       endTime: string | null;
     };
     remarks: string | null;
+    payment: {
+      referenceNumber: string | null;
+      status: "not_submitted" | "pending" | "confirmed" | "rejected";
+      receipt: { fileName: string; url: string } | null;
+      canRemind: boolean;
+    };
     documents: Array<{ type: string; fileName: string; status: string; url: string }>;
     missingRequirements?: Array<{ key: string; label: string; types: string[] }>;
     serviceData: {

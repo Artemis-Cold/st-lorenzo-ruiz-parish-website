@@ -11,9 +11,9 @@ export default function Logo() {
       />
 
       <div>
-        <h1 className="text-lg font-semibold">ParishConnect</h1>
+        <h1 className="text-lg font-semibold">St. Lorenzo Ruiz Parish</h1>
 
-        <p className="text-xs text-gray-500">San Lorenzo Ruiz Parish</p>
+        <p className="text-xs text-gray-500">Dagatan, Taysan, Batangas</p>
       </div>
     </div>
   );
