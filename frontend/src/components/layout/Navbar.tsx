@@ -7,6 +7,7 @@ const navItems = [
   { label: "Home", href: "#home" },
   { label: "About", href: "#about" },
   { label: "Announcements", href: "#announcements" },
+  { label: "Banns", href: "#marriage-banns" },
   { label: "Monthly Schedule", href: "#schedule" },
   { label: "Services", href: "#services" },
 ];
@@ -61,13 +62,13 @@ export default function Navbar() {
         </a>
 
         {/* Desktop Navigation */}
-        <nav className="hidden items-center gap-6 lg:flex">
+        <nav className="hidden items-center gap-3 lg:flex xl:gap-5">
           {navItems.map((item) => (
             <a
               key={item.label}
               href={item.href}
               onClick={(event) => scrollToSection(event, item.href)}
-              className="font-medium text-white transition duration-200 hover:text-[#D4AF37]"
+              className="whitespace-nowrap text-sm font-medium text-white transition duration-200 hover:text-[#D4AF37] xl:text-base"
             >
               {item.label}
             </a>
@@ -75,17 +76,17 @@ export default function Navbar() {
         </nav>
 
         {/* Desktop Buttons */}
-        <div className="hidden items-center gap-3 lg:flex">
+        <div className="hidden items-center gap-2 lg:flex xl:gap-3">
           <Link
             to="/login"
-            className="rounded-xl border border-white px-5 py-2 font-medium text-white transition duration-300 hover:bg-white hover:text-[#B22222]"
+            className="rounded-xl border border-white px-4 py-2 text-sm font-medium text-white transition duration-300 hover:bg-white hover:text-[#B22222] xl:px-5 xl:text-base"
           >
             Login
           </Link>
 
           <Link
             to="/register"
-            className="rounded-xl bg-[#D4AF37] px-5 py-2 font-medium text-white shadow-md transition duration-300 hover:bg-[#C9A227]"
+            className="rounded-xl bg-[#D4AF37] px-4 py-2 text-sm font-medium text-white shadow-md transition duration-300 hover:bg-[#C9A227] xl:px-5 xl:text-base"
           >
             Register
           </Link>

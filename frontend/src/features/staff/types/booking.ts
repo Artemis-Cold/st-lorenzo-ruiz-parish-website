@@ -35,8 +35,22 @@ export interface Booking {
       receipt: { fileName: string; url: string } | null;
       canRemind: boolean;
     };
-    documents: Array<{ type: string; fileName: string; status: string; url: string }>;
-    missingRequirements?: Array<{ key: string; label: string; types: string[] }>;
+    marriageBanns: {
+      id: number;
+      publicationStart: string;
+      publicationEnd: string;
+    } | null;
+    documents: Array<{
+      type: string;
+      fileName: string;
+      status: string;
+      url: string;
+    }>;
+    missingRequirements?: Array<{
+      key: string;
+      label: string;
+      types: string[];
+    }>;
     serviceData: {
       applicants?: Array<{
         role: string;
@@ -89,7 +103,11 @@ export interface Booking {
         gender: string;
         address: string;
         contactNumber: string;
-        parents: Array<{ relationship: string; name: string; birthPlace: string }>;
+        parents: Array<{
+          relationship: string;
+          name: string;
+          birthPlace: string;
+        }>;
         godParents: Array<{ role: string; name: string; residence: string }>;
       };
     };

@@ -81,13 +81,14 @@ export async function uploadParishionerBookingDocument(
   formData.append("file", file);
 
   const response = await api.post<{
+    message: string;
     data: {
       document: ParishionerBookingDetail["documents"][number];
       missingRequirements: MissingRequirement[];
     };
   }>(`/bookings/${bookingId}/documents`, formData);
 
-  return response.data.data;
+  return response.data;
 }
 
 export interface RescheduledBooking {

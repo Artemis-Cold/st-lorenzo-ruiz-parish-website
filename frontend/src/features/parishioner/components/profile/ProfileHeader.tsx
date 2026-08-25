@@ -1,7 +1,7 @@
 import {
   UserCircle2,
   Phone,
-  Mail,
+  User,
   MapPin,
   Pencil,
   Camera,
@@ -47,7 +47,7 @@ export default function ProfileHeader({
       <div className="bg-[#C32020] px-10 py-8">
         <div className="flex flex-col gap-6 md:flex-row md:items-center">
           {/* Avatar */}
-          <div className="relative mx-auto flex-shrink-0 md:mx-0">
+          <div className="relative mx-auto shrink-0 md:mx-0">
             {avatar ? (
               <img
                 src={avatar}
@@ -56,10 +56,7 @@ export default function ProfileHeader({
               />
             ) : (
               <div className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white bg-white/10">
-                <UserCircle2
-                  size={96}
-                  className="text-white"
-                />
+                <UserCircle2 size={96} className="text-white" />
               </div>
             )}
             <button
@@ -74,24 +71,24 @@ export default function ProfileHeader({
 
           {/* User Info */}
           <div className="min-w-0 flex-1 text-center text-white md:text-left">
-            <h1 className="break-words text-3xl font-bold sm:text-4xl">
+            <h1 className="wrap-break-word text-3xl font-bold sm:text-4xl">
               {fullName}
             </h1>
 
             <div className="mt-3 space-y-2 text-left text-white/90">
+              <div className="flex items-start gap-2">
+                <User size={18} />
+                <span>@{username}</span>
+              </div>
+
               <div className="flex items-start gap-2">
                 <Phone size={18} />
                 <span>{phone}</span>
               </div>
 
               <div className="flex items-start gap-2">
-                <Mail size={18} />
-                <span>@{username}</span>
-              </div>
-
-              <div className="flex items-start gap-2">
                 <MapPin size={18} />
-                <span className="break-words">{address}</span>
+                <span className="wrap-break-word">{address}</span>
               </div>
             </div>
 

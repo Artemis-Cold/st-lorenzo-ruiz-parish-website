@@ -116,4 +116,9 @@ class Booking extends Model
     {
         return $this->hasMany(BookingAppointment::class);
     }
+
+    public function marriageBann(): HasOne
+    {
+        return $this->hasOne(MarriageBann::class);
+    }
 }

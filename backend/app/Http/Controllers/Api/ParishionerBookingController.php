@@ -10,6 +10,7 @@ use App\Services\BookingReschedulingService;
 use App\Services\SmsNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -70,12 +71,7 @@ class ParishionerBookingController extends Controller
             ] : null,
             'payment' => $this->paymentData($booking),
             'sections' => $this->sections($booking),
-            'documents' => $booking->documents->map(fn ($document) => [
-                'type' => $document->document_type,
-                'fileName' => $document->file_name,
-                'status' => $document->status,
-                'url' => Storage::disk('public')->url($document->file_path),
-            ])->values(),
+            'documents' => $this->documents($booking),
         ]]);
     }
 
@@ -132,15 +128,18 @@ class ParishionerBookingController extends Controller
             );
         }
 
-        return response()->json(['data' => [
-            'document' => [
-                'type' => $document->document_type,
-                'fileName' => $document->file_name,
-                'status' => $document->status,
-                'url' => Storage::disk('public')->url($document->file_path),
+        return response()->json([
+            'message' => 'Requirement submitted successfully.',
+            'data' => [
+                'document' => [
+                    'type' => $document->document_type,
+                    'fileName' => $document->file_name,
+                    'status' => $document->status,
+                    'url' => Storage::disk('public')->url($document->file_path),
+                ],
+                'missingRequirements' => $missing,
             ],
-            'missingRequirements' => $missing,
-        ]], 201);
+        ], 201);
     }
 
     public function submitPayment(Request $request, Booking $booking): JsonResponse
@@ -260,6 +259,54 @@ class ParishionerBookingController extends Controller
             'document-request' => $this->documentRequestSections($booking),
             default => [],
         };
+    }
+
+    private function documents(Booking $booking): Collection
+    {
+        $sponsorPairs = $booking->weddingSponsorPairs->sortBy('id')->values();
+        $pairNumbers = $sponsorPairs->mapWithKeys(
+            fn ($pair, int $index) => [(string) $pair->id => $index + 1]
+        );
+
+        $documents = $booking->documents->map(function ($document) use ($pairNumbers) {
+            $type = $document->document_type;
+
+            if (preg_match('/^wedding_sponsor_(marriage_contract|confirmation_certificate)_(\d+)$/', $type, $matches)) {
+                $pairNumber = $pairNumbers->get($matches[2]);
+
+                if ($pairNumber !== null) {
+                    $type = "sponsor_pair_{$pairNumber}_{$matches[1]}";
+                }
+            }
+
+            return [
+                'type' => $type,
+                'fileName' => $document->file_name,
+                'status' => $document->status,
+                'url' => Storage::disk('public')->url($document->file_path),
+            ];
+        });
+
+        $sponsorDocuments = $sponsorPairs->flatMap(function ($pair, int $index) {
+            $pairNumber = $index + 1;
+
+            return collect([
+                'marriage_contract' => $pair->marriage_contract,
+                'confirmation_certificate' => $pair->confirmation_certificate,
+            ])->filter()->map(function (string $path, string $type) use ($pairNumber) {
+                $label = 'Sponsor Pair '.$pairNumber.' '.str($type)->headline();
+                $extension = pathinfo($path, PATHINFO_EXTENSION);
+
+                return [
+                    'type' => "sponsor_pair_{$pairNumber}_{$type}",
+                    'fileName' => $label.($extension ? ".{$extension}" : ''),
+                    'status' => 'submitted',
+                    'url' => Storage::disk('public')->url($path),
+                ];
+            })->values();
+        });
+
+        return $documents->concat($sponsorDocuments)->values();
     }
 
     private function paymentData(Booking $booking): array

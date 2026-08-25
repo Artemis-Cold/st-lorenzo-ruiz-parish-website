@@ -8,6 +8,7 @@ use App\Models\Booking;
 use App\Services\BookingRequirementService;
 use App\Services\SmsNotificationService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -29,6 +30,7 @@ class StaffBookingController extends Controller
                 'baptizand.godParentPairs.godParents',
                 'funeralDeceased.children',
                 'appointments',
+                'marriageBann',
             ])
             ->latest()
             ->get()
@@ -78,6 +80,7 @@ class StaffBookingController extends Controller
             'baptizand.godParentPairs.godParents',
             'funeralDeceased.children',
             'appointments',
+            'marriageBann',
         ]);
 
         return response()->json(['data' => $this->serialize($booking)]);
@@ -198,12 +201,12 @@ class StaffBookingController extends Controller
                 ],
                 'remarks' => $booking->remarks,
                 'payment' => $this->paymentData($booking),
-                'documents' => $booking->documents->map(fn ($document) => [
-                    'type' => $document->document_type,
-                    'fileName' => $document->file_name,
-                    'status' => $document->status,
-                    'url' => Storage::disk('public')->url($document->file_path),
-                ])->values(),
+                'marriageBanns' => $booking->marriageBann ? [
+                    'id' => $booking->marriageBann->id,
+                    'publicationStart' => $booking->marriageBann->publication_start->toDateString(),
+                    'publicationEnd' => $booking->marriageBann->publication_end->toDateString(),
+                ] : null,
+                'documents' => $this->documents($booking),
                 'missingRequirements' => $this->requirements->missing($booking),
                 'serviceData' => $this->serviceData($booking),
                 'appointments' => $booking->appointments->map(fn ($appointment) => [
@@ -236,6 +239,54 @@ class StaffBookingController extends Controller
             'canRemind' => $booking->status === 'pending'
                 && (! $receipt || $receipt->status === 'rejected'),
         ];
+    }
+
+    private function documents(Booking $booking): Collection
+    {
+        $sponsorPairs = $booking->weddingSponsorPairs->sortBy('id')->values();
+        $pairNumbers = $sponsorPairs->mapWithKeys(
+            fn ($pair, int $index) => [(string) $pair->id => $index + 1]
+        );
+
+        $documents = $booking->documents->map(function ($document) use ($pairNumbers) {
+            $type = $document->document_type;
+
+            if (preg_match('/^wedding_sponsor_(marriage_contract|confirmation_certificate)_(\d+)$/', $type, $matches)) {
+                $pairNumber = $pairNumbers->get($matches[2]);
+
+                if ($pairNumber !== null) {
+                    $type = "sponsor_pair_{$pairNumber}_{$matches[1]}";
+                }
+            }
+
+            return [
+                'type' => $type,
+                'fileName' => $document->file_name,
+                'status' => $document->status,
+                'url' => Storage::disk('public')->url($document->file_path),
+            ];
+        });
+
+        $sponsorDocuments = $sponsorPairs->flatMap(function ($pair, int $index) {
+            $pairNumber = $index + 1;
+
+            return collect([
+                'marriage_contract' => $pair->marriage_contract,
+                'confirmation_certificate' => $pair->confirmation_certificate,
+            ])->filter()->map(function (string $path, string $type) use ($pairNumber) {
+                $label = 'Sponsor Pair '.$pairNumber.' '.str($type)->headline();
+                $extension = pathinfo($path, PATHINFO_EXTENSION);
+
+                return [
+                    'type' => "sponsor_pair_{$pairNumber}_{$type}",
+                    'fileName' => $label.($extension ? ".{$extension}" : ''),
+                    'status' => 'submitted',
+                    'url' => Storage::disk('public')->url($path),
+                ];
+            })->values();
+        });
+
+        return $documents->concat($sponsorDocuments)->values();
     }
 
     private function serviceData(Booking $booking): array

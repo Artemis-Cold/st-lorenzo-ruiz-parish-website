@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AxiosError } from "axios";
 import { CalendarClock, CalendarDays, CreditCard, ExternalLink, FileText, FileUp, LoaderCircle, Trash2, X } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   getParishionerBooking,
@@ -22,6 +23,13 @@ function withoutKey<T>(record: Record<string, T>, key: string) {
   delete next[key];
   return next;
 }
+
+const requestMessage = (error: unknown, fallback: string) => {
+  if (!(error instanceof AxiosError)) return fallback;
+
+  const message = error.response?.data?.message;
+  return typeof message === "string" && message.trim() ? message : fallback;
+};
 
 export default function BookingDetailModal({
   bookingId,
@@ -117,18 +125,27 @@ export default function BookingDetailModal({
     if (!paymentReference.trim()) errors.reference_number = "Enter the GCash reference number.";
     if (!paymentReceipt) errors.receipt = "Choose the GCash receipt before submitting.";
     setPaymentErrors(errors);
-    if (Object.keys(errors).length > 0 || !paymentReceipt) return;
+    if (Object.keys(errors).length > 0 || !paymentReceipt) {
+      toast.error("Please complete the payment information before submitting.");
+      return;
+    }
 
     setSubmittingPayment(true);
     try {
-      await submitParishionerBookingPayment(bookingId, paymentReference.trim(), paymentReceipt);
+      const response = await submitParishionerBookingPayment(bookingId, paymentReference.trim(), paymentReceipt);
       const refreshed = await getParishionerBooking(bookingId);
       setResult({ bookingId, booking: refreshed, error: "" });
       setPaymentReference(refreshed.payment.referenceNumber ?? "");
       setPaymentReceipt(null);
       setPaymentErrors({});
+      toast.success(response.message);
       void onRescheduled?.();
     } catch (requestError) {
+      const message = requestMessage(
+        requestError,
+        "Unable to submit the payment. Please try again.",
+      );
+
       if (requestError instanceof AxiosError && requestError.response?.status === 422) {
         const serverErrors = requestError.response.data?.errors as Record<string, string[]> | undefined;
         setPaymentErrors({
@@ -136,8 +153,9 @@ export default function BookingDetailModal({
           receipt: serverErrors?.receipt?.[0] ?? "",
         });
       } else {
-        setPaymentErrors({ receipt: "Unable to submit the payment. Please try again." });
+        setPaymentErrors({ receipt: message });
       }
+      toast.error(message);
     } finally {
       setSubmittingPayment(false);
     }
@@ -174,10 +192,12 @@ export default function BookingDetailModal({
   ) => {
     const file = pendingFiles[requirement.key];
     if (!file) {
+      const message = "Choose a file before submitting this requirement.";
       setUploadErrors((current) => ({
         ...current,
-        [requirement.key]: "Choose a file before submitting this requirement.",
+        [requirement.key]: message,
       }));
+      toast.error(message);
       return;
     }
 
@@ -186,7 +206,7 @@ export default function BookingDetailModal({
     setUploadErrors((current) => withoutKey(current, requirement.key));
 
     try {
-      const uploaded = await uploadParishionerBookingDocument(
+      const response = await uploadParishionerBookingDocument(
         bookingId,
         documentType,
         file,
@@ -196,19 +216,25 @@ export default function BookingDetailModal({
         booking: current.booking
           ? {
               ...current.booking,
-              documents: [...current.booking.documents, uploaded.document],
-              missingRequirements: uploaded.missingRequirements,
+              documents: [...current.booking.documents, response.data.document],
+              missingRequirements: response.data.missingRequirements,
             }
           : null,
       }));
       setPendingFiles((current) => withoutKey(current, requirement.key));
       setSelectedTypes((current) => withoutKey(current, requirement.key));
+      toast.success(response.message);
       void onRescheduled?.();
-    } catch {
+    } catch (requestError) {
+      const message = requestMessage(
+        requestError,
+        "Unable to submit this requirement. Please try again.",
+      );
       setUploadErrors((current) => ({
         ...current,
-        [requirement.key]: "Unable to submit this requirement. Please try again.",
+        [requirement.key]: message,
       }));
+      toast.error(message);
     } finally {
       setUploading(null);
     }

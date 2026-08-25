@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\BookingSlotController;
 use App\Http\Controllers\Api\DocumentRequestBookingController;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\FuneralBookingController;
+use App\Http\Controllers\Api\MarriageBannController;
 use App\Http\Controllers\Api\MassIntentionBookingController;
 use App\Http\Controllers\Api\ParishCalendarController;
 use App\Http\Controllers\Api\ParishionerBookingController;
@@ -94,6 +95,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
 Route::get('/announcements', [AnnouncementController::class, 'publicIndex']);
 Route::get('/events', [EventController::class, 'publicIndex']);
+Route::get('/marriage-banns', [MarriageBannController::class, 'publicIndex']);
 Route::get('/parish-calendar/bookings', [ParishCalendarController::class, 'bookedServices']);
 
 Route::middleware(['auth:sanctum', 'staff'])
@@ -116,6 +118,8 @@ Route::middleware(['auth:sanctum', 'staff'])
         Route::patch('/bookings/{booking}/status', [StaffBookingController::class, 'updateStatus']);
         Route::post('/bookings/{booking}/requirements/remind', [StaffBookingController::class, 'remindRequirements']);
         Route::post('/bookings/{booking}/payment/remind', [StaffBookingController::class, 'remindPayment']);
+        Route::post('/bookings/{booking}/marriage-banns', [MarriageBannController::class, 'store']);
+        Route::delete('/bookings/{booking}/marriage-banns', [MarriageBannController::class, 'destroy']);
         Route::post('/bookings/{booking}/appointments', [BookingAppointmentController::class, 'store']);
         Route::get('/mass-intentions', [StaffMassIntentionController::class, 'index']);
         Route::get('/document-requests', [StaffDocumentRequestController::class, 'index']);

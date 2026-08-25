@@ -5,6 +5,7 @@ import Schedule from "../components/Schedule";
 import Services from "../components/Services";
 import Announcements from "../components/Announcements";
 import ScrollToTopButton from "../components/ScrollToTopButton";
+import MarriageBanns from "../components/MarriageBanns";
 
 export default function Home() {
   return (
@@ -13,6 +14,7 @@ export default function Home() {
       <Hero />
       <About />
       <Announcements />
+      <MarriageBanns />
       <Schedule />
       <Services />
       <ScrollToTopButton />

@@ -22,7 +22,7 @@ function ParishImageCarousel() {
   };
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-[#2A0909] shadow-xl">
+    <div className="relative h-72 overflow-hidden rounded-3xl bg-[#2A0909] shadow-xl sm:h-80 lg:h-full">
       <motion.img
         key={activeImage.src}
         initial={{ opacity: 0.75, scale: 1.02 }}
@@ -30,7 +30,7 @@ function ParishImageCarousel() {
         transition={{ duration: 0.45 }}
         src={activeImage.src}
         alt={activeImage.alt}
-        className="h-72 w-full object-cover sm:h-80 lg:h-87.5"
+        className="h-full w-full object-cover"
       />
 
       <div
@@ -105,13 +105,14 @@ export default function About() {
         </motion.div>
 
         {/* Content */}
-        <div className="grid items-center gap-9 lg:grid-cols-2 lg:gap-12">
+        <div className="grid items-stretch gap-9 lg:grid-cols-2 lg:gap-12">
           {/* Church Image */}
           <motion.div
             initial={{ opacity: 0, x: -40 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
+            className="h-full"
           >
             <ParishImageCarousel />
           </motion.div>
@@ -127,7 +128,7 @@ export default function About() {
               Kasaysayang Hinubog ng Pananampalataya
             </h3>
 
-            <p className="mt-4 text-sm leading-6 text-gray-600 lg:text-base lg:leading-7">
+            <p className="mt-4 text-sm leading-6 text-gray-600 lg:text-base lg:leading-7 text-justify">
               Itinatag ang Parokya ng San Lorenzo Ruiz noong Setyembre 19, 2010
               sa pangunguna ni Arsobispo Ramon C. Argüelles, kasama si Rdo. P.
               Benedicto Ortega Malaluan bilang unang kura paroko. Saklaw nito
@@ -135,7 +136,7 @@ export default function About() {
               sama-samang kinikilala bilang BAPILADAMA.
             </p>
 
-            <p className="mt-3 text-sm leading-6 text-gray-600 lg:text-base lg:leading-7">
+            <p className="mt-3 text-sm leading-6 text-gray-600 lg:text-base lg:leading-7 text-justify">
               Sa 1.2 ektaryang lupang ipinagkaloob nina Gregoria Natividad
               Flores Chavez at Julia Flores Panganiban, inilagay ang panulukang
               bato noong Mayo 12, 2013. Sa pagtutulungan ng mga parokyano,

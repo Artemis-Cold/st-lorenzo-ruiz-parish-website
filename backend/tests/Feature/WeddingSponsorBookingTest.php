@@ -19,13 +19,16 @@ class WeddingSponsorBookingTest extends TestCase
     public function test_wedding_stores_three_image_photos_and_repeatable_sponsor_pairs(): void
     {
         Storage::fake('public');
-        Sanctum::actingAs(User::factory()->create());
+        $parishioner = User::factory()->create();
+        Sanctum::actingAs($parishioner);
 
         [$slot, $package] = $this->weddingSchedule();
         $payload = $this->payload($slot->id, $package->id);
 
-        $this->post('/api/bookings/wedding', $payload)
+        $response = $this->post('/api/bookings/wedding', $payload)
             ->assertCreated();
+
+        $bookingId = $response->json('data.id');
 
         $this->assertDatabaseCount('wedding_sponsor_pairs', 2);
         $this->assertDatabaseCount('wedding_sponsors', 4);
@@ -42,6 +45,37 @@ class WeddingSponsorBookingTest extends TestCase
         foreach (['couple_photo_1', 'couple_photo_2', 'couple_photo_3'] as $type) {
             $this->assertDatabaseHas('booking_documents', ['document_type' => $type]);
         }
+
+        $parishionerDocuments = collect(
+            $this->getJson("/api/bookings/{$bookingId}")
+                ->assertOk()
+                ->json('data.documents')
+        );
+
+        $this->assertSame(
+            ['sponsor_pair_1_confirmation_certificate', 'sponsor_pair_2_confirmation_certificate'],
+            $parishionerDocuments
+                ->filter(fn (array $document) => str_starts_with($document['type'], 'sponsor_pair_'))
+                ->pluck('type')
+                ->values()
+                ->all()
+        );
+
+        Sanctum::actingAs(User::factory()->create(['role' => 'staff']));
+        $staffDocuments = collect(
+            $this->getJson('/api/staff/bookings')
+                ->assertOk()
+                ->json('data.0.details.documents')
+        );
+
+        $this->assertSame(
+            ['sponsor_pair_1_confirmation_certificate', 'sponsor_pair_2_confirmation_certificate'],
+            $staffDocuments
+                ->filter(fn (array $document) => str_starts_with($document['type'], 'sponsor_pair_'))
+                ->pluck('type')
+                ->values()
+                ->all()
+        );
     }
 
     public function test_wedding_couple_photo_rejects_pdf_files(): void
