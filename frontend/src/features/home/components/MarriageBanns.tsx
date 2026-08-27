@@ -77,8 +77,14 @@ export default function MarriageBanns() {
       id="marriage-banns"
       className="relative scroll-mt-18 overflow-hidden bg-linear-to-b from-white via-[#FCFAF7] to-white py-14 md:py-16"
     >
-      <div aria-hidden className="absolute -left-32 top-20 size-80 rounded-full bg-[#D4AF37]/10 blur-3xl" />
-      <div aria-hidden className="absolute -right-36 bottom-6 size-80 rounded-full bg-[#B22222]/6 blur-3xl" />
+      <div
+        aria-hidden
+        className="absolute -left-32 top-20 size-80 rounded-full bg-[#D4AF37]/10 blur-3xl"
+      />
+      <div
+        aria-hidden
+        className="absolute -right-36 bottom-6 size-80 rounded-full bg-[#B22222]/6 blur-3xl"
+      />
 
       <div className="relative mx-auto max-w-6xl px-5 sm:px-6">
         <motion.div
@@ -97,7 +103,9 @@ export default function MarriageBanns() {
           </h2>
           <div className="mx-auto mt-4 h-1 w-16 rounded-full bg-[#D4AF37]" />
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-gray-600 md:text-base">
-            These banns are formally published as part of each couple’s preparation for marriage. Anyone aware of a canonical impediment is respectfully requested to contact the parish office.
+            These banns are formally published as part of each couple’s
+            preparation for marriage. Anyone aware of a canonical impediment is
+            respectfully requested to contact the parish office.
           </p>
         </motion.div>
 
@@ -117,9 +125,15 @@ export default function MarriageBanns() {
             viewport={{ once: true }}
             className="mx-auto mt-9 max-w-5xl rounded-[2rem] border border-dashed border-[#D9D0C3] bg-white/80 px-6 py-12 text-center shadow-sm"
           >
-            <span className="mx-auto grid size-16 place-items-center rounded-full bg-[#B22222]/6 text-[#B22222]/45"><Heart size={30} /></span>
-            <p className="mt-4 font-serif text-xl font-semibold text-[#292524]">There are no active marriage banns at this time.</p>
-            <p className="mt-2 text-sm text-gray-500">Approved banns will appear here during their publication period.</p>
+            <span className="mx-auto grid size-16 place-items-center rounded-full bg-[#B22222]/6 text-[#B22222]/45">
+              <Heart size={30} />
+            </span>
+            <p className="mt-4 font-serif text-xl font-semibold text-[#292524]">
+              There are no active marriage banns at this time.
+            </p>
+            <p className="mt-2 text-sm text-gray-500">
+              Approved banns will appear here during their publication period.
+            </p>
           </motion.div>
         ) : (
           <motion.div
@@ -170,8 +184,12 @@ export default function MarriageBanns() {
                   </>
                 ) : (
                   <div className="flex flex-col items-center px-6 text-center text-white/50">
-                    <span className="grid size-16 place-items-center rounded-full border border-white/10 bg-white/5"><ImageIcon size={31} /></span>
-                    <p className="mt-3 text-sm">No couple photo is available.</p>
+                    <span className="grid size-16 place-items-center rounded-full border border-white/10 bg-white/5">
+                      <ImageIcon size={31} />
+                    </span>
+                    <p className="mt-3 text-sm">
+                      No couple photo is available.
+                    </p>
                   </div>
                 )}
 
@@ -183,15 +201,32 @@ export default function MarriageBanns() {
 
                 {activeBann.photos.length > 1 && (
                   <>
-                    <button type="button" onClick={showPreviousPhoto} aria-label="Show previous submitted photo" className="absolute left-3 top-1/2 z-20 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-black/35 text-white opacity-100 backdrop-blur-md transition duration-300 hover:scale-105 hover:bg-black/60 focus-visible:ring-2 focus-visible:ring-white lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
+                    <button
+                      type="button"
+                      onClick={showPreviousPhoto}
+                      aria-label="Show previous submitted photo"
+                      className="absolute left-3 top-1/2 z-20 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-black/35 text-white opacity-100 backdrop-blur-md transition duration-300 hover:scale-105 hover:bg-black/60 focus-visible:ring-2 focus-visible:ring-white lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100"
+                    >
                       <ChevronLeft size={21} />
                     </button>
-                    <button type="button" onClick={showNextPhoto} aria-label="Show next submitted photo" className="absolute right-3 top-1/2 z-20 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-black/35 text-white opacity-100 backdrop-blur-md transition duration-300 hover:scale-105 hover:bg-black/60 focus-visible:ring-2 focus-visible:ring-white lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100">
+                    <button
+                      type="button"
+                      onClick={showNextPhoto}
+                      aria-label="Show next submitted photo"
+                      className="absolute right-3 top-1/2 z-20 grid size-11 -translate-y-1/2 place-items-center rounded-full border border-white/20 bg-black/35 text-white opacity-100 backdrop-blur-md transition duration-300 hover:scale-105 hover:bg-black/60 focus-visible:ring-2 focus-visible:ring-white lg:opacity-0 lg:group-hover:opacity-100 lg:group-focus-within:opacity-100"
+                    >
                       <ChevronRight size={21} />
                     </button>
                     <div className="absolute bottom-4 left-1/2 z-20 flex max-w-[75%] -translate-x-1/2 gap-1.5 overflow-x-auto rounded-full border border-white/10 bg-black/35 px-3 py-2 backdrop-blur-md">
                       {activeBann.photos.map((photo, index) => (
-                        <button key={photo.url} type="button" onClick={() => setActivePhotoIndex(index)} aria-label={`Show submitted photo ${index + 1}`} aria-current={activePhotoIndex === index} className={`h-1.5 shrink-0 rounded-full transition-all duration-300 ${activePhotoIndex === index ? "w-7 bg-[#F5D76E]" : "w-1.5 bg-white/55 hover:bg-white"}`} />
+                        <button
+                          key={photo.url}
+                          type="button"
+                          onClick={() => setActivePhotoIndex(index)}
+                          aria-label={`Show submitted photo ${index + 1}`}
+                          aria-current={activePhotoIndex === index}
+                          className={`h-1.5 shrink-0 rounded-full transition-all duration-300 ${activePhotoIndex === index ? "w-7 bg-[#F5D76E]" : "w-1.5 bg-white/55 hover:bg-white"}`}
+                        />
                       ))}
                     </div>
                   </>
@@ -208,36 +243,65 @@ export default function MarriageBanns() {
                   className="relative flex min-h-full flex-col overflow-hidden p-6 sm:p-8 lg:p-9"
                   aria-live="polite"
                 >
-                  <div aria-hidden className="absolute -right-16 -top-16 size-52 rounded-full border-32 border-[#D4AF37]/8 transition-transform duration-700 group-hover:scale-110" />
+                  <div
+                    aria-hidden
+                    className="absolute -right-16 -top-16 size-52 rounded-full border-32 border-[#D4AF37]/8 transition-transform duration-700 group-hover:scale-110"
+                  />
                   <div className="relative flex items-center justify-between gap-3">
-                    <span className="grid size-12 place-items-center rounded-2xl bg-[#B22222] text-white shadow-lg shadow-[#B22222]/20 transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105"><Heart size={20} fill="currentColor" /></span>
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D4AF37]/35 bg-[#FFF9E8] px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-widest text-[#806216] sm:px-3 sm:text-[10px] sm:tracking-[0.14em]"><ShieldCheck size={14} /> Parish published</span>
+                    <span className="grid size-12 place-items-center rounded-2xl bg-[#B22222] text-white shadow-lg shadow-[#B22222]/20 transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105">
+                      <Heart size={20} fill="currentColor" />
+                    </span>
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-[#D4AF37]/35 bg-[#FFF9E8] px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-widest text-[#806216] sm:px-3 sm:text-[10px] sm:tracking-[0.14em]">
+                      <ShieldCheck size={14} /> Parish published
+                    </span>
                   </div>
 
-                  <p className="relative mt-7 text-[11px] font-bold uppercase tracking-[0.2em] text-[#B22222]">Bride &amp; Groom</p>
+                  <p className="relative mt-7 text-[11px] font-bold uppercase tracking-[0.2em] text-[#B22222]">
+                    Bride &amp; Groom
+                  </p>
                   <h3 className="relative mt-2 font-serif text-2xl font-bold leading-snug text-[#292524] sm:text-3xl">
                     {activeBann.brideName}
-                    <span className="my-1 block font-sans text-sm font-semibold italic text-[#B22222]">and</span>
+                    <span className="my-1 block font-sans text-sm font-semibold italic text-[#B22222]">
+                      and
+                    </span>
                     {activeBann.groomName}
                   </h3>
 
                   <div className="relative mt-6 rounded-2xl border border-[#E7E2DA] bg-[#FAF8F5] p-4 transition-colors duration-300 group-hover:border-[#D4AF37]/40">
                     <div className="flex items-start gap-3">
-                      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-[#B22222] shadow-sm"><CalendarDays size={18} /></span>
+                      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-[#B22222] shadow-sm">
+                        <CalendarDays size={18} />
+                      </span>
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-400">Wedding celebration</p>
-                        <p className="mt-1 text-sm font-semibold text-[#292524]">{formatDate(activeBann.weddingDate)}</p>
-                        {activeBann.weddingTime && <p className="mt-0.5 text-sm text-gray-600">{formatTime(activeBann.weddingTime)}</p>}
+                        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-400">
+                          Wedding celebration
+                        </p>
+                        <p className="mt-1 text-sm font-semibold text-[#292524]">
+                          {formatDate(activeBann.weddingDate)}
+                        </p>
+                        {activeBann.weddingTime && (
+                          <p className="mt-0.5 text-sm text-gray-600">
+                            {formatTime(activeBann.weddingTime)}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
 
                   <div className="relative mt-5 border-l-2 border-[#D4AF37] pl-4">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-400">Publication period</p>
-                    <p className="mt-1 text-xs leading-5 text-gray-600">{formatDate(activeBann.publicationStart)} — {formatDate(activeBann.publicationEnd)}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-gray-400">
+                      Publication period
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-gray-600">
+                      {formatDate(activeBann.publicationStart)} —{" "}
+                      {formatDate(activeBann.publicationEnd)}
+                    </p>
                   </div>
 
-                  <p className="relative mt-auto pt-6 text-xs leading-5 text-gray-500">Please communicate any concern privately and directly with the parish office.</p>
+                  <p className="relative mt-auto pt-6 text-xs leading-5 text-gray-500">
+                    Please communicate any concern privately and directly with
+                    the parish office.
+                  </p>
                 </motion.div>
               </AnimatePresence>
             </article>
@@ -246,16 +310,38 @@ export default function MarriageBanns() {
               <div className="mt-5 flex flex-col gap-4 rounded-2xl border border-[#E7E2DA] bg-white/85 p-3 shadow-sm backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:pl-5">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between text-xs font-semibold text-gray-500">
-                    <span>Couple {activeBannIndex + 1} of {banns.length}</span>
-                    <span>{Math.round(((activeBannIndex + 1) / banns.length) * 100)}%</span>
+                    <span>
+                      Couple {activeBannIndex + 1} of {banns.length}
+                    </span>
+                    <span>
+                      {Math.round(((activeBannIndex + 1) / banns.length) * 100)}
+                      %
+                    </span>
                   </div>
                   <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#EFEAE3]">
-                    <div className="h-full rounded-full bg-linear-to-r from-[#B22222] to-[#D4AF37] transition-all duration-500" style={{ width: `${((activeBannIndex + 1) / banns.length) * 100}%` }} />
+                    <div
+                      className="h-full rounded-full bg-linear-to-r from-[#B22222] to-[#D4AF37] transition-all duration-500"
+                      style={{
+                        width: `${((activeBannIndex + 1) / banns.length) * 100}%`,
+                      }}
+                    />
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2 sm:flex">
-                  <button type="button" onClick={showPreviousBann} className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E7E2DA] bg-white px-4 py-2.5 text-sm font-semibold text-[#292524] transition duration-300 hover:-translate-x-0.5 hover:border-[#B22222]/30 hover:text-[#B22222] focus-visible:ring-2 focus-visible:ring-[#B22222]/30"><ChevronLeft size={17} /> Previous</button>
-                  <button type="button" onClick={showNextBann} className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#B22222] px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#B22222]/15 transition duration-300 hover:translate-x-0.5 hover:bg-[#991B1B] focus-visible:ring-2 focus-visible:ring-[#B22222]/30">Next <ChevronRight size={17} /></button>
+                  <button
+                    type="button"
+                    onClick={showPreviousBann}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#E7E2DA] bg-white px-4 py-2.5 text-sm font-semibold text-[#292524] transition duration-300 hover:-translate-x-0.5 hover:border-[#B22222]/30 hover:text-[#B22222] focus-visible:ring-2 focus-visible:ring-[#B22222]/30"
+                  >
+                    <ChevronLeft size={17} /> Previous
+                  </button>
+                  <button
+                    type="button"
+                    onClick={showNextBann}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#B22222] px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-[#B22222]/15 transition duration-300 hover:translate-x-0.5 hover:bg-[#991B1B] focus-visible:ring-2 focus-visible:ring-[#B22222]/30"
+                  >
+                    Next <ChevronRight size={17} />
+                  </button>
                 </div>
               </div>
             )}

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Booking;
+use App\Models\BookingDocument;
 use App\Models\BookingSlot;
 use App\Models\Service;
 use App\Models\User;
@@ -26,6 +27,13 @@ class ParishionerBookingRescheduleTest extends TestCase
             'processed_by' => $staff->id,
             'processed_at' => now(),
         ]);
+        BookingDocument::create([
+            'booking_id' => $booking->id,
+            'document_type' => 'payment_receipt',
+            'file_name' => 'confirmed-receipt.jpg',
+            'file_path' => 'booking-documents/confirmed-receipt.jpg',
+            'status' => 'approved',
+        ]);
 
         Sanctum::actingAs($user);
 
@@ -43,6 +51,7 @@ class ParishionerBookingRescheduleTest extends TestCase
             'processed_by' => null,
             'processed_at' => null,
         ]);
+
     }
 
     public function test_reschedule_rejects_another_service_and_unavailable_slot(): void

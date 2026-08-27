@@ -14,6 +14,7 @@ use App\Models\PackageInclusion;
 use App\Models\Service;
 use App\Models\ServicePackage;
 use App\Models\User;
+use App\Services\SmsNotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -64,6 +65,13 @@ class StaffManagementApiTest extends TestCase
                 'file_path' => 'booking-documents/'.$documentType.'.pdf',
             ]);
         }
+        BookingDocument::create([
+            'booking_id' => $booking->id,
+            'document_type' => 'payment_receipt',
+            'file_name' => 'confirmed-payment.jpg',
+            'file_path' => 'booking-documents/confirmed-payment.jpg',
+            'status' => 'approved',
+        ]);
         $booking->update(['status' => 'paid']);
 
         $this->getJson('/api/staff/bookings')
@@ -119,6 +127,28 @@ class StaffManagementApiTest extends TestCase
             ->assertJsonPath('data.0.receipt.fileName', 'mass-receipt.jpg')
             ->assertJsonPath('data.0.type', 'Thanksgiving')
             ->assertJsonPath('data.0.status', 'paid');
+
+        MassIntentionEntry::create([
+            'mass_intention_id' => $intention->id,
+            'intention_type' => 'Birthday',
+            'names' => ['Ana Santos'],
+            'amount' => 100,
+        ]);
+
+        $this->getJson('/api/staff/mass-intentions?type=Birthday&status=paid&date=2026-08-20&search=Ana&per_page=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.names', 'Ana Santos')
+            ->assertJsonPath('data.0.type', 'Birthday')
+            ->assertJsonPath('meta.current_page', 1)
+            ->assertJsonPath('meta.last_page', 1)
+            ->assertJsonPath('meta.total', 1);
+
+        $this->getJson('/api/staff/mass-intentions?per_page=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('meta.last_page', 2)
+            ->assertJsonPath('meta.total', 2);
 
         $transaction = $this->getJson('/api/staff/transactions')
             ->assertOk()
@@ -181,6 +211,26 @@ class StaffManagementApiTest extends TestCase
             ->assertJsonPath('data.0.receipt.fileName', 'document-receipt.jpg')
             ->assertJsonPath('data.0.name', $parishioner->full_name);
 
+        $this->getJson('/api/staff/document-requests?status=pending&search=Baptismal&date='.now()->toDateString().'&per_page=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.reference', $booking->booking_reference)
+            ->assertJsonPath('meta.total', 1);
+
+        $this->getJson('/api/staff/transactions?status=pending&service=document-request&search=DOCUMENT-PAYMENT&date='.now()->toDateString().'&per_page=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.bookingReference', $booking->booking_reference)
+            ->assertJsonPath('data.0.reference', 'DOCUMENT-PAYMENT-1')
+            ->assertJsonPath('meta.total', 1);
+
+        $this->patchJson("/api/staff/document-requests/{$request->id}/status", [
+            'status' => 'ready_for_pickup',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors('status');
+
+        $this->assertDatabaseCount('sms_messages', 0);
+
         $this->patchJson("/api/staff/transactions/{$receipt->id}/status", [
             'status' => 'confirmed',
         ])->assertOk()->assertJsonPath('data.status', 'confirmed');
@@ -191,10 +241,6 @@ class StaffManagementApiTest extends TestCase
         ]);
 
         $this->patchJson("/api/staff/document-requests/{$request->id}/status", [
-            'status' => 'approved',
-        ])->assertOk()->assertJsonPath('data.status', 'approved');
-
-        $this->patchJson("/api/staff/document-requests/{$request->id}/status", [
             'status' => 'ready_for_pickup',
         ])->assertOk()->assertJsonPath('data.status', 'ready_for_pickup');
 
@@ -202,7 +248,7 @@ class StaffManagementApiTest extends TestCase
             'booking_id' => $booking->id,
             'category' => 'document_status',
             'status' => 'pending',
-            'message' => "St. Lorenzo Ruiz Parish: Your request for Baptismal Certificate and Confirmation Certificate (Ref: {$booking->booking_reference}) is ready for pickup. Please claim it at the parish office during office hours. Thank you.",
+            'message' => "St. Lorenzo Ruiz Parish: Your request for Baptismal Certificate and Confirmation Certificate (Ref: {$booking->booking_reference}) is ready for pickup. Please claim it at the parish office during office hours. Thank you.\n\n".SmsNotificationService::AUTOMATED_MESSAGE_NOTICE,
         ]);
         Http::assertNothingSent();
         Queue::assertNothingPushed();
@@ -230,6 +276,46 @@ class StaffManagementApiTest extends TestCase
         $this->patchJson("/api/staff/bookings/{$booking->id}/status", [
             'status' => 'approved',
         ])->assertUnprocessable()->assertJsonValidationErrors('status');
+    }
+
+    public function test_staff_booking_list_supports_server_side_filters_and_pagination(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['role' => 'staff']));
+        $parishioner = User::factory()->create([
+            'first_name' => 'Juan',
+            'last_name' => 'Dela Cruz',
+            'phone' => '09170000001',
+        ]);
+
+        $matching = $this->booking($parishioner, 'wedding');
+        $matching->update([
+            'booking_reference' => 'WED-ALPHA-001',
+            'status' => 'approved',
+        ]);
+        $this->booking($parishioner, 'funeral')->update([
+            'booking_reference' => 'FUN-ALPHA-002',
+            'status' => 'approved',
+        ]);
+        $this->booking($parishioner, 'baptism')->update([
+            'booking_reference' => 'BAP-BETA-003',
+            'status' => 'pending',
+        ]);
+
+        $this->getJson('/api/staff/bookings?service=wedding&status=approved&search=alpha&per_page=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.reference', 'WED-ALPHA-001')
+            ->assertJsonPath('meta.current_page', 1)
+            ->assertJsonPath('meta.last_page', 1)
+            ->assertJsonPath('meta.per_page', 1)
+            ->assertJsonPath('meta.total', 1);
+
+        $this->getJson('/api/staff/bookings?search=juan%20cruz&per_page=2')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('meta.current_page', 1)
+            ->assertJsonPath('meta.last_page', 2)
+            ->assertJsonPath('meta.total', 3);
     }
 
     public function test_staff_dashboard_returns_live_statistics_and_activity(): void

@@ -37,9 +37,9 @@ interface Props {
 
 function Detail({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="grid min-w-0 grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-start gap-3 text-sm">
+    <div className="grid min-w-0 grid-cols-1 items-start gap-1 text-sm sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] sm:gap-3">
       <span className="break-words text-gray-500">{label}</span>
-      <span className="min-w-0 break-words text-right font-medium leading-5 text-[#292524]">
+      <span className="min-w-0 break-words text-left font-medium leading-5 text-[#292524] sm:text-right">
         {value || "—"}
       </span>
     </div>
@@ -170,11 +170,11 @@ export default function BookingDetailModal({
   return (
     <div
       data-app-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4"
     >
       <div
         data-modal-scroll="true"
-        className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-7 shadow-lg"
+        className="max-h-[95vh] w-full max-w-2xl overflow-x-hidden overflow-y-auto rounded-2xl bg-white p-4 shadow-lg sm:max-h-[92vh] sm:rounded-3xl sm:p-7"
       >
         <div className="mb-6 flex items-start justify-between">
           <div className="min-w-0 pr-4">
@@ -499,7 +499,7 @@ export default function BookingDetailModal({
         )}
 
         {(booking.type === "Marriage" || booking.type === "Baptism") && (
-          <section className="mt-4 space-y-4 rounded-2xl border border-[#E7E2DA] p-5">
+          <section className="mt-4 min-w-0 space-y-4 rounded-2xl border border-[#E7E2DA] p-4 sm:p-5">
             <div>
               <h3 className="font-semibold text-[#292524]">
                 {booking.type === "Baptism"
@@ -522,7 +522,7 @@ export default function BookingDetailModal({
                 value={`${new Date(item.scheduledAt).toLocaleString()} — ${item.venue}`}
               />
             ))}
-            <form onSubmit={schedule} className="grid gap-3 sm:grid-cols-2">
+            <form onSubmit={schedule} className="grid min-w-0 gap-3 md:grid-cols-2">
               {booking.type === "Marriage" ? (
                 <select
                   value={appointment.type}
@@ -532,13 +532,13 @@ export default function BookingDetailModal({
                       type: e.target.value as typeof appointment.type,
                     })
                   }
-                  className="rounded-xl border px-3 py-2"
+                  className="min-w-0 w-full rounded-xl border px-3 py-2"
                 >
                   <option value="seminar">Wedding Seminar</option>
                   <option value="priest_interview">Priest Interview</option>
                 </select>
               ) : (
-                <div className="rounded-xl border bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700">
+                <div className="min-w-0 w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700">
                   Baptism Seminar
                 </div>
               )}
@@ -552,7 +552,7 @@ export default function BookingDetailModal({
                     scheduledAt: e.target.value,
                   })
                 }
-                className="rounded-xl border px-3 py-2"
+                className="min-w-0 w-full max-w-full rounded-xl border px-3 py-2"
               />
               <input
                 required
@@ -561,7 +561,7 @@ export default function BookingDetailModal({
                 onChange={(e) =>
                   setAppointment({ ...appointment, venue: e.target.value })
                 }
-                className="rounded-xl border px-3 py-2"
+                className="min-w-0 w-full rounded-xl border px-3 py-2"
               />
               <input
                 placeholder="Notes (optional)"
@@ -569,9 +569,9 @@ export default function BookingDetailModal({
                 onChange={(e) =>
                   setAppointment({ ...appointment, notes: e.target.value })
                 }
-                className="rounded-xl border px-3 py-2"
+                className="min-w-0 w-full rounded-xl border px-3 py-2"
               />
-              <button className="rounded-xl bg-[#B22222] px-4 py-2 font-semibold text-white sm:col-span-2">
+              <button type="submit" className="min-w-0 whitespace-normal rounded-xl bg-[#B22222] px-4 py-2.5 text-center font-semibold leading-5 text-white md:col-span-2">
                 Save Schedule &amp; Notify
               </button>
             </form>

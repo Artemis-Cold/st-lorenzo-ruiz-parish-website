@@ -103,6 +103,7 @@ class SmsNotificationTest extends TestCase
     {
         config()->set('services.sms.driver', 'semaphore');
         config()->set('services.semaphore.api_key', 'secret-key');
+        config()->set('services.semaphore.sender_name', 'SLRPARISH');
         Http::fake(['api.semaphore.co/*' => Http::response([[
             'message_id' => 123, 'status' => 'Queued',
         ]])]);
@@ -116,7 +117,8 @@ class SmsNotificationTest extends TestCase
         Http::assertSent(fn ($request) => $request->url() === 'https://api.semaphore.co/api/v4/messages'
             && $request['apikey'] === 'secret-key'
             && $request['number'] === '639171234567'
-            && $request['message'] === 'Your request is approved.'
+            && $request['message'] === "Your request is approved.\n\n".SmsNotificationService::AUTOMATED_MESSAGE_NOTICE
+            && $request['sendername'] === 'SLRPARISH'
         );
 
         $this->assertDatabaseHas('sms_messages', [
@@ -158,8 +160,19 @@ class SmsNotificationTest extends TestCase
             'user_id' => $user->id,
             'recipient' => '639171234567',
             'status' => 'pending',
+            'message' => "Your booking has incomplete requirements.\n\n".SmsNotificationService::AUTOMATED_MESSAGE_NOTICE,
         ]);
         Queue::assertNothingPushed();
+    }
+
+    public function test_automated_message_notice_is_not_added_twice(): void
+    {
+        $message = 'Your request is ready.\n\n'.SmsNotificationService::AUTOMATED_MESSAGE_NOTICE;
+
+        $formatted = SmsNotificationService::withAutomatedMessageNotice($message);
+
+        $this->assertSame($message, $formatted);
+        $this->assertSame(1, substr_count($formatted, SmsNotificationService::AUTOMATED_MESSAGE_NOTICE));
     }
 
     public function test_semaphore_failure_does_not_break_a_sync_web_request(): void

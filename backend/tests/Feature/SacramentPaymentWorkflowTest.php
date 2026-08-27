@@ -16,6 +16,80 @@ class SacramentPaymentWorkflowTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_rejected_mass_intention_and_document_request_payments_can_be_replaced(): void
+    {
+        Storage::fake('public');
+        $parishioner = User::factory()->create();
+        Sanctum::actingAs($parishioner);
+
+        foreach (['mass-intention', 'document-request'] as $index => $serviceCode) {
+            $service = Service::create([
+                'code' => $serviceCode,
+                'name' => str($serviceCode)->headline(),
+                'description' => str($serviceCode)->headline(),
+            ]);
+            $oldReference = 'REJECTED-REFERENCE-'.$index;
+            $newReference = 'CORRECTED-REFERENCE-'.$index;
+            $booking = Booking::create([
+                'booking_reference' => strtoupper(substr($serviceCode, 0, 3)).'-REPLACE-'.$index,
+                'payment_reference' => $oldReference,
+                'user_id' => $parishioner->id,
+                'service_id' => $service->id,
+                'status' => 'pending',
+            ]);
+
+            if ($serviceCode === 'mass-intention') {
+                $booking->massIntention()->create([
+                    'intention_date' => now()->addWeek()->toDateString(),
+                    'payment_reference' => $oldReference,
+                    'total_amount' => 100,
+                ]);
+            } else {
+                $booking->documentRequest()->create([
+                    'payment_reference' => $oldReference,
+                    'total_amount' => 100,
+                ]);
+            }
+
+            $oldPath = "booking-documents/rejected-{$index}.jpg";
+            Storage::disk('public')->put($oldPath, 'rejected receipt');
+            $receipt = $booking->documents()->create([
+                'document_type' => 'payment_receipt',
+                'file_name' => "rejected-{$index}.jpg",
+                'file_path' => $oldPath,
+                'status' => 'rejected',
+                'remarks' => 'Reference could not be verified.',
+            ]);
+
+            $this->post("/api/bookings/{$booking->id}/payment", [
+                'reference_number' => $newReference,
+                'receipt' => UploadedFile::fake()->image("corrected-{$index}.jpg"),
+            ], ['Accept' => 'application/json'])
+                ->assertCreated()
+                ->assertJsonPath('data.referenceNumber', $newReference)
+                ->assertJsonPath('data.status', 'pending');
+
+            $this->assertDatabaseHas('bookings', [
+                'id' => $booking->id,
+                'payment_reference' => $newReference,
+                'status' => 'pending',
+            ]);
+            $this->assertDatabaseHas('booking_documents', [
+                'id' => $receipt->id,
+                'file_name' => "corrected-{$index}.jpg",
+                'status' => 'pending',
+                'remarks' => null,
+            ]);
+            $this->assertDatabaseCount('booking_documents', $index + 1);
+            Storage::disk('public')->assertMissing($oldPath);
+
+            $paymentReference = $serviceCode === 'mass-intention'
+                ? $booking->massIntention()->value('payment_reference')
+                : $booking->documentRequest()->value('payment_reference');
+            $this->assertSame($newReference, $paymentReference);
+        }
+    }
+
     public function test_staff_can_remind_and_verify_a_replaceable_sacrament_payment(): void
     {
         config()->set('services.sms.driver', 'database');

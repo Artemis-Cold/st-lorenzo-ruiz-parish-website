@@ -40,16 +40,16 @@ const navItems = [
     color: "#2F7D5E",
   },
   {
-    label: "Mass Intention Listing",
-    to: "/staff/mass-intentions",
-    icon: ClipboardList,
-    color: "#C9A227",
-  },
-  {
     label: "Booking Management",
     to: "/staff/bookings",
     icon: CalendarRange,
     color: "#2F7D5E",
+  },
+  {
+    label: "Mass Intention Listing",
+    to: "/staff/mass-intentions",
+    icon: ClipboardList,
+    color: "#C9A227",
   },
   {
     label: "Requests",
@@ -97,7 +97,7 @@ export default function StaffSidebar({ onNavigate }: StaffSidebarProps) {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5 scrollbar-none [&::-webkit-scrollbar]:hidden">
         {navItems.map(({ label, to, icon: Icon }) => (
           <NavLink
             key={to}

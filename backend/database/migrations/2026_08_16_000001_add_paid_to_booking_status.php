@@ -11,10 +11,6 @@ return new class extends Migration
             DB::statement("ALTER TABLE bookings MODIFY status ENUM('pending', 'paid', 'approved', 'ready_for_pickup', 'rejected', 'cancelled', 'completed') NOT NULL DEFAULT 'pending'");
         }
 
-        DB::table('bookings')
-            ->whereIn('service_id', DB::table('services')->select('id')->where('code', 'mass-intention'))
-            ->whereIn('status', ['pending', 'approved'])
-            ->update(['status' => 'paid']);
     }
 
     public function down(): void

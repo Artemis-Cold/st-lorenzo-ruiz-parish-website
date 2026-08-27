@@ -3,23 +3,72 @@ import type {
   Booking,
   BookingStatus,
 } from "@/features/staff/types/booking";
-import type { MassIntention } from "@/features/staff/types/massIntention";
+import type {
+  IntentionType,
+  MassIntention,
+} from "@/features/staff/types/massIntention";
 import type {
   RequestStatus,
   ServiceRequest,
 } from "@/features/staff/types/request";
 
-interface CollectionResponse<T> {
-  data: T[];
+export interface StaffBookingFilters {
+  service?: "wedding" | "funeral" | "baptism";
+  status?: BookingStatus;
+  search?: string;
+  date?: string;
+  page?: number;
+  perPage?: number;
+}
+
+export interface StaffBookingPage {
+  data: Booking[];
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+    from: number | null;
+    to: number | null;
+  };
 }
 
 interface ItemResponse<T> {
   data: T;
 }
 
-export async function getStaffBookings(): Promise<Booking[]> {
-  const response = await api.get<CollectionResponse<Booking>>("/staff/bookings");
-  return response.data.data;
+export async function getStaffBookings(
+  filters: StaffBookingFilters = {},
+  signal?: AbortSignal,
+): Promise<StaffBookingPage> {
+  const response = await api.get<StaffBookingPage>("/staff/bookings", {
+    params: {
+      service: filters.service,
+      status: filters.status,
+      search: filters.search || undefined,
+      date: filters.date || undefined,
+      page: filters.page,
+      per_page: filters.perPage,
+    },
+    signal,
+  });
+  return response.data;
+}
+
+export async function getAllStaffBookings(
+  filters: Omit<StaffBookingFilters, "page" | "perPage">,
+): Promise<Booking[]> {
+  const firstPage = await getStaffBookings({ ...filters, page: 1, perPage: 100 });
+
+  if (firstPage.meta.last_page <= 1) return firstPage.data;
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: firstPage.meta.last_page - 1 }, (_, index) =>
+      getStaffBookings({ ...filters, page: index + 2, perPage: 100 }),
+    ),
+  );
+
+  return [firstPage, ...remainingPages].flatMap((result) => result.data);
 }
 
 export async function updateStaffBookingStatus(
@@ -47,18 +96,104 @@ export async function sendBookingPaymentReminder(id: number): Promise<string> {
   return response.data.message;
 }
 
-export async function getStaffMassIntentions(): Promise<MassIntention[]> {
-  const response = await api.get<CollectionResponse<MassIntention>>(
-    "/staff/mass-intentions",
-  );
-  return response.data.data;
+export interface StaffMassIntentionFilters {
+  type?: IntentionType;
+  status?: MassIntention["status"];
+  search?: string;
+  date?: string;
+  page?: number;
+  perPage?: number;
 }
 
-export async function getStaffDocumentRequests(): Promise<ServiceRequest[]> {
-  const response = await api.get<CollectionResponse<ServiceRequest>>(
-    "/staff/document-requests",
+export interface StaffMassIntentionPage {
+  data: MassIntention[];
+  meta: StaffBookingPage["meta"];
+}
+
+export async function getStaffMassIntentions(
+  filters: StaffMassIntentionFilters = {},
+  signal?: AbortSignal,
+): Promise<StaffMassIntentionPage> {
+  const response = await api.get<StaffMassIntentionPage>(
+    "/staff/mass-intentions",
+    {
+      params: {
+        type: filters.type,
+        status: filters.status,
+        search: filters.search || undefined,
+        date: filters.date || undefined,
+        page: filters.page,
+        per_page: filters.perPage,
+      },
+      signal,
+    },
   );
-  return response.data.data;
+  return response.data;
+}
+
+export async function getAllStaffMassIntentions(
+  filters: Omit<StaffMassIntentionFilters, "page" | "perPage">,
+): Promise<MassIntention[]> {
+  const firstPage = await getStaffMassIntentions({ ...filters, page: 1, perPage: 100 });
+
+  if (firstPage.meta.last_page <= 1) return firstPage.data;
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: firstPage.meta.last_page - 1 }, (_, index) =>
+      getStaffMassIntentions({ ...filters, page: index + 2, perPage: 100 }),
+    ),
+  );
+
+  return [firstPage, ...remainingPages].flatMap((result) => result.data);
+}
+
+export interface StaffDocumentRequestFilters {
+  status?: RequestStatus;
+  search?: string;
+  date?: string;
+  page?: number;
+  perPage?: number;
+}
+
+export interface StaffDocumentRequestPage {
+  data: ServiceRequest[];
+  meta: StaffBookingPage["meta"];
+}
+
+export async function getStaffDocumentRequests(
+  filters: StaffDocumentRequestFilters = {},
+  signal?: AbortSignal,
+): Promise<StaffDocumentRequestPage> {
+  const response = await api.get<StaffDocumentRequestPage>(
+    "/staff/document-requests",
+    {
+      params: {
+        status: filters.status,
+        search: filters.search || undefined,
+        date: filters.date || undefined,
+        page: filters.page,
+        per_page: filters.perPage,
+      },
+      signal,
+    },
+  );
+  return response.data;
+}
+
+export async function getAllStaffDocumentRequests(
+  filters: Omit<StaffDocumentRequestFilters, "page" | "perPage">,
+): Promise<ServiceRequest[]> {
+  const firstPage = await getStaffDocumentRequests({ ...filters, page: 1, perPage: 100 });
+
+  if (firstPage.meta.last_page <= 1) return firstPage.data;
+
+  const remainingPages = await Promise.all(
+    Array.from({ length: firstPage.meta.last_page - 1 }, (_, index) =>
+      getStaffDocumentRequests({ ...filters, page: index + 2, perPage: 100 }),
+    ),
+  );
+
+  return [firstPage, ...remainingPages].flatMap((result) => result.data);
 }
 
 export async function updateDocumentRequestStatus(

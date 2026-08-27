@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\SmsMessage;
+use App\Services\SmsNotificationService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Http;
@@ -24,6 +25,12 @@ class SendSmsMessage implements ShouldQueue
     public function handle(): void
     {
         $sms = SmsMessage::findOrFail($this->smsMessageId);
+        $message = SmsNotificationService::withAutomatedMessageNotice($sms->message);
+
+        if ($message !== $sms->message) {
+            $sms->update(['message' => $message]);
+        }
+
         $driver = config('services.sms.driver', 'log');
 
         try {

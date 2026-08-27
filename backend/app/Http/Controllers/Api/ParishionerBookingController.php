@@ -145,7 +145,7 @@ class ParishionerBookingController extends Controller
     public function submitPayment(Request $request, Booking $booking): JsonResponse
     {
         abort_unless($booking->user_id === $request->user()->id, 404);
-        abort_unless(in_array($booking->service()->value('code'), self::RESCHEDULABLE_SERVICES, true), 404);
+        abort_unless(in_array($booking->service()->value('code'), self::PAYMENT_SERVICES, true), 404);
 
         if (! in_array($booking->status, ['pending', 'paid'], true)) {
             throw ValidationException::withMessages([

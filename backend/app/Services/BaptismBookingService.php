@@ -69,6 +69,8 @@ class BaptismBookingService
 
             'booking_slot_id' => $slot->id,
 
+            'status' => 'pending',
+
             'remarks' => $data['remarks'] ?? null,
         ]);
     }

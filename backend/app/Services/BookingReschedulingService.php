@@ -62,14 +62,9 @@ class BookingReschedulingService
                 ]);
             }
 
-            $hasConfirmedPayment = $lockedBooking->documents()
-                ->where('document_type', 'payment_receipt')
-                ->where('status', 'approved')
-                ->exists();
-
             $lockedBooking->update([
                 'booking_slot_id' => $slot->id,
-                'status' => $hasConfirmedPayment ? 'paid' : 'pending',
+                'status' => 'pending',
                 'processed_by' => null,
                 'processed_at' => null,
             ]);

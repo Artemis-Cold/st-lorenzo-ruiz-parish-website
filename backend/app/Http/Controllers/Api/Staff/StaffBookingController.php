@@ -8,6 +8,7 @@ use App\Models\Booking;
 use App\Services\BookingRequirementService;
 use App\Services\SmsNotificationService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -18,12 +19,69 @@ class StaffBookingController extends Controller
 
     public function __construct(private BookingRequirementService $requirements) {}
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $bookings = Booking::query()
+        $filters = $request->validate([
+            'service' => ['nullable', 'in:wedding,funeral,baptism'],
+            'status' => ['nullable', 'in:pending,paid,approved,rejected,cancelled,completed'],
+            'search' => ['nullable', 'string', 'max:100'],
+            'date' => ['nullable', 'date_format:Y-m-d'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        $query = Booking::query()
             ->whereHas('service', fn ($query) => $query->whereIn('code', [
                 'wedding', 'funeral', 'baptism',
-            ]))
+            ]));
+
+        if (! empty($filters['service'])) {
+            $query->whereHas(
+                'service',
+                fn ($service) => $service->where('code', $filters['service'])
+            );
+        }
+
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (! empty($filters['date'])) {
+            $query->whereHas(
+                'slot',
+                fn ($slot) => $slot->whereDate('booking_date', $filters['date'])
+            );
+        }
+
+        $searchTerms = preg_split('/\s+/', trim($filters['search'] ?? ''), -1, PREG_SPLIT_NO_EMPTY);
+
+        foreach ($searchTerms ?: [] as $term) {
+            $like = '%'.$term.'%';
+            $query->where(function ($booking) use ($like) {
+                $booking
+                    ->where('booking_reference', 'like', $like)
+                    ->orWhereHas('user', fn ($user) => $user
+                        ->where('first_name', 'like', $like)
+                        ->orWhere('middle_initial', 'like', $like)
+                        ->orWhere('last_name', 'like', $like)
+                        ->orWhere('username', 'like', $like)
+                        ->orWhere('phone', 'like', $like))
+                    ->orWhereHas('weddingApplicants', fn ($applicant) => $applicant
+                        ->where('first_name', 'like', $like)
+                        ->orWhere('last_name', 'like', $like)
+                        ->orWhere('contact_number', 'like', $like))
+                    ->orWhereHas('funeralDeceased', fn ($deceased) => $deceased
+                        ->where('first_name', 'like', $like)
+                        ->orWhere('last_name', 'like', $like)
+                        ->orWhere('informant_contact_number', 'like', $like))
+                    ->orWhereHas('baptizand', fn ($baptizand) => $baptizand
+                        ->where('first_name', 'like', $like)
+                        ->orWhere('last_name', 'like', $like)
+                        ->orWhere('contact_number', 'like', $like));
+            });
+        }
+
+        $bookings = $query
             ->with([
                 'user', 'service', 'package.inclusions', 'selectedAddons', 'slot',
                 'documents', 'weddingApplicants', 'weddingSponsorPairs.sponsors', 'baptizand.parents',
@@ -33,10 +91,22 @@ class StaffBookingController extends Controller
                 'marriageBann',
             ])
             ->latest()
-            ->get()
+            ->paginate($filters['per_page'] ?? 10);
+
+        $data = $bookings->getCollection()
             ->map(fn (Booking $booking) => $this->serialize($booking));
 
-        return response()->json(['data' => $bookings]);
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'current_page' => $bookings->currentPage(),
+                'last_page' => $bookings->lastPage(),
+                'per_page' => $bookings->perPage(),
+                'total' => $bookings->total(),
+                'from' => $bookings->firstItem(),
+                'to' => $bookings->lastItem(),
+            ],
+        ]);
     }
 
     public function updateStatus(
@@ -61,7 +131,12 @@ class StaffBookingController extends Controller
                 ]);
             }
 
-            if ($booking->status === 'pending') {
+            $hasConfirmedPayment = $booking->documents()
+                ->where('document_type', 'payment_receipt')
+                ->where('status', 'approved')
+                ->exists();
+
+            if (! $hasConfirmedPayment) {
                 throw ValidationException::withMessages([
                     'payment' => 'This booking cannot be approved until its payment is confirmed.',
                 ]);
@@ -69,7 +144,7 @@ class StaffBookingController extends Controller
         }
 
         $this->changeStatus($booking, $request->validated('status'), [
-            'pending' => ['rejected', 'cancelled'],
+            'pending' => ['approved', 'rejected', 'cancelled'],
             'paid' => ['approved', 'rejected', 'cancelled'],
             'approved' => ['completed', 'cancelled'],
         ]);

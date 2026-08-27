@@ -7,6 +7,7 @@ use App\Http\Requests\Staff\UpdateBookingStatusRequest;
 use App\Models\DocumentRequestBooking;
 use App\Services\SmsNotificationService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -14,15 +15,71 @@ class StaffDocumentRequestController extends Controller
 {
     use ManagesBookingStatus;
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $requests = DocumentRequestBooking::query()
+        $filters = $request->validate([
+            'status' => ['nullable', 'in:pending,paid,approved,ready_for_pickup,completed,rejected,cancelled'],
+            'search' => ['nullable', 'string', 'max:100'],
+            'date' => ['nullable', 'date_format:Y-m-d'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        $query = DocumentRequestBooking::query();
+
+        if (! empty($filters['status'])) {
+            $query->whereHas(
+                'booking',
+                fn ($booking) => $booking->where('status', $filters['status'])
+            );
+        }
+
+        if (! empty($filters['date'])) {
+            $query->whereHas(
+                'booking',
+                fn ($booking) => $booking->whereDate('created_at', $filters['date'])
+            );
+        }
+
+        $searchTerms = preg_split('/\s+/', trim($filters['search'] ?? ''), -1, PREG_SPLIT_NO_EMPTY);
+
+        foreach ($searchTerms ?: [] as $term) {
+            $like = '%'.$term.'%';
+            $query->where(function ($documentRequest) use ($like) {
+                $documentRequest
+                    ->where('payment_reference', 'like', $like)
+                    ->orWhereHas('items', fn ($item) => $item
+                        ->where('document_type', 'like', $like))
+                    ->orWhereHas('booking', fn ($booking) => $booking
+                        ->where('booking_reference', 'like', $like)
+                        ->orWhereHas('user', fn ($user) => $user
+                            ->where('first_name', 'like', $like)
+                            ->orWhere('middle_initial', 'like', $like)
+                            ->orWhere('last_name', 'like', $like)
+                            ->orWhere('username', 'like', $like)
+                            ->orWhere('phone', 'like', $like)));
+            });
+        }
+
+        $requests = $query
             ->with(['items', 'booking.user', 'booking.documents'])
             ->latest()
-            ->get()
+            ->paginate($filters['per_page'] ?? 10);
+
+        $data = $requests->getCollection()
             ->map(fn (DocumentRequestBooking $documentRequest) => $this->serialize($documentRequest));
 
-        return response()->json(['data' => $requests]);
+        return response()->json([
+            'data' => $data,
+            'meta' => [
+                'current_page' => $requests->currentPage(),
+                'last_page' => $requests->lastPage(),
+                'per_page' => $requests->perPage(),
+                'total' => $requests->total(),
+                'from' => $requests->firstItem(),
+                'to' => $requests->lastItem(),
+            ],
+        ]);
     }
 
     public function updateStatus(
@@ -34,24 +91,15 @@ class StaffDocumentRequestController extends Controller
         ]);
         $booking = $documentRequest->booking;
 
-        if ($request->validated('status') === 'approved') {
-            if (! in_array($booking->status, ['pending', 'paid'], true)) {
-                throw ValidationException::withMessages([
-                    'status' => "A {$booking->status} request cannot be changed to approved.",
-                ]);
-            }
-
-            if ($booking->status === 'pending') {
-                throw ValidationException::withMessages([
-                    'payment' => 'This request cannot be approved until its payment is confirmed.',
-                ]);
-            }
+        if ($request->validated('status') === 'ready_for_pickup' && $booking->status !== 'paid') {
+            throw ValidationException::withMessages([
+                'status' => 'Only a document request with a confirmed payment can be marked ready for pickup.',
+            ]);
         }
 
         $this->changeStatus($booking, $request->validated('status'), [
             'pending' => ['rejected', 'cancelled'],
-            'paid' => ['approved', 'rejected', 'cancelled'],
-            'approved' => ['ready_for_pickup', 'cancelled'],
+            'paid' => ['ready_for_pickup', 'rejected', 'cancelled'],
             'ready_for_pickup' => ['completed', 'cancelled'],
         ]);
 
@@ -65,7 +113,6 @@ class StaffDocumentRequestController extends Controller
         $documentTypes = $documentTypes ?: 'parish document';
         $reference = $booking->booking_reference;
         $message = match ($status) {
-            'approved' => "St. Lorenzo Ruiz Parish: Your request for {$documentTypes} (Ref: {$reference}) has been approved. We will notify you when it is ready for pickup.",
             'ready_for_pickup' => "St. Lorenzo Ruiz Parish: Your request for {$documentTypes} (Ref: {$reference}) is ready for pickup. Please claim it at the parish office during office hours. Thank you.",
             'completed' => "St. Lorenzo Ruiz Parish: Your request for {$documentTypes} (Ref: {$reference}) has been completed. Thank you for coordinating with the parish office.",
             'rejected' => "St. Lorenzo Ruiz Parish: Your request for {$documentTypes} (Ref: {$reference}) could not be approved. Please contact the parish office for assistance.",

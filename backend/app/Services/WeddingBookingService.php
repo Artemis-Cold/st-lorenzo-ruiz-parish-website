@@ -37,6 +37,7 @@ class WeddingBookingService
                 'service_id' => $slot->service_id,
                 'service_package_id' => $package->id,
                 'booking_slot_id' => $slot->id,
+                'status' => 'pending',
                 'remarks' => $data['remarks'] ?? null,
             ]);
 
