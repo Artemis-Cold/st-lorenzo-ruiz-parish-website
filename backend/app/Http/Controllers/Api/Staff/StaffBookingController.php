@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Staff\RequestRequirementResubmissionRequest;
 use App\Http\Requests\Staff\UpdateBookingStatusRequest;
 use App\Models\Booking;
 use App\Services\BookingRequirementService;
@@ -179,6 +180,42 @@ class StaffBookingController extends Controller
         ]);
     }
 
+    public function requestRequirementResubmission(
+        RequestRequirementResubmissionRequest $request,
+        Booking $booking
+    ): JsonResponse {
+        abort_unless(
+            in_array($booking->service()->value('code'), ['wedding', 'funeral', 'baptism'], true),
+            404
+        );
+
+        if (! in_array($booking->status, ['pending', 'paid'], true)) {
+            throw ValidationException::withMessages([
+                'document_key' => 'Requirements can only be reviewed while the booking is pending approval.',
+            ]);
+        }
+
+        $result = $this->requirements->requestResubmission(
+            $booking,
+            $request->validated('document_key'),
+            $request->validated('reason'),
+        );
+
+        $booking->load([
+            'user', 'service', 'package.inclusions', 'selectedAddons', 'slot',
+            'documents', 'weddingApplicants', 'weddingSponsorPairs.sponsors', 'baptizand.parents',
+            'baptizand.godParentPairs.godParents',
+            'funeralDeceased.children',
+            'appointments',
+            'marriageBann',
+        ]);
+
+        return response()->json([
+            'message' => "The parishioner was notified to resubmit {$result['label']}.",
+            'data' => $this->serialize($booking),
+        ]);
+    }
+
     public function remindPayment(
         Booking $booking,
         SmsNotificationService $sms
@@ -324,8 +361,12 @@ class StaffBookingController extends Controller
         $pairNumbers = $sponsorPairs->mapWithKeys(
             fn ($pair, int $index) => [(string) $pair->id => $index + 1]
         );
+        $godParentPairs = $booking->baptizand?->godParentPairs?->sortBy('id')->values() ?? collect();
+        $godParentPairNumbers = $godParentPairs->mapWithKeys(
+            fn ($pair, int $index) => [(string) $pair->id => $index + 1]
+        );
 
-        $documents = $booking->documents->map(function ($document) use ($pairNumbers) {
+        $documents = $booking->documents->map(function ($document) use ($pairNumbers, $godParentPairNumbers) {
             $type = $document->document_type;
 
             if (preg_match('/^wedding_sponsor_(marriage_contract|confirmation_certificate)_(\d+)$/', $type, $matches)) {
@@ -336,11 +377,25 @@ class StaffBookingController extends Controller
                 }
             }
 
+            if (preg_match('/^godparent_(marriage_contract|confirmation_certificate)_(\d+)$/', $type, $matches)) {
+                $pairNumber = $godParentPairNumbers->get($matches[2]);
+
+                if ($pairNumber !== null) {
+                    $type = "godparent_pair_{$pairNumber}_{$matches[1]}";
+                }
+            }
+
             return [
+                'id' => $document->id,
                 'type' => $type,
+                'requirementType' => $document->document_type,
                 'fileName' => $document->file_name,
                 'status' => $document->status,
+                'remarks' => $document->remarks,
                 'url' => Storage::disk('public')->url($document->file_path),
+                'reviewKey' => $document->document_type === 'payment_receipt'
+                    ? null
+                    : "document:{$document->id}",
             ];
         });
 
@@ -350,20 +405,47 @@ class StaffBookingController extends Controller
             return collect([
                 'marriage_contract' => $pair->marriage_contract,
                 'confirmation_certificate' => $pair->confirmation_certificate,
-            ])->filter()->map(function (string $path, string $type) use ($pairNumber) {
+            ])->filter()->map(function (string $path, string $type) use ($pair, $pairNumber) {
                 $label = 'Sponsor Pair '.$pairNumber.' '.str($type)->headline();
                 $extension = pathinfo($path, PATHINFO_EXTENSION);
 
                 return [
+                    'id' => null,
                     'type' => "sponsor_pair_{$pairNumber}_{$type}",
+                    'requirementType' => "wedding_sponsor_{$type}_{$pair->id}",
                     'fileName' => $label.($extension ? ".{$extension}" : ''),
                     'status' => 'submitted',
+                    'remarks' => null,
                     'url' => Storage::disk('public')->url($path),
+                    'reviewKey' => "wedding-sponsor:{$pair->id}:{$type}",
                 ];
             })->values();
         });
 
-        return $documents->concat($sponsorDocuments)->values();
+        $godParentDocuments = $godParentPairs->flatMap(function ($pair, int $index) {
+            $pairNumber = $index + 1;
+
+            return collect([
+                'marriage_contract' => $pair->marriage_contract,
+                'confirmation_certificate' => $pair->confirmation_certificate,
+            ])->filter()->map(function (string $path, string $type) use ($pair, $pairNumber) {
+                $label = 'Godparent Pair '.$pairNumber.' '.str($type)->headline();
+                $extension = pathinfo($path, PATHINFO_EXTENSION);
+
+                return [
+                    'id' => null,
+                    'type' => "godparent_pair_{$pairNumber}_{$type}",
+                    'requirementType' => "godparent_{$type}_{$pair->id}",
+                    'fileName' => $label.($extension ? ".{$extension}" : ''),
+                    'status' => 'submitted',
+                    'remarks' => null,
+                    'url' => Storage::disk('public')->url($path),
+                    'reviewKey' => "baptism-godparent:{$pair->id}:{$type}",
+                ];
+            })->values();
+        });
+
+        return $documents->concat($sponsorDocuments)->concat($godParentDocuments)->values();
     }
 
     private function serviceData(Booking $booking): array

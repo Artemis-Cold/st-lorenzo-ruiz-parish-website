@@ -13,11 +13,22 @@ const statusStyles: Record<ProfileBooking["status"], string> = {
   rejected: "bg-gray-200 text-gray-700",
 };
 
-const statusLabel = (status: ProfileBooking["status"]) =>
-  status
+const isDocumentRequest = (service: string) =>
+  service.toLowerCase().includes("document request");
+
+const statusLabel = (status: ProfileBooking["status"], service: string) => {
+  if (status === "paid" && isDocumentRequest(service)) return "Preparing";
+
+  return status
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
+};
+
+const statusClass = (booking: ProfileBooking) =>
+  booking.status === "paid" && isDocumentRequest(booking.service)
+    ? "bg-sky-100 text-sky-700"
+    : statusStyles[booking.status];
 
 export default function CurrentBookings({
   bookings,
@@ -58,10 +69,10 @@ export default function CurrentBookings({
                 <span
                   className={
                     "rounded-full px-3 py-1 text-xs font-semibold " +
-                    statusStyles[booking.status]
+                    statusClass(booking)
                   }
                 >
-                  {statusLabel(booking.status)}
+                  {statusLabel(booking.status, booking.service)}
                 </span>
               </div>
               <p className="mt-3 text-right text-xs font-semibold text-[#B22222]">

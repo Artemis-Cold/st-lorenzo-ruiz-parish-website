@@ -61,7 +61,8 @@ class WeddingSponsorBookingTest extends TestCase
                 ->all()
         );
 
-        Sanctum::actingAs(User::factory()->create(['role' => 'staff']));
+        $staff = User::factory()->create(['role' => 'staff']);
+        Sanctum::actingAs($staff);
         $staffDocuments = collect(
             $this->getJson('/api/staff/bookings')
                 ->assertOk()
@@ -76,6 +77,35 @@ class WeddingSponsorBookingTest extends TestCase
                 ->values()
                 ->all()
         );
+
+        $firstSponsorDocument = $staffDocuments->firstWhere(
+            'type',
+            'sponsor_pair_1_confirmation_certificate'
+        );
+
+        $this->postJson("/api/staff/bookings/{$bookingId}/requirements/resubmit", [
+            'document_key' => $firstSponsorDocument['reviewKey'],
+            'reason' => 'The sponsor certificate is incomplete and cannot be verified.',
+        ])->assertOk()
+            ->assertJsonCount(1, 'data.details.missingRequirements');
+
+        $this->assertDatabaseHas('sms_messages', [
+            'booking_id' => $bookingId,
+            'category' => 'booking_requirement_resubmission',
+        ]);
+
+        Sanctum::actingAs($parishioner);
+        $missingRequirement = $this->getJson("/api/bookings/{$bookingId}")
+            ->assertOk()
+            ->assertJsonCount(1, 'data.missingRequirements')
+            ->json('data.missingRequirements.0');
+
+        $this->post("/api/bookings/{$bookingId}/documents", [
+            'document_type' => $missingRequirement['types'][0],
+            'file' => UploadedFile::fake()->create('valid-sponsor-certificate.pdf', 100, 'application/pdf'),
+        ], ['Accept' => 'application/json'])
+            ->assertCreated()
+            ->assertJsonCount(0, 'data.missingRequirements');
     }
 
     public function test_wedding_couple_photo_rejects_pdf_files(): void

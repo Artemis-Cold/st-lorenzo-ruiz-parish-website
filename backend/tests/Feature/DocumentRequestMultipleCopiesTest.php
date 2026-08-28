@@ -64,7 +64,7 @@ class DocumentRequestMultipleCopiesTest extends TestCase
                     ],
                 ],
             ],
-            'reference_number' => 'GCASH-MULTIPLE-DOCUMENTS',
+            'reference_number' => '3000000000001',
             'receipt' => UploadedFile::fake()->image('receipt.jpg'),
         ], ['Accept' => 'application/json']);
 
@@ -95,7 +95,7 @@ class DocumentRequestMultipleCopiesTest extends TestCase
 
         $this->post('/api/bookings/document-request', [
             'requests' => $requests,
-            'reference_number' => 'GCASH-TOO-MANY-DOCUMENTS',
+            'reference_number' => '3000000000002',
             'receipt' => UploadedFile::fake()->image('receipt.jpg'),
         ], ['Accept' => 'application/json'])
             ->assertUnprocessable()

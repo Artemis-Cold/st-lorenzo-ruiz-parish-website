@@ -42,10 +42,14 @@ export interface Booking {
       publicationEnd: string;
     } | null;
     documents: Array<{
+      id: number | null;
       type: string;
+      requirementType: string;
       fileName: string;
       status: string;
+      remarks: string | null;
       url: string;
+      reviewKey: string | null;
     }>;
     missingRequirements?: Array<{
       key: string;

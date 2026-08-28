@@ -92,6 +92,18 @@ export async function sendBookingRequirementsReminder(
   return response.data.message;
 }
 
+export async function requestBookingRequirementResubmission(
+  id: number,
+  documentKey: string,
+  reason: string,
+): Promise<{ message: string; data: Booking }> {
+  const response = await api.post<{ message: string; data: Booking }>(
+    `/staff/bookings/${id}/requirements/resubmit`,
+    { document_key: documentKey, reason },
+  );
+  return response.data;
+}
+
 export async function sendBookingPaymentReminder(id: number): Promise<string> {
   const response = await api.post<{ message: string }>(
     `/staff/bookings/${id}/payment/remind`,

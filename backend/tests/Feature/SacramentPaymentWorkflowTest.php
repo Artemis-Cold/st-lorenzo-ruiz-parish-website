@@ -16,6 +16,34 @@ class SacramentPaymentWorkflowTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_sacrament_payment_requires_an_exactly_thirteen_digit_gcash_reference(): void
+    {
+        Storage::fake('public');
+        $parishioner = User::factory()->create();
+        $service = Service::create([
+            'code' => 'funeral',
+            'name' => 'Funeral',
+            'description' => 'Funeral',
+        ]);
+        $booking = Booking::create([
+            'booking_reference' => 'FUN-GCASH-VALIDATION',
+            'user_id' => $parishioner->id,
+            'service_id' => $service->id,
+            'status' => 'pending',
+        ]);
+
+        Sanctum::actingAs($parishioner);
+
+        foreach (['123456789012', '12345678901A3', '12345678901234'] as $reference) {
+            $this->post("/api/bookings/{$booking->id}/payment", [
+                'reference_number' => $reference,
+                'receipt' => UploadedFile::fake()->image('receipt.jpg'),
+            ], ['Accept' => 'application/json'])
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors('reference_number');
+        }
+    }
+
     public function test_rejected_mass_intention_and_document_request_payments_can_be_replaced(): void
     {
         Storage::fake('public');
@@ -29,7 +57,7 @@ class SacramentPaymentWorkflowTest extends TestCase
                 'description' => str($serviceCode)->headline(),
             ]);
             $oldReference = 'REJECTED-REFERENCE-'.$index;
-            $newReference = 'CORRECTED-REFERENCE-'.$index;
+            $newReference = '400000000000'.($index + 1);
             $booking = Booking::create([
                 'booking_reference' => strtoupper(substr($serviceCode, 0, 3)).'-REPLACE-'.$index,
                 'payment_reference' => $oldReference,
@@ -126,7 +154,7 @@ class SacramentPaymentWorkflowTest extends TestCase
 
         Sanctum::actingAs($parishioner);
         $this->post("/api/bookings/{$booking->id}/payment", [
-            'reference_number' => 'GCASH-BAP-001',
+            'reference_number' => '5000000000001',
             'receipt' => UploadedFile::fake()->image('first-receipt.jpg'),
         ], ['Accept' => 'application/json'])
             ->assertCreated()
@@ -148,11 +176,11 @@ class SacramentPaymentWorkflowTest extends TestCase
 
         Sanctum::actingAs($parishioner);
         $this->post("/api/bookings/{$booking->id}/payment", [
-            'reference_number' => 'GCASH-BAP-002',
+            'reference_number' => '5000000000002',
             'receipt' => UploadedFile::fake()->image('corrected-receipt.jpg'),
         ], ['Accept' => 'application/json'])
             ->assertCreated()
-            ->assertJsonPath('data.referenceNumber', 'GCASH-BAP-002')
+            ->assertJsonPath('data.referenceNumber', '5000000000002')
             ->assertJsonPath('data.status', 'pending');
 
         Sanctum::actingAs($staff);
@@ -161,7 +189,7 @@ class SacramentPaymentWorkflowTest extends TestCase
         ])->assertOk()->assertJsonPath('data.status', 'confirmed');
         $this->assertDatabaseHas('bookings', [
             'id' => $booking->id,
-            'payment_reference' => 'GCASH-BAP-002',
+            'payment_reference' => '5000000000002',
             'status' => 'paid',
         ]);
         $this->assertDatabaseHas('sms_messages', [

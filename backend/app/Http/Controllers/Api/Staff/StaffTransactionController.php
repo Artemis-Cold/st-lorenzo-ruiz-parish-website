@@ -80,7 +80,7 @@ class StaffTransactionController extends Controller
         $transactions = $query
             ->with([
                 'booking.service', 'booking.user', 'booking.massIntention',
-                'booking.documentRequest', 'booking.package.inclusions',
+                'booking.documentRequest.items', 'booking.package.inclusions',
                 'booking.selectedAddons',
             ])
             ->latest()
@@ -138,16 +138,25 @@ class StaffTransactionController extends Controller
 
         $bookingDocument->load([
             'booking.service', 'booking.user', 'booking.massIntention',
-            'booking.documentRequest', 'booking.package.inclusions',
+            'booking.documentRequest.items', 'booking.package.inclusions',
             'booking.selectedAddons',
         ]);
 
         $booking = $bookingDocument->booking;
         $service = $booking->service->name;
         $reference = $booking->booking_reference;
-        $message = $data['status'] === 'confirmed'
-            ? "St. Lorenzo Ruiz Parish: Your GCash payment for {$service} (Ref: {$reference}) has been confirmed. Your booking is now marked as paid. Thank you."
-            : "St. Lorenzo Ruiz Parish: We could not verify the GCash payment for {$service} (Ref: {$reference}). Please review the reference number and receipt, then submit your payment details again through My Profile.";
+        $isDocumentRequest = $booking->service->code === 'document-request';
+        $documentTypes = $booking->documentRequest?->items
+            ->pluck('document_type')
+            ->filter()
+            ->unique()
+            ->values()
+            ->join(', ', ' and ') ?: 'parish document';
+        $message = match (true) {
+            $data['status'] === 'confirmed' && $isDocumentRequest => "St. Lorenzo Ruiz Parish: Your GCash payment for {$documentTypes} (Ref: {$reference}) has been confirmed. Your document request is now being prepared. We will notify you by SMS when it is ready for pickup. Thank you.",
+            $data['status'] === 'confirmed' => "St. Lorenzo Ruiz Parish: Your GCash payment for {$service} (Ref: {$reference}) has been confirmed. Your booking is now marked as paid. Thank you.",
+            default => "St. Lorenzo Ruiz Parish: We could not verify the GCash payment for {$service} (Ref: {$reference}). Please review the reference number and receipt, then submit your payment details again through My Profile.",
+        };
         $sms->queue($booking, 'payment_status', $message);
 
         return response()->json(['data' => $this->serialize($bookingDocument)]);

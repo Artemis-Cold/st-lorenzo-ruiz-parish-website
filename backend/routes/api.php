@@ -121,6 +121,7 @@ Route::middleware(['auth:sanctum', 'staff'])
         Route::delete('/availability/{bookingSlot}', [StaffAvailabilityController::class, 'destroy']);
         Route::patch('/bookings/{booking}/status', [StaffBookingController::class, 'updateStatus']);
         Route::post('/bookings/{booking}/requirements/remind', [StaffBookingController::class, 'remindRequirements']);
+        Route::post('/bookings/{booking}/requirements/resubmit', [StaffBookingController::class, 'requestRequirementResubmission']);
         Route::post('/bookings/{booking}/payment/remind', [StaffBookingController::class, 'remindPayment']);
         Route::post('/bookings/{booking}/marriage-banns', [MarriageBannController::class, 'store']);
         Route::delete('/bookings/{booking}/marriage-banns', [MarriageBannController::class, 'destroy']);

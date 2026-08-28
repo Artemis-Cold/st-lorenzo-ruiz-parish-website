@@ -44,9 +44,12 @@ export interface ParishionerBookingDetail {
     fields: Array<{ label: string; value: string }>;
   }>;
   documents: Array<{
+    id: number | null;
     type: string;
+    requirementType: string;
     fileName: string;
     status: string;
+    remarks: string | null;
     url: string;
   }>;
 }

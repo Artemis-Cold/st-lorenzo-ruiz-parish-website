@@ -1,12 +1,20 @@
 import { useState, type FormEvent } from "react";
 import { AxiosError } from "axios";
-import { Ban, BellRing, CheckCircle2, ExternalLink, X } from "lucide-react";
+import {
+  Ban,
+  BellRing,
+  CheckCircle2,
+  ExternalLink,
+  FileWarning,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import type { Booking, BookingStatus } from "../../types/booking";
 import BookingStatusBadge from "./BookingStatusBadge";
 import { formatLabel } from "../../utils/formatLabel";
 import {
+  requestBookingRequirementResubmission,
   scheduleBookingAppointment,
   sendBookingPaymentReminder,
   sendBookingRequirementsReminder,
@@ -33,6 +41,7 @@ interface Props {
   booking: Booking | null;
   onClose: () => void;
   onUpdateStatus: (id: number, status: BookingStatus) => void;
+  onBookingUpdated: (booking: Booking) => void;
 }
 
 function Detail({ label, value }: { label: string; value: React.ReactNode }) {
@@ -50,6 +59,7 @@ export default function BookingDetailModal({
   booking,
   onClose,
   onUpdateStatus,
+  onBookingUpdated,
 }: Props) {
   const [appointments, setAppointments] = useState(
     booking?.details.appointments ?? [],
@@ -72,6 +82,12 @@ export default function BookingDetailModal({
   const [bannsErrors, setBannsErrors] = useState<Record<string, string>>({});
   const [savingBanns, setSavingBanns] = useState(false);
   const [removingBanns, setRemovingBanns] = useState(false);
+  const [resubmissionDocument, setResubmissionDocument] = useState<
+    Booking["details"]["documents"][number] | null
+  >(null);
+  const [resubmissionReason, setResubmissionReason] = useState("");
+  const [resubmissionError, setResubmissionError] = useState("");
+  const [requestingResubmission, setRequestingResubmission] = useState(false);
   if (!booking) return null;
 
   const { details } = booking;
@@ -115,6 +131,49 @@ export default function BookingDetailModal({
       toast.error("Unable to send the payment reminder.");
     } finally {
       setPaymentReminding(false);
+    }
+  };
+  const requestResubmission = async () => {
+    const reason = resubmissionReason.trim();
+
+    if (!resubmissionDocument?.reviewKey) {
+      setResubmissionError("Select a valid submitted requirement.");
+      return;
+    }
+
+    if (reason.length < 5) {
+      setResubmissionError(
+        "Explain why the requirement is invalid using at least 5 characters.",
+      );
+      return;
+    }
+
+    setRequestingResubmission(true);
+    setResubmissionError("");
+    try {
+      const response = await requestBookingRequirementResubmission(
+        booking.id,
+        resubmissionDocument.reviewKey,
+        reason,
+      );
+      onBookingUpdated(response.data);
+      setResubmissionDocument(null);
+      setResubmissionReason("");
+      toast.success(response.message);
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.status === 422) {
+        const fields = error.response.data?.errors as
+          Record<string, string[]> | undefined;
+        setResubmissionError(
+          fields?.reason?.[0] ??
+            fields?.document_key?.[0] ??
+            "Unable to request resubmission.",
+        );
+      } else {
+        toast.error("Unable to send the resubmission request.");
+      }
+    } finally {
+      setRequestingResubmission(false);
     }
   };
   const saveMarriageBanns = async (event: FormEvent) => {
@@ -681,29 +740,163 @@ export default function BookingDetailModal({
           </section>
         )}
 
-        <section className="mt-4 space-y-2 rounded-2xl border border-[#E7E2DA] p-5">
-          <h3 className="font-semibold text-[#292524]">Submitted documents</h3>
+        <section className="mt-4 rounded-2xl border border-[#E7E2DA] p-4 sm:p-5">
+          <div className="flex items-start gap-3">
+            <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#B22222]/8 text-[#B22222]">
+              <FileWarning size={19} />
+            </span>
+            <div>
+              <h3 className="font-semibold text-[#292524]">
+                Submitted requirements
+              </h3>
+              <p className="mt-1 text-xs leading-5 text-gray-500">
+                Review each file. If a requirement is unclear or invalid,
+                request a replacement and notify the parishioner by SMS.
+              </p>
+            </div>
+          </div>
           {details.documents.length ? (
-            details.documents.map((document) => (
-              <Detail
-                key={`${document.type}-${document.fileName}`}
-                label={formatLabel(document.type)}
-                value={
-                  <a
-                    href={document.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-[#B22222] hover:underline"
-                  >
-                    {document.fileName} ({formatLabel(document.status)})
-                  </a>
-                }
-              />
-            ))
+            <div className="mt-4 space-y-3">
+              {details.documents.map((document) => (
+                <div
+                  key={`${document.reviewKey ?? document.type}-${document.fileName}`}
+                  className={`rounded-xl border p-3.5 ${document.status === "rejected" ? "border-red-200 bg-red-50/70" : "border-gray-200 bg-[#FAF8F5]"}`}
+                >
+                  <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-semibold text-[#292524]">
+                          {formatLabel(document.type)}
+                        </p>
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${document.status === "rejected" ? "bg-red-100 text-red-700" : document.status === "approved" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-800"}`}
+                        >
+                          {formatLabel(document.status)}
+                        </span>
+                      </div>
+                      <p className="mt-1 truncate text-xs text-gray-500">
+                        {document.fileName}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap gap-2">
+                      <a
+                        href={document.url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-[#B22222] transition hover:border-red-200 hover:bg-red-50"
+                      >
+                        View file <ExternalLink size={13} />
+                      </a>
+                      {document.reviewKey &&
+                        document.status !== "rejected" &&
+                        (booking.status === "pending" ||
+                          booking.status === "paid") && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setResubmissionDocument(document);
+                              setResubmissionReason("");
+                              setResubmissionError("");
+                            }}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-[#B22222] px-3 py-2 text-xs font-semibold text-white transition hover:bg-[#991B1B]"
+                          >
+                            Request resubmission
+                          </button>
+                        )}
+                    </div>
+                  </div>
+                  {document.status === "rejected" && document.remarks && (
+                    <div className="mt-3 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs leading-5 text-red-700">
+                      <span className="font-semibold">Reason:</span>{" "}
+                      {document.remarks}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           ) : (
-            <p className="text-sm text-gray-400">No documents attached.</p>
+            <p className="mt-4 text-sm text-gray-400">
+              No requirements attached.
+            </p>
           )}
         </section>
+
+        <AlertDialog
+          open={resubmissionDocument !== null}
+          onOpenChange={(open) => {
+            if (!open && !requestingResubmission) {
+              setResubmissionDocument(null);
+              setResubmissionReason("");
+              setResubmissionError("");
+            }
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Request a replacement file?</AlertDialogTitle>
+              <AlertDialogDescription>
+                The selected requirement will be marked invalid and the
+                parishioner will receive an SMS asking them to resubmit it from
+                My Profile.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+
+            <div className="rounded-xl border border-[#E7E2DA] bg-[#FAF8F5] p-3">
+              <p className="text-xs font-medium text-gray-500">
+                Selected requirement
+              </p>
+              <p className="mt-1 text-sm font-semibold text-[#292524]">
+                {resubmissionDocument
+                  ? formatLabel(resubmissionDocument.type)
+                  : "—"}
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="requirement-resubmission-reason"
+                className="mb-1.5 block text-sm font-semibold text-[#292524]"
+              >
+                Reason for resubmission <span className="text-red-600">*</span>
+              </label>
+              <textarea
+                id="requirement-resubmission-reason"
+                rows={4}
+                maxLength={300}
+                value={resubmissionReason}
+                disabled={requestingResubmission}
+                onChange={(event) => {
+                  setResubmissionReason(event.target.value);
+                  setResubmissionError("");
+                }}
+                placeholder="Example: The uploaded image is blurred and the document details cannot be verified."
+                className={`w-full resize-none rounded-xl border px-3 py-2.5 text-sm outline-none transition focus:border-[#B22222] ${resubmissionError ? "border-red-400" : "border-gray-300"}`}
+              />
+              <div className="mt-1 flex items-start justify-between gap-3">
+                <p className="text-xs text-red-600">{resubmissionError}</p>
+                <span className="shrink-0 text-xs text-gray-400">
+                  {resubmissionReason.length}/300
+                </span>
+              </div>
+            </div>
+
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={requestingResubmission}>
+                Cancel
+              </AlertDialogCancel>
+              <button
+                type="button"
+                disabled={requestingResubmission}
+                onClick={() => void requestResubmission()}
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-[#B22222] px-4 text-sm font-semibold text-white transition hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {requestingResubmission
+                  ? "Sending notification..."
+                  : "Mark invalid & notify"}
+              </button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {missingRequirements.length > 0 && (
           <section className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-5">

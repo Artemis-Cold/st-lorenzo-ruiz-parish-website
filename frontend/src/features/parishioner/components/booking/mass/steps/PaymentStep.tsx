@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from "react";
 import { UploadCloud, ReceiptText } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { GCASH_REFERENCE_LENGTH, normalizeGcashReference } from "@/utils/gcash";
 import { BookingCard } from "../..";
 
 import type { MassIntentionBooking } from "../../../../types/mass";
@@ -157,17 +158,27 @@ ${
 
                 <input
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]{13}"
+                  maxLength={GCASH_REFERENCE_LENGTH}
                   value={booking.reference_number}
                   onChange={(e) =>
-                    updateBooking("reference_number", e.target.value)
+                    updateBooking(
+                      "reference_number",
+                      normalizeGcashReference(e.target.value),
+                    )
                   }
                   readOnly={readOnly}
-                  placeholder="Enter GCash Reference Number"
+                  placeholder="Enter the 13-digit reference"
                   className={
                     inputClass +
                     (getError("reference_number") ? " border-red-400" : "")
                   }
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  Enter the Transaction Reference ID shown on your GCash
+                  receipt.
+                </p>
                 <FieldError message={getError("reference_number")} />
               </div>
             </div>

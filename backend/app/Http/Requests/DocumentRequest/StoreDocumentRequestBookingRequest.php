@@ -31,8 +31,7 @@ class StoreDocumentRequestBookingRequest extends FormRequest
             'requests.*.details' => ['required', 'array'],
             'reference_number' => [
                 'required',
-                'string',
-                'max:100',
+                'digits:13',
                 'unique:bookings,payment_reference',
                 'unique:mass_intentions,payment_reference',
                 'unique:document_request_bookings,payment_reference',
@@ -91,6 +90,13 @@ class StoreDocumentRequestBookingRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    public function messages(): array
+    {
+        return [
+            'reference_number.digits' => 'Enter the 13-digit GCash transaction reference number.',
+        ];
     }
 
     /** @return array<int, callable(Validator): void> */

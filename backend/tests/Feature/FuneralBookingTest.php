@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\BookingDocument;
 use App\Models\BookingSlot;
 use App\Models\Service;
 use App\Models\ServicePackage;
@@ -106,8 +107,55 @@ class FuneralBookingTest extends TestCase
             'category' => 'booking_requirements_complete',
         ]);
 
+        $deathCertificate = BookingDocument::query()
+            ->where('booking_id', $bookingId)
+            ->where('document_type', 'death_certificate')
+            ->firstOrFail();
+
+        Sanctum::actingAs($staff);
+        $this->postJson("/api/staff/bookings/{$bookingId}/requirements/resubmit", [
+            'document_key' => "document:{$deathCertificate->id}",
+            'reason' => 'The certificate image is blurred and cannot be verified.',
+        ])->assertOk()
+            ->assertJsonCount(1, 'data.details.missingRequirements')
+            ->assertJsonPath('data.details.documents.0.status', 'rejected');
+
+        $this->assertDatabaseHas('booking_documents', [
+            'id' => $deathCertificate->id,
+            'status' => 'rejected',
+            'remarks' => 'The certificate image is blurred and cannot be verified.',
+        ]);
+        $this->assertDatabaseHas('sms_messages', [
+            'booking_id' => $bookingId,
+            'category' => 'booking_requirement_resubmission',
+        ]);
+
+        Sanctum::actingAs($parishioner);
+        $this->getJson("/api/bookings/{$bookingId}")
+            ->assertOk()
+            ->assertJsonCount(1, 'data.missingRequirements')
+            ->assertJsonPath('data.documents.0.status', 'rejected')
+            ->assertJsonPath(
+                'data.documents.0.remarks',
+                'The certificate image is blurred and cannot be verified.'
+            );
+
+        $this->post("/api/bookings/{$bookingId}/documents", [
+            'document_type' => 'death_certificate',
+            'file' => UploadedFile::fake()->create('clear-death.pdf', 500, 'application/pdf'),
+        ], ['Accept' => 'application/json'])
+            ->assertCreated()
+            ->assertJsonCount(0, 'data.missingRequirements');
+
+        $this->assertDatabaseHas('booking_documents', [
+            'id' => $deathCertificate->id,
+            'file_name' => 'clear-death.pdf',
+            'status' => 'pending',
+            'remarks' => null,
+        ]);
+
         $this->post("/api/bookings/{$bookingId}/payment", [
-            'reference_number' => 'FUNERAL-PAYMENT-001',
+            'reference_number' => '6000000000001',
             'receipt' => UploadedFile::fake()->image('gcash-receipt.jpg'),
         ], ['Accept' => 'application/json'])
             ->assertCreated()

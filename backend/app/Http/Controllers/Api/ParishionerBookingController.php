@@ -108,19 +108,41 @@ class ParishionerBookingController extends Controller
             'file' => ['required', 'file', 'mimes:'.$fileTypes, 'max:5120'],
         ]);
 
-        if ($booking->documents()->where('document_type', $data['document_type'])->exists()) {
+        $existingDocument = $booking->documents()
+            ->where('document_type', $data['document_type'])
+            ->first();
+
+        if ($existingDocument && $existingDocument->status !== 'rejected') {
             throw ValidationException::withMessages([
                 'file' => 'This requirement has already been uploaded.',
             ]);
         }
 
         $file = $data['file'];
-        $document = $booking->documents()->create([
-            'document_type' => $data['document_type'],
-            'file_name' => $file->getClientOriginalName(),
-            'file_path' => $file->store('booking-documents', 'public'),
-            'status' => 'pending',
-        ]);
+        $newPath = $file->store('booking-documents', 'public');
+        $oldPath = $existingDocument?->file_path;
+
+        if ($existingDocument) {
+            $existingDocument->update([
+                'file_name' => $file->getClientOriginalName(),
+                'file_path' => $newPath,
+                'status' => 'pending',
+                'remarks' => null,
+            ]);
+            $document = $existingDocument->refresh();
+        } else {
+            $document = $booking->documents()->create([
+                'document_type' => $data['document_type'],
+                'file_name' => $file->getClientOriginalName(),
+                'file_path' => $newPath,
+                'status' => 'pending',
+            ]);
+        }
+
+        if ($oldPath && $oldPath !== $newPath) {
+            Storage::disk('public')->delete($oldPath);
+        }
+
         $booking->load(['service', 'documents', 'baptizand', 'user']);
         $missing = $requirements->missing($booking);
 
@@ -140,6 +162,7 @@ class ParishionerBookingController extends Controller
                     'type' => $document->document_type,
                     'fileName' => $document->file_name,
                     'status' => $document->status,
+                    'remarks' => $document->remarks,
                     'url' => Storage::disk('public')->url($document->file_path),
                 ],
                 'missingRequirements' => $missing,
@@ -177,13 +200,14 @@ class ParishionerBookingController extends Controller
         $data = $request->validate([
             'reference_number' => [
                 'required',
-                'string',
-                'max:100',
+                'digits:13',
                 Rule::unique('bookings', 'payment_reference')->ignore($booking->id),
                 Rule::unique('mass_intentions', 'payment_reference')->ignore($booking->massIntention?->id),
                 Rule::unique('document_request_bookings', 'payment_reference')->ignore($booking->documentRequest?->id),
             ],
             'receipt' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+        ], [
+            'reference_number.digits' => 'Enter the 13-digit GCash transaction reference number.',
         ]);
 
         $file = $data['receipt'];
@@ -272,8 +296,12 @@ class ParishionerBookingController extends Controller
         $pairNumbers = $sponsorPairs->mapWithKeys(
             fn ($pair, int $index) => [(string) $pair->id => $index + 1]
         );
+        $godParentPairs = $booking->baptizand?->godParentPairs?->sortBy('id')->values() ?? collect();
+        $godParentPairNumbers = $godParentPairs->mapWithKeys(
+            fn ($pair, int $index) => [(string) $pair->id => $index + 1]
+        );
 
-        $documents = $booking->documents->map(function ($document) use ($pairNumbers) {
+        $documents = $booking->documents->map(function ($document) use ($pairNumbers, $godParentPairNumbers) {
             $type = $document->document_type;
 
             if (preg_match('/^wedding_sponsor_(marriage_contract|confirmation_certificate)_(\d+)$/', $type, $matches)) {
@@ -284,10 +312,21 @@ class ParishionerBookingController extends Controller
                 }
             }
 
+            if (preg_match('/^godparent_(marriage_contract|confirmation_certificate)_(\d+)$/', $type, $matches)) {
+                $pairNumber = $godParentPairNumbers->get($matches[2]);
+
+                if ($pairNumber !== null) {
+                    $type = "godparent_pair_{$pairNumber}_{$matches[1]}";
+                }
+            }
+
             return [
+                'id' => $document->id,
                 'type' => $type,
+                'requirementType' => $document->document_type,
                 'fileName' => $document->file_name,
                 'status' => $document->status,
+                'remarks' => $document->remarks,
                 'url' => Storage::disk('public')->url($document->file_path),
             ];
         });
@@ -298,20 +337,45 @@ class ParishionerBookingController extends Controller
             return collect([
                 'marriage_contract' => $pair->marriage_contract,
                 'confirmation_certificate' => $pair->confirmation_certificate,
-            ])->filter()->map(function (string $path, string $type) use ($pairNumber) {
+            ])->filter()->map(function (string $path, string $type) use ($pair, $pairNumber) {
                 $label = 'Sponsor Pair '.$pairNumber.' '.str($type)->headline();
                 $extension = pathinfo($path, PATHINFO_EXTENSION);
 
                 return [
+                    'id' => null,
                     'type' => "sponsor_pair_{$pairNumber}_{$type}",
+                    'requirementType' => "wedding_sponsor_{$type}_{$pair->id}",
                     'fileName' => $label.($extension ? ".{$extension}" : ''),
                     'status' => 'submitted',
+                    'remarks' => null,
                     'url' => Storage::disk('public')->url($path),
                 ];
             })->values();
         });
 
-        return $documents->concat($sponsorDocuments)->values();
+        $godParentDocuments = $godParentPairs->flatMap(function ($pair, int $index) {
+            $pairNumber = $index + 1;
+
+            return collect([
+                'marriage_contract' => $pair->marriage_contract,
+                'confirmation_certificate' => $pair->confirmation_certificate,
+            ])->filter()->map(function (string $path, string $type) use ($pair, $pairNumber) {
+                $label = 'Godparent Pair '.$pairNumber.' '.str($type)->headline();
+                $extension = pathinfo($path, PATHINFO_EXTENSION);
+
+                return [
+                    'id' => null,
+                    'type' => "godparent_pair_{$pairNumber}_{$type}",
+                    'requirementType' => "godparent_{$type}_{$pair->id}",
+                    'fileName' => $label.($extension ? ".{$extension}" : ''),
+                    'status' => 'submitted',
+                    'remarks' => null,
+                    'url' => Storage::disk('public')->url($path),
+                ];
+            })->values();
+        });
+
+        return $documents->concat($sponsorDocuments)->concat($godParentDocuments)->values();
     }
 
     private function paymentData(Booking $booking): array

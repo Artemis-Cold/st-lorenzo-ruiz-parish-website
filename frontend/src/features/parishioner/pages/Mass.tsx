@@ -16,6 +16,7 @@ import type { MassIntentionBooking } from "../types/mass";
 import { submitMassIntention } from "@/services/massIntentionBookingService";
 import { getServiceFees } from "@/services/serviceFeeService";
 import type { ParishEvent } from "@/services/eventService";
+import { GCASH_REFERENCE_ERROR, isValidGcashReference } from "@/utils/gcash";
 
 const stepLabels = [
   "Mass Schedule",
@@ -150,8 +151,8 @@ export default function Mass() {
           "The current Mass Intention rate could not be loaded.",
         ];
       }
-      if (!booking.reference_number.trim()) {
-        errors.reference_number = ["GCash reference number is required."];
+      if (!isValidGcashReference(booking.reference_number)) {
+        errors.reference_number = [GCASH_REFERENCE_ERROR];
       }
       if (!booking.receipt) {
         errors.receipt = ["Payment receipt is required."];

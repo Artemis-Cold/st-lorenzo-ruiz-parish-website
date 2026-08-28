@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Booking;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class BookingRequirementService
 {
@@ -16,7 +18,10 @@ class BookingRequirementService
             'baptizand.godParentPairs',
             'weddingSponsorPairs',
         ]);
-        $uploaded = $booking->documents->pluck('document_type')->all();
+        $uploaded = $booking->documents
+            ->where('status', '!=', 'rejected')
+            ->pluck('document_type')
+            ->all();
 
         return collect($this->definitions($booking))
             ->reject(fn (array $requirement) => count(array_intersect($requirement['types'], $uploaded)) > 0)
@@ -49,6 +54,115 @@ class BookingRequirementService
         );
 
         return true;
+    }
+
+    public function requestResubmission(Booking $booking, string $documentKey, string $reason): array
+    {
+        $reason = preg_replace('/\s+/', ' ', trim($reason));
+
+        $documentType = DB::transaction(function () use ($booking, $documentKey, $reason) {
+            if (preg_match('/^document:(\d+)$/', $documentKey, $matches)) {
+                $document = $booking->documents()->whereKey((int) $matches[1])->first();
+
+                if (! $document || $document->document_type === 'payment_receipt') {
+                    throw ValidationException::withMessages([
+                        'document_key' => 'Select a valid submitted requirement.',
+                    ]);
+                }
+
+                if ($document->status === 'rejected') {
+                    throw ValidationException::withMessages([
+                        'document_key' => 'This requirement is already awaiting resubmission.',
+                    ]);
+                }
+
+                $document->update(['status' => 'rejected', 'remarks' => $reason]);
+
+                return $document->document_type;
+            }
+
+            if (preg_match('/^wedding-sponsor:(\d+):(marriage_contract|confirmation_certificate)$/', $documentKey, $matches)) {
+                $pair = $booking->weddingSponsorPairs()->whereKey((int) $matches[1])->first();
+
+                return $this->rejectPairDocument(
+                    $booking,
+                    $pair,
+                    $matches[2],
+                    "wedding_sponsor_{$matches[2]}_{$matches[1]}",
+                    $reason,
+                );
+            }
+
+            if (preg_match('/^baptism-godparent:(\d+):(marriage_contract|confirmation_certificate)$/', $documentKey, $matches)) {
+                $pair = $booking->baptizand?->godParentPairs()->whereKey((int) $matches[1])->first();
+
+                return $this->rejectPairDocument(
+                    $booking,
+                    $pair,
+                    $matches[2],
+                    "godparent_{$matches[2]}_{$matches[1]}",
+                    $reason,
+                );
+            }
+
+            throw ValidationException::withMessages([
+                'document_key' => 'Select a valid submitted requirement.',
+            ]);
+        });
+
+        $booking->unsetRelation('documents');
+        $booking->unsetRelation('weddingSponsorPairs');
+        $booking->unsetRelation('baptizand');
+        $booking->load([
+            'user',
+            'service',
+            'documents',
+            'weddingSponsorPairs',
+            'baptizand.godParentPairs',
+        ]);
+
+        $requirement = collect($this->missing($booking))->first(
+            fn (array $item) => in_array($documentType, $item['types'], true)
+        );
+        $label = $requirement['label'] ?? str($documentType)->headline()->toString();
+        $serviceName = $booking->service?->name ?? 'service';
+
+        $this->sms->queue(
+            $booking,
+            'booking_requirement_resubmission',
+            "St. Lorenzo Ruiz Parish: A submitted requirement for your {$serviceName} booking (Ref: {$booking->booking_reference}) needs to be resubmitted. Requirement: {$label}. Reason: {$reason}. Please upload a clear and valid replacement under My Profile. Thank you."
+        );
+
+        return ['documentType' => $documentType, 'label' => $label];
+    }
+
+    private function rejectPairDocument(
+        Booking $booking,
+        mixed $pair,
+        string $column,
+        string $documentType,
+        string $reason,
+    ): string {
+        $path = $pair?->{$column};
+
+        if (! $pair || ! $path) {
+            throw ValidationException::withMessages([
+                'document_key' => 'This supporting document is no longer available for review.',
+            ]);
+        }
+
+        $booking->documents()->updateOrCreate(
+            ['document_type' => $documentType],
+            [
+                'file_name' => basename($path),
+                'file_path' => $path,
+                'status' => 'rejected',
+                'remarks' => $reason,
+            ]
+        );
+        $pair->update([$column => null]);
+
+        return $documentType;
     }
 
     private function definitions(Booking $booking): array

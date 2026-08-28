@@ -15,6 +15,12 @@ import { toast } from "sonner";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import {
+  GCASH_REFERENCE_ERROR,
+  GCASH_REFERENCE_LENGTH,
+  isValidGcashReference,
+  normalizeGcashReference,
+} from "@/utils/gcash";
+import {
   getParishionerBooking,
   submitParishionerBookingPayment,
   uploadParishionerBookingDocument,
@@ -146,8 +152,8 @@ export default function BookingDetailModal({
 
   const submitPayment = async () => {
     const errors: Record<string, string> = {};
-    if (!paymentReference.trim())
-      errors.reference_number = "Enter the GCash reference number.";
+    if (!isValidGcashReference(paymentReference))
+      errors.reference_number = GCASH_REFERENCE_ERROR;
     if (!paymentReceipt)
       errors.receipt = "Choose the GCash receipt before submitting.";
     setPaymentErrors(errors);
@@ -245,16 +251,8 @@ export default function BookingDetailModal({
         documentType,
         file,
       );
-      setResult((current) => ({
-        ...current,
-        booking: current.booking
-          ? {
-              ...current.booking,
-              documents: [...current.booking.documents, response.data.document],
-              missingRequirements: response.data.missingRequirements,
-            }
-          : null,
-      }));
+      const refreshedBooking = await getParishionerBooking(bookingId);
+      setResult({ bookingId, booking: refreshedBooking, error: "" });
       setPendingFiles((current) => withoutKey(current, requirement.key));
       setSelectedTypes((current) => withoutKey(current, requirement.key));
       toast.success(response.message);
@@ -333,7 +331,10 @@ export default function BookingDetailModal({
               <div>
                 <p className="text-xs text-gray-500">Status</p>
                 <p className="font-semibold text-[#B22222]">
-                  {label(booking.status)}
+                  {booking.serviceCode === "document-request" &&
+                  booking.status === "paid"
+                    ? "Preparing"
+                    : label(booking.status)}
                 </p>
               </div>
               <div>
@@ -488,12 +489,16 @@ export default function BookingDetailModal({
                 {booking.payment.status === "pending" && (
                   <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-800">
                     Your payment is awaiting parish staff verification. The
-                    booking will be marked as paid after confirmation.
+                    {booking.serviceCode === "document-request"
+                      ? " document request will move to Preparing after confirmation."
+                      : " booking will be marked as paid after confirmation."}
                   </p>
                 )}
                 {booking.payment.status === "confirmed" && (
                   <p className="mt-3 rounded-xl border border-green-200 bg-green-50 p-3 text-sm leading-5 text-green-800">
-                    Your payment has been confirmed by the parish staff.
+                    {booking.serviceCode === "document-request"
+                      ? "Your payment has been confirmed. The parish staff is now preparing your requested document. You will receive an SMS when it is ready for pickup."
+                      : "Your payment has been confirmed by the parish staff."}
                   </p>
                 )}
                 {booking.payment.status === "rejected" && (
@@ -511,16 +516,25 @@ export default function BookingDetailModal({
                         <span className="text-red-600">*</span>
                       </label>
                       <input
+                        inputMode="numeric"
+                        pattern="[0-9]{13}"
+                        maxLength={GCASH_REFERENCE_LENGTH}
                         value={paymentReference}
                         onChange={(event) => {
-                          setPaymentReference(event.target.value);
+                          setPaymentReference(
+                            normalizeGcashReference(event.target.value),
+                          );
                           setPaymentErrors((current) =>
                             withoutKey(current, "reference_number"),
                           );
                         }}
-                        placeholder="Enter the reference number"
+                        placeholder="Enter the 13-digit reference"
                         className={`w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-[#B22222] ${paymentErrors.reference_number ? "border-red-400" : "border-gray-300"}`}
                       />
+                      <p className="mt-1 text-xs text-gray-500">
+                        Enter the Transaction Reference ID shown on your GCash
+                        receipt.
+                      </p>
                       {paymentErrors.reference_number && (
                         <p className="mt-1 text-sm text-red-600">
                           {paymentErrors.reference_number}
@@ -596,20 +610,47 @@ export default function BookingDetailModal({
             {booking.documents.length > 0 && (
               <section className="rounded-2xl border p-5">
                 <h3 className="font-semibold">Submitted files</h3>
-                <div className="mt-3 space-y-2">
+                <div className="mt-3 space-y-3">
                   {booking.documents.map((document) => (
-                    <a
-                      key={`${document.type}-${document.fileName}`}
-                      href={document.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-between rounded-xl bg-gray-50 p-3 text-sm text-[#B22222] hover:bg-red-50"
+                    <div
+                      key={`${document.requirementType}-${document.fileName}`}
+                      className={`rounded-xl border p-3 ${document.status === "rejected" ? "border-red-200 bg-red-50" : "border-gray-200 bg-gray-50"}`}
                     >
-                      <span>
-                        {label(document.type)} — {document.fileName}
-                      </span>
-                      <ExternalLink size={16} />
-                    </a>
+                      <div className="flex min-w-0 items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm font-semibold text-[#292524]">
+                              {label(document.type)}
+                            </p>
+                            <span
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${document.status === "rejected" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}
+                            >
+                              {label(document.status)}
+                            </span>
+                          </div>
+                          <p className="mt-1 break-all text-xs text-gray-500">
+                            {document.fileName}
+                          </p>
+                        </div>
+                        <a
+                          href={document.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          aria-label={`View ${label(document.type)}`}
+                          className="grid size-9 shrink-0 place-items-center rounded-lg border border-gray-200 bg-white text-[#B22222] transition hover:bg-red-50"
+                        >
+                          <ExternalLink size={15} />
+                        </a>
+                      </div>
+                      {document.status === "rejected" && document.remarks && (
+                        <div className="mt-3 rounded-lg border border-red-200 bg-white p-3 text-xs leading-5 text-red-700">
+                          <span className="font-semibold">
+                            Parish staff review:
+                          </span>{" "}
+                          {document.remarks}
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               </section>
@@ -638,6 +679,11 @@ export default function BookingDetailModal({
                   {booking.missingRequirements.map((requirement) => {
                     const pendingFile = pendingFiles[requirement.key];
                     const isUploading = uploading === requirement.key;
+                    const rejectedDocument = booking.documents.find(
+                      (document) =>
+                        document.status === "rejected" &&
+                        requirement.types.includes(document.requirementType),
+                    );
 
                     return (
                       <div
@@ -647,6 +693,14 @@ export default function BookingDetailModal({
                         <p className="text-sm font-semibold text-gray-800">
                           {requirement.label}
                         </p>
+                        {rejectedDocument?.remarks && (
+                          <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-700">
+                            <span className="font-semibold">
+                              Replacement requested:
+                            </span>{" "}
+                            {rejectedDocument.remarks}
+                          </p>
+                        )}
                         {requirement.types.length > 1 && (
                           <select
                             value={

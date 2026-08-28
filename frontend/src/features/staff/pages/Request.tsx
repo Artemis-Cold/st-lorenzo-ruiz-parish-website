@@ -28,6 +28,7 @@ import {
   type StaffDocumentRequestPage,
 } from "@/services/staffManagementService";
 import { formatLabel } from "../utils/formatLabel";
+import { requestStatusLabel } from "../utils/requestStatus";
 import {
   drawParishPdfLetterhead,
   loadParishPdfLogo,
@@ -36,7 +37,7 @@ import {
 const statusOptions: Array<{ label: string; value: RequestStatus | "" }> = [
   { label: "All statuses", value: "" },
   { label: "Pending", value: "pending" },
-  { label: "Paid", value: "paid" },
+  { label: "Preparing", value: "paid" },
   { label: "Approved", value: "approved" },
   { label: "Ready for Pickup", value: "ready_for_pickup" },
   { label: "Completed", value: "completed" },
@@ -144,7 +145,7 @@ export default function Requests() {
     try {
       const updated = await updateDocumentRequestStatus(id, nextStatus);
       toast.success(
-        `Request from “${updated.name}” marked as ${formatLabel(nextStatus)}.`,
+        `Request from “${updated.name}” marked as ${requestStatusLabel(nextStatus)}.`,
       );
       setSelected(null);
       setLoading(true);
@@ -180,7 +181,7 @@ export default function Requests() {
         minute: "2-digit",
       });
       const filterSummary = [
-        status ? `${formatLabel(status)} status` : "All statuses",
+        status ? `${requestStatusLabel(status)} status` : "All statuses",
         requestDate ? `Submitted: ${requestDate}` : "All submission dates",
         debouncedSearch ? `Search: ${debouncedSearch}` : null,
       ]
@@ -226,7 +227,7 @@ export default function Requests() {
             .map((document) => formatLabel(document.type))
             .join(", "),
           `PHP ${item.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
-          formatLabel(item.status),
+          requestStatusLabel(item.status),
         ]),
         theme: "grid",
         headStyles: {

@@ -39,7 +39,7 @@ class MassIntentionTypeValidationTest extends TestCase
                 'type' => 'Special Intention',
                 'entries' => [['names' => ['Juan Dela Cruz']]],
             ]],
-            'reference_number' => 'GCASH-TEST-001',
+            'reference_number' => '2000000000001',
             'receipt' => UploadedFile::fake()->image('receipt.jpg'),
         ];
 
@@ -87,7 +87,7 @@ class MassIntentionTypeValidationTest extends TestCase
                 'type' => 'Thanksgiving',
                 'entries' => [['names' => ['Juan Dela Cruz']]],
             ]],
-            'reference_number' => 'GCASH-PAID-001',
+            'reference_number' => '2000000000002',
             'receipt' => UploadedFile::fake()->image('receipt.jpg'),
         ], ['Accept' => 'application/json']);
 
@@ -128,7 +128,7 @@ class MassIntentionTypeValidationTest extends TestCase
                 'type' => 'Thanksgiving',
                 'entries' => [['names' => ['Juan Dela Cruz']]],
             ]],
-            'reference_number' => 'GCASH-DATE-TEST',
+            'reference_number' => '2000000000003',
             'receipt' => UploadedFile::fake()->image('receipt.jpg'),
         ];
 

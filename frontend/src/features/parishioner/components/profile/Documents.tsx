@@ -13,6 +13,7 @@ const statusStyle: Record<string, string> = {
   completed: "bg-green-100 text-green-700",
   approved: "bg-blue-100 text-blue-700",
   ready_for_pickup: "bg-purple-100 text-purple-700",
+  paid: "bg-sky-100 text-sky-700",
   pending: "bg-amber-100 text-amber-700",
   cancelled: "bg-red-100 text-red-700",
   rejected: "bg-gray-200 text-gray-700",
@@ -72,7 +73,9 @@ export default function Documents({
                   statusStyle[document.status] ?? "bg-gray-100 text-gray-700"
                 }`}
               >
-                {documentLabel(document.status)}
+                {document.status === "paid"
+                  ? "Preparing"
+                  : documentLabel(document.status)}
               </span>
             </div>
             <p className="mt-3 text-right text-xs font-semibold text-[#B22222]">

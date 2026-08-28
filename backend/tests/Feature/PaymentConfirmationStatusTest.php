@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Booking;
 use App\Models\BookingDocument;
 use App\Models\Service;
+use App\Models\SmsMessage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -203,6 +204,26 @@ class PaymentConfirmationStatusTest extends TestCase
                 'processed_by' => $staff->id,
             ]);
         }
+
+        $documentRequestSms = SmsMessage::query()
+            ->where('booking_id', $records['document-request']['booking']->id)
+            ->where('category', 'payment_status')
+            ->sole();
+        $this->assertStringContainsString(
+            'Your document request is now being prepared.',
+            $documentRequestSms->message
+        );
+        $this->assertStringContainsString(
+            'We will notify you by SMS when it is ready for pickup.',
+            $documentRequestSms->message
+        );
+        $this->assertSame(
+            0,
+            SmsMessage::query()
+                ->where('booking_id', '!=', $records['document-request']['booking']->id)
+                ->where('message', 'like', '%document request is now being prepared%')
+                ->count()
+        );
 
         $this->getJson('/api/staff/bookings?status=paid&per_page=100')
             ->assertOk()

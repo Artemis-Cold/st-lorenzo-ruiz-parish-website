@@ -34,8 +34,7 @@ class StoreMassIntentionBookingRequest extends FormRequest
             'groups.*.entries.*.names.*' => ['required', 'string', 'max:150'],
             'reference_number' => [
                 'required',
-                'string',
-                'max:100',
+                'digits:13',
                 'unique:bookings,payment_reference',
                 'unique:mass_intentions,payment_reference',
                 'unique:document_request_bookings,payment_reference',
@@ -47,6 +46,13 @@ class StoreMassIntentionBookingRequest extends FormRequest
                 'max:5120',
             ],
             'remarks' => ['nullable', 'string'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'reference_number.digits' => 'Enter the 13-digit GCash transaction reference number.',
         ];
     }
 

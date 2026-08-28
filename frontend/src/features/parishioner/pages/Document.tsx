@@ -16,6 +16,7 @@ import type {
   DocumentRequestBooking,
 } from "../types/document";
 import { submitDocumentRequest } from "@/services/documentRequestBookingService";
+import { GCASH_REFERENCE_ERROR, isValidGcashReference } from "@/utils/gcash";
 
 const stepLabels = ["Selection", "Details", "Payment", "Confirmation"];
 
@@ -166,8 +167,8 @@ export default function Document() {
     } else if (step === 2) {
       errors = validateDetails();
     } else if (step === 3) {
-      if (!booking.reference_number.trim()) {
-        errors.reference_number = ["GCash reference number is required."];
+      if (!isValidGcashReference(booking.reference_number)) {
+        errors.reference_number = [GCASH_REFERENCE_ERROR];
       }
       if (!booking.receipt) {
         errors.receipt = ["Payment receipt is required."];

@@ -171,6 +171,13 @@ export default function BookingManagement() {
     }
   };
 
+  const handleBookingUpdated = (updated: Booking) => {
+    setBookings((items) =>
+      items.map((item) => (item.id === updated.id ? updated : item)),
+    );
+    setSelected(updated);
+  };
+
   const handleExportPdf = async () => {
     setExporting(true);
     try {
@@ -596,6 +603,7 @@ export default function BookingManagement() {
         booking={selected}
         onClose={() => setSelected(null)}
         onUpdateStatus={handleUpdateStatus}
+        onBookingUpdated={handleBookingUpdated}
       />
     </StaffDashboardLayout>
   );

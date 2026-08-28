@@ -140,6 +140,16 @@ export default function RequestDetailModal({
           </div>
         </div>
 
+        {request.status === "paid" && (
+          <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-800">
+            <p className="font-semibold">Payment confirmed — now preparing</p>
+            <p className="mt-1 text-xs leading-5">
+              The payment has been verified. Prepare the requested document,
+              then mark it Ready for Pickup to notify the parishioner.
+            </p>
+          </div>
+        )}
+
         {isActionable && (
           <div className="mt-6 space-y-2.5">
             {request.status === "paid" && (
