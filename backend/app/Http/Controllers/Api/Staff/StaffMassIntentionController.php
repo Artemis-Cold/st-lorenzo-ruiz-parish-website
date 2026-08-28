@@ -17,6 +17,7 @@ class StaffMassIntentionController extends Controller
             'status' => ['nullable', 'in:pending,paid,rejected,cancelled,completed'],
             'search' => ['nullable', 'string', 'max:100'],
             'date' => ['nullable', 'date_format:Y-m-d'],
+            'time' => ['nullable', 'date_format:H:i'],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
@@ -38,6 +39,14 @@ class StaffMassIntentionController extends Controller
             $query->whereHas(
                 'massIntention',
                 fn ($intention) => $intention->whereDate('intention_date', $filters['date'])
+            );
+        }
+
+        if (! empty($filters['time'])) {
+            $time = $filters['time'].':00';
+            $query->whereHas(
+                'massIntention',
+                fn ($intention) => $intention->whereTime('mass_starts_at', $time)
             );
         }
 
@@ -92,6 +101,10 @@ class StaffMassIntentionController extends Controller
             'id' => $entry->id,
             'bookingId' => $booking->id,
             'date' => $massIntention->intention_date->format('m-d-Y'),
+            'massTitle' => $massIntention->mass_schedule_title,
+            'massStartsAt' => $massIntention->mass_starts_at?->toIso8601String(),
+            'massTime' => $massIntention->mass_starts_at?->format('g:i A'),
+            'massLocation' => $massIntention->mass_location,
             'names' => collect($entry->names)->filter()->join(' & '),
             'contactNumber' => $booking->user->phone,
             'type' => $entry->intention_type,

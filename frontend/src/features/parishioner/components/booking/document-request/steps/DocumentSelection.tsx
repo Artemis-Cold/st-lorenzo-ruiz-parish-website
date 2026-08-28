@@ -1,12 +1,9 @@
-import type { Dispatch, SetStateAction } from "react";
-import { Circle, CircleCheck } from "lucide-react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { FileText, Minus, Plus } from "lucide-react";
 
 import { BookingCard } from "../..";
 
-import {
-  DOCUMENT_PRICES,
-  getDocumentPrice,
-} from "../../../../data/documentPrices";
+import { getServiceFees, type ServiceFee } from "@/services/serviceFeeService";
 
 import type {
   DocumentDetails,
@@ -64,25 +61,52 @@ export default function DocumentSelectionStep({
   setBooking,
   errors,
 }: Props) {
-  const toggleDocument = (type: DocumentType) => {
-    setBooking((prev) => {
-      const exists = prev.requests.some(
-        (request) => request.document_type === type,
-      );
+  const [documents, setDocuments] = useState<ServiceFee[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
 
-      if (exists) {
-        return {
-          ...prev,
-          requests: prev.requests.filter(
-            (request) => request.document_type !== type,
-          ),
-        };
-      }
+  useEffect(() => {
+    let active = true;
+
+    getServiceFees("document-request")
+      .then((fees) => {
+        if (!active) return;
+        setDocuments(fees);
+        setBooking((current) => ({
+          ...current,
+          requests: current.requests.map((request) => {
+            const fee = fees.find(
+              (item) => item.name === request.document_type,
+            );
+            return fee ? { ...request, price: fee.amount } : request;
+          }),
+        }));
+        setLoadError(false);
+      })
+      .catch(() => {
+        if (active) setLoadError(true);
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [setBooking]);
+
+  const addDocument = (document: ServiceFee) => {
+    const type = document.name as DocumentType;
+    setBooking((prev) => {
+      const count = prev.requests.filter(
+        (request) => request.document_type === type,
+      ).length;
+      if (count >= 10) return prev;
 
       const newRequest: DocumentRequest = {
-        id: Date.now(),
+        id: Math.max(0, ...prev.requests.map((request) => request.id)) + 1,
         document_type: type,
-        price: getDocumentPrice(type),
+        price: document.amount,
         details: createDefaultDetails(type),
       };
 
@@ -93,55 +117,140 @@ export default function DocumentSelectionStep({
     });
   };
 
+  const removeDocument = (type: DocumentType) => {
+    setBooking((prev) => {
+      const lastIndex = prev.requests
+        .map((request) => request.document_type)
+        .lastIndexOf(type);
+      if (lastIndex === -1) return prev;
+
+      return {
+        ...prev,
+        requests: prev.requests.filter((_, index) => index !== lastIndex),
+      };
+    });
+  };
+  const totalAmount = booking.requests.reduce(
+    (sum, request) => sum + request.price,
+    0,
+  );
+
   return (
     <BookingCard title="Select Documents" contentClassName="p-4 sm:p-6 md:p-8">
       <div className="space-y-4 sm:space-y-6">
-        <div className="divide-y overflow-hidden rounded-xl border">
-          {DOCUMENT_PRICES.map((document) => {
-            const selected = booking.requests.some(
-              (request) => request.document_type === document.type,
-            );
+        {loading && (
+          <div className="rounded-xl border border-dashed px-4 py-10 text-center text-sm text-gray-500">
+            Loading current document prices...
+          </div>
+        )}
+        {loadError && (
+          <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
+            Current document prices could not be loaded. Please refresh the
+            page.
+          </div>
+        )}
+        {!loading && !loadError && (
+          <div className="space-y-3">
+            {documents.map((document) => {
+              const type = document.name as DocumentType;
+              const quantity = booking.requests.filter(
+                (request) => request.document_type === type,
+              ).length;
 
-            return (
-              <button
-                key={document.type}
-                type="button"
-                onClick={() => toggleDocument(document.type)}
-                aria-pressed={selected}
-                className={`
-                  grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-3
-                  px-3 py-3 text-left transition sm:gap-4 sm:px-5 sm:py-4
+              return (
+                <div
+                  key={document.id}
+                  className={`
+                  flex w-full min-w-0 flex-col gap-3 rounded-2xl border p-4
+                  text-left transition sm:grid sm:grid-cols-[minmax(0,1fr)_auto]
+                  sm:items-center sm:gap-5 sm:px-5 sm:py-4
 
-                  ${selected ? "bg-red-50" : "hover:bg-gray-50"}
+                  ${quantity > 0 ? "border-red-200 bg-red-50" : "border-gray-200 bg-white"}
                 `}
-              >
-                <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-                  {selected ? (
-                    <CircleCheck size={22} className="shrink-0 text-[#B22222]" />
-                  ) : (
-                    <Circle size={22} className="shrink-0 text-gray-400" />
-                  )}
+                >
+                  <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+                    <div
+                      className={`grid size-10 shrink-0 place-items-center rounded-xl ${quantity > 0 ? "bg-[#B22222] text-white" : "bg-gray-100 text-gray-400"}`}
+                    >
+                      <FileText size={19} />
+                    </div>
 
-                  <span className="min-w-0 wrap-break-word text-sm leading-5 tracking-wide md:text-lg md:leading-normal">
-                    {document.type.toUpperCase()}
-                  </span>
+                    <div className="min-w-0">
+                      <p className="wrap-break-word text-sm font-medium leading-5 tracking-wide md:text-base md:leading-normal">
+                        {document.name}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500 sm:text-sm">
+                        ₱{document.amount.toFixed(2)} per request
+                        {quantity > 0 &&
+                          ` · ₱${(document.amount * quantity).toFixed(2)} subtotal`}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex min-w-0 items-center justify-between gap-3 border-t border-gray-200/80 pt-3 sm:border-0 sm:pt-0">
+                    <div className="min-w-0 sm:hidden">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                        Quantity
+                      </p>
+                      <p className="mt-0.5 text-sm font-medium text-[#292524]">
+                        {quantity > 0
+                          ? `${quantity} selected`
+                          : "Not selected"}
+                      </p>
+                    </div>
+
+                    <div className="flex shrink-0 items-center overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+                      <button
+                        type="button"
+                        onClick={() => removeDocument(type)}
+                        disabled={quantity === 0}
+                        aria-label={`Remove one ${document.name}`}
+                        className="grid size-11 place-items-center text-gray-600 transition hover:bg-red-50 hover:text-[#B22222] disabled:cursor-not-allowed disabled:opacity-30 sm:size-10"
+                      >
+                        <Minus size={17} />
+                      </button>
+                      <span className="grid h-11 min-w-11 place-items-center border-x border-gray-200 px-2 font-bold tabular-nums text-[#292524] sm:h-10 sm:min-w-10">
+                        {quantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => addDocument(document)}
+                        disabled={quantity >= 10}
+                        aria-label={`Add one ${document.name}`}
+                        className="grid size-11 place-items-center text-[#B22222] transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-30 sm:size-10"
+                      >
+                        <Plus size={17} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-
-                <span className="shrink-0 whitespace-nowrap font-semibold text-[#B22222] md:text-xl">
-                  ₱{document.price.toFixed(2)}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
         {errors?.requests?.[0] && (
           <p className="text-sm text-red-600">{errors.requests[0]}</p>
         )}
 
         {booking.requests.length > 0 && (
-          <div className="rounded-lg bg-red-50 p-3 text-sm text-[#B22222] sm:p-4">
-            <strong>{booking.requests.length}</strong> document
-            {booking.requests.length > 1 ? "s" : ""} selected.
+          <div className="rounded-2xl border border-red-100 bg-red-50 p-4 sm:flex sm:items-center sm:justify-between sm:gap-5">
+            <div>
+              <p className="text-sm font-semibold text-[#B22222]">
+                {booking.requests.length} document request
+                {booking.requests.length > 1 ? "s" : ""} selected
+              </p>
+              <p className="mt-1 text-xs leading-5 text-gray-600">
+                You can request up to 10 of each document type.
+              </p>
+            </div>
+            <div className="mt-3 flex items-center justify-between border-t border-red-100 pt-3 sm:mt-0 sm:block sm:border-0 sm:pt-0 sm:text-right">
+              <span className="text-xs font-medium text-gray-500 sm:block">
+                Estimated total
+              </span>
+              <span className="font-bold tabular-nums text-[#B22222] sm:mt-1 sm:block sm:text-lg">
+                ₱{totalAmount.toFixed(2)}
+              </span>
+            </div>
           </div>
         )}
       </div>

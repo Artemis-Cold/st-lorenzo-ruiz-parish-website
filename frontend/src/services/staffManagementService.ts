@@ -101,6 +101,7 @@ export interface StaffMassIntentionFilters {
   status?: MassIntention["status"];
   search?: string;
   date?: string;
+  time?: string;
   page?: number;
   perPage?: number;
 }
@@ -122,6 +123,7 @@ export async function getStaffMassIntentions(
         status: filters.status,
         search: filters.search || undefined,
         date: filters.date || undefined,
+        time: filters.time || undefined,
         page: filters.page,
         per_page: filters.perPage,
       },

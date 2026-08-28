@@ -17,7 +17,7 @@ class WeddingPackageSeeder extends Seeder
             ['name' => 'Wedding'],
         );
 
-        $package = ServicePackage::updateOrCreate(
+        $package = ServicePackage::firstOrCreate(
             [
                 'service_id' => $service->id,
                 'name' => 'Standard Wedding Package',
@@ -29,6 +29,12 @@ class WeddingPackageSeeder extends Seeder
             ],
         );
 
+        // Wedding totals come from the required inclusions and selected
+        // add-ons, so the package itself must never add another base charge.
+        if ((float) $package->base_price !== 0.0) {
+            $package->update(['base_price' => 0]);
+        }
+
         $inclusions = [
             ['name' => 'Mass Offering', 'price' => 2000],
             ['name' => 'Rite Fee', 'price' => 1000],
@@ -39,7 +45,7 @@ class WeddingPackageSeeder extends Seeder
         ];
 
         foreach ($inclusions as $inclusion) {
-            PackageInclusion::updateOrCreate(
+            PackageInclusion::firstOrCreate(
                 [
                     'service_package_id' => $package->id,
                     'name' => $inclusion['name'],
@@ -57,7 +63,7 @@ class WeddingPackageSeeder extends Seeder
         ];
 
         foreach ($addons as $addon) {
-            PackageAddon::updateOrCreate(
+            PackageAddon::firstOrCreate(
                 [
                     'service_package_id' => $package->id,
                     'name' => $addon['name'],

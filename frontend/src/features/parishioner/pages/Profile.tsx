@@ -31,7 +31,9 @@ export default function Profile() {
   const [editingPhoto, setEditingPhoto] = useState(false);
   const [viewingInformation, setViewingInformation] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
-  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(null);
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -159,12 +161,18 @@ export default function Profile() {
       )}
 
       <div className="mt-8">
-        {activeTab === "current" && <CurrentBookings bookings={bookings} onView={setSelectedBookingId} />}
-        {activeTab === "recent" && (
-          <RecentBookings bookings={recentBookings} onView={setSelectedBookingId} />
+        {activeTab === "current" && (
+          <CurrentBookings bookings={bookings} onView={setSelectedBookingId} />
         )}
-        {activeTab === "documents" && <Documents documents={documents} onView={setSelectedBookingId} />}
-
+        {activeTab === "recent" && (
+          <RecentBookings
+            bookings={recentBookings}
+            onView={setSelectedBookingId}
+          />
+        )}
+        {activeTab === "documents" && (
+          <Documents documents={documents} onView={setSelectedBookingId} />
+        )}
       </div>
       <BookingDetailModal
         key={selectedBookingId ?? "closed-booking-detail"}

@@ -23,6 +23,11 @@ class Service extends Model
         return $this->hasMany(ServicePackage::class);
     }
 
+    public function fees(): HasMany
+    {
+        return $this->hasMany(ServiceFee::class);
+    }
+
     public function bookingSlots(): HasMany
     {
         return $this->hasMany(BookingSlot::class);

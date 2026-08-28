@@ -119,6 +119,27 @@ class BookingSlotAvailabilityTest extends TestCase
             ->assertJsonPath('0.status', 'full');
     }
 
+    public function test_same_day_sacrament_slots_are_not_bookable_or_returned(): void
+    {
+        [$baptism] = $this->services();
+        $slot = $this->slot($baptism, today(), '09:00');
+
+        $this->slotsFor('baptism', today())
+            ->assertOk()
+            ->assertExactJson([]);
+
+        try {
+            app(BookingSlotAvailabilityService::class)
+                ->lockBookable($slot->id, 'baptism');
+            $this->fail('A same-day booking should be rejected.');
+        } catch (ValidationException $exception) {
+            $this->assertSame(
+                'Same-day bookings are not allowed. Please select tomorrow or a later date.',
+                $exception->errors()['booking_slot_id'][0],
+            );
+        }
+    }
+
     private function services(): array
     {
         return collect(['baptism', 'wedding', 'funeral'])

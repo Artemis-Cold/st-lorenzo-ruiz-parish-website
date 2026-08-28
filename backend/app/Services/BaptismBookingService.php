@@ -5,16 +5,19 @@ namespace App\Services;
 use App\Models\Baptizand;
 use App\Models\Booking;
 use App\Models\BookingSlot;
+use App\Models\ServicePackage;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class BaptismBookingService
 {
     public function __construct(
         private BookingSlotAvailabilityService $availability,
-        private BookingRequirementService $requirements
+        private BookingRequirementService $requirements,
+        private BookingPricingService $pricing,
     ) {}
 
     public function store(array $data): Booking
@@ -23,7 +26,29 @@ class BaptismBookingService
 
             $slot = $this->validateSlot($data['booking_slot_id']);
 
-            $booking = $this->createBooking($slot, $data);
+            $package = ServicePackage::query()
+                ->with('inclusions')
+                ->findOrFail($data['service_package_id']);
+
+            if (! $package->is_active || $package->service_id !== $slot->service_id) {
+                throw ValidationException::withMessages([
+                    'service_package_id' => 'The selected package is unavailable for this service.',
+                ]);
+            }
+
+            $additionalSponsorCount = max((count($data['god_parents']) * 2) - 2, 0);
+            $fees = [];
+
+            if ($additionalSponsorCount > 0) {
+                $fees[] = [
+                    'fee' => $this->pricing->fee('baptism', 'additional_sponsor'),
+                    'quantity' => $additionalSponsorCount,
+                ];
+            }
+
+            $price = $this->pricing->calculate($package, collect(), $fees);
+
+            $booking = $this->createBooking($slot, $data, $package, $price);
 
             $baptizand = $this->createBaptizand($booking, $data['baptizand']);
 
@@ -56,7 +81,9 @@ class BaptismBookingService
 
     private function createBooking(
         BookingSlot $slot,
-        array $data
+        array $data,
+        ServicePackage $package,
+        array $price,
     ): Booking {
         return Booking::create([
             'booking_reference' => $this->generateReference(),
@@ -65,9 +92,13 @@ class BaptismBookingService
 
             'service_id' => $slot->service_id,
 
-            'service_package_id' => $data['service_package_id'],
+            'service_package_id' => $package->id,
 
             'booking_slot_id' => $slot->id,
+
+            'total_amount' => $price['total'],
+
+            'pricing_snapshot' => $price['snapshot'],
 
             'status' => 'pending',
 

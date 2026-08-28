@@ -11,6 +11,10 @@ export interface MassIntention {
   id: number;
   bookingId: number;
   date: string; // dd-mm-yyyy for display
+  massTitle: string | null;
+  massStartsAt: string | null;
+  massTime: string | null;
+  massLocation: string | null;
   names: string;
   contactNumber: string;
   type: IntentionType;

@@ -17,17 +17,39 @@ class StaffAvailabilityController extends Controller
 {
     public function __construct(private BookingSlotScheduleService $schedule) {}
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
+        $data = $request->validate([
+            'month' => ['nullable', 'date_format:Y-m'],
+        ]);
+
+        $month = CarbonImmutable::parse(
+            ($data['month'] ?? now()->format('Y-m')).'-01'
+        );
+
         $slots = BookingSlot::query()
             ->with([
                 'service:id,code,name',
                 'bookings' => fn ($query) => $query
-                    ->whereNotIn('status', config('booking-slots.released_statuses', ['cancelled', 'rejected']))
+                    ->whereNotIn(
+                        'status',
+                        config('booking-slots.released_statuses', [
+                            'cancelled',
+                            'rejected',
+                        ])
+                    )
                     ->with('service:id,code,name'),
             ])
-            ->whereHas('service', fn ($query) => $query->whereIn('code', config('booking-slots.services', [])))
-            ->whereDate('booking_date', '>=', today())
+            ->whereHas(
+                'service',
+                fn ($query) => $query->whereIn(
+                    'code',
+                    config('booking-slots.services', [])
+                )
+            )
+            ->whereDate('booking_date', '>=', $month->startOfMonth())
+            ->whereDate('booking_date', '<=', $month->endOfMonth())
+            ->whereDate('booking_date', '>=', today()->addDay())
             ->orderBy('booking_date')
             ->orderBy('start_time')
             ->get()
@@ -35,78 +57,98 @@ class StaffAvailabilityController extends Controller
             ->map(fn (Collection $sharedSlots) => $this->data($sharedSlots))
             ->values();
 
-        return response()->json(['data' => $slots]);
+        return response()->json([
+            'data' => $slots,
+            'month' => $month->format('Y-m'),
+        ]);
     }
 
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'dates' => ['required', 'array', 'min:1', 'max:90'],
-            'dates.*' => ['required', 'distinct', 'date_format:Y-m-d', 'after_or_equal:today'],
+            'month' => ['required', 'date_format:Y-m'],
         ]);
+
+        $month = CarbonImmutable::parse($data['month'].'-01');
+        $earliestDate = CarbonImmutable::tomorrow();
+
+        if ($month->endOfMonth()->isBefore($earliestDate)) {
+            throw ValidationException::withMessages([
+                'month' => 'Select the current month or a future month.',
+            ]);
+        }
 
         $services = Service::query()
             ->whereIn('code', config('booking-slots.services', []))
             ->get()
             ->keyBy('code');
 
-        $missingServices = collect(config('booking-slots.services', []))->diff($services->keys());
+        $missingServices = collect(config('booking-slots.services', []))
+            ->diff($services->keys());
 
         if ($missingServices->isNotEmpty()) {
             throw ValidationException::withMessages([
-                'dates' => 'The parish booking services are not completely configured.',
+                'month' => 'The parish booking services are not completely configured.',
             ]);
         }
 
-        $result = DB::transaction(function () use ($data, $services) {
-            $result = [
-                'datesCreated' => 0,
-                'datesRestored' => 0,
-                'datesUnchanged' => 0,
-            ];
+        $result = DB::transaction(function () use ($month, $earliestDate, $services) {
+            $createdRecords = 0;
+            $skippedRecords = 0;
+            $changedDates = [];
 
-            foreach ($data['dates'] as $date) {
-                $bookingDate = CarbonImmutable::parse($date);
+            $date = $month->startOfMonth()->isBefore($earliestDate)
+                ? $earliestDate
+                : $month->startOfMonth();
+
+            $endDate = $month->endOfMonth();
+
+            while ($date->lessThanOrEqualTo($endDate)) {
+                $dateCreatedRecords = 0;
+
                 $startTimes = $this->schedule->startTimesFor($date);
-                $expectedSlotCount = count($startTimes) * $services->count();
-                $existingSlots = BookingSlot::query()
-                    ->whereIn('service_id', $services->pluck('id'))
-                    ->whereDate('booking_date', $bookingDate)
-                    ->whereIn('start_time', $startTimes)
-                    ->lockForUpdate()
-                    ->get();
-
-                if ($existingSlots->count() === $expectedSlotCount
-                    && $existingSlots->every(fn (BookingSlot $slot) => $slot->is_active)) {
-                    $result['datesUnchanged']++;
-
-                    continue;
-                }
-
-                $result[$existingSlots->isEmpty() ? 'datesCreated' : 'datesRestored']++;
 
                 foreach ($startTimes as $startTime) {
                     foreach ($services as $service) {
-                        BookingSlot::updateOrCreate([
+                        $slot = BookingSlot::firstOrCreate([
                             'service_id' => $service->id,
-                            'booking_date' => $bookingDate,
+                            'booking_date' => $date,
                             'start_time' => $startTime,
                         ], [
                             'end_time' => $this->schedule->endTimeFor($startTime),
                             'capacity' => $this->schedule->capacityFor($service->code),
                             'is_active' => true,
                         ]);
+
+                        if ($slot->wasRecentlyCreated) {
+                            $createdRecords++;
+                            $dateCreatedRecords++;
+                        } else {
+                            $skippedRecords++;
+                        }
                     }
                 }
+
+                if ($dateCreatedRecords > 0) {
+                    $changedDates[] = $date->toDateString();
+                }
+
+                $date = $date->addDay();
             }
 
-            return $result;
+            return [
+                'datesOpened' => count($changedDates),
+                'recordsCreated' => $createdRecords,
+                'recordsSkipped' => $skippedRecords,
+            ];
         });
 
         return response()->json([
-            'message' => $this->storeMessage($result),
+            'message' => $result['recordsCreated'] > 0
+                ? "Opened booking schedules for {$result['datesOpened']} dates."
+                : 'The booking schedule for this month already exists.',
             ...$result,
-        ], $result['datesCreated'] + $result['datesRestored'] > 0 ? 201 : 200);
+        ], $result['recordsCreated'] > 0 ? 201 : 200);
     }
 
     public function update(Request $request, BookingSlot $bookingSlot): JsonResponse
@@ -171,31 +213,5 @@ class StaffAvailabilityController extends Controller
     private function slotKey(BookingSlot $slot): string
     {
         return $slot->booking_date->toDateString().'|'.substr($slot->start_time, 0, 5);
-    }
-
-    /** @param array{datesCreated: int, datesRestored: int, datesUnchanged: int} $result */
-    private function storeMessage(array $result): string
-    {
-        $messages = [];
-
-        if ($result['datesCreated'] > 0) {
-            $messages[] = $result['datesCreated'] === 1
-                ? 'Opened 1 new schedule date.'
-                : "Opened {$result['datesCreated']} new schedule dates.";
-        }
-
-        if ($result['datesRestored'] > 0) {
-            $messages[] = $result['datesRestored'] === 1
-                ? 'Restored 1 incomplete or disabled schedule date.'
-                : "Restored {$result['datesRestored']} incomplete or disabled schedule dates.";
-        }
-
-        if ($result['datesUnchanged'] > 0) {
-            $messages[] = $result['datesUnchanged'] === 1
-                ? '1 selected date was already open.'
-                : "{$result['datesUnchanged']} selected dates were already open.";
-        }
-
-        return implode(' ', $messages);
     }
 }

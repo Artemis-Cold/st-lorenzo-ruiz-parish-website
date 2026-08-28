@@ -31,11 +31,7 @@ ${
 }
 `;
 
-  const updateEntry = (
-    type: IntentionType,
-    entryId: number,
-    value: string,
-  ) => {
+  const updateEntry = (type: IntentionType, entryId: number, value: string) => {
     setBooking((prev) => ({
       ...prev,
       groups: prev.groups.map((group) =>
@@ -78,10 +74,7 @@ ${
     }));
   };
 
-  const removeEntry = (
-    type: IntentionType,
-    entryId: number,
-  ) => {
+  const removeEntry = (type: IntentionType, entryId: number) => {
     setBooking((prev) => ({
       ...prev,
       groups: prev.groups.map((group) =>
@@ -89,9 +82,7 @@ ${
           ? group
           : {
               ...group,
-              entries: group.entries.filter(
-                (entry) => entry.id !== entryId,
-              ),
+              entries: group.entries.filter((entry) => entry.id !== entryId),
             },
       ),
     }));
@@ -100,72 +91,58 @@ ${
   return (
     <div className="grid gap-6 md:grid-cols-2">
       {booking.groups.map((group) => (
-        <BookingCard
-          key={group.type}
-          title={group.type}
-        >
+        <BookingCard key={group.type} title={group.type}>
           <div className="space-y-4">
-            {group.entries.map(
-              (entry: IntentionEntry, index) => (
-                <div
-                  key={entry.id}
-                  className="flex items-center gap-3"
-                >
-                  <span className="w-6 text-center text-lg font-semibold text-[#B22222]">
-                    {index + 1}
-                  </span>
+            {group.entries.map((entry: IntentionEntry, index) => (
+              <div key={entry.id} className="flex items-center gap-3">
+                <span className="w-6 text-center text-lg font-semibold text-[#B22222]">
+                  {index + 1}
+                </span>
 
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      readOnly={readOnly}
-                      className={
-                        inputClass +
-                        (getError(
-                          "groups." +
-                            booking.groups.indexOf(group) +
-                            ".entries." +
-                            index +
-                            ".names",
-                        )
-                          ? " border-red-400"
-                          : "")
-                      }
-                      placeholder="Enter Name/s"
-                      value={entry.names.join(",")}
-                      onChange={(e) =>
-                        updateEntry(group.type, entry.id, e.target.value)
-                      }
-                    />
-                    <FieldError
-                      message={getError(
+                <div className="flex-1">
+                  <input
+                    type="text"
+                    readOnly={readOnly}
+                    className={
+                      inputClass +
+                      (getError(
                         "groups." +
                           booking.groups.indexOf(group) +
                           ".entries." +
                           index +
                           ".names",
-                      )}
-                    />
-                  </div>
-
-                  {!readOnly &&
-                    group.entries.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          removeEntry(
-                            group.type,
-                            entry.id,
-                          )
-                        }
-                        className="text-sm font-medium text-red-600 hover:underline"
-                      >
-                        Remove
-                      </button>
+                      )
+                        ? " border-red-400"
+                        : "")
+                    }
+                    placeholder="Enter Name/s"
+                    value={entry.names.join(",")}
+                    onChange={(e) =>
+                      updateEntry(group.type, entry.id, e.target.value)
+                    }
+                  />
+                  <FieldError
+                    message={getError(
+                      "groups." +
+                        booking.groups.indexOf(group) +
+                        ".entries." +
+                        index +
+                        ".names",
                     )}
+                  />
                 </div>
-              ),
-            )}
+
+                {!readOnly && group.entries.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeEntry(group.type, entry.id)}
+                    className="text-sm font-medium text-red-600 hover:underline"
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
+            ))}
 
             {!readOnly && (
               <button
@@ -178,8 +155,8 @@ ${
             )}
 
             <p className="text-xs italic text-gray-500">
-              Maximum of <strong>3 names</strong> per line.
-              Separate names using commas.
+              Maximum of <strong>3 names</strong> per line. Separate names using
+              commas.
             </p>
           </div>
         </BookingCard>

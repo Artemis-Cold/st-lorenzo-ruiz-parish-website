@@ -56,9 +56,9 @@ class BookingReschedulingService
                 $lockedBooking->id,
             );
 
-            if ($slot->booking_date->isBefore(today())) {
+            if ($slot->booking_date->lessThanOrEqualTo(today())) {
                 throw ValidationException::withMessages([
-                    'booking_slot_id' => 'The selected schedule must not be in the past.',
+                    'booking_slot_id' => 'Same-day rescheduling is not allowed. Please select tomorrow or a later date.',
                 ]);
             }
 

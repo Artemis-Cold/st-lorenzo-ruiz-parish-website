@@ -71,8 +71,9 @@ export default function Funeral() {
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
-  const [selectedPackage, setSelectedPackage] =
-    useState<ServicePackage | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<ServicePackage | null>(
+    null,
+  );
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [stepError, setStepError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -136,7 +137,11 @@ export default function Funeral() {
     required("deceased.death_cause", deceased.death_cause, "Cause of death");
     for (const parent of ["father", "mother"] as const) {
       const parentLabel =
-        parent === "father" ? "Father" : parent === "mother" ? "Mother" : "Spouse";
+        parent === "father"
+          ? "Father"
+          : parent === "mother"
+            ? "Mother"
+            : "Spouse";
       required(
         "deceased." + parent + ".first_name",
         deceased[parent].first_name,
@@ -149,8 +154,16 @@ export default function Funeral() {
       );
     }
     if (deceased.has_spouse) {
-      required("deceased.spouse.first_name", deceased.spouse.first_name, "Spouse's first name");
-      required("deceased.spouse.last_name", deceased.spouse.last_name, "Spouse's last name");
+      required(
+        "deceased.spouse.first_name",
+        deceased.spouse.first_name,
+        "Spouse's first name",
+      );
+      required(
+        "deceased.spouse.last_name",
+        deceased.spouse.last_name,
+        "Spouse's last name",
+      );
     }
     required(
       "deceased.church_life.attends_mass",
@@ -268,7 +281,10 @@ export default function Funeral() {
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        <BookingHeader title="Funeral" subtitle="Arrange the Funeral Mass Schedule" />
+        <BookingHeader
+          title="Funeral"
+          subtitle="Arrange the Funeral Mass Schedule"
+        />
         <BookingStepper currentStep={currentStep} steps={stepLabels} />
         {submitted ? (
           <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-green-800">

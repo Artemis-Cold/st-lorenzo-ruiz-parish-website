@@ -36,23 +36,26 @@ interface Props {
 
 export default function RecentActivityCard({ activity }: Props) {
   return (
-    <div className="min-w-0 self-start rounded-3xl border border-[#E7E2DA] bg-white p-6 shadow-sm sm:p-7">
-      <div className="mb-6 flex items-center gap-2.5">
+    <div className="flex h-full min-h-0 min-w-0 flex-col overflow-hidden rounded-3xl border border-[#E7E2DA] bg-white p-5 shadow-sm">
+      <div className="mb-4 flex shrink-0 items-center gap-2.5">
         <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#B22222]/10 text-[#B22222]">
           <Bell size={18} />
         </div>
-        <h2 className="font-serif text-lg font-bold text-[#292524] sm:text-xl">
+        <h2 className="font-serif text-lg font-bold text-[#292524]">
           Recent Activity
         </h2>
       </div>
 
       {activity.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-[#E7E2DA] py-14 text-center">
+        <div className="grid min-h-0 flex-1 place-items-center rounded-2xl border border-dashed border-[#E7E2DA] py-8 text-center">
           <Bell className="mx-auto mb-3 text-gray-300" size={28} />
           <p className="text-sm text-gray-400">Nothing to show yet.</p>
         </div>
       ) : (
-        <ul className="divide-y divide-[#F0EDE7]">
+        <ul
+          data-modal-scroll="true"
+          className="min-h-0 flex-1 divide-y divide-[#F0EDE7] overflow-y-auto pr-1"
+        >
           {activity.map((item) => {
             const { icon: Icon, color } = iconMap[item.type];
 

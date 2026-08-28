@@ -20,7 +20,7 @@ class ServicePackageSeeder extends Seeder
         ];
 
         foreach ($packages as $package) {
-            ServicePackage::updateOrCreate(
+            ServicePackage::firstOrCreate(
                 [
                     'service_id' => $services[$package['service']],
                     'name' => $package['name'],

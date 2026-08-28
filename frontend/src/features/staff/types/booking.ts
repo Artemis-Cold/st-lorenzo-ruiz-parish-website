@@ -23,6 +23,12 @@ export interface Booking {
     baseAmount: number;
     inclusions: Array<{ name: string; price: number }>;
     addons: Array<{ name: string; price: number }>;
+    fees: Array<{
+      name: string;
+      price: number;
+      quantity: number;
+      subtotal: number;
+    }>;
     schedule: {
       date: string | null;
       startTime: string | null;

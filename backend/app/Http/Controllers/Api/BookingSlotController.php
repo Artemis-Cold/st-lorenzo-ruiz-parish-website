@@ -35,14 +35,14 @@ class BookingSlotController extends Controller
 
         if ($request->filled('month')) {
             $month = Carbon::createFromFormat('Y-m', $request->month);
-            $today = Carbon::today();
+            $earliestDate = Carbon::tomorrow();
             $monthEnd = $month->copy()->endOfMonth();
 
-            if ($monthEnd->lt($today)) {
+            if ($monthEnd->lt($earliestDate)) {
                 return response()->json([]);
             }
 
-            $rangeStart = $month->copy()->startOfMonth()->max($today);
+            $rangeStart = $month->copy()->startOfMonth()->max($earliestDate);
             $slots = $query
                 ->whereBetween('booking_date', [
                     $rangeStart->toDateString(),
@@ -80,11 +80,16 @@ class BookingSlotController extends Controller
             );
         }
 
+        $date = Carbon::createFromFormat('Y-m-d', $request->date);
+
+        if ($date->lessThan(Carbon::tomorrow())) {
+            return response()->json([]);
+        }
+
         $slots = $query
             ->whereDate('booking_date', $request->date)
             ->orderBy('start_time')
             ->get();
-        $date = Carbon::createFromFormat('Y-m-d', $request->date);
         $bookings = $this->activeBookingsBetween($date, $date);
 
         $slots = $slots->map(function (BookingSlot $slot) use ($bookings) {

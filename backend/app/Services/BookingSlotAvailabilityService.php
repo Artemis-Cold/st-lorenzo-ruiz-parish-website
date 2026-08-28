@@ -65,8 +65,8 @@ class BookingSlotAvailabilityService
             return $this->stateResult(false, 'inactive', $serviceBookings->count(), null, 'The selected time slot is disabled.');
         }
 
-        if ($slot->booking_date->isBefore(today())) {
-            return $this->stateResult(false, 'past', $serviceBookings->count(), null, 'The selected time slot is in the past.');
+        if ($slot->booking_date->lessThanOrEqualTo(today())) {
+            return $this->stateResult(false, 'past', $serviceBookings->count(), null, 'Same-day bookings are not allowed. Please select tomorrow or a later date.');
         }
 
         if ($otherService) {

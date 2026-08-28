@@ -9,30 +9,30 @@ export default function WelcomeBanner() {
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-[#B22222] px-6 py-8 text-white shadow-lg sm:px-10 sm:py-10">
+    <div className="relative overflow-hidden rounded-3xl bg-[#B22222] px-6 py-6 text-white shadow-lg sm:px-8 sm:py-7">
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/[0.06]"
+        className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/6"
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -bottom-20 right-24 h-40 w-40 rounded-full bg-white/[0.05]"
+        className="pointer-events-none absolute -bottom-20 right-24 h-40 w-40 rounded-full bg-white/5"
       />
 
-      <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
             {greeting}
           </p>
-          <h1 className="mt-2 font-serif text-2xl font-bold leading-tight sm:text-3xl">
+          <h1 className="mt-1.5 font-serif text-2xl font-bold leading-tight sm:text-3xl">
             Welcome back, {user?.first_name ?? "Admin"}
           </h1>
-          <p className="mt-2 max-w-md text-sm text-white/75 sm:text-base">
+          <p className="mt-1.5 max-w-md text-sm text-white/75">
             Manage church services, listings, and requests from this dashboard.
           </p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-3 self-start rounded-2xl border border-white/15 bg-white/10 px-4 py-3 text-sm">
+        <div className="flex shrink-0 items-center gap-3 self-start rounded-xl border border-white/15 bg-white/10 px-3.5 py-2.5 text-xs sm:text-sm">
           <span className="text-white/70">
             {now.toLocaleDateString("en-US", {
               weekday: "long",

@@ -92,7 +92,7 @@ export default function PackagesStep({
 
   if (loading) {
     return (
-      <BookingCard title="Wedding Package & Add-ons">
+      <BookingCard title="Wedding Fees & Add-ons">
         <div className="rounded-2xl border py-10 text-center text-gray-500">
           Loading wedding inclusions...
         </div>
@@ -102,7 +102,7 @@ export default function PackagesStep({
 
   if (loadError || !selectedPackage) {
     return (
-      <BookingCard title="Wedding Package & Add-ons">
+      <BookingCard title="Wedding Fees & Add-ons">
         <div className="rounded-2xl border border-dashed border-red-200 bg-red-50 py-10 text-center text-red-600">
           Wedding inclusions are currently unavailable. Please try again.
         </div>
@@ -111,14 +111,12 @@ export default function PackagesStep({
   }
 
   return (
-    <BookingCard title="Wedding Package & Add-ons">
+    <BookingCard title="Wedding Fees & Add-ons">
       <div className="space-y-8">
         <div className="rounded-2xl border border-red-100 bg-red-50 px-5 py-4 text-center">
-          <p className="font-semibold text-[#B22222]">
-            Wedding package includes the following.
-          </p>
+          <p className="font-semibold text-[#B22222]">Required wedding fees</p>
           <p className="mt-1 text-sm text-gray-600">
-            Review the standard fees below and select optional add-ons if
+            Review the required inclusions below and select optional add-ons if
             needed.
           </p>
         </div>
@@ -189,7 +187,7 @@ export default function PackagesStep({
         {/* Total */}
         <div className="rounded-2xl bg-[#B22222] p-6 text-white">
           <div className="flex items-center justify-between">
-            <span className="text-xl font-semibold">Total Package</span>
+            <span className="text-xl font-semibold">Total Wedding Fee</span>
 
             <span className="text-3xl font-bold">
               ₱{total.toLocaleString()}

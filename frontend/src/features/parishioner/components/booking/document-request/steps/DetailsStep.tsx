@@ -141,7 +141,16 @@ export default function DetailsStep({
       {booking.requests.map((request, index) => (
         <BookingCard
           key={request.id}
-          title={request.document_type}
+          title={(() => {
+            const matchingRequests = booking.requests.filter(
+              (item) => item.document_type === request.document_type,
+            );
+            if (matchingRequests.length === 1) return request.document_type;
+            const position = matchingRequests.findIndex(
+              (item) => item.id === request.id,
+            ) + 1;
+            return `${request.document_type} — Request ${position} of ${matchingRequests.length}`;
+          })()}
         >
           <div className="space-y-6">
             {renderForm(request, index)}

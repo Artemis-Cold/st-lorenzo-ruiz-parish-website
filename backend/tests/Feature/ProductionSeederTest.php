@@ -22,6 +22,7 @@ class ProductionSeederTest extends TestCase
         $this->assertDatabaseCount('service_packages', 5);
         $this->assertDatabaseCount('package_inclusions', 6);
         $this->assertDatabaseCount('package_addons', 5);
+        $this->assertDatabaseCount('service_fees', 7);
         $this->assertDatabaseCount('users', 1);
 
         $this->assertDatabaseHas('service_packages', [
@@ -42,6 +43,11 @@ class ProductionSeederTest extends TestCase
 
         $this->assertTrue(Hash::check('11111111', $staff->password));
         $this->assertNotNull($staff->phone_verified_at);
+
+        $this->assertDatabaseHas('service_fees', [
+            'code' => 'intention_line',
+            'amount' => 100,
+        ]);
 
         $this->postJson('/api/auth/staff/login', [
             'username' => 'parishadmin',

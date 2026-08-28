@@ -104,6 +104,8 @@ class StaffManagementApiTest extends TestCase
         $intention = MassIntention::create([
             'booking_id' => $booking->id,
             'intention_date' => '2026-08-20',
+            'mass_schedule_title' => 'Daily Mass',
+            'mass_starts_at' => '2026-08-20 06:00:00',
             'payment_reference' => 'MASS-PAYMENT-1',
             'total_amount' => 100,
         ]);
@@ -135,7 +137,7 @@ class StaffManagementApiTest extends TestCase
             'amount' => 100,
         ]);
 
-        $this->getJson('/api/staff/mass-intentions?type=Birthday&status=paid&date=2026-08-20&search=Ana&per_page=1')
+        $this->getJson('/api/staff/mass-intentions?type=Birthday&status=paid&date=2026-08-20&time=06:00&search=Ana&per_page=1')
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.names', 'Ana Santos')
@@ -143,6 +145,11 @@ class StaffManagementApiTest extends TestCase
             ->assertJsonPath('meta.current_page', 1)
             ->assertJsonPath('meta.last_page', 1)
             ->assertJsonPath('meta.total', 1);
+
+        $this->getJson('/api/staff/mass-intentions?date=2026-08-20&time=09:00')
+            ->assertOk()
+            ->assertJsonCount(0, 'data')
+            ->assertJsonPath('meta.total', 0);
 
         $this->getJson('/api/staff/mass-intentions?per_page=1')
             ->assertOk()

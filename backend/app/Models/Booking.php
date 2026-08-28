@@ -21,6 +21,8 @@ class Booking extends Model
         'service_id',
         'service_package_id',
         'booking_slot_id',
+        'total_amount',
+        'pricing_snapshot',
         'status',
         'processed_by',
         'processed_at',
@@ -29,10 +31,16 @@ class Booking extends Model
 
     protected $casts = [
         'processed_at' => 'datetime',
+        'total_amount' => 'decimal:2',
+        'pricing_snapshot' => 'array',
     ];
 
     public function getTotalAmountAttribute(): float
     {
+        if (($this->attributes['total_amount'] ?? null) !== null) {
+            return (float) $this->attributes['total_amount'];
+        }
+
         return (float) (($this->package?->base_price ?? 0)
             + ($this->package?->inclusions->sum('price') ?? 0)
             + $this->selectedAddons->sum('price'));

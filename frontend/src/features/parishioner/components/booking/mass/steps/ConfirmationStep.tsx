@@ -3,17 +3,22 @@ import { useAuth } from "@/contexts/AuthContext";
 
 import type { MassIntentionBooking } from "../../../../types/mass";
 import type { Dispatch, SetStateAction } from "react";
+import type { ParishEvent } from "@/services/eventService";
 
 interface ConfirmationStepProps {
   booking: MassIntentionBooking;
   agree: boolean;
   setAgree: Dispatch<SetStateAction<boolean>>;
+  linePrice: number | null;
+  selectedMass: ParishEvent | null;
 }
 
 export default function ConfirmationStep({
   booking,
   agree,
   setAgree,
+  linePrice,
+  selectedMass,
 }: ConfirmationStepProps) {
   const { user } = useAuth();
   const totalIntentions = booking.groups.reduce(
@@ -21,7 +26,7 @@ export default function ConfirmationStep({
     0,
   );
 
-  const totalAmount = totalIntentions * 100;
+  const totalAmount = totalIntentions * (linePrice ?? 0);
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
@@ -31,9 +36,7 @@ export default function ConfirmationStep({
           {/* Total */}
           <div className="rounded-xl border border-red-200 p-5">
             <div className="flex items-center justify-between">
-              <span className="text-lg text-gray-700">
-                Total
-              </span>
+              <span className="text-lg text-gray-700">Total</span>
 
               <span className="text-3xl font-semibold text-[#B22222]">
                 ₱{totalAmount.toFixed(2)}
@@ -43,18 +46,13 @@ export default function ConfirmationStep({
 
           {/* Summary */}
           <div className="divide-y rounded-lg border border-gray-200">
-            <SummaryRow
-              label="Parishioner"
-              value={user?.full_name ?? "-"}
-            />
+            <SummaryRow label="Parishioner" value={user?.full_name ?? "-"} />
 
             <SummaryRow
               label="Mass Intention Type"
               value={
                 booking.groups.length > 0
-                  ? booking.groups
-                      .map((g) => g.type)
-                      .join(", ")
+                  ? booking.groups.map((g) => g.type).join(", ")
                   : "-"
               }
             />
@@ -71,21 +69,28 @@ export default function ConfirmationStep({
             />
 
             <SummaryRow
-              label="Payment Method"
-              value="GCash"
+              label="Mass Schedule"
+              value={
+                selectedMass
+                  ? `${new Date(selectedMass.startsAt).toLocaleTimeString(
+                      "en-PH",
+                      {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      },
+                    )} · ${selectedMass.title}`
+                  : "-"
+              }
             />
 
-            <SummaryRow
-              label="Sent To"
-              value="000-0000-000"
-            />
+            <SummaryRow label="Venue" value={selectedMass?.location ?? "-"} />
+
+            <SummaryRow label="Payment Method" value="GCash" />
           </div>
 
           {/* Footer */}
           <div className="flex items-center justify-between rounded-b-xl bg-[#B22222] px-5 py-4 text-white">
-            <span className="text-2xl font-medium">
-              Amount
-            </span>
+            <span className="text-2xl font-medium">Amount</span>
 
             <span className="text-3xl font-semibold">
               ₱{totalAmount.toFixed(2)}
@@ -96,7 +101,7 @@ export default function ConfirmationStep({
 
       {/* Receipt */}
       <BookingCard title="">
-        <div className="flex h-full min-h-[430px] items-center justify-center rounded-xl border border-red-200">
+        <div className="flex h-full min-h-107.5 items-center justify-center rounded-xl border border-red-200">
           {booking.receipt ? (
             booking.receipt.type.startsWith("image") ? (
               <img
@@ -106,9 +111,7 @@ export default function ConfirmationStep({
               />
             ) : (
               <div className="min-w-0 max-w-full px-4 text-center">
-                <p className="break-all font-medium">
-                  {booking.receipt.name}
-                </p>
+                <p className="break-all font-medium">{booking.receipt.name}</p>
 
                 <p className="mt-2 text-sm text-gray-500">
                   PDF uploaded successfully
@@ -116,9 +119,7 @@ export default function ConfirmationStep({
               </div>
             )
           ) : (
-            <p className="text-lg text-[#B22222]">
-              Photo of Receipt
-            </p>
+            <p className="text-lg text-[#B22222]">Photo of Receipt</p>
           )}
         </div>
       </BookingCard>
@@ -150,19 +151,12 @@ interface SummaryRowProps {
   value: string;
 }
 
-function SummaryRow({
-  label,
-  value,
-}: SummaryRowProps) {
+function SummaryRow({ label, value }: SummaryRowProps) {
   return (
     <div className="flex items-center justify-between px-4 py-3">
-      <span className="text-sm text-gray-700">
-        {label}
-      </span>
+      <span className="text-sm text-gray-700">{label}</span>
 
-      <span className="text-sm font-medium text-gray-900">
-        {value}
-      </span>
+      <span className="text-sm font-medium text-gray-900">{value}</span>
     </div>
   );
 }

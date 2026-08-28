@@ -217,7 +217,10 @@ export default function Document() {
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        <BookingHeader title="Document Request" subtitle="Request Church Documents" />
+        <BookingHeader
+          title="Document Request"
+          subtitle="Request Church Documents"
+        />
         <BookingStepper currentStep={currentStep} steps={stepLabels} />
         {submitted ? (
           <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-green-800">

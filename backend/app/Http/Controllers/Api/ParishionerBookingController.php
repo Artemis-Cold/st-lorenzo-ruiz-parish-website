@@ -56,17 +56,22 @@ class ParishionerBookingController extends Controller
             'schedule' => [
                 'date' => $booking->slot?->booking_date?->toDateString()
                     ?? $booking->massIntention?->intention_date?->toDateString(),
-                'startTime' => $booking->slot?->start_time,
+                'startTime' => $booking->slot?->start_time
+                    ?? $booking->massIntention?->mass_starts_at?->format('H:i'),
                 'endTime' => $booking->slot?->end_time,
             ],
             'package' => $booking->package ? [
-                'name' => $booking->package->name,
-                'baseAmount' => (float) $booking->package->base_price,
-                'inclusions' => $booking->package->inclusions->pluck('name')->values(),
-                'addons' => $booking->selectedAddons->map(fn ($addon) => [
+                'name' => $booking->pricing_snapshot['package']['name'] ?? $booking->package->name,
+                'baseAmount' => (float) ($booking->pricing_snapshot['package']['basePrice'] ?? $booking->package->base_price),
+                'inclusions' => collect($booking->pricing_snapshot['inclusions'] ?? [])
+                    ->pluck('name')
+                    ->whenEmpty(fn () => $booking->package->inclusions->pluck('name'))
+                    ->values(),
+                'addons' => $booking->pricing_snapshot['addons'] ?? $booking->selectedAddons->map(fn ($addon) => [
                     'name' => $addon->name,
                     'price' => (float) $addon->price,
                 ])->values(),
+                'fees' => $booking->pricing_snapshot['fees'] ?? [],
                 'totalAmount' => $booking->total_amount,
             ] : null,
             'payment' => $this->paymentData($booking),
@@ -455,6 +460,10 @@ class ParishionerBookingController extends Controller
             'title' => 'Mass intention details',
             'fields' => $this->fields([
                 'Intention date' => $intention->intention_date?->format('F j, Y'),
+                'Mass schedule' => $intention->mass_starts_at
+                    ? $intention->mass_starts_at->format('g:i A').' — '.$intention->mass_schedule_title
+                    : null,
+                'Venue' => $intention->mass_location,
                 'Payment reference' => $intention->payment_reference,
                 'Total amount' => '₱'.number_format((float) $intention->total_amount, 2),
                 'Intentions' => $intention->entries->map(fn ($entry) => $entry->intention_type.': '.collect($entry->names)->join(', '))->join(' | '),

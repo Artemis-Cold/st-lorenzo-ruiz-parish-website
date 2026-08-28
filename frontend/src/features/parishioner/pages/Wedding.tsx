@@ -108,8 +108,9 @@ export default function Wedding() {
     null,
   );
   const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
-  const [selectedPackage, setSelectedPackage] =
-    useState<ServicePackage | null>(null);
+  const [selectedPackage, setSelectedPackage] = useState<ServicePackage | null>(
+    null,
+  );
 
   const [stepError, setStepError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -298,9 +299,21 @@ export default function Wedding() {
       (["god_father", "god_mother"] as const).forEach((role) => {
         const sponsor = pair[role];
         const label = role === "god_father" ? "Godfather" : "Godmother";
-        requireField(`sponsors.${index}.${role}.first_name`, sponsor.first_name, `${label}'s first name`);
-        requireField(`sponsors.${index}.${role}.last_name`, sponsor.last_name, `${label}'s last name`);
-        requireField(`sponsors.${index}.${role}.residence`, sponsor.residence, `${label}'s residence`);
+        requireField(
+          `sponsors.${index}.${role}.first_name`,
+          sponsor.first_name,
+          `${label}'s first name`,
+        );
+        requireField(
+          `sponsors.${index}.${role}.last_name`,
+          sponsor.last_name,
+          `${label}'s last name`,
+        );
+        requireField(
+          `sponsors.${index}.${role}.residence`,
+          sponsor.residence,
+          `${label}'s residence`,
+        );
       });
     });
 
@@ -394,27 +407,27 @@ export default function Wedding() {
           </div>
         ) : (
           <>
-        {stepError && <AlertBanner message={stepError} />}
-        {submitError && <AlertBanner message={submitError} />}
+            {stepError && <AlertBanner message={stepError} />}
+            {submitError && <AlertBanner message={submitError} />}
 
-        {pages[currentStep - 1]}
+            {pages[currentStep - 1]}
 
-        <BookingFooter
-          previous={
-            currentStep > 1
-              ? () => setCurrentStep((prev) => prev - 1)
-              : undefined
-          }
-          next={handleNext}
-          previousText="Back"
-          nextText={
-            currentStep === pages.length
-              ? submitting
-                ? "Submitting..."
-                : "Submit Booking"
-              : `Continue to ${stepLabels[currentStep]}`
-          }
-        />
+            <BookingFooter
+              previous={
+                currentStep > 1
+                  ? () => setCurrentStep((prev) => prev - 1)
+                  : undefined
+              }
+              next={handleNext}
+              previousText="Back"
+              nextText={
+                currentStep === pages.length
+                  ? submitting
+                    ? "Submitting..."
+                    : "Submit Booking"
+                  : `Continue to ${stepLabels[currentStep]}`
+              }
+            />
           </>
         )}
       </div>

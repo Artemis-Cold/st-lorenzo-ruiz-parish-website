@@ -3,6 +3,7 @@
 namespace App\Http\Requests\DocumentRequest;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class StoreDocumentRequestBookingRequest extends FormRequest
 {
@@ -22,10 +23,9 @@ class StoreDocumentRequestBookingRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
-            'requests' => ['required', 'array', 'min:1'],
+            'requests' => ['required', 'array', 'min:1', 'max:50'],
             'requests.*.document_type' => [
                 'required',
-                'distinct',
                 'in:'.implode(',', self::TYPES),
             ],
             'requests.*.details' => ['required', 'array'],
@@ -91,5 +91,23 @@ class StoreDocumentRequestBookingRequest extends FormRequest
         }
 
         return $rules;
+    }
+
+    /** @return array<int, callable(Validator): void> */
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            $counts = collect($this->input('requests', []))
+                ->countBy('document_type');
+
+            foreach ($counts as $type => $count) {
+                if ($count > 10) {
+                    $validator->errors()->add(
+                        'requests',
+                        "You may request up to 10 copies of {$type} at a time."
+                    );
+                }
+            }
+        }];
     }
 }

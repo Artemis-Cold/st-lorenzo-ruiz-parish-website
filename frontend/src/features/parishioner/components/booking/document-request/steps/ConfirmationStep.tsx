@@ -18,38 +18,47 @@ export default function ConfirmationStep({
     (sum, request) => sum + request.price,
     0,
   );
+  const documentSummary = Array.from(
+    new Set(booking.requests.map((request) => request.document_type)),
+  ).map((type) => {
+    const requests = booking.requests.filter(
+      (request) => request.document_type === type,
+    );
+
+    return {
+      type,
+      quantity: requests.length,
+      unitPrice: requests[0]?.price ?? 0,
+      subtotal: requests.reduce((sum, request) => sum + request.price, 0),
+    };
+  });
 
   return (
     <div className="space-y-6">
       {/* Summary */}
       <BookingCard title="Request Summary">
         <div className="space-y-4">
-          {booking.requests.map((request) => (
+          {documentSummary.map((item) => (
             <div
-              key={request.id}
+              key={item.type}
               className="flex items-center justify-between rounded-xl border border-gray-200 p-4"
             >
               <div className="flex items-center gap-3">
                 <div className="rounded-lg bg-red-50 p-2">
-                  <FileText
-                    size={20}
-                    className="text-[#B22222]"
-                  />
+                  <FileText size={20} className="text-[#B22222]" />
                 </div>
 
                 <div>
-                  <p className="font-medium">
-                    {request.document_type}
-                  </p>
+                  <p className="font-medium">{item.type}</p>
 
                   <p className="text-sm text-gray-500">
-                    ₱{request.price.toLocaleString()}
+                    {item.quantity} × ₱{item.unitPrice.toLocaleString()}
                   </p>
                 </div>
               </div>
 
               <span className="font-semibold text-[#B22222]">
-                ₱{request.price.toLocaleString()}
+                ₱{item.subtotal.toLocaleString()}
               </span>
             </div>
           ))}
@@ -58,9 +67,7 @@ export default function ConfirmationStep({
             <div className="flex items-center justify-between text-lg font-bold">
               <span>Total</span>
 
-              <span className="text-[#B22222]">
-                ₱{total.toLocaleString()}
-              </span>
+              <span className="text-[#B22222]">₱{total.toLocaleString()}</span>
             </div>
           </div>
         </div>
@@ -70,9 +77,7 @@ export default function ConfirmationStep({
       <BookingCard title="Payment Information">
         <div className="space-y-5">
           <div className="rounded-xl bg-gray-50 p-4">
-            <p className="text-sm text-gray-500">
-              Reference Number
-            </p>
+            <p className="text-sm text-gray-500">Reference Number</p>
 
             <p className="mt-1 font-semibold">
               {booking.reference_number || "-"}
@@ -81,14 +86,9 @@ export default function ConfirmationStep({
 
           <div className="rounded-xl border border-gray-200 p-4">
             <div className="mb-3 flex items-center gap-2">
-              <ReceiptText
-                size={20}
-                className="text-[#B22222]"
-              />
+              <ReceiptText size={20} className="text-[#B22222]" />
 
-              <span className="font-semibold">
-                Payment Receipt
-              </span>
+              <span className="font-semibold">Payment Receipt</span>
             </div>
 
             {booking.receipt ? (
@@ -110,9 +110,7 @@ export default function ConfirmationStep({
                 </p>
               </div>
             ) : (
-              <p className="text-sm text-gray-500">
-                No receipt uploaded.
-              </p>
+              <p className="text-sm text-gray-500">No receipt uploaded.</p>
             )}
           </div>
 
@@ -120,9 +118,7 @@ export default function ConfirmationStep({
             <div className="rounded-xl bg-gray-50 p-4">
               <p className="text-sm text-gray-500">Remarks</p>
 
-              <p className="mt-1 whitespace-pre-wrap">
-                {booking.remarks}
-              </p>
+              <p className="mt-1 whitespace-pre-wrap">{booking.remarks}</p>
             </div>
           )}
         </div>

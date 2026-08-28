@@ -10,21 +10,32 @@ export interface StaffAvailabilitySlot {
   isActive: boolean;
 }
 
-export async function getStaffAvailability() {
-  const response = await api.get<{ data: StaffAvailabilitySlot[] }>("/staff/availability");
+export interface MonthlyAvailabilityResult {
+  message: string;
+  datesOpened: number;
+  recordsCreated: number;
+  recordsSkipped: number;
+}
+
+export async function getStaffAvailability(month: string) {
+  const response = await api.get<{
+    data: StaffAvailabilitySlot[];
+    month: string;
+  }>("/staff/availability", {
+    params: { month },
+  });
+
   return response.data.data;
 }
 
-export async function createStaffAvailability(dates: string[]) {
-  const response = await api.post<{
-    message: string;
-    datesCreated: number;
-    datesRestored: number;
-    datesUnchanged: number;
-  }>(
+export async function createStaffAvailability(
+  month: string,
+): Promise<MonthlyAvailabilityResult> {
+  const response = await api.post<MonthlyAvailabilityResult>(
     "/staff/availability",
-    { dates },
+    { month },
   );
+
   return response.data;
 }
 

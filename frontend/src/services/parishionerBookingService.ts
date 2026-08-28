@@ -19,6 +19,12 @@ export interface ParishionerBookingDetail {
     baseAmount: number;
     inclusions: string[];
     addons: Array<{ name: string; price: number }>;
+    fees: Array<{
+      name: string;
+      price: number;
+      quantity: number;
+      subtotal: number;
+    }>;
     totalAmount: number;
   } | null;
   payment: {

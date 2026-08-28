@@ -84,6 +84,22 @@ export default function MassIntentionDetailModal({
             </span>
           </div>
 
+          <div className="flex items-center justify-between gap-4 text-sm">
+            <span className="text-gray-500">Mass Schedule</span>
+            <span className="text-right font-medium text-[#292524]">
+              {intention.massTime
+                ? `${intention.massTime}${intention.massTitle ? ` · ${intention.massTitle}` : ""}`
+                : "Not recorded"}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 text-sm">
+            <span className="text-gray-500">Venue</span>
+            <span className="text-right font-medium text-[#292524]">
+              {intention.massLocation ?? "Not recorded"}
+            </span>
+          </div>
+
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">Contact No.</span>
             <span className="font-medium tabular-nums text-[#292524]">

@@ -37,19 +37,22 @@ class StaffAvailabilityTest extends TestCase
         $this->assertSame(1, $schedule->capacityFor('funeral'));
     }
 
-    public function test_staff_opens_fixed_shared_schedules_for_multiple_dates(): void
+    public function test_staff_opens_fixed_shared_schedules_for_an_entire_month(): void
     {
         $this->actingAsStaff();
         $services = $this->services();
-        $monday = today()->next(CarbonInterface::MONDAY)->toDateString();
-        $sunday = today()->next(CarbonInterface::SUNDAY)->toDateString();
+        $month = today()->addMonth()->startOfMonth();
+        $monday = $month->copy()->next(CarbonInterface::MONDAY)->toDateString();
+        $sunday = $month->copy()->next(CarbonInterface::SUNDAY)->toDateString();
+        $expectedSharedSlots = $this->expectedSharedSlotCount($month);
 
         $this->postJson('/api/staff/availability', [
-            'dates' => [$monday, $sunday],
+            'month' => $month->format('Y-m'),
         ])->assertCreated()
-            ->assertJsonPath('datesCreated', 2);
+            ->assertJsonPath('datesOpened', $month->daysInMonth)
+            ->assertJsonPath('recordsCreated', $expectedSharedSlots * 3);
 
-        $this->assertSame(33, BookingSlot::count());
+        $this->assertSame($expectedSharedSlots * 3, BookingSlot::count());
         $this->assertSame(21, BookingSlot::whereDate('booking_date', $monday)->count());
         $this->assertSame(12, BookingSlot::whereDate('booking_date', $sunday)->count());
         $this->assertSame(0, BookingSlot::whereDate('booking_date', $sunday)->where('start_time', '08:00')->count());
@@ -67,9 +70,9 @@ class StaffAvailabilityTest extends TestCase
             ->firstOrFail()
             ->capacity);
 
-        $this->getJson('/api/staff/availability')
+        $this->getJson('/api/staff/availability?month='.$month->format('Y-m'))
             ->assertOk()
-            ->assertJsonCount(11, 'data')
+            ->assertJsonCount($expectedSharedSlots, 'data')
             ->assertJsonFragment([
                 'date' => $monday,
                 'startTime' => '08:00',
@@ -77,20 +80,23 @@ class StaffAvailabilityTest extends TestCase
             ]);
     }
 
-    public function test_adding_a_date_is_idempotent_and_shared_slots_are_managed_together(): void
+    public function test_adding_a_month_is_idempotent_and_shared_slots_are_managed_together(): void
     {
         $this->actingAsStaff();
         $services = $this->services();
-        $date = today()->next(CarbonInterface::MONDAY)->toDateString();
+        $month = today()->addMonth()->startOfMonth();
+        $date = $month->copy()->next(CarbonInterface::MONDAY)->toDateString();
+        $payload = ['month' => $month->format('Y-m')];
 
-        $this->postJson('/api/staff/availability', ['dates' => [$date]])->assertCreated();
-        $this->postJson('/api/staff/availability', ['dates' => [$date]])
+        $this->postJson('/api/staff/availability', $payload)->assertCreated();
+        $slotCount = BookingSlot::count();
+
+        $this->postJson('/api/staff/availability', $payload)
             ->assertOk()
-            ->assertJsonPath('datesCreated', 0)
-            ->assertJsonPath('datesRestored', 0)
-            ->assertJsonPath('datesUnchanged', 1)
-            ->assertJsonPath('message', '1 selected date was already open.');
-        $this->assertSame(21, BookingSlot::count());
+            ->assertJsonPath('datesOpened', 0)
+            ->assertJsonPath('recordsCreated', 0)
+            ->assertJsonPath('message', 'The booking schedule for this month already exists.');
+        $this->assertSame($slotCount, BookingSlot::count());
 
         $representative = BookingSlot::query()
             ->whereDate('booking_date', $date)
@@ -103,12 +109,10 @@ class StaffAvailabilityTest extends TestCase
 
         $this->assertSame(3, BookingSlot::whereDate('booking_date', $date)->where('start_time', '08:00')->where('is_active', false)->count());
 
-        $this->postJson('/api/staff/availability', ['dates' => [$date]])
-            ->assertCreated()
-            ->assertJsonPath('datesCreated', 0)
-            ->assertJsonPath('datesRestored', 1)
-            ->assertJsonPath('datesUnchanged', 0);
-        $this->assertSame(3, BookingSlot::whereDate('booking_date', $date)->where('start_time', '08:00')->where('is_active', true)->count());
+        $this->postJson('/api/staff/availability', $payload)
+            ->assertOk()
+            ->assertJsonPath('recordsCreated', 0);
+        $this->assertSame(3, BookingSlot::whereDate('booking_date', $date)->where('start_time', '08:00')->where('is_active', false)->count());
 
         $baptismSlot = BookingSlot::query()
             ->where('service_id', $services['baptism']->id)
@@ -124,7 +128,7 @@ class StaffAvailabilityTest extends TestCase
             'status' => 'pending',
         ]);
 
-        $this->getJson('/api/staff/availability')
+        $this->getJson('/api/staff/availability?month='.$month->format('Y-m'))
             ->assertJsonFragment([
                 'date' => $date,
                 'startTime' => '09:00',
@@ -140,18 +144,40 @@ class StaffAvailabilityTest extends TestCase
         $this->assertSame(0, BookingSlot::whereDate('booking_date', $date)->where('start_time', '08:00')->count());
     }
 
-    public function test_staff_must_select_at_least_one_valid_date(): void
+    public function test_staff_must_select_a_current_or_future_month(): void
     {
         $this->actingAsStaff();
         $this->services();
 
-        $this->postJson('/api/staff/availability', ['dates' => []])
+        $this->postJson('/api/staff/availability', [])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors('dates');
+            ->assertJsonValidationErrors('month');
 
-        $this->postJson('/api/staff/availability', ['dates' => [today()->subDay()->toDateString()]])
+        $this->postJson('/api/staff/availability', [
+            'month' => today()->subMonth()->format('Y-m'),
+        ])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors('dates.0');
+            ->assertJsonValidationErrors('month');
+    }
+
+    public function test_current_month_generation_skips_past_and_current_dates(): void
+    {
+        $this->actingAsStaff();
+        $this->services();
+
+        $this->postJson('/api/staff/availability', [
+            'month' => today()->format('Y-m'),
+        ])->assertCreated();
+
+        $this->assertFalse(BookingSlot::query()
+            ->whereDate('booking_date', today()->subDay())
+            ->exists());
+        $this->assertFalse(BookingSlot::query()
+            ->whereDate('booking_date', today())
+            ->exists());
+        $this->assertTrue(BookingSlot::query()
+            ->whereDate('booking_date', today()->addDay())
+            ->exists());
     }
 
     private function actingAsStaff(): void
@@ -165,5 +191,18 @@ class StaffAvailabilityTest extends TestCase
         return collect(['baptism', 'funeral', 'wedding'])->mapWithKeys(fn ($code) => [
             $code => Service::create(['code' => $code, 'name' => ucfirst($code), 'description' => $code]),
         ]);
+    }
+
+    private function expectedSharedSlotCount($month): int
+    {
+        $count = 0;
+        $date = $month->copy()->startOfMonth();
+
+        while ($date->month === $month->month) {
+            $count += $date->isSunday() ? 4 : 7;
+            $date->addDay();
+        }
+
+        return $count;
     }
 }

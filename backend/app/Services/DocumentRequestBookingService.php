@@ -11,14 +11,6 @@ use Illuminate\Validation\ValidationException;
 
 class DocumentRequestBookingService
 {
-    private const PRICES = [
-        'Baptismal Certificate' => 100,
-        'Confirmation Certificate' => 100,
-        'Death Certificate' => 100,
-        'Marriage Certificate' => 100,
-        'Request of Permission' => 100,
-    ];
-
     public function store(array $data): Booking
     {
         return DB::transaction(function () use ($data) {
@@ -30,8 +22,23 @@ class DocumentRequestBookingService
                 ]);
             }
 
+            $prices = $service->fees()
+                ->where('is_active', true)
+                ->get()
+                ->keyBy('name');
+
+            $missingPrice = collect($data['requests'])
+                ->pluck('document_type')
+                ->first(fn (string $type) => ! $prices->has($type));
+
+            if ($missingPrice) {
+                throw ValidationException::withMessages([
+                    'requests' => "The current price for {$missingPrice} is unavailable.",
+                ]);
+            }
+
             $total = collect($data['requests'])
-                ->sum(fn (array $request) => self::PRICES[$request['document_type']]);
+                ->sum(fn (array $request) => (float) $prices[$request['document_type']]->amount);
 
             $booking = Booking::create([
                 'booking_reference' => $this->reference(),
@@ -53,7 +60,7 @@ class DocumentRequestBookingService
                 $documentRequest->items()->create([
                     'document_type' => $request['document_type'],
                     'details' => $request['details'],
-                    'price' => self::PRICES[$request['document_type']],
+                    'price' => $prices[$request['document_type']]->amount,
                 ]);
             }
 

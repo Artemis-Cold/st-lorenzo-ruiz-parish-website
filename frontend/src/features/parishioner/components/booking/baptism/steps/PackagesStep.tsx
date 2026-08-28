@@ -17,6 +17,7 @@ interface PackagesStepProps {
   selectedDate: Date | null;
   selectedPackage: ServicePackage | null;
   setSelectedPackage: Dispatch<SetStateAction<ServicePackage | null>>;
+  additionalSponsorPrice: number | null;
 }
 
 export default function PackagesStep({
@@ -25,6 +26,7 @@ export default function PackagesStep({
   selectedDate,
   selectedPackage,
   setSelectedPackage,
+  additionalSponsorPrice,
 }: PackagesStepProps) {
   const [packages, setPackages] = useState<ServicePackage[]>([]);
 
@@ -151,7 +153,11 @@ export default function PackagesStep({
 
           <p className="text-center italic text-[#B22222]">
             Additional sponsors are charged
-            <b> ₱100 per person.</b>
+            <b>
+              {additionalSponsorPrice === null
+                ? " at the current parish rate."
+                : ` ₱${additionalSponsorPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })} per person.`}
+            </b>
           </p>
 
           <p className="mt-5 text-center italic text-[#B22222]">

@@ -36,6 +36,20 @@ export default function PaymentStep({
     (sum, request) => sum + request.price,
     0,
   );
+  const documentSummary = Array.from(
+    new Set(booking.requests.map((request) => request.document_type)),
+  ).map((type) => {
+    const requests = booking.requests.filter(
+      (request) => request.document_type === type,
+    );
+
+    return {
+      type,
+      quantity: requests.length,
+      unitPrice: requests[0]?.price ?? 0,
+      subtotal: requests.reduce((sum, request) => sum + request.price, 0),
+    };
+  });
 
   const inputClass = `
 w-full rounded-xl border px-4 py-3 transition
@@ -51,7 +65,7 @@ ${
       {/* Payment Summary */}
       <BookingCard title="Payment Summary">
         <div className="space-y-6">
-          <div className="rounded-2xl bg-gradient-to-br from-red-50 to-white p-6">
+          <div className="rounded-2xl bg-linear-to-br from-red-50 to-white p-6">
             <div className="mb-4 flex items-center gap-3">
               <div className="rounded-xl bg-[#B22222] p-3 text-white">
                 <ReceiptText size={22} />
@@ -76,18 +90,21 @@ ${
               <div className="space-y-3">
                 <p className="font-medium text-gray-700">Selected Documents</p>
 
-                {booking.requests.length > 0 ? (
-                  booking.requests.map((request) => (
+                {documentSummary.length > 0 ? (
+                  documentSummary.map((item) => (
                     <div
-                      key={request.id}
+                      key={item.type}
                       className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3"
                     >
-                      <span className="text-gray-700">
-                        {request.document_type}
-                      </span>
+                      <div>
+                        <p className="text-gray-700">{item.type}</p>
+                        <p className="mt-0.5 text-xs text-gray-500">
+                          {item.quantity} × ₱{item.unitPrice.toLocaleString()}
+                        </p>
+                      </div>
 
                       <span className="font-semibold text-[#B22222]">
-                        ₱{request.price.toLocaleString()}
+                        ₱{item.subtotal.toLocaleString()}
                       </span>
                     </div>
                   ))
@@ -121,26 +138,35 @@ ${
       </BookingCard>
 
       {/* Payment Details */}
-      <BookingCard title="GCash Payment" contentClassName="p-5 sm:p-6 lg:p-5 xl:p-6">
+      <BookingCard
+        title="GCash Payment"
+        contentClassName="p-5 sm:p-6 lg:p-5 xl:p-6"
+      >
         <div className="space-y-4">
           <div className="grid gap-4 lg:grid-cols-[11rem_minmax(0,1fr)] lg:items-center">
             <div className="flex justify-center rounded-2xl bg-gray-50 p-2 lg:p-1">
-            <img
-              //src="/images/gcash-qr.png"
-              src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=GCASH-QR-PLACEHOLDER"
-              alt="GCash QR Code"
+              <img
+                //src="/images/gcash-qr.png"
+                src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=GCASH-QR-PLACEHOLDER"
+                alt="GCash QR Code"
                 className="size-52 rounded-xl border bg-white p-2 object-contain lg:size-40 xl:size-44"
-            />
+              />
             </div>
 
             <div className="space-y-4">
               <div className="flex items-center gap-3 rounded-xl border p-3">
                 <div className="grid size-11 shrink-0 place-items-center rounded-full bg-blue-50">
-                  <img src={gcashLogo} alt="GCash" className="size-9 object-contain" />
+                  <img
+                    src={gcashLogo}
+                    alt="GCash"
+                    className="size-9 object-contain"
+                  />
                 </div>
 
                 <div className="min-w-0">
-                  <h3 className="truncate text-sm font-semibold sm:text-base">St. Lorenzo Ruiz Parish</h3>
+                  <h3 className="truncate text-sm font-semibold sm:text-base">
+                    St. Lorenzo Ruiz Parish
+                  </h3>
                   <p className="text-sm text-gray-500">09945697318</p>
                 </div>
               </div>
@@ -153,10 +179,15 @@ ${
                 <input
                   type="text"
                   value={booking.reference_number}
-                  onChange={(e) => updateBooking("reference_number", e.target.value)}
+                  onChange={(e) =>
+                    updateBooking("reference_number", e.target.value)
+                  }
                   readOnly={readOnly}
                   placeholder="Enter GCash Reference Number"
-                  className={inputClass + (getError("reference_number") ? " border-red-400" : "")}
+                  className={
+                    inputClass +
+                    (getError("reference_number") ? " border-red-400" : "")
+                  }
                 />
                 <FieldError message={getError("reference_number")} />
               </div>
@@ -174,8 +205,14 @@ ${
 
               <div className="min-w-0">
                 <p className="font-semibold">Upload GCash Receipt</p>
-                <p className="mt-1 text-xs text-gray-500 sm:text-sm">PDF, JPG, JPEG or PNG (Max 5 MB)</p>
-                {booking.receipt && <p className="mt-2 max-w-full break-all text-sm font-medium text-green-600 lg:mt-1">{booking.receipt.name}</p>}
+                <p className="mt-1 text-xs text-gray-500 sm:text-sm">
+                  PDF, JPG, JPEG or PNG (Max 5 MB)
+                </p>
+                {booking.receipt && (
+                  <p className="mt-2 max-w-full break-all text-sm font-medium text-green-600 lg:mt-1">
+                    {booking.receipt.name}
+                  </p>
+                )}
               </div>
 
               <input

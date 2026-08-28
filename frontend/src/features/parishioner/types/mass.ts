@@ -17,6 +17,7 @@ export interface IntentionGroup {
 
 export interface MassIntentionBooking {
   intention_date: Date | null;
+  mass_event_id: number;
   groups: IntentionGroup[];
   remarks: string;
   reference_number: string;

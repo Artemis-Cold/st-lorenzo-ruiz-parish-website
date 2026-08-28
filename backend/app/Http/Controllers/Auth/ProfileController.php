@@ -122,7 +122,8 @@ class ProfileController extends Controller
             'status' => $booking->status,
             'booking_date' => $booking->slot?->booking_date?->toDateString()
                 ?? $booking->massIntention?->intention_date?->toDateString(),
-            'start_time' => $booking->slot?->start_time,
+            'start_time' => $booking->slot?->start_time
+                ?? $booking->massIntention?->mass_starts_at?->format('H:i'),
             'end_time' => $booking->slot?->end_time,
             'created_at' => $booking->created_at,
         ];

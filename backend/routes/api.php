@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\MarriageBannController;
 use App\Http\Controllers\Api\MassIntentionBookingController;
 use App\Http\Controllers\Api\ParishCalendarController;
 use App\Http\Controllers\Api\ParishionerBookingController;
+use App\Http\Controllers\Api\ServiceFeeController;
 use App\Http\Controllers\Api\ServicePackageController;
 use App\Http\Controllers\Api\Staff\BookingAppointmentController;
 use App\Http\Controllers\Api\Staff\StaffAvailabilityController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\Api\Staff\StaffBookingController;
 use App\Http\Controllers\Api\Staff\StaffDashboardController;
 use App\Http\Controllers\Api\Staff\StaffDocumentRequestController;
 use App\Http\Controllers\Api\Staff\StaffMassIntentionController;
+use App\Http\Controllers\Api\Staff\StaffPricingController;
 use App\Http\Controllers\Api\Staff\StaffSettingsController;
 use App\Http\Controllers\Api\Staff\StaffTransactionController;
 use App\Http\Controllers\Api\WeddingBookingController;
@@ -108,6 +110,8 @@ Route::middleware(['auth:sanctum', 'staff'])
         Route::patch('/settings/profile', [StaffSettingsController::class, 'updateProfile']);
         Route::patch('/settings/password', [StaffSettingsController::class, 'updatePassword']);
         Route::post('/settings/staff', [StaffSettingsController::class, 'createStaff']);
+        Route::get('/settings/pricing', [StaffPricingController::class, 'index']);
+        Route::put('/settings/pricing', [StaffPricingController::class, 'update']);
         Route::get('/transactions', [StaffTransactionController::class, 'index']);
         Route::patch('/transactions/{bookingDocument}/status', [StaffTransactionController::class, 'updateStatus']);
         Route::get('/bookings', [StaffBookingController::class, 'index']);
@@ -129,6 +133,11 @@ Route::middleware(['auth:sanctum', 'staff'])
 Route::get(
     '/services/{code}/packages',
     [ServicePackageController::class, 'index']
+);
+
+Route::get(
+    '/services/{code}/fees',
+    [ServiceFeeController::class, 'index']
 );
 
 Route::get(

@@ -12,6 +12,7 @@ class ProductionSeeder extends Seeder
             ServiceSeeder::class,
             ServicePackageSeeder::class,
             WeddingPackageSeeder::class,
+            ServiceFeeSeeder::class,
             ProductionStaffSeeder::class,
         ]);
     }

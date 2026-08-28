@@ -7,7 +7,7 @@ function appendValue(formData: FormData, key: string, value: unknown): void {
   if (value instanceof File) {
     formData.append(key, value);
   } else if (value instanceof Date) {
-    formData.append(key, value.toISOString().split("T")[0]);
+    formData.append(key, formatLocalDate(value));
   } else if (Array.isArray(value)) {
     value.forEach((item, index) =>
       appendValue(formData, key + "[" + index + "]", item),
@@ -19,6 +19,14 @@ function appendValue(formData: FormData, key: string, value: unknown): void {
   } else {
     formData.append(key, value === null ? "" : String(value));
   }
+}
+
+function formatLocalDate(date: Date): string {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
 }
 
 export async function submitMassIntention(booking: MassIntentionBooking) {

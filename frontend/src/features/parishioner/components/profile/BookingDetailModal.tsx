@@ -282,6 +282,7 @@ export default function BookingDetailModal({
                 <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2"><p><span className="text-gray-500">Package:</span> {booking.package.name}</p><p><span className="text-gray-500">Total:</span> ₱{booking.package.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p></div>
                 {booking.package.inclusions.length > 0 && <p className="mt-2 text-sm"><span className="text-gray-500">Inclusions:</span> {booking.package.inclusions.join(", ")}</p>}
                 {booking.package.addons.length > 0 && <p className="mt-2 text-sm"><span className="text-gray-500">Add-ons:</span> {booking.package.addons.map((addon) => addon.name).join(", ")}</p>}
+                {booking.package.fees.length > 0 && <p className="mt-2 text-sm"><span className="text-gray-500">Additional fees:</span> {booking.package.fees.map((fee) => `${fee.name}${fee.quantity > 1 ? ` × ${fee.quantity}` : ""}`).join(", ")}</p>}
               </section>
             )}
 

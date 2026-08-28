@@ -1,4 +1,4 @@
-import { Menu, Bell } from "lucide-react";
+import { Menu } from "lucide-react";
 
 interface StaffTopbarProps {
   onMenuClick: () => void;
@@ -18,13 +18,6 @@ export default function StaffTopbar({ onMenuClick }: StaffTopbarProps) {
       <span className="font-serif text-sm font-bold uppercase tracking-wide text-[#B22222]">
         Parish Staff Portal
       </span>
-
-      <button
-        aria-label="Notifications"
-        className="rounded-lg p-2 text-[#B22222] hover:bg-[#B22222]/10"
-      >
-        <Bell size={20} />
-      </button>
     </header>
   );
 }

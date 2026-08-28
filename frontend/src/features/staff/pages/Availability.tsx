@@ -1,11 +1,17 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+} from "react";
 import {
   CalendarClock,
   CalendarPlus,
   CheckCircle2,
+  Filter,
   Power,
   Trash2,
-  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
@@ -19,23 +25,8 @@ import {
   type StaffAvailabilitySlot,
 } from "@/services/staffAvailabilityService";
 
-const localToday = () => {
-  const date = new Date();
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-};
-
 const WEEKDAY_SCHEDULE = "8:00 AM–12:00 PM and 1:00 PM–4:00 PM";
 const SUNDAY_SCHEDULE = "11:00 AM–12:00 PM and 1:00 PM–4:00 PM";
-const WEEKDAY_START_TIMES = [
-  "08:00",
-  "09:00",
-  "10:00",
-  "11:00",
-  "13:00",
-  "14:00",
-  "15:00",
-];
-const SUNDAY_START_TIMES = ["11:00", "13:00", "14:00", "15:00"];
 
 const longDate = (date: string) =>
   new Date(`${date}T00:00:00`).toLocaleDateString("en-US", {
@@ -45,25 +36,35 @@ const longDate = (date: string) =>
     year: "numeric",
   });
 
-const isSunday = (date: string) => new Date(`${date}T00:00:00`).getDay() === 0;
+const currentMonth = () => {
+  const date = new Date();
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
+    2,
+    "0",
+  )}`;
+};
 
 export default function Availability() {
   const [slots, setSlots] = useState<StaffAvailabilitySlot[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [dateDraft, setDateDraft] = useState("");
-  const [dates, setDates] = useState<string[]>([]);
+  const [scheduleMonth, setScheduleMonth] = useState(currentMonth());
+  const [viewMonth, setViewMonth] = useState(currentMonth());
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
-  const load = () =>
-    getStaffAvailability()
+  const load = useCallback((month: string) => {
+    setLoading(true);
+
+    return getStaffAvailability(month)
       .then(setSlots)
       .catch(() => toast.error("Unable to load availability."))
       .finally(() => setLoading(false));
+  }, []);
 
   useEffect(() => {
-    void load();
-  }, []);
+    void load(viewMonth);
+  }, [load, viewMonth]);
 
   const grouped = useMemo(
     () =>
@@ -76,63 +77,14 @@ export default function Availability() {
     [slots],
   );
 
-  const fullyOpenDates = useMemo(() => {
-    const openDates = new Set<string>();
-
-    for (const [date, daySlots] of grouped) {
-      const expectedTimes = isSunday(date)
-        ? SUNDAY_START_TIMES
-        : WEEKDAY_START_TIMES;
-      if (
-        expectedTimes.every((time) =>
-          daySlots.some((slot) => slot.startTime === time && slot.isActive),
-        )
-      ) {
-        openDates.add(date);
-      }
-    }
-
-    return openDates;
-  }, [grouped]);
-
-  const dateError =
-    errors.dates?.[0] ??
-    Object.entries(errors).find(([field]) =>
-      field.startsWith("dates."),
-    )?.[1]?.[0];
-
-  const addDate = () => {
-    if (!dateDraft) {
-      setErrors({ dates: ["Select a date before adding it."] });
-      return;
-    }
-
-    if (dates.includes(dateDraft)) {
-      setErrors({ dates: ["That date is already selected."] });
-      return;
-    }
-
-    if (fullyOpenDates.has(dateDraft)) {
-      setErrors({
-        dates: ["The complete schedule for this date is already open."],
-      });
-      return;
-    }
-
-    setDates((current) => [...current, dateDraft].sort());
-    setDateDraft("");
-    setErrors({});
-  };
-
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    const selectedDates =
-      dateDraft && !dates.includes(dateDraft)
-        ? [...dates, dateDraft].sort()
-        : dates;
 
-    if (selectedDates.length === 0) {
-      setErrors({ dates: ["Select at least one date."] });
+    if (!scheduleMonth) {
+      setErrors({
+        month: ["Select a month before opening the schedule."],
+      });
+
       return;
     }
 
@@ -140,20 +92,24 @@ export default function Availability() {
     setSaving(true);
 
     try {
-      const result = await createStaffAvailability(selectedDates);
-      if (result.datesCreated + result.datesRestored > 0) {
+      const result = await createStaffAvailability(scheduleMonth);
+
+      if (result.recordsCreated > 0) {
         toast.success(result.message);
       } else {
         toast.info(result.message);
       }
-      setDates([]);
-      setDateDraft("");
-      await load();
+
+      if (viewMonth === scheduleMonth) {
+        await load(scheduleMonth);
+      } else {
+        setViewMonth(scheduleMonth);
+      }
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status === 422) {
         setErrors(error.response.data.errors ?? {});
       } else {
-        toast.error("Unable to save availability. Please try again.");
+        toast.error("Unable to open the monthly schedule.");
       }
     } finally {
       setSaving(false);
@@ -219,78 +175,35 @@ export default function Availability() {
               <CalendarPlus className="text-[#B22222]" />
               <div>
                 <h2 className="font-serif text-xl font-bold">
-                  Open Schedule Dates
+                  Open Monthly Schedule
                 </h2>
                 <p className="mt-0.5 text-xs text-gray-500">
-                  Add one or several dates at once.
+                  Generate the fixed booking hours for an entire month.
                 </p>
               </div>
             </div>
 
             <label className="block text-sm font-medium">
-              Select date
-              <div className="mt-2 flex gap-2">
-                <input
-                  type="date"
-                  min={localToday()}
-                  value={dateDraft}
-                  onChange={(event) => {
-                    setDateDraft(event.target.value);
-                    setErrors({});
-                  }}
-                  className={`min-w-0 flex-1 rounded-xl border px-4 py-3 outline-none focus:border-[#B22222] ${dateError ? "border-red-400" : "border-gray-300"}`}
-                />
-                <button
-                  type="button"
-                  onClick={addDate}
-                  className="rounded-xl border border-[#B22222] px-4 font-semibold text-[#B22222] transition hover:bg-red-50"
-                >
-                  Add
-                </button>
-              </div>
-              {dateError && (
-                <p className="mt-1.5 text-xs text-red-600">{dateError}</p>
+              Schedule month
+              <input
+                type="month"
+                min={currentMonth()}
+                value={scheduleMonth}
+                onChange={(event) => {
+                  setScheduleMonth(event.target.value);
+                  setErrors((current) => {
+                    const next = { ...current };
+                    delete next.month;
+                    return next;
+                  });
+                }}
+                aria-invalid={Boolean(errors.month)}
+                className={`mt-2 w-full rounded-xl border px-4 py-3 outline-none transition focus:border-[#B22222] ${errors.month ? "border-red-400 bg-red-50/30" : "border-gray-300"}`}
+              />
+              {errors.month?.[0] && (
+                <p className="mt-1.5 text-xs text-red-600">{errors.month[0]}</p>
               )}
             </label>
-
-            {dates.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Selected dates ({dates.length})
-                </p>
-                <div className="max-h-40 space-y-2 overflow-y-auto pr-1 [scrollbar-color:#D6CEC4_transparent] scrollbar-thin">
-                  {dates.map((date) => (
-                    <div
-                      key={date}
-                      className="flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5"
-                    >
-                      <div>
-                        <p className="text-sm font-semibold text-gray-800">
-                          {longDate(date)}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {isSunday(date)
-                            ? "Sunday · 4 time slots"
-                            : "Weekday · 7 time slots"}
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        aria-label={`Remove ${date}`}
-                        onClick={() =>
-                          setDates((current) =>
-                            current.filter((item) => item !== date),
-                          )
-                        }
-                        className="rounded-lg p-1.5 text-gray-400 hover:bg-white hover:text-red-600"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             <div className="space-y-3 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-xs leading-5 text-blue-900">
               <div>
@@ -302,8 +215,9 @@ export default function Availability() {
                 <p>{SUNDAY_SCHEDULE}</p>
               </div>
               <p className="border-t border-blue-200 pt-3 text-blue-800">
-                Every opened time starts free for Baptism, Wedding, and Funeral.
-                Its first booking determines the service lock.
+                Existing schedules are kept unchanged. Every newly opened time
+                starts free for Baptism, Wedding, and Funeral; its first booking
+                determines the service lock.
               </p>
             </div>
 
@@ -311,19 +225,33 @@ export default function Availability() {
               disabled={saving}
               className="w-full rounded-xl bg-[#B22222] py-3 font-semibold text-white transition hover:bg-[#8F1B1B] disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {saving ? "Opening schedules..." : "Open Selected Dates"}
+              {saving ? "Opening monthly schedule..." : "Open Monthly Schedule"}
             </button>
           </form>
 
           <section className="overflow-hidden rounded-3xl border border-[#E7E2DA] bg-white shadow-sm">
-            <div className="border-b border-gray-100 px-6 py-5">
-              <h2 className="font-serif text-xl font-bold">
-                Upcoming Shared Slots
-              </h2>
-              <p className="mt-1 text-sm text-gray-500">
-                A free time is available to all three services until its first
-                booking.
-              </p>
+            <div className="flex flex-col gap-4 border-b border-gray-100 px-6 py-5 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="font-serif text-xl font-bold">
+                  Monthly Shared Slots
+                </h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  A free time is available to all three services until its first
+                  booking.
+                </p>
+              </div>
+              <label className="block shrink-0 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                <span className="flex items-center gap-1.5">
+                  <Filter size={13} /> View month
+                </span>
+                <input
+                  type="month"
+                  min={currentMonth()}
+                  value={viewMonth}
+                  onChange={(event) => setViewMonth(event.target.value)}
+                  className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium normal-case tracking-normal text-gray-800 outline-none transition focus:border-[#B22222] sm:w-44"
+                />
+              </label>
             </div>
             <div className="max-h-[65vh] min-h-64 overflow-y-auto overscroll-contain scroll-smooth px-6 py-5 pr-4 [scrollbar-color:#D6CEC4_transparent] scrollbar-thin">
               {loading ? (
@@ -332,7 +260,7 @@ export default function Availability() {
                 </p>
               ) : grouped.length === 0 ? (
                 <p className="rounded-2xl border border-dashed py-12 text-center text-gray-400">
-                  No upcoming availability configured.
+                  No availability configured for this month.
                 </p>
               ) : (
                 <div className="space-y-6">

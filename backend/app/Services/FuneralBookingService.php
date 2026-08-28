@@ -15,7 +15,8 @@ class FuneralBookingService
 {
     public function __construct(
         private BookingSlotAvailabilityService $availability,
-        private BookingRequirementService $requirements
+        private BookingRequirementService $requirements,
+        private BookingPricingService $pricing,
     ) {}
 
     public function store(array $data): Booking
@@ -34,16 +35,17 @@ class FuneralBookingService
             }
 
             $addonIds = $data['selected_addon_ids'] ?? [];
-            $validAddonIds = PackageAddon::query()
+            $addons = PackageAddon::query()
                 ->where('service_package_id', $package->id)
                 ->whereIn('id', $addonIds)
-                ->pluck('id')
-                ->all();
-            if (count($addonIds) !== count($validAddonIds)) {
+                ->get();
+            if (count($addonIds) !== $addons->count()) {
                 throw ValidationException::withMessages([
                     'selected_addon_ids' => 'One or more add-ons do not belong to this package.',
                 ]);
             }
+
+            $price = $this->pricing->calculate($package, $addons);
 
             $booking = Booking::create([
                 'booking_reference' => $this->reference(),
@@ -51,6 +53,8 @@ class FuneralBookingService
                 'service_id' => $slot->service_id,
                 'service_package_id' => $package->id,
                 'booking_slot_id' => $slot->id,
+                'total_amount' => $price['total'],
+                'pricing_snapshot' => $price['snapshot'],
                 'status' => 'pending',
                 'remarks' => $data['remarks'] ?? null,
             ]);
@@ -81,7 +85,7 @@ class FuneralBookingService
                 $deceased->children()->create($child);
             }
 
-            $booking->selectedAddons()->sync($validAddonIds);
+            $booking->selectedAddons()->sync($addons->modelKeys());
             foreach ($data['documents'] ?? [] as $document) {
                 /** @var UploadedFile $file */
                 $file = $document['file'];

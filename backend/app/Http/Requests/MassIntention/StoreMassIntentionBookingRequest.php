@@ -2,7 +2,10 @@
 
 namespace App\Http\Requests\MassIntention;
 
+use App\Models\Event;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreMassIntentionBookingRequest extends FormRequest
 {
@@ -14,7 +17,12 @@ class StoreMassIntentionBookingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'intention_date' => ['required', 'date', 'after_or_equal:today'],
+            'intention_date' => ['required', 'date', 'after:today'],
+            'mass_event_id' => [
+                'required',
+                'integer',
+                Rule::exists('events', 'id')->where('category', 'mass'),
+            ],
             'groups' => ['required', 'array', 'min:1'],
             'groups.*.type' => [
                 'required',
@@ -40,5 +48,24 @@ class StoreMassIntentionBookingRequest extends FormRequest
             ],
             'remarks' => ['nullable', 'string'],
         ];
+    }
+
+    /** @return array<int, callable(Validator): void> */
+    public function after(): array
+    {
+        return [function (Validator $validator): void {
+            if ($validator->errors()->hasAny(['intention_date', 'mass_event_id'])) {
+                return;
+            }
+
+            $event = Event::query()->find($this->integer('mass_event_id'));
+
+            if (! $event || $event->starts_at->toDateString() !== $this->input('intention_date')) {
+                $validator->errors()->add(
+                    'mass_event_id',
+                    'Select a Mass schedule that belongs to the chosen intention date.'
+                );
+            }
+        }];
     }
 }

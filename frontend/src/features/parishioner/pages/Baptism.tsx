@@ -19,6 +19,7 @@ import { submitBooking } from "../../../services/baptismBookingService";
 import type { BaptismBooking } from "../types/baptism";
 import type { BookingSlot } from "../../../services/bookingSlotService";
 import type { ServicePackage } from "../../../services/servicePackageService";
+import { getServiceFees } from "@/services/serviceFeeService";
 
 const stepLabels = [
   "Requirements",
@@ -105,9 +106,27 @@ export default function Baptism() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const [additionalSponsorPrice, setAdditionalSponsorPrice] = useState<number | null>(null);
 
   const [agreedToDeclaration, setAgreedToDeclaration] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    getServiceFees("baptism")
+      .then((fees) => {
+        const sponsorFee = fees.find((fee) => fee.code === "additional_sponsor");
+        if (active) setAdditionalSponsorPrice(sponsorFee?.amount ?? null);
+      })
+      .catch(() => {
+        if (active) setAdditionalSponsorPrice(null);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     window.scrollTo({
@@ -142,6 +161,7 @@ export default function Baptism() {
       selectedDate={selectedScheduleDate}
       selectedPackage={selectedPackage}
       setSelectedPackage={setSelectedPackage}
+      additionalSponsorPrice={additionalSponsorPrice}
       key="packages"
     />,
     <DetailsStep
@@ -156,6 +176,7 @@ export default function Baptism() {
       selectedDate={selectedScheduleDate}
       selectedSlot={selectedSlot}
       selectedPackage={selectedPackage}
+      additionalSponsorPrice={additionalSponsorPrice}
       agree={agreedToDeclaration}
       setAgree={setAgreedToDeclaration}
       key="confirmation"
@@ -310,6 +331,10 @@ export default function Baptism() {
 
     if (step === 4) {
       const detailsErrors = validateDetailsStep(booking);
+
+      if (booking.god_parents.length > 1 && additionalSponsorPrice === null) {
+        detailsErrors.pricing = ["The additional sponsor rate could not be loaded."];
+      }
 
       if (Object.keys(detailsErrors).length > 0) {
         setFieldErrors(detailsErrors);

@@ -246,6 +246,7 @@ class StaffBookingController extends Controller
             'funeral' => $booking->funeralDeceased?->informant_contact_number,
             default => $booking->baptizand?->contact_number,
         } ?: $booking->user->phone;
+        $pricing = $booking->pricing_snapshot;
 
         return [
             'id' => $booking->id,
@@ -259,16 +260,17 @@ class StaffBookingController extends Controller
             'status' => $booking->status,
             'details' => [
                 'submittedBy' => $booking->user->full_name,
-                'packageName' => $booking->package?->name,
-                'baseAmount' => (float) ($booking->package?->base_price ?? 0),
-                'inclusions' => $booking->package?->inclusions->map(fn ($inclusion) => [
+                'packageName' => $pricing['package']['name'] ?? $booking->package?->name,
+                'baseAmount' => (float) ($pricing['package']['basePrice'] ?? $booking->package?->base_price ?? 0),
+                'inclusions' => $pricing['inclusions'] ?? ($booking->package?->inclusions->map(fn ($inclusion) => [
                     'name' => $inclusion->name,
                     'price' => (float) $inclusion->price,
-                ])->values() ?? [],
-                'addons' => $booking->selectedAddons->map(fn ($addon) => [
+                ])->values() ?? []),
+                'addons' => $pricing['addons'] ?? $booking->selectedAddons->map(fn ($addon) => [
                     'name' => $addon->name,
                     'price' => (float) $addon->price,
                 ])->values(),
+                'fees' => $pricing['fees'] ?? [],
                 'schedule' => [
                     'date' => $booking->slot?->booking_date?->format('F j, Y'),
                     'startTime' => $booking->slot?->start_time,

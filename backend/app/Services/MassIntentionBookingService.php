@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Booking;
+use App\Models\Event;
 use App\Models\Service;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -11,8 +12,6 @@ use Illuminate\Validation\ValidationException;
 
 class MassIntentionBookingService
 {
-    private const AMOUNT_PER_ENTRY = 100;
-
     public function store(array $data): Booking
     {
         return DB::transaction(function () use ($data) {
@@ -21,6 +20,30 @@ class MassIntentionBookingService
             if (! $service || ! $service->is_active) {
                 throw ValidationException::withMessages([
                     'intention_date' => 'Mass Intention service is unavailable.',
+                ]);
+            }
+
+            $linePrice = $service->fees()
+                ->where('code', 'intention_line')
+                ->where('is_active', true)
+                ->value('amount');
+
+            if ($linePrice === null) {
+                throw ValidationException::withMessages([
+                    'groups' => 'The Mass Intention rate is currently unavailable.',
+                ]);
+            }
+
+            $linePrice = (float) $linePrice;
+
+            $massEvent = Event::query()
+                ->whereKey($data['mass_event_id'])
+                ->where('category', 'mass')
+                ->first();
+
+            if (! $massEvent || $massEvent->starts_at->toDateString() !== $data['intention_date']) {
+                throw ValidationException::withMessages([
+                    'mass_event_id' => 'The selected Mass schedule is unavailable for this date.',
                 ]);
             }
 
@@ -40,8 +63,12 @@ class MassIntentionBookingService
 
             $massIntention = $booking->massIntention()->create([
                 'intention_date' => $data['intention_date'],
+                'mass_event_id' => $massEvent->id,
+                'mass_schedule_title' => $massEvent->title,
+                'mass_starts_at' => $massEvent->starts_at,
+                'mass_location' => $massEvent->location,
                 'payment_reference' => $data['reference_number'],
-                'total_amount' => $entryCount * self::AMOUNT_PER_ENTRY,
+                'total_amount' => $entryCount * $linePrice,
             ]);
 
             foreach ($data['groups'] as $group) {
@@ -49,7 +76,7 @@ class MassIntentionBookingService
                     $massIntention->entries()->create([
                         'intention_type' => $group['type'],
                         'names' => $entry['names'],
-                        'amount' => self::AMOUNT_PER_ENTRY,
+                        'amount' => $linePrice,
                     ]);
                 }
             }

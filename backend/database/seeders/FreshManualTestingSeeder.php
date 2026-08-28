@@ -12,6 +12,7 @@ class FreshManualTestingSeeder extends Seeder
             ServiceSeeder::class,
             ServicePackageSeeder::class,
             WeddingPackageSeeder::class,
+            ServiceFeeSeeder::class,
             ManualTestAccountSeeder::class,
             ManualTestAvailabilitySeeder::class,
         ]);

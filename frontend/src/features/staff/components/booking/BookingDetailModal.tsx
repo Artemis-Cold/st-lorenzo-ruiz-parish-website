@@ -240,6 +240,13 @@ export default function BookingDetailModal({
                 value={`₱${addon.price.toLocaleString()}.00`}
               />
             ))}
+            {details.fees.map((fee) => (
+              <Detail
+                key={fee.name}
+                label={`${fee.name}${fee.quantity > 1 ? ` × ${fee.quantity}` : ""}`}
+                value={`₱${fee.subtotal.toLocaleString()}.00`}
+              />
+            ))}
             <div className="border-t border-[#E7E2DA] pt-3">
               <Detail
                 label="Total"

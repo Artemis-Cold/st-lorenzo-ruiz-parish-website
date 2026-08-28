@@ -7,6 +7,7 @@ use App\Models\BookingSlot;
 use App\Models\PackageAddon;
 use App\Models\ServicePackage;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -15,7 +16,8 @@ class WeddingBookingService
 {
     public function __construct(
         private BookingSlotAvailabilityService $availability,
-        private BookingRequirementService $requirements
+        private BookingRequirementService $requirements,
+        private BookingPricingService $pricing,
     ) {}
 
     public function store(array $data): Booking
@@ -26,10 +28,11 @@ class WeddingBookingService
                 $data['service_package_id'],
                 $slot
             );
-            $addonIds = $this->validateAddons(
+            $addons = $this->validateAddons(
                 $data['selected_addon_ids'] ?? [],
                 $package
             );
+            $price = $this->pricing->calculate($package, $addons);
 
             $booking = Booking::create([
                 'booking_reference' => $this->generateReference(),
@@ -37,6 +40,8 @@ class WeddingBookingService
                 'service_id' => $slot->service_id,
                 'service_package_id' => $package->id,
                 'booking_slot_id' => $slot->id,
+                'total_amount' => $price['total'],
+                'pricing_snapshot' => $price['snapshot'],
                 'status' => 'pending',
                 'remarks' => $data['remarks'] ?? null,
             ]);
@@ -51,7 +56,7 @@ class WeddingBookingService
 
             $this->createSponsorPairs($booking, $data['sponsors']);
 
-            $booking->selectedAddons()->sync($addonIds);
+            $booking->selectedAddons()->sync($addons->modelKeys());
             $this->uploadDocuments($booking, $data['documents'] ?? []);
 
             $booking->load([
@@ -90,23 +95,23 @@ class WeddingBookingService
         return $package;
     }
 
+    /** @return Collection<int, PackageAddon> */
     private function validateAddons(
         array $addonIds,
         ServicePackage $package
-    ): array {
-        $validIds = PackageAddon::query()
+    ): Collection {
+        $addons = PackageAddon::query()
             ->where('service_package_id', $package->id)
             ->whereIn('id', $addonIds)
-            ->pluck('id')
-            ->all();
+            ->get();
 
-        if (count($validIds) !== count($addonIds)) {
+        if ($addons->count() !== count($addonIds)) {
             throw ValidationException::withMessages([
                 'selected_addon_ids' => 'One or more selected add-ons do not belong to this package.',
             ]);
         }
 
-        return $validIds;
+        return $addons;
     }
 
     private function createApplicant(

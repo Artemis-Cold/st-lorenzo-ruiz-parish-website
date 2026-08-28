@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AxiosError } from "axios";
 import {
   CalendarDays,
+  Clock3,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
@@ -47,6 +48,13 @@ const statusOptions: Array<{ label: string; value: IntentionStatus | "" }> = [
   { label: "Cancelled", value: "cancelled" },
 ];
 
+const massTimeOptions = [
+  { label: "All Mass times", value: "" },
+  { label: "6:00 AM", value: "06:00" },
+  { label: "9:00 AM", value: "09:00" },
+  { label: "4:30 PM", value: "16:30" },
+];
+
 const emptyMeta: StaffMassIntentionPage["meta"] = {
   current_page: 1,
   last_page: 1,
@@ -79,6 +87,7 @@ const chunk = <T,>(items: T[], size: number): T[][] => {
 function drawFormHeader(
   doc: jsPDF,
   date: string,
+  time: string | null,
   logo: HTMLImageElement,
   continuation?: string,
 ) {
@@ -89,7 +98,7 @@ function drawFormHeader(
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.text(`DATE: ${date}`, 16, 31);
-  doc.text("TIME: ____________________", 125, 31);
+  doc.text(`TIME: ${time ?? "____________________"}`, 65, 31);
 
   if (continuation) {
     doc.setFontSize(7);
@@ -142,12 +151,10 @@ function exportParishMassForm(
   records: MassIntention[],
   logo: HTMLImageElement,
 ) {
-  const recordsByDate = new Map<string, MassIntention[]>();
+  const recordsBySchedule = new Map<string, MassIntention[]>();
   records.forEach((record) => {
-    recordsByDate.set(record.date, [
-      ...(recordsByDate.get(record.date) ?? []),
-      record,
-    ]);
+    const key = `${record.date}|${record.massStartsAt ?? "unscheduled"}`;
+    recordsBySchedule.set(key, [...(recordsBySchedule.get(key) ?? []), record]);
   });
 
   let hasPage = false;
@@ -156,9 +163,11 @@ function exportParishMassForm(
     hasPage = true;
   };
 
-  [...recordsByDate.entries()]
+  [...recordsBySchedule.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
-    .forEach(([date, dateRecords]) => {
+    .forEach(([, dateRecords]) => {
+      const date = dateRecords[0]?.date ?? "";
+      const massTime = dateRecords[0]?.massTime ?? null;
       const thanksgivingPages = chunk(
         dateRecords.filter((record) => record.type === "Thanksgiving"),
         30,
@@ -184,6 +193,7 @@ function exportParishMassForm(
         drawFormHeader(
           doc,
           date,
+          massTime,
           logo,
           thanksgivingPages.length > 1
             ? `Thanksgiving ${index + 1} of ${thanksgivingPages.length}`
@@ -208,6 +218,7 @@ function exportParishMassForm(
         drawFormHeader(
           doc,
           date,
+          massTime,
           logo,
           detailPageCount > 1
             ? `Other intentions ${index + 1} of ${detailPageCount}`
@@ -272,6 +283,7 @@ export default function MassIntentions() {
   const [intentionType, setIntentionType] = useState<IntentionType | "">("");
   const [status, setStatus] = useState<IntentionStatus | "">("paid");
   const [intentionDate, setIntentionDate] = useState(getToday);
+  const [massTime, setMassTime] = useState("");
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -293,6 +305,7 @@ export default function MassIntentions() {
         type: intentionType || undefined,
         status: status || undefined,
         date: intentionDate || undefined,
+        time: massTime || undefined,
         search: debouncedSearch || undefined,
         page,
         perPage: 10,
@@ -320,7 +333,7 @@ export default function MassIntentions() {
       });
 
     return () => controller.abort();
-  }, [intentionType, status, intentionDate, debouncedSearch, page]);
+  }, [intentionType, status, intentionDate, massTime, debouncedSearch, page]);
 
   const currentFilters = (): Omit<
     StaffMassIntentionFilters,
@@ -329,6 +342,7 @@ export default function MassIntentions() {
     type: intentionType || undefined,
     status: status || undefined,
     date: intentionDate || undefined,
+    time: massTime || undefined,
     search: debouncedSearch || undefined,
   });
 
@@ -339,6 +353,7 @@ export default function MassIntentions() {
     setIntentionType("");
     setStatus("paid");
     setIntentionDate("");
+    setMassTime("");
     setPage(1);
   };
 
@@ -375,7 +390,7 @@ export default function MassIntentions() {
   };
 
   const hasFilters = Boolean(
-    search || intentionType || status !== "paid" || intentionDate,
+    search || intentionType || status !== "paid" || intentionDate || massTime,
   );
 
   return (
@@ -420,7 +435,7 @@ export default function MassIntentions() {
         </div>
 
         <section className="rounded-3xl border border-[#E7E2DA] bg-white p-5 shadow-sm sm:p-6">
-          <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-[minmax(240px,1fr)_180px_160px_170px_110px_140px]">
+          <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-[minmax(220px,1fr)_170px_150px_165px_145px_105px_140px]">
             <label className="relative block min-w-0">
               <span className="sr-only">Search mass intentions</span>
               <Search
@@ -495,6 +510,29 @@ export default function MassIntentions() {
                 }}
                 className="h-11 w-full rounded-xl border border-[#E7E2DA] bg-white pl-10 pr-3 text-sm text-gray-700 outline-none transition focus:border-[#B22222]"
               />
+            </label>
+
+            <label className="relative block min-w-0">
+              <span className="sr-only">Filter by Mass time</span>
+              <Clock3
+                size={16}
+                className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+              />
+              <select
+                value={massTime}
+                onChange={(event) => {
+                  setLoading(true);
+                  setMassTime(event.target.value);
+                  setPage(1);
+                }}
+                className="h-11 w-full appearance-none rounded-xl border border-[#E7E2DA] bg-white pl-10 pr-3 text-sm text-gray-700 outline-none transition focus:border-[#B22222]"
+              >
+                {massTimeOptions.map((option) => (
+                  <option key={option.value || "all"} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
             </label>
 
             <button
@@ -610,6 +648,11 @@ export default function MassIntentions() {
                       </td>
                       <td className="whitespace-nowrap px-5 py-4 tabular-nums text-gray-600">
                         {item.date}
+                        {item.massTime && (
+                          <span className="mt-0.5 flex items-center gap-1 text-[11px] font-medium text-[#B22222]">
+                            <Clock3 size={11} /> {item.massTime}
+                          </span>
+                        )}
                       </td>
                       <td className="max-w-64 px-5 py-4">
                         <p

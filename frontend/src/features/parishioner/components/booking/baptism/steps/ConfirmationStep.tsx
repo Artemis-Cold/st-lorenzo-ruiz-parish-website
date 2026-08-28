@@ -15,6 +15,7 @@ interface ConfirmationStepProps {
   selectedDate: Date | null;
   selectedSlot: BookingSlot | null;
   selectedPackage: ServicePackage | null;
+  additionalSponsorPrice: number | null;
   agree: boolean;
   setAgree: Dispatch<SetStateAction<boolean>>;
 }
@@ -25,6 +26,7 @@ export default function ConfirmationStep({
   selectedDate,
   selectedSlot,
   selectedPackage,
+  additionalSponsorPrice,
   agree,
   setAgree,
 }: ConfirmationStepProps) {
@@ -34,7 +36,11 @@ export default function ConfirmationStep({
 
       <ScheduleSummary selectedDate={selectedDate} selectedSlot={selectedSlot} />
 
-      <PackageSummary selectedPackage={selectedPackage} />
+      <PackageSummary
+        selectedPackage={selectedPackage}
+        additionalSponsorCount={Math.max(booking.god_parents.length * 2 - 2, 0)}
+        additionalSponsorPrice={additionalSponsorPrice}
+      />
 
       <DetailsStep booking={booking} setBooking={setBooking} readOnly />
 

@@ -115,11 +115,11 @@ export default function BookingCalendar({
     a.getMonth() === b.getMonth() &&
     a.getFullYear() === b.getFullYear();
 
-  const isPastDate = (date: Date) => {
+  const isBeforeEarliestBookingDate = (date: Date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    return date < today;
+    return date <= today;
   };
 
   const today = new Date();
@@ -177,13 +177,13 @@ export default function BookingCalendar({
 
               const booking = bookings[formatKey(cellDate)];
 
-              const isSelected = isSameDate(selectedDate, cellDate);
-
               const isToday = isSameDate(new Date(), cellDate);
 
               const disabled =
-                isPastDate(cellDate) ||
+                isBeforeEarliestBookingDate(cellDate) ||
                 (!!service && (!booking || booking.status === "full"));
+              const isSelected =
+                !disabled && isSameDate(selectedDate, cellDate);
 
               return (
                 <button
