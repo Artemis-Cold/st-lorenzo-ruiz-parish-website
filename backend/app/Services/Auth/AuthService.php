@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthService
 {
+    private const TERMS_VERSION = '2026-08-28';
+
     /**
      * Register a new parishioner.
      */
@@ -37,6 +39,8 @@ class AuthService
             'zip_code' => $data['zip_code'] ?? null,
 
             'role' => 'parishioner',
+            'terms_accepted_at' => now(),
+            'terms_version' => self::TERMS_VERSION,
         ]);
 
         /*

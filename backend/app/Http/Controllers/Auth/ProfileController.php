@@ -42,10 +42,16 @@ class ProfileController extends Controller
     public function update(UpdateProfileRequest $request): JsonResponse
     {
         $user = $request->user();
-        $user->update([
-            ...$request->validated(),
+        $validated = $request->validated();
+        $phoneChanged = $validated['phone'] !== $user->phone;
+
+        $user->forceFill([
+            ...$validated,
             'profile_completed' => true,
-        ]);
+            'phone_verified_at' => $phoneChanged
+                ? null
+                : $user->phone_verified_at,
+        ])->save();
 
         return response()->json([
             'message' => 'Profile updated successfully.',

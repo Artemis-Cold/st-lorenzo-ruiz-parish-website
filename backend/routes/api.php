@@ -25,6 +25,7 @@ use App\Http\Controllers\Api\WeddingBookingController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\PasswordResetOtpController;
+use App\Http\Controllers\Auth\PhoneVerificationController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\StaffLoginController;
@@ -56,31 +57,32 @@ Route::prefix('auth')->group(function () {
 });
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('phone.verified')->group(function () {
+        Route::post(
+            '/bookings/baptism',
+            [BaptismBookingController::class, 'store']
+        );
 
-    Route::post(
-        '/bookings/baptism',
-        [BaptismBookingController::class, 'store']
-    );
+        Route::post(
+            '/bookings/wedding',
+            [WeddingBookingController::class, 'store']
+        );
 
-    Route::post(
-        '/bookings/wedding',
-        [WeddingBookingController::class, 'store']
-    );
+        Route::post(
+            '/bookings/funeral',
+            [FuneralBookingController::class, 'store']
+        );
 
-    Route::post(
-        '/bookings/funeral',
-        [FuneralBookingController::class, 'store']
-    );
+        Route::post(
+            '/bookings/mass-intention',
+            [MassIntentionBookingController::class, 'store']
+        );
 
-    Route::post(
-        '/bookings/mass-intention',
-        [MassIntentionBookingController::class, 'store']
-    );
-
-    Route::post(
-        '/bookings/document-request',
-        [DocumentRequestBookingController::class, 'store']
-    );
+        Route::post(
+            '/bookings/document-request',
+            [DocumentRequestBookingController::class, 'store']
+        );
+    });
 
     Route::get('/bookings/{booking}', [ParishionerBookingController::class, 'show']);
     Route::post('/bookings/{booking}/documents', [ParishionerBookingController::class, 'uploadDocument']);
@@ -92,6 +94,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/profile/password', [ProfileController::class, 'updatePassword']);
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::post('/profile/photo', [ProfileController::class, 'updatePhoto']);
+    Route::post('/profile/phone-verification/otp', [PhoneVerificationController::class, 'send'])
+        ->middleware('throttle:3,10');
+    Route::post('/profile/phone-verification/verify', [PhoneVerificationController::class, 'verify'])
+        ->middleware('throttle:10,1');
 
 });
 

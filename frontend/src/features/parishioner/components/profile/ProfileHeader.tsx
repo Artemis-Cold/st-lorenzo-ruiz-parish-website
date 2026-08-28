@@ -7,6 +7,8 @@ import {
   Camera,
   KeyRound,
   ContactRound,
+  ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 
 interface ProfileHeaderProps {
@@ -19,6 +21,8 @@ interface ProfileHeaderProps {
   onChangePhoto?: () => void;
   onViewInformation?: () => void;
   onChangePassword?: () => void;
+  phoneVerified: boolean;
+  onVerifyPhone?: () => void;
   activeTab: "current" | "recent" | "documents";
   onTabChange: (tab: "current" | "recent" | "documents") => void;
 }
@@ -33,6 +37,8 @@ export default function ProfileHeader({
   onChangePhoto,
   onViewInformation,
   onChangePassword,
+  phoneVerified,
+  onVerifyPhone,
   activeTab,
   onTabChange,
 }: ProfileHeaderProps) {
@@ -84,6 +90,20 @@ export default function ProfileHeader({
               <div className="flex items-start gap-2">
                 <Phone size={18} />
                 <span>{phone}</span>
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    phoneVerified
+                      ? "bg-emerald-100 text-emerald-800"
+                      : "bg-amber-100 text-amber-900"
+                  }`}
+                >
+                  {phoneVerified ? (
+                    <ShieldCheck size={13} />
+                  ) : (
+                    <ShieldAlert size={13} />
+                  )}
+                  {phoneVerified ? "Verified" : "Unverified"}
+                </span>
               </div>
 
               <div className="flex items-start gap-2">
@@ -93,6 +113,16 @@ export default function ProfileHeader({
             </div>
 
             <div className="mt-6 flex flex-wrap justify-center gap-3 md:justify-start">
+              {!phoneVerified && (
+                <button
+                  type="button"
+                  onClick={onVerifyPhone}
+                  className="inline-flex items-center gap-2 rounded-xl bg-amber-300 px-5 py-2.5 font-semibold text-amber-950 transition hover:bg-amber-200"
+                >
+                  <ShieldCheck size={18} />
+                  Verify Mobile Number
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onViewInformation}

@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
 import StaffProtectedRoute from "./components/StaffProtectedRoute";
+import PhoneVerifiedRoute from "./components/PhoneVerifiedRoute";
 import Home from "./features/home/pages/Home";
 
 import Login from "./features/auth/pages/Login";
@@ -57,15 +58,13 @@ function App() {
           <Route path="/help" element={<Help />} />
           <Route path="/about" element={<AboutParish />} />
 
-          <Route path="/services/wedding" element={<Wedding />} />
-
-          <Route path="/services/funeral" element={<Funeral />} />
-
-          <Route path="/services/baptism" element={<Baptism />} />
-
-          <Route path="/services/mass-intention" element={<Mass />} />
-
-          <Route path="/services/document-request" element={<Document />} />
+          <Route element={<PhoneVerifiedRoute />}>
+            <Route path="/services/wedding" element={<Wedding />} />
+            <Route path="/services/funeral" element={<Funeral />} />
+            <Route path="/services/baptism" element={<Baptism />} />
+            <Route path="/services/mass-intention" element={<Mass />} />
+            <Route path="/services/document-request" element={<Document />} />
+          </Route>
 
           <Route path="/ar-navigation" element={<ARTest />} />
         </Route>

@@ -6,7 +6,7 @@ interface StaffTopbarProps {
 
 export default function StaffTopbar({ onMenuClick }: StaffTopbarProps) {
   return (
-    <header className="flex items-center justify-between border-b border-[#E7E2DA] bg-white/80 px-4 py-3 backdrop-blur lg:hidden">
+    <header className="flex items-center border-b border-[#E7E2DA] bg-white/80 px-4 py-3 backdrop-blur gap-4 lg:hidden">
       <button
         onClick={onMenuClick}
         aria-label="Open menu"

@@ -64,4 +64,47 @@ class ParishionerAccountSecurityTest extends TestCase
 
         $this->assertSame(1, User::where('username', 'johndoe')->count());
     }
+
+    public function test_registration_rejects_a_duplicate_normalized_phone_number(): void
+    {
+        User::factory()->create(['phone' => '09171234567']);
+
+        $this->postJson('/api/auth/register', [
+            'username' => 'anotheruser',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'first_name' => 'Maria',
+            'last_name' => 'Santos',
+            'phone' => '0917 123 4567',
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors(['phone']);
+
+        $this->assertSame(1, User::where('phone', '09171234567')->count());
+    }
+
+    public function test_registration_requires_terms_and_conditions_acceptance(): void
+    {
+        $payload = [
+            'username' => 'newparishioner',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
+            'first_name' => 'Maria',
+            'last_name' => 'Santos',
+            'phone' => '09181234567',
+        ];
+
+        $this->postJson('/api/auth/register', $payload)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['terms_accepted']);
+
+        $this->postJson('/api/auth/register', [
+            ...$payload,
+            'terms_accepted' => true,
+        ])->assertCreated();
+
+        $user = User::where('username', 'newparishioner')->firstOrFail();
+
+        $this->assertNotNull($user->terms_accepted_at);
+        $this->assertSame('2026-08-28', $user->terms_version);
+    }
 }

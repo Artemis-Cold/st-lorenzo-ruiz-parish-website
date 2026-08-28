@@ -6,6 +6,11 @@ export default function WelcomeBanner() {
 
   if (!user) return null;
 
+  const now = new Date();
+  const hour = now.getHours();
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+
   return (
     <section
       className="relative overflow-hidden rounded-3xl bg-cover bg-center shadow-lg"
@@ -17,11 +22,11 @@ export default function WelcomeBanner() {
 
       <div className="relative z-10 flex min-h-60 flex-col justify-center px-6 py-10 text-white sm:px-10">
         <span className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-[#D4AF37]">
-          Welcome
+          {greeting}
         </span>
 
         <h1 className="font-serif text-3xl font-bold sm:text-4xl">
-          Welcome Back, {user.first_name}!
+          Welcome, {user.first_name}!
         </h1>
 
         <p className="mt-4 max-w-xl text-gray-200">

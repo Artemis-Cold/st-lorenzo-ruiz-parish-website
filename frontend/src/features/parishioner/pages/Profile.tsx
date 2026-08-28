@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 
 import DashboardLayout from "../components/DashboardLayout";
 import ProfileHeader from "../components/profile/ProfileHeader";
@@ -10,6 +11,7 @@ import ProfileEditForm from "../components/profile/ProfileEditForm";
 import BookingDetailModal from "../components/profile/BookingDetailModal";
 import PasswordSettingsCard from "../components/profile/PasswordSettingsCard";
 import ProfilePhotoModal from "../components/profile/ProfilePhotoModal";
+import PhoneVerificationModal from "../components/profile/PhoneVerificationModal";
 import {
   getProfile,
   type ProfileBooking,
@@ -20,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { User } from "@/types/user";
 
 export default function Profile() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user: authenticatedUser, refreshUser } = useAuth();
   const [user, setUser] = useState<User | null>(authenticatedUser);
   const [bookings, setBookings] = useState<ProfileBooking[]>([]);
@@ -32,6 +35,9 @@ export default function Profile() {
   const [editingPhoto, setEditingPhoto] = useState(false);
   const [viewingInformation, setViewingInformation] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [verifyingPhone, setVerifyingPhone] = useState(
+    () => searchParams.get("verifyPhone") === "1",
+  );
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(
     null,
   );
@@ -113,6 +119,15 @@ export default function Profile() {
     setEditing(false);
   };
 
+  const closePhoneVerification = () => {
+    setVerifyingPhone(false);
+    if (searchParams.has("verifyPhone")) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("verifyPhone");
+      setSearchParams(nextParams, { replace: true });
+    }
+  };
+
   return (
     <DashboardLayout>
       {error && (
@@ -131,6 +146,8 @@ export default function Profile() {
         onChangePhoto={() => setEditingPhoto(true)}
         onViewInformation={() => setViewingInformation(true)}
         onChangePassword={() => setChangingPassword(true)}
+        phoneVerified={user.phone_verified}
+        onVerifyPhone={() => setVerifyingPhone(true)}
         activeTab={activeTab}
         onTabChange={setActiveTab}
       />
@@ -167,6 +184,16 @@ export default function Profile() {
 
       {changingPassword && (
         <PasswordSettingsCard onClose={() => setChangingPassword(false)} />
+      )}
+
+      {verifyingPhone && !user.phone_verified && (
+        <PhoneVerificationModal
+          phone={user.phone}
+          onClose={closePhoneVerification}
+          onVerified={async () => {
+            await Promise.all([loadProfile(), refreshUser()]);
+          }}
+        />
       )}
 
       <div className="mt-8">

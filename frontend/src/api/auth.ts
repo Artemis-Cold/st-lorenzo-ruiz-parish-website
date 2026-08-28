@@ -124,6 +124,27 @@ export const updateParishionerPassword = async (data: {
   return response.data;
 };
 
+export const requestPhoneVerificationOtp = async (): Promise<{
+  message: string;
+}> => {
+  const response = await api.post<{ message: string }>(
+    "/profile/phone-verification/otp",
+  );
+
+  return response.data;
+};
+
+export const verifyPhoneNumber = async (
+  otp: string,
+): Promise<{ message: string; user: User }> => {
+  const response = await api.post<{ message: string; user: User }>(
+    "/profile/phone-verification/verify",
+    { otp },
+  );
+
+  return response.data;
+};
+
 export interface ProfileBooking {
   id: number;
   booking_reference: string;

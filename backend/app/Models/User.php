@@ -40,6 +40,8 @@ class User extends Authenticatable
         'role',
         'is_active',
         'profile_completed',
+        'terms_accepted_at',
+        'terms_version',
     ];
 
     protected $hidden = [
@@ -52,6 +54,7 @@ class User extends Authenticatable
         return [
             'birth_date' => 'date',
             'phone_verified_at' => 'datetime',
+            'terms_accepted_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
             'profile_completed' => 'boolean',

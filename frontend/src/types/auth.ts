@@ -13,6 +13,8 @@ export interface RegisterRequest {
 
   password_confirmation: string;
 
+  terms_accepted: boolean;
+
   first_name: string;
 
   middle_initial?: string;

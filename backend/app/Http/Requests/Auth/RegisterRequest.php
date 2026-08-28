@@ -45,6 +45,10 @@ class RegisterRequest extends FormRequest
                 'confirmed',
                 'min:8',
             ],
+            'terms_accepted' => [
+                'required',
+                'accepted',
+            ],
 
             'first_name' => [
                 'required',
@@ -76,6 +80,13 @@ class RegisterRequest extends FormRequest
             'zip_code' => ['nullable'],
             'birth_date' => ['nullable', 'date'],
             'gender' => ['nullable'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'terms_accepted.accepted' => 'You must accept the Terms and Conditions to create an account.',
         ];
     }
 }

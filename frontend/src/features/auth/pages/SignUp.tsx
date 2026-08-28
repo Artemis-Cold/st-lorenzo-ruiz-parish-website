@@ -9,6 +9,7 @@ import AuthButton from "../components/AuthButton";
 import PasswordField from "../components/PasswordField";
 import PhoneField from "../components/PhoneField";
 import TextField from "../components/TextField";
+import TermsAndConditionsDialog from "../components/TermsAndConditionsDialog";
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -20,6 +21,8 @@ export default function SignUp() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -39,6 +42,7 @@ export default function SignUp() {
         username,
         password,
         password_confirmation: passwordConfirmation,
+        terms_accepted: termsAccepted,
       });
 
       navigate("/dashboard");
@@ -153,6 +157,43 @@ export default function SignUp() {
           )}
         </div>
 
+        <div>
+          <div className="flex items-start gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 transition hover:border-gray-300">
+            <input
+              id="terms-accepted"
+              type="checkbox"
+              checked={termsAccepted}
+              onChange={(event) => {
+                setTermsAccepted(event.target.checked);
+                setFieldErrors((current) => ({
+                  ...current,
+                  terms_accepted: [],
+                }));
+              }}
+              disabled={submitting}
+              className="mt-0.5 size-4 shrink-0 accent-[#B22222]"
+            />
+            <div className="text-sm leading-5 text-gray-600">
+              <label htmlFor="terms-accepted" className="cursor-pointer">
+                I have read and agree to the
+              </label>{" "}
+              <button
+                type="button"
+                onClick={() => setTermsOpen(true)}
+                className="font-semibold text-[#B22222] underline decoration-red-200 underline-offset-2 hover:text-[#981B1B]"
+              >
+                Terms and Conditions
+              </button>
+              .
+            </div>
+          </div>
+          {fieldErrors.terms_accepted?.[0] && (
+            <p className="mt-1 text-sm text-red-600">
+              {fieldErrors.terms_accepted[0]}
+            </p>
+          )}
+        </div>
+
         <AuthButton type="submit" disabled={submitting}>
           {submitting ? "Creating Account..." : "Create Account"}
         </AuthButton>
@@ -164,6 +205,8 @@ export default function SignUp() {
           Login
         </Link>
       </p>
+
+      <TermsAndConditionsDialog open={termsOpen} onOpenChange={setTermsOpen} />
     </AuthLayout>
   );
 }

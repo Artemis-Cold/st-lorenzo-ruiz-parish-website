@@ -7,6 +7,13 @@ use Illuminate\Validation\Rule;
 
 class UpdateProfileRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'phone' => preg_replace('/\D+/', '', (string) $this->input('phone')),
+        ]);
+    }
+
     public function authorize(): bool
     {
         return true;
