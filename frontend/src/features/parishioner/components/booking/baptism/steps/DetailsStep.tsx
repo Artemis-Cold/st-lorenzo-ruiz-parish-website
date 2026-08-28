@@ -532,7 +532,6 @@ ${
                 />
                 <FieldError message={getError("baptizand.contact_number")} />
               </div>
-
             </div>
           </section>
 

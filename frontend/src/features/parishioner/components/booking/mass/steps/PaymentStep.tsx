@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from "react";
 import { UploadCloud, ReceiptText } from "lucide-react";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { BookingCard } from "../..";
 
 import type { MassIntentionBooking } from "../../../../types/mass";
@@ -62,11 +63,17 @@ ${
               <div>
                 <h3 className="font-semibold">Mass Intention Summary</h3>
 
-                <p className="text-sm text-gray-500">
-                  {linePrice === null
-                    ? "Loading current rate..."
-                    : `₱${linePrice.toLocaleString(undefined, { minimumFractionDigits: 2 })} per intention line`}
-                </p>
+                {linePrice === null ? (
+                  <Skeleton className="mt-1 h-4 w-44" />
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    ₱
+                    {linePrice.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}{" "}
+                    per intention line
+                  </p>
+                )}
               </div>
             </div>
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, CircleHelp, Cross, Music2 } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { BookingCard } from "../..";
 import {
   getServicePackages,
@@ -29,12 +30,30 @@ export default function PackagesStep(props: Props) {
 
   useEffect(() => {
     if (selectedPackage || booking.service_package_id === 0) return;
-    const match = packages.find((item) => item.id === booking.service_package_id);
+    const match = packages.find(
+      (item) => item.id === booking.service_package_id,
+    );
     if (match) setSelectedPackage(match);
-  }, [booking.service_package_id, packages, selectedPackage, setSelectedPackage]);
+  }, [
+    booking.service_package_id,
+    packages,
+    selectedPackage,
+    setSelectedPackage,
+  ]);
 
   if (loading) {
-    return <BookingCard title="Packages">Loading packages...</BookingCard>;
+    return (
+      <BookingCard title="Packages">
+        <div
+          aria-label="Loading funeral packages"
+          aria-busy="true"
+          className="grid grid-cols-2 gap-3 sm:gap-5"
+        >
+          <Skeleton className="h-56 rounded-2xl" />
+          <Skeleton className="h-56 rounded-2xl" />
+        </div>
+      </BookingCard>
+    );
   }
 
   return (
@@ -99,7 +118,9 @@ export default function PackagesStep(props: Props) {
               <CircleHelp className="size-6 text-[#B22222] sm:size-8" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-lg font-semibold sm:text-2xl">Need help choosing?</h3>
+              <h3 className="text-lg font-semibold sm:text-2xl">
+                Need help choosing?
+              </h3>
               <p className="mt-1 text-sm leading-5 text-[#B22222] sm:text-base">
                 Contact the Parish Office for assistance with your package.
               </p>

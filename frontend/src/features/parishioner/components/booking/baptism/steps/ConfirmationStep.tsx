@@ -34,7 +34,10 @@ export default function ConfirmationStep({
     <div className="space-y-8">
       <ConfirmationNotice />
 
-      <ScheduleSummary selectedDate={selectedDate} selectedSlot={selectedSlot} />
+      <ScheduleSummary
+        selectedDate={selectedDate}
+        selectedSlot={selectedSlot}
+      />
 
       <PackageSummary
         selectedPackage={selectedPackage}

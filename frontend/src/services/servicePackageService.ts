@@ -24,11 +24,9 @@ export interface ServicePackage {
 }
 
 export async function getServicePackages(
-  serviceCode: string
+  serviceCode: string,
 ): Promise<ServicePackage[]> {
-  const { data } = await api.get(
-    `/services/${serviceCode}/packages`
-  );
+  const { data } = await api.get(`/services/${serviceCode}/packages`);
 
   return data;
 }

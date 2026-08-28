@@ -56,9 +56,7 @@ export default function FileUploadField({
         }}
       />
 
-      {sizeError && (
-        <p className="mb-2 text-sm text-red-600">{sizeError}</p>
-      )}
+      {sizeError && <p className="mb-2 text-sm text-red-600">{sizeError}</p>}
 
       {readOnly ? (
         <div className="rounded-2xl border border-gray-200 bg-gray-50 p-5">
@@ -67,7 +65,9 @@ export default function FileUploadField({
               <FileText className="mt-1 shrink-0 text-green-600" size={28} />
 
               <div className="min-w-0 flex-1">
-                <p className="break-all font-semibold text-gray-800">{file.name}</p>
+                <p className="break-all font-semibold text-gray-800">
+                  {file.name}
+                </p>
 
                 <p className="text-sm text-gray-500">
                   {(file.size / 1024 / 1024).toFixed(2)} MB

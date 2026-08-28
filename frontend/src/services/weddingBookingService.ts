@@ -22,10 +22,19 @@ function buildFormData(booking: WeddingBooking): FormData {
     formData.append(prefix + "[middle_initial]", person.middle_initial);
     formData.append(prefix + "[last_name]", person.last_name);
     formData.append(prefix + "[address]", person.address);
-    formData.append(prefix + "[age]", person.age === null ? "" : String(person.age));
+    formData.append(
+      prefix + "[age]",
+      person.age === null ? "" : String(person.age),
+    );
     formData.append(prefix + "[contact_number]", person.contact_number);
-    formData.append(prefix + "[church][baptized_in]", person.church.baptized_in);
-    formData.append(prefix + "[church][confirmed_in]", person.church.confirmed_in);
+    formData.append(
+      prefix + "[church][baptized_in]",
+      person.church.baptized_in,
+    );
+    formData.append(
+      prefix + "[church][confirmed_in]",
+      person.church.confirmed_in,
+    );
 
     (["father", "mother"] as const).forEach((parent) => {
       formData.append(

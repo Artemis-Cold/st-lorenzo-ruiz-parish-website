@@ -40,12 +40,14 @@ export interface StaffAnnouncementPage {
   };
 }
 
-export async function getStaffAnnouncements(params: {
-  group?: StaffAnnouncementGroup;
-  search?: string;
-  page?: number;
-  perPage?: number;
-} = {}): Promise<StaffAnnouncementPage> {
+export async function getStaffAnnouncements(
+  params: {
+    group?: StaffAnnouncementGroup;
+    search?: string;
+    page?: number;
+    perPage?: number;
+  } = {},
+): Promise<StaffAnnouncementPage> {
   const response = await api.get<StaffAnnouncementPage>(
     "/staff/announcements",
     { params },

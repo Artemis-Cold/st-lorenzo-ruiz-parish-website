@@ -54,22 +54,15 @@ const intentionOptions = [
   color: string;
 }[];
 
-export default function IntentionSelector({
-  booking,
-  setBooking,
-}: Props) {
+export default function IntentionSelector({ booking, setBooking }: Props) {
   const toggleIntention = (type: IntentionType) => {
     setBooking((prev) => {
-      const exists = prev.groups.some(
-        (group) => group.type === type,
-      );
+      const exists = prev.groups.some((group) => group.type === type);
 
       if (exists) {
         return {
           ...prev,
-          groups: prev.groups.filter(
-            (group) => group.type !== type,
-          ),
+          groups: prev.groups.filter((group) => group.type !== type),
         };
       }
 
@@ -139,9 +132,7 @@ export default function IntentionSelector({
                   `}
                 >
                   <div className="flex items-center gap-3">
-                    <div
-                      className={`rounded-lg bg-red-50 p-2 ${item.color}`}
-                    >
+                    <div className={`rounded-lg bg-red-50 p-2 ${item.color}`}>
                       <Icon size={20} />
                     </div>
 
@@ -155,15 +146,9 @@ export default function IntentionSelector({
                   </div>
 
                   {selected ? (
-                    <CircleCheckBig
-                      size={22}
-                      className="text-[#B22222]"
-                    />
+                    <CircleCheckBig size={22} className="text-[#B22222]" />
                   ) : (
-                    <Circle
-                      size={22}
-                      className="text-gray-400"
-                    />
+                    <Circle size={22} className="text-gray-400" />
                   )}
                 </button>
               );
@@ -173,9 +158,8 @@ export default function IntentionSelector({
 
         <div className="rounded-xl border border-red-200 bg-red-50 p-4">
           <p className="text-sm text-[#B22222]">
-            You may select <strong>multiple intention types</strong>.
-            Each selected intention will have its own list of names in the
-            next step.
+            You may select <strong>multiple intention types</strong>. Each
+            selected intention will have its own list of names in the next step.
           </p>
         </div>
       </div>

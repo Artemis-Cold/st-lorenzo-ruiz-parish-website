@@ -27,7 +27,9 @@ export default function ScheduleSummary(props: Props) {
           <p className="text-sm text-gray-500">Time</p>
           <p className="font-semibold">
             {props.selectedSlot
-              ? props.selectedSlot.start_time + " - " + props.selectedSlot.end_time
+              ? props.selectedSlot.start_time +
+                " - " +
+                props.selectedSlot.end_time
               : "-"}
           </p>
         </div>

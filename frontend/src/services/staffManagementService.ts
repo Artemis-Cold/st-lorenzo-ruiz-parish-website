@@ -1,8 +1,5 @@
 import api from "@/api/axios";
-import type {
-  Booking,
-  BookingStatus,
-} from "@/features/staff/types/booking";
+import type { Booking, BookingStatus } from "@/features/staff/types/booking";
 import type {
   IntentionType,
   MassIntention,
@@ -58,7 +55,11 @@ export async function getStaffBookings(
 export async function getAllStaffBookings(
   filters: Omit<StaffBookingFilters, "page" | "perPage">,
 ): Promise<Booking[]> {
-  const firstPage = await getStaffBookings({ ...filters, page: 1, perPage: 100 });
+  const firstPage = await getStaffBookings({
+    ...filters,
+    page: 1,
+    perPage: 100,
+  });
 
   if (firstPage.meta.last_page <= 1) return firstPage.data;
 
@@ -82,7 +83,9 @@ export async function updateStaffBookingStatus(
   return response.data.data;
 }
 
-export async function sendBookingRequirementsReminder(id: number): Promise<string> {
+export async function sendBookingRequirementsReminder(
+  id: number,
+): Promise<string> {
   const response = await api.post<{ message: string }>(
     `/staff/bookings/${id}/requirements/remind`,
   );
@@ -136,7 +139,11 @@ export async function getStaffMassIntentions(
 export async function getAllStaffMassIntentions(
   filters: Omit<StaffMassIntentionFilters, "page" | "perPage">,
 ): Promise<MassIntention[]> {
-  const firstPage = await getStaffMassIntentions({ ...filters, page: 1, perPage: 100 });
+  const firstPage = await getStaffMassIntentions({
+    ...filters,
+    page: 1,
+    perPage: 100,
+  });
 
   if (firstPage.meta.last_page <= 1) return firstPage.data;
 
@@ -185,7 +192,11 @@ export async function getStaffDocumentRequests(
 export async function getAllStaffDocumentRequests(
   filters: Omit<StaffDocumentRequestFilters, "page" | "perPage">,
 ): Promise<ServiceRequest[]> {
-  const firstPage = await getStaffDocumentRequests({ ...filters, page: 1, perPage: 100 });
+  const firstPage = await getStaffDocumentRequests({
+    ...filters,
+    page: 1,
+    perPage: 100,
+  });
 
   if (firstPage.meta.last_page <= 1) return firstPage.data;
 
@@ -211,11 +222,15 @@ export async function updateDocumentRequestStatus(
 
 export async function scheduleBookingAppointment(
   bookingId: number,
-  data: { type: "seminar" | "priest_interview"; scheduledAt: string; venue: string; notes: string },
+  data: {
+    type: "seminar" | "priest_interview";
+    scheduledAt: string;
+    venue: string;
+    notes: string;
+  },
 ) {
-  const response = await api.post<{ data: Booking["details"]["appointments"][number] }>(
-    `/staff/bookings/${bookingId}/appointments`,
-    data,
-  );
+  const response = await api.post<{
+    data: Booking["details"]["appointments"][number];
+  }>(`/staff/bookings/${bookingId}/appointments`, data);
   return response.data.data;
 }

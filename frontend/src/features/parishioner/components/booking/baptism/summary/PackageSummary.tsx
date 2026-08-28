@@ -24,7 +24,8 @@ export default function PackageSummary({
     );
   }
 
-  const sponsorSubtotal = additionalSponsorCount * (additionalSponsorPrice ?? 0);
+  const sponsorSubtotal =
+    additionalSponsorCount * (additionalSponsorPrice ?? 0);
   const total = Number(selectedPackage.base_price) + sponsorSubtotal;
 
   return (
@@ -53,7 +54,8 @@ export default function PackageSummary({
         </div>
         {additionalSponsorCount > 0 && (
           <div className="mt-4 border-t border-gray-200 pt-4 text-sm text-gray-600">
-            Additional sponsors: {additionalSponsorCount} × {additionalSponsorPrice === null
+            Additional sponsors: {additionalSponsorCount} ×{" "}
+            {additionalSponsorPrice === null
               ? "rate unavailable"
               : `₱${additionalSponsorPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
           </div>

@@ -63,7 +63,9 @@ export default function FileUploadField({
               <FileText className="mt-1 shrink-0 text-green-600" size={28} />
 
               <div className="min-w-0 flex-1">
-                <p className="break-all font-semibold text-gray-800">{file.name}</p>
+                <p className="break-all font-semibold text-gray-800">
+                  {file.name}
+                </p>
 
                 <p className="text-sm text-gray-500">
                   {(file.size / 1024 / 1024).toFixed(2)} MB

@@ -17,16 +17,11 @@ import type {
   PermissionRequestDetails,
 } from "../../../../types/document";
 
-import type {
-  Dispatch,
-  SetStateAction,
-} from "react";
+import type { Dispatch, SetStateAction } from "react";
 
 interface Props {
   booking: DocumentRequestBooking;
-  setBooking: Dispatch<
-    SetStateAction<DocumentRequestBooking>
-  >;
+  setBooking: Dispatch<SetStateAction<DocumentRequestBooking>>;
   readOnly?: boolean;
   errors?: Record<string, string[]>;
 }
@@ -61,9 +56,7 @@ export default function DetailsStep({
   const removeRequest = (requestId: number) => {
     setBooking((prev) => ({
       ...prev,
-      requests: prev.requests.filter(
-        (request) => request.id !== requestId,
-      ),
+      requests: prev.requests.filter((request) => request.id !== requestId),
     }));
   };
 
@@ -146,9 +139,8 @@ export default function DetailsStep({
               (item) => item.document_type === request.document_type,
             );
             if (matchingRequests.length === 1) return request.document_type;
-            const position = matchingRequests.findIndex(
-              (item) => item.id === request.id,
-            ) + 1;
+            const position =
+              matchingRequests.findIndex((item) => item.id === request.id) + 1;
             return `${request.document_type} — Request ${position} of ${matchingRequests.length}`;
           })()}
         >
@@ -159,9 +151,7 @@ export default function DetailsStep({
               <div className="flex justify-end">
                 <button
                   type="button"
-                  onClick={() =>
-                    removeRequest(request.id)
-                  }
+                  onClick={() => removeRequest(request.id)}
                   className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
                 >
                   Remove Request

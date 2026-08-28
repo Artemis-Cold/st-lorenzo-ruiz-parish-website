@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { ListSkeleton } from "@/components/ui/skeleton";
 import {
   createEvent,
   createMassSchedule,
@@ -97,6 +98,7 @@ export default function Events() {
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
+      setLoading(true);
       setPage(1);
       setDebouncedSearch(search.trim());
     }, 350);
@@ -106,7 +108,6 @@ export default function Events() {
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
     getStaffEvents({
       group,
       search: debouncedSearch || undefined,
@@ -146,6 +147,7 @@ export default function Events() {
         toast.success(
           `"${created.title}" has been added to the parish calendar.`,
         );
+        setLoading(true);
         setGroup("events");
         setSearch("");
         setPage(1);
@@ -171,6 +173,7 @@ export default function Events() {
       await deleteEvent(deleting.id);
       toast.success(`"${deleting.title}" has been deleted.`);
       setDeleting(null);
+      setLoading(true);
       if (events.length === 1 && page > 1) setPage((current) => current - 1);
       else setRefreshKey((key) => key + 1);
     } catch (error) {
@@ -190,6 +193,7 @@ export default function Events() {
       } else {
         toast.info(result.message);
       }
+      setLoading(true);
       setGroup("masses");
       setSearch("");
       setPage(1);
@@ -300,7 +304,7 @@ export default function Events() {
             </div>
 
             <div
-              className="mt-5 flex gap-1 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden"
+              className="mt-5 flex gap-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
               role="tablist"
               aria-label="Event schedule groups"
             >
@@ -315,6 +319,7 @@ export default function Events() {
                     role="tab"
                     aria-selected={active}
                     onClick={() => {
+                      setLoading(true);
                       setGroup(item.value);
                       setPage(1);
                     }}
@@ -335,11 +340,9 @@ export default function Events() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pr-3 sm:p-6 sm:pr-4 [scrollbar-color:#D6CEC4_transparent] scrollbar-thin">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pr-3 sm:p-6 sm:pr-4 [scrollbar-color:#D6CEC4_transparent] [scrollbar-width:thin]">
             {loading ? (
-              <div className="flex h-full items-center justify-center">
-                <p className="text-sm text-gray-400">Loading schedule...</p>
-              </div>
+              <ListSkeleton items={5} />
             ) : events.length === 0 ? (
               <div className="flex h-full min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-[#E7E2DA] px-6 text-center text-gray-400">
                 {group === "masses" ? (
@@ -454,7 +457,10 @@ export default function Events() {
             <div className="flex items-center gap-2 self-end sm:self-auto">
               <button
                 type="button"
-                onClick={() => setPage((current) => Math.max(1, current - 1))}
+                onClick={() => {
+                  setLoading(true);
+                  setPage((current) => Math.max(1, current - 1));
+                }}
                 disabled={loading || meta.current_page <= 1}
                 aria-label="Previous page"
                 className="grid size-9 place-items-center rounded-lg border border-[#DDD7CF] text-gray-600 transition hover:border-[#B22222]/40 hover:text-[#B22222] disabled:cursor-not-allowed disabled:opacity-40"
@@ -466,9 +472,10 @@ export default function Events() {
               </span>
               <button
                 type="button"
-                onClick={() =>
-                  setPage((current) => Math.min(meta.last_page, current + 1))
-                }
+                onClick={() => {
+                  setLoading(true);
+                  setPage((current) => Math.min(meta.last_page, current + 1));
+                }}
                 disabled={loading || meta.current_page >= meta.last_page}
                 aria-label="Next page"
                 className="grid size-9 place-items-center rounded-lg border border-[#DDD7CF] text-gray-600 transition hover:border-[#B22222]/40 hover:text-[#B22222] disabled:cursor-not-allowed disabled:opacity-40"

@@ -1,9 +1,14 @@
-import type { Dispatch, SetStateAction } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 
 import { BookingCard } from "../..";
 
-import { useEffect, useState } from "react";
-
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   getServicePackages,
   type ServicePackage,
@@ -29,30 +34,42 @@ export default function PackagesStep({
   additionalSponsorPrice,
 }: PackagesStepProps) {
   const [packages, setPackages] = useState<ServicePackage[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+
     const loadPackages = async () => {
       try {
         const data = await getServicePackages("baptism");
-        setPackages(data);
+        if (active) setPackages(data);
       } catch (error) {
         console.error(error);
+      } finally {
+        if (active) setLoading(false);
       }
     };
 
-    loadPackages();
+    void loadPackages();
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const isSunday = selectedDate ? selectedDate.getDay() === 0 : null;
 
-  const relevantPackages =
-    isSunday === null
-      ? packages
-      : packages.filter((pkg) =>
-          isSunday
-            ? pkg.name.toLowerCase().includes("sunday")
-            : !pkg.name.toLowerCase().includes("sunday"),
-        );
+  const relevantPackages = useMemo(
+    () =>
+      isSunday === null
+        ? packages
+        : packages.filter((pkg) =>
+            isSunday
+              ? pkg.name.toLowerCase().includes("sunday")
+              : !pkg.name.toLowerCase().includes("sunday"),
+          ),
+    [isSunday, packages],
+  );
 
   // If the previously selected package no longer matches the chosen date
   // (e.g. user picked a package, went back, changed the date), clear it.
@@ -67,7 +84,12 @@ export default function PackagesStep({
       setBooking((prev) => ({ ...prev, service_package_id: 0 }));
       setSelectedPackage(null);
     }
-  }, [selectedDate, packages]);
+  }, [
+    booking.service_package_id,
+    relevantPackages,
+    setBooking,
+    setSelectedPackage,
+  ]);
 
   // If selectedPackage was lost on remount (e.g. navigated away and back)
   // but booking.service_package_id still points at a valid package once
@@ -80,7 +102,12 @@ export default function PackagesStep({
     if (match) {
       setSelectedPackage(match);
     }
-  }, [packages]);
+  }, [
+    booking.service_package_id,
+    packages,
+    selectedPackage,
+    setSelectedPackage,
+  ]);
 
   const selectPackage = (pkg: ServicePackage) => {
     setBooking((prev) => ({
@@ -90,6 +117,21 @@ export default function PackagesStep({
 
     setSelectedPackage(pkg);
   };
+
+  if (loading) {
+    return (
+      <BookingCard title="Packages">
+        <div
+          aria-label="Loading baptism packages"
+          aria-busy="true"
+          className="grid gap-4 md:grid-cols-2"
+        >
+          <Skeleton className="h-64 rounded-2xl" />
+          <Skeleton className="h-64 rounded-2xl" />
+        </div>
+      </BookingCard>
+    );
+  }
 
   return (
     <BookingCard title="Packages">

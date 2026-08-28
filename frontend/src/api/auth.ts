@@ -32,8 +32,16 @@ export const staffLogin = async (
 
 export type PasswordResetPortal = "parishioner" | "staff";
 
-export async function requestPasswordResetOtp(username: string, phone: string, portal: PasswordResetPortal) {
-  const response = await api.post<{ message: string }>("/auth/password/otp", { username, phone, portal });
+export async function requestPasswordResetOtp(
+  username: string,
+  phone: string,
+  portal: PasswordResetPortal,
+) {
+  const response = await api.post<{ message: string }>("/auth/password/otp", {
+    username,
+    phone,
+    portal,
+  });
   return response.data;
 }
 
@@ -45,7 +53,10 @@ export async function resetPasswordWithOtp(data: {
   password: string;
   password_confirmation: string;
 }) {
-  const response = await api.post<{ message: string }>("/auth/password/reset", data);
+  const response = await api.post<{ message: string }>(
+    "/auth/password/reset",
+    data,
+  );
   return response.data;
 }
 
@@ -118,7 +129,14 @@ export interface ProfileBooking {
   booking_reference: string;
   service: string;
   package: string | null;
-  status: "pending" | "paid" | "approved" | "ready_for_pickup" | "rejected" | "cancelled" | "completed";
+  status:
+    | "pending"
+    | "paid"
+    | "approved"
+    | "ready_for_pickup"
+    | "rejected"
+    | "cancelled"
+    | "completed";
   booking_date: string | null;
   start_time: string | null;
   end_time: string | null;

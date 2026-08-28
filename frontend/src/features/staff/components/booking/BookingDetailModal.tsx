@@ -140,8 +140,7 @@ export default function BookingDetailModal({
     } catch (error) {
       if (error instanceof AxiosError && error.response?.status === 422) {
         const fields = error.response.data?.errors as
-          | Record<string, string[]>
-          | undefined;
+          Record<string, string[]> | undefined;
         setBannsErrors({
           booking: fields?.booking?.[0] ?? "",
           publicationStart: fields?.publicationStart?.[0] ?? "",
@@ -529,7 +528,10 @@ export default function BookingDetailModal({
                 value={`${new Date(item.scheduledAt).toLocaleString()} — ${item.venue}`}
               />
             ))}
-            <form onSubmit={schedule} className="grid min-w-0 gap-3 md:grid-cols-2">
+            <form
+              onSubmit={schedule}
+              className="grid min-w-0 gap-3 md:grid-cols-2"
+            >
               {booking.type === "Marriage" ? (
                 <select
                   value={appointment.type}
@@ -578,7 +580,10 @@ export default function BookingDetailModal({
                 }
                 className="min-w-0 w-full rounded-xl border px-3 py-2"
               />
-              <button type="submit" className="min-w-0 whitespace-normal rounded-xl bg-[#B22222] px-4 py-2.5 text-center font-semibold leading-5 text-white md:col-span-2">
+              <button
+                type="submit"
+                className="min-w-0 whitespace-normal rounded-xl bg-[#B22222] px-4 py-2.5 text-center font-semibold leading-5 text-white md:col-span-2"
+              >
                 Save Schedule &amp; Notify
               </button>
             </form>

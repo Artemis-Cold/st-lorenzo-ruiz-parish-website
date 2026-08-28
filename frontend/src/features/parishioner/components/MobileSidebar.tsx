@@ -17,7 +17,7 @@ import {
   FileText,
 } from "lucide-react";
 
-import logo from "../../../assets/images/parish-logo.png";
+import ParishLogo from "@/components/common/ParishLogo";
 import SidebarItem from "./SidebarItem";
 
 interface MobileSidebarProps {
@@ -45,12 +45,18 @@ export default function MobileSidebar({ open, onClose }: MobileSidebarProps) {
         }`}
       >
         {/* Header */}
-        <div className="relative flex justify-center border-b border-red-700 p-6">
-          <img
-            src={logo}
-            alt="Parish Logo"
-            className="h-20 w-20 rounded-full border-4 border-white object-cover shadow-lg"
-          />
+        <div className="relative flex items-center gap-3 border-b border-white/10 px-5 py-5">
+          <span className="grid size-15 shrink-0 place-items-center rounded-full bg-white p-1.5 shadow-lg ring-1 ring-white/30">
+            <ParishLogo className="size-full" />
+          </span>
+          <div className="min-w-0 pr-10">
+            <p className="font-serif text-sm font-bold leading-tight">
+              St. Lorenzo Ruiz Parish
+            </p>
+            <p className="mt-1 text-[10px] uppercase tracking-[0.16em] text-white/60">
+              Parishioner portal
+            </p>
+          </div>
 
           <button
             onClick={onClose}

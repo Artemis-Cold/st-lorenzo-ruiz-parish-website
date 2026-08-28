@@ -24,8 +24,14 @@ export default function RequestDetailModal({
     request.status === "ready_for_pickup";
 
   return (
-    <div data-app-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div data-modal-scroll="true" className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-7 shadow-lg">
+    <div
+      data-app-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+    >
+      <div
+        data-modal-scroll="true"
+        className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-3xl bg-white p-7 shadow-lg"
+      >
         <div className="mb-6 flex items-start justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
@@ -62,7 +68,9 @@ export default function RequestDetailModal({
               </div>
               {Object.entries(document.details).map(([key, value]) => (
                 <p key={key} className="mt-1 text-xs text-gray-500">
-                  <span className="capitalize">{key.replaceAll("_", " ")}:</span>{" "}
+                  <span className="capitalize">
+                    {key.replaceAll("_", " ")}:
+                  </span>{" "}
                   {Array.isArray(value)
                     ? value.join(", ")
                     : String(value ?? "—")}

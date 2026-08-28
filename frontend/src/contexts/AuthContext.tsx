@@ -98,9 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response.user;
   };
 
-  const staffLogin = async (
-    credentials: LoginCredentials,
-  ): Promise<User> => {
+  const staffLogin = async (credentials: LoginCredentials): Promise<User> => {
     const response = await staffLoginApi(credentials);
 
     localStorage.setItem("token", response.token);

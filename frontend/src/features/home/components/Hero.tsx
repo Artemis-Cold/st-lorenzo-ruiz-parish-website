@@ -2,7 +2,7 @@ import { ArrowRight, MapPin, Mail, Phone } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
-import parishLogo from "../../../assets/images/parish-logo.png";
+import parishLogo from "../../../assets/images/pdf-logo.png";
 import churchImage from "../../../assets/images/church.jpg";
 
 export default function Hero() {
@@ -38,7 +38,7 @@ export default function Hero() {
           transition={{ duration: 0.65, ease: "easeOut" }}
           src={parishLogo}
           alt="St. Lorenzo Ruiz Parish Logo"
-          className="mb-6 size-24 rounded-full border-[3px] border-[#D4AF37] bg-white shadow-[0_18px_55px_rgba(0,0,0,0.38)] sm:mb-7 sm:size-32 lg:size-36"
+          className="mb-6 size-20 rounded-full border-[3px] border-[#D4AF37] bg-white p-1 shadow-[0_18px_55px_rgba(0,0,0,0.38)] sm:mb-7 sm:size-26 lg:size-28"
         />
 
         <motion.span

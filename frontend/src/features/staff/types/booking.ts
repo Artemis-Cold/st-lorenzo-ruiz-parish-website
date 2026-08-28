@@ -1,10 +1,5 @@
 export type BookingStatus =
-  | "pending"
-  | "paid"
-  | "approved"
-  | "rejected"
-  | "cancelled"
-  | "completed";
+  "pending" | "paid" | "approved" | "rejected" | "cancelled" | "completed";
 
 export type BookingType = "Marriage" | "Funeral" | "Baptism";
 

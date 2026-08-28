@@ -104,7 +104,10 @@ export default function ProfilePhotoModal({
       toast.success("Profile photo updated successfully.");
       onClose();
     } catch (uploadError) {
-      if (uploadError instanceof AxiosError && uploadError.response?.status === 422) {
+      if (
+        uploadError instanceof AxiosError &&
+        uploadError.response?.status === 422
+      ) {
         setError(
           uploadError.response.data.errors?.profile_photo?.[0] ??
             "The cropped photo could not be uploaded.",
@@ -134,7 +137,11 @@ export default function ProfilePhotoModal({
               className="size-full object-cover"
             />
           ) : currentPhoto ? (
-            <img src={currentPhoto} alt="Current profile" className="size-full object-cover" />
+            <img
+              src={currentPhoto}
+              alt="Current profile"
+              className="size-full object-cover"
+            />
           ) : (
             <Camera size={64} className="text-gray-300" />
           )}
@@ -157,16 +164,40 @@ export default function ProfilePhotoModal({
               <span className="mb-2 flex items-center gap-2">
                 <ZoomIn size={16} /> Zoom
               </span>
-              <input type="range" min="1" max="3" step="0.05" value={zoom} onChange={(event) => setZoom(Number(event.target.value))} className="w-full accent-[#B22222]" />
+              <input
+                type="range"
+                min="1"
+                max="3"
+                step="0.05"
+                value={zoom}
+                onChange={(event) => setZoom(Number(event.target.value))}
+                className="w-full accent-[#B22222]"
+              />
             </label>
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="text-sm font-medium text-gray-700">
                 <span className="mb-2 block">Move left or right</span>
-                <input type="range" min="-100" max="100" value={horizontal} onChange={(event) => setHorizontal(Number(event.target.value))} className="w-full accent-[#B22222]" />
+                <input
+                  type="range"
+                  min="-100"
+                  max="100"
+                  value={horizontal}
+                  onChange={(event) =>
+                    setHorizontal(Number(event.target.value))
+                  }
+                  className="w-full accent-[#B22222]"
+                />
               </label>
               <label className="text-sm font-medium text-gray-700">
                 <span className="mb-2 block">Move up or down</span>
-                <input type="range" min="-100" max="100" value={vertical} onChange={(event) => setVertical(Number(event.target.value))} className="w-full accent-[#B22222]" />
+                <input
+                  type="range"
+                  min="-100"
+                  max="100"
+                  value={vertical}
+                  onChange={(event) => setVertical(Number(event.target.value))}
+                  className="w-full accent-[#B22222]"
+                />
               </label>
             </div>
           </div>
@@ -178,10 +209,19 @@ export default function ProfilePhotoModal({
         {error && <p className="text-center text-sm text-red-600">{error}</p>}
 
         <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
-          <button type="button" onClick={onClose} className="rounded-xl border border-gray-300 px-5 py-3 font-medium text-gray-700 hover:bg-gray-50">
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-gray-300 px-5 py-3 font-medium text-gray-700 hover:bg-gray-50"
+          >
             Cancel
           </button>
-          <button type="button" onClick={savePhoto} disabled={!image || saving} className="rounded-xl bg-[#B22222] px-5 py-3 font-semibold text-white transition hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-50">
+          <button
+            type="button"
+            onClick={savePhoto}
+            disabled={!image || saving}
+            className="rounded-xl bg-[#B22222] px-5 py-3 font-semibold text-white transition hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-50"
+          >
             {saving ? "Saving Photo..." : "Save Cropped Photo"}
           </button>
         </div>

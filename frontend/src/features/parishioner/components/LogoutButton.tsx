@@ -21,9 +21,7 @@ interface Props {
   collapsed?: boolean;
 }
 
-export default function LogoutButton({
-  collapsed = false,
-}: Props) {
+export default function LogoutButton({ collapsed = false }: Props) {
   const { logout } = useAuth();
 
   const navigate = useNavigate();
@@ -40,19 +38,13 @@ export default function LogoutButton({
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <div>
-          <SidebarItem
-            collapsed={collapsed}
-            icon={LogOut}
-            label="Logout"
-          />
+          <SidebarItem collapsed={collapsed} icon={LogOut} label="Logout" />
         </div>
       </AlertDialogTrigger>
 
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>
-            Logout?
-          </AlertDialogTitle>
+          <AlertDialogTitle>Logout?</AlertDialogTitle>
 
           <AlertDialogDescription>
             You will be signed out of your account.
@@ -60,9 +52,7 @@ export default function LogoutButton({
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel>
-            Cancel
-          </AlertDialogCancel>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
 
           <AlertDialogAction
             onClick={handleLogout}

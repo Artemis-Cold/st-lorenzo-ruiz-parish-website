@@ -28,12 +28,6 @@ export const DOCUMENT_PRICES: DocumentPrice[] = [
   },
 ];
 
-export const getDocumentPrice = (
-  type: DocumentType,
-): number => {
-  return (
-    DOCUMENT_PRICES.find(
-      (document) => document.type === type,
-    )?.price ?? 0
-  );
+export const getDocumentPrice = (type: DocumentType): number => {
+  return DOCUMENT_PRICES.find((document) => document.type === type)?.price ?? 0;
 };

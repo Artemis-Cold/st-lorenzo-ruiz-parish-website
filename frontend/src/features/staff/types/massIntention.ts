@@ -1,11 +1,7 @@
 import type { IntentionStatus } from "../components/StatusBadge";
 
 export type IntentionType =
-  | "Anniversary"
-  | "Birthday"
-  | "Petition"
-  | "Soul"
-  | "Thanksgiving";
+  "Anniversary" | "Birthday" | "Petition" | "Soul" | "Thanksgiving";
 
 export interface MassIntention {
   id: number;

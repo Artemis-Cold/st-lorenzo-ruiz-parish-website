@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { AxiosError } from "axios";
-import { CalendarClock, Check, LoaderCircle, X } from "lucide-react";
+import { CalendarClock, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import BookingCalendar from "../booking/BookingCalendar";
 import {
   formatBookingDate,
@@ -97,7 +98,10 @@ export default function RescheduleBookingModal({
       onRescheduled(response.data);
       onClose();
     } catch (requestError) {
-      if (requestError instanceof AxiosError && requestError.response?.status === 422) {
+      if (
+        requestError instanceof AxiosError &&
+        requestError.response?.status === 422
+      ) {
         setError(
           requestError.response.data.errors?.booking_slot_id?.[0] ??
             "The selected schedule is unavailable.",
@@ -129,11 +133,29 @@ export default function RescheduleBookingModal({
       >
         <header className="sticky top-0 z-10 flex items-start justify-between border-b border-gray-100 bg-white px-6 py-5 sm:px-8">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wider text-[#B22222]">{booking.reference}</p>
-            <h2 id="reschedule-title" className="mt-1 font-serif text-2xl font-bold text-[#292524]">Reschedule {booking.service}</h2>
-            <p className="mt-1 text-sm text-gray-500">Choose another available date and time. The new schedule will return to staff review.</p>
+            <p className="text-xs font-semibold uppercase tracking-wider text-[#B22222]">
+              {booking.reference}
+            </p>
+            <h2
+              id="reschedule-title"
+              className="mt-1 font-serif text-2xl font-bold text-[#292524]"
+            >
+              Reschedule {booking.service}
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Choose another available date and time. The new schedule will
+              return to staff review.
+            </p>
           </div>
-          <button type="button" onClick={onClose} disabled={saving} aria-label="Close" className="ml-4 grid size-10 shrink-0 place-items-center rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-50"><X size={20} /></button>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={saving}
+            aria-label="Close"
+            className="ml-4 grid size-10 shrink-0 place-items-center rounded-full text-gray-500 hover:bg-gray-100 disabled:opacity-50"
+          >
+            <X size={20} />
+          </button>
         </header>
 
         <div className="grid gap-6 p-4 sm:p-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(280px,0.7fr)]">
@@ -145,18 +167,42 @@ export default function RescheduleBookingModal({
 
           <div className="rounded-3xl bg-white p-5 shadow-lg">
             <div className="flex items-start gap-3 border-b border-gray-100 pb-4">
-              <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-red-50 text-[#B22222]"><CalendarClock size={20} /></div>
+              <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-red-50 text-[#B22222]">
+                <CalendarClock size={20} />
+              </div>
               <div>
-                <h3 className="font-serif text-lg font-bold">Available Times</h3>
-                <p className="mt-1 text-xs leading-5 text-gray-500">{selectedDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}</p>
+                <h3 className="font-serif text-lg font-bold">
+                  Available Times
+                </h3>
+                <p className="mt-1 text-xs leading-5 text-gray-500">
+                  {selectedDate.toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </p>
               </div>
             </div>
 
-            <div data-modal-scroll="true" className="mt-4 max-h-72 space-y-3 overflow-y-auto pr-1">
+            <div
+              data-modal-scroll="true"
+              className="mt-4 max-h-72 space-y-3 overflow-y-auto pr-1"
+            >
               {loadingSlots ? (
-                <div className="flex items-center justify-center py-12 text-sm text-gray-500"><LoaderCircle size={18} className="mr-2 animate-spin" /> Loading slots...</div>
+                <div
+                  aria-label="Loading reschedule time slots"
+                  aria-busy="true"
+                  className="space-y-3"
+                >
+                  <Skeleton className="h-16 rounded-xl" />
+                  <Skeleton className="h-16 rounded-xl" />
+                  <Skeleton className="h-16 rounded-xl" />
+                </div>
               ) : slots.length === 0 ? (
-                <p className="rounded-xl border border-dashed px-4 py-10 text-center text-sm text-gray-500">No time slots are available on this date.</p>
+                <p className="rounded-xl border border-dashed px-4 py-10 text-center text-sm text-gray-500">
+                  No time slots are available on this date.
+                </p>
               ) : (
                 slots.map((slot) => {
                   const isCurrent = slot.id === booking.bookingSlotId;
@@ -180,19 +226,52 @@ export default function RescheduleBookingModal({
                             : "border-gray-200 hover:border-[#B22222]"
                       }`}
                     >
-                      <span className="font-semibold">{formatTime(slot.start_time)} – {formatTime(slot.end_time)}</span>
-                      {selected ? <Check size={18} /> : <span className="text-xs">{isCurrent ? "Current" : slot.available ? "Available" : slot.availability_status === "locked" ? `Reserved for ${slot.locked_by_service ?? "another service"}` : "Full"}</span>}
+                      <span className="font-semibold">
+                        {formatTime(slot.start_time)} –{" "}
+                        {formatTime(slot.end_time)}
+                      </span>
+                      {selected ? (
+                        <Check size={18} />
+                      ) : (
+                        <span className="text-xs">
+                          {isCurrent
+                            ? "Current"
+                            : slot.available
+                              ? "Available"
+                              : slot.availability_status === "locked"
+                                ? `Reserved for ${slot.locked_by_service ?? "another service"}`
+                                : "Full"}
+                        </span>
+                      )}
                     </button>
                   );
                 })
               )}
             </div>
 
-            {(error || slotLoadError) && <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error || slotLoadError}</p>}
+            {(error || slotLoadError) && (
+              <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+                {error || slotLoadError}
+              </p>
+            )}
 
             <div className="mt-5 space-y-3 border-t border-gray-100 pt-5">
-              <button type="button" onClick={submit} disabled={!selectedSlotId || saving} className="w-full rounded-xl bg-[#B22222] px-5 py-3 font-semibold text-white transition hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-50">{saving ? "Rescheduling..." : "Confirm New Schedule"}</button>
-              <button type="button" onClick={onClose} disabled={saving} className="w-full rounded-xl border border-gray-300 px-5 py-3 font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">Cancel</button>
+              <button
+                type="button"
+                onClick={submit}
+                disabled={!selectedSlotId || saving}
+                className="w-full rounded-xl bg-[#B22222] px-5 py-3 font-semibold text-white transition hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {saving ? "Rescheduling..." : "Confirm New Schedule"}
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={saving}
+                className="w-full rounded-xl border border-gray-300 px-5 py-3 font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>

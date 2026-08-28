@@ -39,9 +39,7 @@ export default function RequirementsStep() {
           </h3>
 
           <div className="rounded-xl border border-gray-200 p-5">
-            <h4 className="font-semibold text-[#B22222]">
-              Memorial Biography
-            </h4>
+            <h4 className="font-semibold text-[#B22222]">Memorial Biography</h4>
 
             <ul className="mt-3 list-disc space-y-2 pl-6 text-gray-700">
               <li>A written life story honoring your loved ones.</li>

@@ -146,7 +146,9 @@ export default function Mass() {
 
     if (step === 4) {
       if (linePrice === null) {
-        errors.pricing = ["The current Mass Intention rate could not be loaded."];
+        errors.pricing = [
+          "The current Mass Intention rate could not be loaded.",
+        ];
       }
       if (!booking.reference_number.trim()) {
         errors.reference_number = ["GCash reference number is required."];

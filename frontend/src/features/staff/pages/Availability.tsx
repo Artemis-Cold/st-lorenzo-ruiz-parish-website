@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type FormEvent,
-} from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   CalendarClock,
   CalendarPlus,
@@ -16,6 +10,7 @@ import {
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 
+import { ListSkeleton } from "@/components/ui/skeleton";
 import StaffDashboardLayout from "../components/dashboard/StaffDashboardLayout";
 import {
   createStaffAvailability,
@@ -53,18 +48,33 @@ export default function Availability() {
   const [viewMonth, setViewMonth] = useState(currentMonth());
   const [errors, setErrors] = useState<Record<string, string[]>>({});
 
-  const load = useCallback((month: string) => {
+  const reload = (month: string) => {
     setLoading(true);
 
     return getStaffAvailability(month)
       .then(setSlots)
       .catch(() => toast.error("Unable to load availability."))
       .finally(() => setLoading(false));
-  }, []);
+  };
 
   useEffect(() => {
-    void load(viewMonth);
-  }, [load, viewMonth]);
+    let active = true;
+
+    getStaffAvailability(viewMonth)
+      .then((items) => {
+        if (active) setSlots(items);
+      })
+      .catch(() => {
+        if (active) toast.error("Unable to load availability.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [viewMonth]);
 
   const grouped = useMemo(
     () =>
@@ -101,8 +111,9 @@ export default function Availability() {
       }
 
       if (viewMonth === scheduleMonth) {
-        await load(scheduleMonth);
+        await reload(scheduleMonth);
       } else {
+        setLoading(true);
         setViewMonth(scheduleMonth);
       }
     } catch (error) {
@@ -248,16 +259,17 @@ export default function Availability() {
                   type="month"
                   min={currentMonth()}
                   value={viewMonth}
-                  onChange={(event) => setViewMonth(event.target.value)}
+                  onChange={(event) => {
+                    setLoading(true);
+                    setViewMonth(event.target.value);
+                  }}
                   className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm font-medium normal-case tracking-normal text-gray-800 outline-none transition focus:border-[#B22222] sm:w-44"
                 />
               </label>
             </div>
-            <div className="max-h-[65vh] min-h-64 overflow-y-auto overscroll-contain scroll-smooth px-6 py-5 pr-4 [scrollbar-color:#D6CEC4_transparent] scrollbar-thin">
+            <div className="max-h-[65vh] min-h-64 overflow-y-auto overscroll-contain scroll-smooth px-6 py-5 pr-4 [scrollbar-color:#D6CEC4_transparent] [scrollbar-width:thin]">
               {loading ? (
-                <p className="py-12 text-center text-gray-400">
-                  Loading availability...
-                </p>
+                <ListSkeleton items={5} />
               ) : grouped.length === 0 ? (
                 <p className="rounded-2xl border border-dashed py-12 text-center text-gray-400">
                   No availability configured for this month.

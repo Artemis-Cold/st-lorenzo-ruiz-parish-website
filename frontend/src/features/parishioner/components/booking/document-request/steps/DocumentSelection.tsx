@@ -1,6 +1,7 @@
 import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { FileText, Minus, Plus } from "lucide-react";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { BookingCard } from "../..";
 
 import { getServiceFees, type ServiceFee } from "@/services/serviceFeeService";
@@ -139,8 +140,14 @@ export default function DocumentSelectionStep({
     <BookingCard title="Select Documents" contentClassName="p-4 sm:p-6 md:p-8">
       <div className="space-y-4 sm:space-y-6">
         {loading && (
-          <div className="rounded-xl border border-dashed px-4 py-10 text-center text-sm text-gray-500">
-            Loading current document prices...
+          <div
+            aria-label="Loading document prices"
+            aria-busy="true"
+            className="space-y-3"
+          >
+            {Array.from({ length: 4 }, (_, index) => (
+              <Skeleton key={index} className="h-24 rounded-2xl" />
+            ))}
           </div>
         )}
         {loadError && (
@@ -193,9 +200,7 @@ export default function DocumentSelectionStep({
                         Quantity
                       </p>
                       <p className="mt-0.5 text-sm font-medium text-[#292524]">
-                        {quantity > 0
-                          ? `${quantity} selected`
-                          : "Not selected"}
+                        {quantity > 0 ? `${quantity} selected` : "Not selected"}
                       </p>
                     </div>
 

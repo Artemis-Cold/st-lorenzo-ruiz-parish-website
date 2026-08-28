@@ -40,9 +40,7 @@ ${
           className={inputClass + (getError("name") ? " border-red-400" : "")}
           value={details.name}
           readOnly={readOnly}
-          onChange={(e) =>
-            updateRequest("name", e.target.value)
-          }
+          onChange={(e) => updateRequest("name", e.target.value)}
           placeholder="Enter full name"
         />
         <FieldError message={getError("name")} />
@@ -54,12 +52,12 @@ ${
         </label>
 
         <input
-          className={inputClass + (getError("address") ? " border-red-400" : "")}
+          className={
+            inputClass + (getError("address") ? " border-red-400" : "")
+          }
           value={details.address}
           readOnly={readOnly}
-          onChange={(e) =>
-            updateRequest("address", e.target.value)
-          }
+          onChange={(e) => updateRequest("address", e.target.value)}
           placeholder="Complete address"
         />
         <FieldError message={getError("address")} />
@@ -85,9 +83,7 @@ ${
           onChange={(e) =>
             updateRequest(
               "baptism_date",
-              e.target.value
-                ? new Date(e.target.value)
-                : null,
+              e.target.value ? new Date(e.target.value) : null,
             )
           }
         />
@@ -98,7 +94,9 @@ ${
 }
 
 function FieldError({ message }: { message?: string }) {
-  return message ? <p className="mt-1 text-sm text-red-600">{message}</p> : null;
+  return message ? (
+    <p className="mt-1 text-sm text-red-600">{message}</p>
+  ) : null;
 }
 
 function toDateInputValue(date: Date): string {

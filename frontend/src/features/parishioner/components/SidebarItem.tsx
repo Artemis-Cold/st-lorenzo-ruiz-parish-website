@@ -17,11 +17,7 @@ export default function SidebarItem({
   onClick,
   collapsed = false,
 }: SidebarItemProps) {
-  const className = ({
-    isActive = false,
-  }: {
-    isActive?: boolean;
-  }) =>
+  const className = ({ isActive = false }: { isActive?: boolean }) =>
     `flex w-full items-center rounded-xl px-4 py-3 transition-all duration-200 ${
       collapsed ? "justify-center" : "gap-3"
     } ${
@@ -35,24 +31,16 @@ export default function SidebarItem({
       <NavLink to={to} className={className}>
         <Icon size={20} />
 
-        {!collapsed && (
-          <span className="font-medium">{label}</span>
-        )}
+        {!collapsed && <span className="font-medium">{label}</span>}
       </NavLink>
     );
   }
 
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={className({})}
-    >
+    <button type="button" onClick={onClick} className={className({})}>
       <Icon size={20} />
 
-      {!collapsed && (
-        <span className="font-medium">{label}</span>
-      )}
+      {!collapsed && <span className="font-medium">{label}</span>}
     </button>
   );
 }

@@ -18,7 +18,13 @@ const statusStyle: Record<string, string> = {
   rejected: "bg-gray-200 text-gray-700",
 };
 
-export default function Documents({ documents, onView }: { documents: ProfileDocument[]; onView: (id: number) => void }) {
+export default function Documents({
+  documents,
+  onView,
+}: {
+  documents: ProfileDocument[];
+  onView: (id: number) => void;
+}) {
   return (
     <BookingCard
       title="My Document Requests"
@@ -27,7 +33,11 @@ export default function Documents({ documents, onView }: { documents: ProfileDoc
     >
       <div className="h-full space-y-4">
         {documents.map((document) => (
-          <div key={document.id} onClick={() => onView(document.booking_id)} className="cursor-pointer rounded-2xl border border-gray-200 p-5 transition hover:border-[#B22222]">
+          <div
+            key={document.id}
+            onClick={() => onView(document.booking_id)}
+            className="cursor-pointer rounded-2xl border border-gray-200 p-5 transition hover:border-[#B22222]"
+          >
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex min-w-0 flex-1 gap-4">
                 <div className="flex size-12 shrink-0 items-center justify-center self-start rounded-xl bg-red-50">
@@ -42,11 +52,15 @@ export default function Documents({ documents, onView }: { documents: ProfileDoc
                   </p>
                   <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
                     <CalendarDays size={15} />
-                    Requested {new Date(document.requested_at).toLocaleDateString("en-US", {
-                      month: "long",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
+                    Requested{" "}
+                    {new Date(document.requested_at).toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      },
+                    )}
                   </div>
                   <p className="mt-2 text-sm font-medium">
                     ₱{Number(document.price).toFixed(2)}
@@ -61,7 +75,9 @@ export default function Documents({ documents, onView }: { documents: ProfileDoc
                 {documentLabel(document.status)}
               </span>
             </div>
-            <p className="mt-3 text-right text-xs font-semibold text-[#B22222]">View request information</p>
+            <p className="mt-3 text-right text-xs font-semibold text-[#B22222]">
+              View request information
+            </p>
           </div>
         ))}
 

@@ -9,6 +9,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   getPublicMarriageBanns,
   type MarriageBann,
@@ -110,12 +111,12 @@ export default function MarriageBanns() {
         </motion.div>
 
         {loading ? (
-          <div className="mx-auto mt-9 grid min-h-96 max-w-5xl animate-pulse overflow-hidden rounded-[2rem] border border-[#E7E2DA] bg-white lg:grid-cols-[1.05fr_0.95fr]">
-            <div className="min-h-72 bg-gray-200/80" />
+          <div className="mx-auto mt-9 grid min-h-96 max-w-5xl overflow-hidden rounded-[2rem] border border-[#E7E2DA] bg-white lg:grid-cols-[1.05fr_0.95fr]">
+            <Skeleton className="min-h-72 rounded-none bg-gray-200/80" />
             <div className="space-y-5 p-8">
-              <div className="h-5 w-36 rounded-full bg-gray-200" />
-              <div className="h-14 max-w-sm rounded-xl bg-gray-200" />
-              <div className="h-24 rounded-2xl bg-gray-100" />
+              <Skeleton className="h-5 w-36 rounded-full bg-gray-200" />
+              <Skeleton className="h-14 max-w-sm rounded-xl bg-gray-200" />
+              <Skeleton className="h-24 rounded-2xl bg-gray-100" />
             </div>
           </div>
         ) : !activeBann ? (

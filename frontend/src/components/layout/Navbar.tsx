@@ -1,7 +1,8 @@
 import { Menu, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, type MouseEvent } from "react";
-import logo from "../../assets/images/parish-logo.png";
+
+import ParishLogo from "@/components/common/ParishLogo";
 
 const navItems = [
   { label: "Home", href: "#home" },
@@ -38,11 +39,9 @@ export default function Navbar() {
           onClick={(event) => scrollToSection(event, "#home")}
           className="flex min-w-0 items-center gap-3"
         >
-          <img
-            src={logo}
-            alt="St. Lorenzo Ruiz Parish Logo"
-            className="h-12 w-12 shrink-0 rounded-full border-2 border-white object-cover shadow-md"
-          />
+          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-white p-1 shadow-md ring-1 ring-white/40 xl:size-12">
+            <ParishLogo className="size-full" />
+          </span>
 
           <div className="min-w-0 leading-tight">
             <h1 className="truncate font-serif text-lg font-bold tracking-wide text-white xl:text-xl">

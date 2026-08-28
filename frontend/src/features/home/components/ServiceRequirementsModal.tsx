@@ -48,14 +48,19 @@ export default function ServiceRequirementsModal({
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${service.color}`}>
+            <div
+              className={`flex h-12 w-12 items-center justify-center rounded-2xl ${service.color}`}
+            >
               <Icon size={24} />
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#B22222]">
                 Before you book
               </p>
-              <h2 id="service-requirements-title" className="mt-1 font-serif text-2xl font-bold text-[#292524]">
+              <h2
+                id="service-requirements-title"
+                className="mt-1 font-serif text-2xl font-bold text-[#292524]"
+              >
                 {service.title}
               </h2>
             </div>
@@ -77,7 +82,10 @@ export default function ServiceRequirementsModal({
 
         <ul className="mt-5 space-y-3">
           {service.requirements.map((requirement) => (
-            <li key={requirement} className="flex items-start gap-3 rounded-xl bg-[#FAF8F5] px-4 py-3 text-sm leading-5 text-gray-700">
+            <li
+              key={requirement}
+              className="flex items-start gap-3 rounded-xl bg-[#FAF8F5] px-4 py-3 text-sm leading-5 text-gray-700"
+            >
               <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-green-100 text-green-700">
                 <Check size={13} strokeWidth={3} />
               </span>

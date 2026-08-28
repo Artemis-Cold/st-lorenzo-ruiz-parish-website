@@ -61,7 +61,12 @@ export default function ProfileEditForm({ user, onSaved, onCancel }: Props) {
   const field = (
     key: keyof UpdateProfileData,
     label: string,
-    options?: { type?: string; required?: boolean; maxLength?: number; placeholder?: string },
+    options?: {
+      type?: string;
+      required?: boolean;
+      maxLength?: number;
+      placeholder?: string;
+    },
   ) => (
     <div>
       <label className="mb-2 block text-sm font-medium">
@@ -112,8 +117,13 @@ export default function ProfileEditForm({ user, onSaved, onCancel }: Props) {
             placeholder: "e.g. B",
           })}
           {field("last_name", "Last Name")}
-          {field("suffix", "Suffix", { required: false, placeholder: "e.g. Jr., Sr., III" })}
-          {field("phone", "Contact Number", { placeholder: "e.g. 0917 123 4567" })}
+          {field("suffix", "Suffix", {
+            required: false,
+            placeholder: "e.g. Jr., Sr., III",
+          })}
+          {field("phone", "Contact Number", {
+            placeholder: "e.g. 0917 123 4567",
+          })}
           {field("birth_date", "Birth Date", { type: "date" })}
         </div>
 
@@ -137,12 +147,21 @@ export default function ProfileEditForm({ user, onSaved, onCancel }: Props) {
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
-          {field("house_no", "House Number", { required: false, placeholder: "e.g. 123" })}
-          {field("street", "Street", { required: false, placeholder: "e.g. Rizal Street" })}
+          {field("house_no", "House Number", {
+            required: false,
+            placeholder: "e.g. 123",
+          })}
+          {field("street", "Street", {
+            required: false,
+            placeholder: "e.g. Rizal Street",
+          })}
           {field("barangay", "Barangay")}
           {field("municipality", "Municipality/City")}
           {field("province", "Province")}
-          {field("zip_code", "ZIP Code", { required: false, placeholder: "e.g. 4000" })}
+          {field("zip_code", "ZIP Code", {
+            required: false,
+            placeholder: "e.g. 4000",
+          })}
         </div>
 
         <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">

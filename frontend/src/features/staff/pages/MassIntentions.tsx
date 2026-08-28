@@ -15,6 +15,7 @@ import {
 import jsPDF from "jspdf";
 import { toast } from "sonner";
 
+import { Skeleton, TableSkeletonRows } from "@/components/ui/skeleton";
 import StaffDashboardLayout from "../components/dashboard/StaffDashboardLayout";
 import StatusBadge, { type IntentionStatus } from "../components/StatusBadge";
 import MassIntentionDetailModal from "../components/mass-intentions/MassIntentionDetailModal";
@@ -427,9 +428,13 @@ export default function MassIntentions() {
               <p className="text-[10px] font-semibold uppercase tracking-wider text-white/60">
                 Matching records
               </p>
-              <p className="mt-0.5 text-2xl font-bold tabular-nums">
-                {loading && meta.total === 0 ? "—" : meta.total}
-              </p>
+              {loading && meta.total === 0 ? (
+                <Skeleton className="mt-1 h-7 w-12 bg-white/20" />
+              ) : (
+                <p className="mt-0.5 text-2xl font-bold tabular-nums">
+                  {meta.total}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -572,12 +577,7 @@ export default function MassIntentions() {
                 automatically when filters change.
               </p>
             </div>
-            {loading && (
-              <span className="mt-2 inline-flex items-center gap-2 text-xs font-medium text-gray-400 sm:mt-0">
-                <LoaderCircle size={14} className="animate-spin" /> Updating
-                results
-              </span>
-            )}
+            {loading && <Skeleton className="mt-2 h-3 w-24 sm:mt-0" />}
           </div>
 
           <p className="border-b border-[#EFEAE3] px-5 py-2 text-[11px] text-gray-400 xl:hidden">
@@ -587,9 +587,7 @@ export default function MassIntentions() {
             data-table-scroll="true"
             className="overflow-x-auto overscroll-x-contain"
           >
-            <table
-              className={`w-full min-w-210 text-left text-sm transition-opacity ${loading && intentions.length > 0 ? "opacity-55" : "opacity-100"}`}
-            >
+            <table className="w-full min-w-210 text-left text-sm">
               <thead>
                 <tr className="bg-[#FAF8F5] text-[11px] font-bold uppercase tracking-[0.12em] text-gray-500">
                   <th className="sticky left-0 z-20 bg-[#FAF8F5] px-5 py-4 shadow-[8px_0_14px_-14px_rgba(41,37,36,0.75)] sm:px-6">
@@ -607,16 +605,8 @@ export default function MassIntentions() {
                 </tr>
               </thead>
               <tbody>
-                {loading && intentions.length === 0 ? (
-                  Array.from({ length: 6 }, (_, index) => (
-                    <tr key={index} className="border-t border-[#F0EDE7]">
-                      {Array.from({ length: 8 }, (__, cell) => (
-                        <td key={cell} className="px-5 py-4">
-                          <div className="h-4 animate-pulse rounded bg-gray-100" />
-                        </td>
-                      ))}
-                    </tr>
-                  ))
+                {loading ? (
+                  <TableSkeletonRows columns={8} />
                 ) : intentions.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="px-5 py-16 text-center">

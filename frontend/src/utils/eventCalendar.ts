@@ -7,7 +7,11 @@ export function eventsByDate(events: ParishEvent[]) {
   return events.reduce<Record<string, ParishEvent[]>>((result, event) => {
     const start = new Date(event.startsAt);
     const end = event.endsAt ? new Date(event.endsAt) : start;
-    const cursor = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const cursor = new Date(
+      start.getFullYear(),
+      start.getMonth(),
+      start.getDate(),
+    );
     const finalDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
 
     while (cursor <= finalDay) {

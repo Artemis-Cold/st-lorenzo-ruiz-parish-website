@@ -6,12 +6,12 @@ import {
   BookOpenText,
   Church,
   FileText,
-  LoaderCircle,
   Save,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -249,8 +249,18 @@ export default function PricingSettings() {
 
           <div className="p-5 sm:p-7">
             {loading && (
-              <div className="flex min-h-64 items-center justify-center text-gray-500">
-                <LoaderCircle className="mr-2 animate-spin" /> Loading prices...
+              <div
+                aria-label="Loading pricing information"
+                aria-busy="true"
+                className="space-y-6"
+              >
+                <Skeleton className="h-7 w-52" />
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <Skeleton className="h-44 rounded-2xl" />
+                  <Skeleton className="h-44 rounded-2xl" />
+                  <Skeleton className="h-44 rounded-2xl" />
+                  <Skeleton className="h-44 rounded-2xl" />
+                </div>
               </div>
             )}
             {!loading && !pricing && (

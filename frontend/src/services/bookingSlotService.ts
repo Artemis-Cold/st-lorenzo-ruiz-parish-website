@@ -26,7 +26,7 @@ export const formatBookingDate = (date: Date): string =>
 
 export async function getBookingSlots(
   service: string,
-  date: string
+  date: string,
 ): Promise<BookingSlot[]> {
   const { data } = await api.get("/booking-slots", {
     params: {

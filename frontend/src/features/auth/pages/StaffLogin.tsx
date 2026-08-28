@@ -72,7 +72,11 @@ export default function StaffLogin() {
       subtitle="Sign in to manage parish services and bookings."
     >
       <form onSubmit={handleLogin} className="space-y-5">
-        {location.state?.message && <p className="rounded-xl bg-green-50 p-3 text-sm text-green-700">{location.state.message}</p>}
+        {location.state?.message && (
+          <p className="rounded-xl bg-green-50 p-3 text-sm text-green-700">
+            {location.state.message}
+          </p>
+        )}
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <div>

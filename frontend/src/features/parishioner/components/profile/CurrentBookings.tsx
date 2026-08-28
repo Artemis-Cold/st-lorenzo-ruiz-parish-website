@@ -64,7 +64,9 @@ export default function CurrentBookings({
                   {statusLabel(booking.status)}
                 </span>
               </div>
-              <p className="mt-3 text-right text-xs font-semibold text-[#B22222]">View booking information</p>
+              <p className="mt-3 text-right text-xs font-semibold text-[#B22222]">
+                View booking information
+              </p>
 
               <div className="mt-4 flex items-center gap-2 border-t pt-4 text-sm text-gray-600">
                 <CalendarDays size={16} />

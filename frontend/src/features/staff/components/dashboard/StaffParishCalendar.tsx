@@ -5,12 +5,12 @@ import {
   ChevronRight,
   Church,
   Clock3,
-  LoaderCircle,
   MapPin,
   RefreshCw,
   X,
 } from "lucide-react";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { getPublicEvents, type ParishEvent } from "@/services/eventService";
 import {
   getPublicBookedServices,
@@ -313,11 +313,14 @@ export default function StaffParishCalendar() {
             ))}
 
             {loading && (
-              <div className="absolute inset-0 grid place-items-center rounded-2xl bg-white/70 backdrop-blur-[1px]">
-                <span className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2 text-sm font-medium text-gray-500 shadow-sm">
-                  <LoaderCircle size={17} className="animate-spin" />
-                  Loading calendar...
-                </span>
+              <div
+                aria-label="Loading parish calendar"
+                aria-busy="true"
+                className="absolute inset-0 grid grid-cols-7 gap-1 rounded-2xl bg-white/90 p-1 backdrop-blur-[1px]"
+              >
+                {Array.from({ length: 42 }, (_, index) => (
+                  <Skeleton key={index} className="h-8 rounded-lg" />
+                ))}
               </div>
             )}
           </div>

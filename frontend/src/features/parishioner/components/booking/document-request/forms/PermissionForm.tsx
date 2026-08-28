@@ -36,12 +36,12 @@ ${
         </label>
 
         <input
-          className={inputClass + (getError("full_name") ? " border-red-400" : "")}
+          className={
+            inputClass + (getError("full_name") ? " border-red-400" : "")
+          }
           value={details.full_name}
           readOnly={readOnly}
-          onChange={(e) =>
-            updateRequest("full_name", e.target.value)
-          }
+          onChange={(e) => updateRequest("full_name", e.target.value)}
           placeholder="Enter full name"
         />
         <FieldError message={getError("full_name")} />
@@ -53,12 +53,12 @@ ${
         </label>
 
         <input
-          className={inputClass + (getError("address") ? " border-red-400" : "")}
+          className={
+            inputClass + (getError("address") ? " border-red-400" : "")
+          }
           value={details.address}
           readOnly={readOnly}
-          onChange={(e) =>
-            updateRequest("address", e.target.value)
-          }
+          onChange={(e) => updateRequest("address", e.target.value)}
           placeholder="Complete address"
         />
         <FieldError message={getError("address")} />
@@ -68,5 +68,7 @@ ${
 }
 
 function FieldError({ message }: { message?: string }) {
-  return message ? <p className="mt-1 text-sm text-red-600">{message}</p> : null;
+  return message ? (
+    <p className="mt-1 text-sm text-red-600">{message}</p>
+  ) : null;
 }

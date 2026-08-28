@@ -59,13 +59,19 @@ export default function PackageSummary({
 
         <div className="mt-5 grid gap-2 border-t border-gray-200 pt-4 sm:grid-cols-2">
           {selectedPackage.inclusions.map((inclusion) => (
-            <div key={inclusion.id} className="flex items-center gap-2 text-sm text-gray-600">
+            <div
+              key={inclusion.id}
+              className="flex items-center gap-2 text-sm text-gray-600"
+            >
               <CheckCircle2 size={15} className="shrink-0 text-green-600" />
               <span>{inclusion.name}</span>
             </div>
           ))}
           {selectedAddons.map((addon) => (
-            <div key={addon.id} className="flex items-center gap-2 text-sm font-medium text-[#B22222]">
+            <div
+              key={addon.id}
+              className="flex items-center gap-2 text-sm font-medium text-[#B22222]"
+            >
               <CheckCircle2 size={15} className="shrink-0" />
               <span>{addon.name}</span>
             </div>

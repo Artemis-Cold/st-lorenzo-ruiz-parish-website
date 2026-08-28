@@ -54,7 +54,9 @@ export default function RecentBookings({
                   )}
                 </div>
                 <div className="min-w-0">
-                  <h3 className="break-words font-semibold">{booking.service}</h3>
+                  <h3 className="break-words font-semibold">
+                    {booking.service}
+                  </h3>
                   <p className="break-all text-sm text-gray-500">
                     {booking.booking_reference}
                   </p>
@@ -76,7 +78,9 @@ export default function RecentBookings({
               {formatDate(booking.booking_date)}
               {booking.start_time && ` • ${booking.start_time}`}
             </div>
-            <p className="mt-3 text-right text-xs font-semibold text-[#B22222]">View booking information</p>
+            <p className="mt-3 text-right text-xs font-semibold text-[#B22222]">
+              View booking information
+            </p>
           </div>
         ))}
 

@@ -7,7 +7,9 @@ export interface ServiceFee {
   amount: number;
 }
 
-export async function getServiceFees(serviceCode: string): Promise<ServiceFee[]> {
+export async function getServiceFees(
+  serviceCode: string,
+): Promise<ServiceFee[]> {
   const response = await api.get<{ data: ServiceFee[] }>(
     `/services/${serviceCode}/fees`,
   );

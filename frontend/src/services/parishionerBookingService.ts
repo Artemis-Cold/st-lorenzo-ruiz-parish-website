@@ -13,7 +13,11 @@ export interface ParishionerBookingDetail {
   missingRequirements: MissingRequirement[];
   submittedAt: string;
   remarks: string | null;
-  schedule: { date: string | null; startTime: string | null; endTime: string | null };
+  schedule: {
+    date: string | null;
+    startTime: string | null;
+    endTime: string | null;
+  };
   package: {
     name: string;
     baseAmount: number;

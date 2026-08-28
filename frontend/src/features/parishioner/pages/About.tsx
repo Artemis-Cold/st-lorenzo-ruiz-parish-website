@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 
 import churchImage from "@/assets/images/church.jpg";
-import parishLogo from "@/assets/images/parish-logo.png";
+import ParishLogo from "@/components/common/ParishLogo";
 import DashboardLayout from "../components/DashboardLayout";
 
 const milestones = [
@@ -48,11 +48,9 @@ export default function About() {
           <div className="absolute inset-0 bg-linear-to-r from-black/90 via-black/65 to-[#7A1717]/25" />
           <div className="relative flex min-h-105 max-w-3xl flex-col justify-end p-7 text-white sm:p-12">
             <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-              <img
-                src={parishLogo}
-                alt="Logo of St. Lorenzo Ruiz Parish"
-                className="size-19 rounded-full border-2 border-[#D4AF37] bg-white object-contain shadow-lg sm:size-21"
-              />
+              <span className="grid size-16 shrink-0 place-items-center rounded-full bg-white p-1 shadow-lg ring-2 ring-[#D4AF37] sm:size-18">
+                <ParishLogo className="size-full" />
+              </span>
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.25em] text-[#F5D76E]">
                   Kasaysayan ng ating parokya

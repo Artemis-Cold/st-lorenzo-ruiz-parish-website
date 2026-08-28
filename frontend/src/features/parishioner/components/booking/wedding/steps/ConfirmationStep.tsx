@@ -32,23 +32,20 @@ export default function ConfirmationStep({
     <div className="space-y-8">
       <ConfirmationNotice />
 
-      <ScheduleSummary selectedDate={selectedDate} selectedSlot={selectedSlot} />
+      <ScheduleSummary
+        selectedDate={selectedDate}
+        selectedSlot={selectedSlot}
+      />
 
       <PackageSummary
         selectedPackage={selectedPackage}
         selectedAddonIds={booking.selected_addon_ids}
       />
 
-      <DetailsStep
-        booking={booking}
-        setBooking={setBooking}
-        readOnly
-      />
+      <DetailsStep booking={booking} setBooking={setBooking} readOnly />
 
       <div className="rounded-3xl border border-[#B22222]/20 bg-red-50 p-6">
-        <h3 className="mb-4 text-xl font-bold text-[#B22222]">
-          Declaration
-        </h3>
+        <h3 className="mb-4 text-xl font-bold text-[#B22222]">Declaration</h3>
 
         <p className="mb-6 text-gray-700">
           I hereby certify that all information and uploaded documents provided

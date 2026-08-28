@@ -1,9 +1,5 @@
 export type IntentionType =
-  | "Thanksgiving"
-  | "Birthday"
-  | "Anniversary"
-  | "Petition"
-  | "Soul";
+  "Thanksgiving" | "Birthday" | "Anniversary" | "Petition" | "Soul";
 
 export interface IntentionEntry {
   id: number;

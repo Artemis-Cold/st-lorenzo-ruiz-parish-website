@@ -1,9 +1,5 @@
 export type IntentionStatus =
-  | "pending"
-  | "paid"
-  | "rejected"
-  | "cancelled"
-  | "completed";
+  "pending" | "paid" | "rejected" | "cancelled" | "completed";
 
 const styles: Record<IntentionStatus, string> = {
   pending: "bg-amber-50 text-amber-700 border-amber-200",

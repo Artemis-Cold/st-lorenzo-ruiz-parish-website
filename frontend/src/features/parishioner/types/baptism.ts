@@ -37,9 +37,7 @@ export interface Baptizand extends PersonName {
 
 export interface BaptismDocument {
   document_type:
-    | "birth_certificate"
-    | "baptism_permit"
-    | "no_record_certificate";
+    "birth_certificate" | "baptism_permit" | "no_record_certificate";
 
   file: File;
 }

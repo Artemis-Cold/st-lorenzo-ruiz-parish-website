@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   getStaffDashboard,
   type StaffDashboardData,
@@ -73,7 +74,7 @@ export default function Dashboard() {
     <StaffDashboardLayout>
       <div className="space-y-5 sm:space-y-6">
         <WelcomeBanner />
-        <StatsOverview stats={stats} />
+        <StatsOverview stats={stats} loading={loading} />
 
         <QuickActionsCard />
 
@@ -124,16 +125,16 @@ function DashboardPanelSkeleton() {
       {[0, 1].map((item) => (
         <div
           key={item}
-          className="flex min-h-52 animate-pulse flex-col rounded-3xl border border-[#E7E2DA] bg-white p-5 shadow-sm"
+          className="flex min-h-52 flex-col rounded-3xl border border-[#E7E2DA] bg-white p-5 shadow-sm"
         >
           <div className="mb-5 flex items-center gap-3">
-            <div className="size-9 rounded-xl bg-gray-100" />
-            <div className="h-5 w-36 rounded-lg bg-gray-100" />
+            <Skeleton className="size-9 rounded-xl bg-gray-100" />
+            <Skeleton className="h-5 w-36 rounded-lg bg-gray-100" />
           </div>
           <div className="space-y-3">
-            <div className="h-14 rounded-2xl bg-gray-100" />
-            <div className="h-14 rounded-2xl bg-gray-100" />
-            <div className="h-14 rounded-2xl bg-gray-100" />
+            <Skeleton className="h-14 rounded-2xl bg-gray-100" />
+            <Skeleton className="h-14 rounded-2xl bg-gray-100" />
+            <Skeleton className="h-14 rounded-2xl bg-gray-100" />
           </div>
         </div>
       ))}

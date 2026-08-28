@@ -15,8 +15,7 @@ export function drawParishPdfLetterhead(doc: jsPDF, logo: HTMLImageElement) {
   const pageWidth = doc.internal.pageSize.getWidth();
   const archdiocese = "ARCHDIOCESE OF LIPA";
   const parish = "ST. LORENZO RUIZ PARISH";
-  const address =
-    "PUROK 4, BRGY. DAGATAN, TAYSAN, BATANGAS | 4228 PHILIPPINES";
+  const address = "PUROK 4, BRGY. DAGATAN, TAYSAN, BATANGAS | 4228 PHILIPPINES";
 
   doc.setTextColor(25, 25, 25);
   doc.setFont("helvetica", "bold");
@@ -29,11 +28,7 @@ export function drawParishPdfLetterhead(doc: jsPDF, logo: HTMLImageElement) {
 
   const logoSize = 21;
   const logoTextGap = 4;
-  const headingWidth = Math.max(
-    archdioceseWidth,
-    parishWidth,
-    addressWidth,
-  );
+  const headingWidth = Math.max(archdioceseWidth, parishWidth, addressWidth);
   const groupWidth = logoSize + logoTextGap + headingWidth;
   const groupX = (pageWidth - groupWidth) / 2;
   const headingCenter = groupX + logoSize + logoTextGap + headingWidth / 2;

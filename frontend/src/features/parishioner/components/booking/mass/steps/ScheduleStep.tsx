@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Clock3, LoaderCircle, MapPin } from "lucide-react";
+import { Clock3, MapPin } from "lucide-react";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import BookingCalendar from "../../BookingCalendar";
 import { getPublicEvents, type ParishEvent } from "@/services/eventService";
 
@@ -142,9 +143,14 @@ export default function ScheduleStep({
               Select a date from the calendar first.
             </div>
           ) : loadingSchedules ? (
-            <div className="flex items-center justify-center rounded-2xl bg-gray-50 py-8 text-sm text-gray-500">
-              <LoaderCircle className="mr-2 animate-spin" size={18} />
-              Loading Mass schedules...
+            <div
+              aria-label="Loading Mass schedules"
+              aria-busy="true"
+              className="space-y-3"
+            >
+              <Skeleton className="h-24 rounded-2xl" />
+              <Skeleton className="h-24 rounded-2xl" />
+              <Skeleton className="h-24 rounded-2xl" />
             </div>
           ) : schedules.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-amber-300 bg-amber-50 px-4 py-6 text-center text-sm leading-6 text-amber-800">

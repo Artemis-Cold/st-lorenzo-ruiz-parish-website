@@ -19,7 +19,13 @@ interface Props {
 }
 
 export default function ScheduleStep(props: Props) {
-  const { booking, setBooking, selectedDate, setSelectedDate, setSelectedSlot } = props;
+  const {
+    booking,
+    setBooking,
+    selectedDate,
+    setSelectedDate,
+    setSelectedSlot,
+  } = props;
   const [slots, setSlots] = useState<BookingSlot[]>([]);
   const [loading, setLoading] = useState(false);
 

@@ -16,8 +16,7 @@ import {
   FileText,
 } from "lucide-react";
 
-import logo from "../../../assets/images/parish-logo.png";
-
+import ParishLogo from "@/components/common/ParishLogo";
 import SidebarItem from "./SidebarItem";
 
 interface SidebarProps {
@@ -33,19 +32,15 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       }`}
     >
       {/* Logo + Toggle */}
-      <div className={`relative border-b border-red-700 p-5 ${collapsed ? "pb-8" : ""}`}>
-        <div
-          className="flex justify-center"
-        >
-          <img
-            src={logo}
-            alt="Parish Logo"
-            className={`rounded-full object-cover transition-all duration-300 ${
-              collapsed
-                ? "h-15 w-15"
-                : "h-25 w-25 border-4 border-white  shadow-lg"
-            }`}
-          />
+      <div
+        className={`relative border-b border-white/10 p-5 ${collapsed ? "pb-8" : ""}`}
+      >
+        <div className="flex justify-center">
+          <span
+            className={`grid shrink-0 place-items-center rounded-full bg-white shadow-lg ring-1 ring-white/30 transition-all duration-300 ${collapsed ? "size-12 p-1" : "size-20 p-1.5"}`}
+          >
+            <ParishLogo className="size-full" />
+          </span>
 
           <button
             onClick={onToggle}

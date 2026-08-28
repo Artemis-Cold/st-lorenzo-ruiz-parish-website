@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { getProfile, type ProfileBooking } from "@/api/auth";
+import { Skeleton } from "@/components/ui/skeleton";
 import DashboardLayout from "../components/DashboardLayout";
 import WelcomeBanner from "../components/dashboard/WelcomeBanner";
 import EventsCard from "../components/dashboard/EventsCard";
@@ -39,7 +40,7 @@ export default function Dashboard() {
 
       <div className="mt-8 grid gap-8 xl:grid-cols-[2fr_1fr]">
         {loading ? (
-          <div className="min-h-80 animate-pulse rounded-3xl bg-white shadow-lg" />
+          <Skeleton className="min-h-80 rounded-3xl bg-white shadow-lg" />
         ) : (
           <EventsCard announcements={announcements} />
         )}
@@ -47,8 +48,8 @@ export default function Dashboard() {
         <div className="space-y-8 md:grid md:grid-cols-2 md:items-start md:gap-6 md:space-y-0 xl:block xl:space-y-8">
           {loading ? (
             <>
-              <div className="h-96 animate-pulse rounded-3xl bg-white shadow-lg" />
-              <div className="h-48 animate-pulse rounded-3xl bg-white shadow-lg" />
+              <Skeleton className="h-96 rounded-3xl bg-white shadow-lg" />
+              <Skeleton className="h-48 rounded-3xl bg-white shadow-lg" />
             </>
           ) : (
             <>

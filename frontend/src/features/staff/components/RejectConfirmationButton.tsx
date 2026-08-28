@@ -30,7 +30,10 @@ export default function RejectConfirmationButton({
       <AlertDialogTrigger asChild>
         <button
           type="button"
-          className={className ?? "flex items-center justify-center gap-2 rounded-xl border border-red-200 px-4 py-3 font-semibold text-red-600 transition hover:bg-red-50"}
+          className={
+            className ??
+            "flex items-center justify-center gap-2 rounded-xl border border-red-200 px-4 py-3 font-semibold text-red-600 transition hover:bg-red-50"
+          }
         >
           <XCircle size={18} />
           {label}

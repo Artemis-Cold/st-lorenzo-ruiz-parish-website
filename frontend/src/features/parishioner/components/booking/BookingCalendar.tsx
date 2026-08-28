@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import type { BookingStatus } from "../../types/booking";
 import {
   getBookingAvailability,
@@ -233,9 +234,17 @@ export default function BookingCalendar({
 
       <div className="mt-5 flex flex-wrap justify-center gap-x-5 gap-y-2 text-xs sm:text-sm">
         {service && loading && (
-          <span className="text-gray-500">Loading availability...</span>
+          <div
+            aria-label="Loading availability"
+            aria-busy="true"
+            className="flex items-center gap-3"
+          >
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-3 w-24" />
+            <Skeleton className="h-3 w-20" />
+          </div>
         )}
-        {service && (
+        {service && !loading && (
           <>
             <div className="flex items-center gap-2">
               <span className="h-3 w-3 rounded-full bg-green-500" />

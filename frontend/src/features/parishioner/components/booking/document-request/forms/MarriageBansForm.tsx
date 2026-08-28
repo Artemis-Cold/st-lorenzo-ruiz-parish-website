@@ -37,12 +37,12 @@ ${
         </label>
 
         <input
-          className={inputClass + (getError("bride_name") ? " border-red-400" : "")}
+          className={
+            inputClass + (getError("bride_name") ? " border-red-400" : "")
+          }
           value={details.bride_name}
           readOnly={readOnly}
-          onChange={(e) =>
-            updateRequest("bride_name", e.target.value)
-          }
+          onChange={(e) => updateRequest("bride_name", e.target.value)}
           placeholder="Enter bride's name"
         />
         <FieldError message={getError("bride_name")} />
@@ -54,12 +54,12 @@ ${
         </label>
 
         <input
-          className={inputClass + (getError("groom_name") ? " border-red-400" : "")}
+          className={
+            inputClass + (getError("groom_name") ? " border-red-400" : "")
+          }
           value={details.groom_name}
           readOnly={readOnly}
-          onChange={(e) =>
-            updateRequest("groom_name", e.target.value)
-          }
+          onChange={(e) => updateRequest("groom_name", e.target.value)}
           placeholder="Enter groom's name"
         />
         <FieldError message={getError("groom_name")} />
@@ -71,12 +71,12 @@ ${
         </label>
 
         <input
-          className={inputClass + (getError("address") ? " border-red-400" : "")}
+          className={
+            inputClass + (getError("address") ? " border-red-400" : "")
+          }
           value={details.address}
           readOnly={readOnly}
-          onChange={(e) =>
-            updateRequest("address", e.target.value)
-          }
+          onChange={(e) => updateRequest("address", e.target.value)}
           placeholder="Complete address"
         />
         <FieldError message={getError("address")} />
@@ -102,9 +102,7 @@ ${
           onChange={(e) =>
             updateRequest(
               "marriage_date",
-              e.target.value
-                ? new Date(e.target.value)
-                : null,
+              e.target.value ? new Date(e.target.value) : null,
             )
           }
         />
@@ -115,7 +113,9 @@ ${
 }
 
 function FieldError({ message }: { message?: string }) {
-  return message ? <p className="mt-1 text-sm text-red-600">{message}</p> : null;
+  return message ? (
+    <p className="mt-1 text-sm text-red-600">{message}</p>
+  ) : null;
 }
 
 function toDateInputValue(date: Date): string {

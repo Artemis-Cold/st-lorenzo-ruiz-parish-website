@@ -93,6 +93,7 @@ export async function submitBooking(booking: BaptismBooking) {
 
       throw new Error(
         err.response?.data?.message ?? "Booking submission failed.",
+        { cause: err },
       );
     }
 

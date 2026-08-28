@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight, CalendarDays, Megaphone } from "lucide-react";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   getPublicAnnouncements,
   type Announcement,
@@ -54,13 +55,10 @@ export default function Announcements() {
 
         {loading ? (
           <div className="mt-7 grid gap-5 lg:grid-cols-[1.3fr_1fr]">
-            <div className="h-72 animate-pulse rounded-3xl bg-white/70" />
+            <Skeleton className="h-72 rounded-3xl bg-white/70" />
             <div className="space-y-3">
               {[1, 2, 3].map((item) => (
-                <div
-                  key={item}
-                  className="h-24 animate-pulse rounded-2xl bg-white/70"
-                />
+                <Skeleton key={item} className="h-24 rounded-2xl bg-white/70" />
               ))}
             </div>
           </div>

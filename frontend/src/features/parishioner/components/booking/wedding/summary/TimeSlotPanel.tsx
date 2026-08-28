@@ -1,4 +1,5 @@
 import { CalendarDays } from "lucide-react";
+import { BookingSlotsSkeleton } from "@/components/ui/skeleton";
 import TimeSlotCard from "../../TimeSlotCard";
 
 import type { Dispatch, SetStateAction } from "react";
@@ -27,11 +28,7 @@ export default function TimeSlotPanel({
   setSelectedSlot,
 }: Props) {
   if (loading) {
-    return (
-      <div className="h-full rounded-3xl border bg-white py-10 text-center shadow-lg">
-        Loading slots...
-      </div>
-    );
+    return <BookingSlotsSkeleton />;
   }
 
   return (

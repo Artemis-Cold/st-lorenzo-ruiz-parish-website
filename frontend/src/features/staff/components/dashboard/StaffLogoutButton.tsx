@@ -14,7 +14,11 @@ import {
 } from "@/components/alert-dialog";
 import { useAuth } from "@/contexts/AuthContext";
 
-export default function StaffLogoutButton({ onLogout }: { onLogout?: () => void }) {
+export default function StaffLogoutButton({
+  onLogout,
+}: {
+  onLogout?: () => void;
+}) {
   const { logout } = useAuth();
   const navigate = useNavigate();
 

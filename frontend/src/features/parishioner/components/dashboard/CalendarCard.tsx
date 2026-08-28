@@ -6,7 +6,11 @@ import { getPublicEvents, type ParishEvent } from "@/services/eventService";
 import { eventsByDate } from "@/utils/eventCalendar";
 import CalendarEventTooltip from "@/components/events/CalendarEventTooltip";
 
-export default function CalendarCard({ bookings }: { bookings: ProfileBooking[] }) {
+export default function CalendarCard({
+  bookings,
+}: {
+  bookings: ProfileBooking[];
+}) {
   const [displayedMonth, setDisplayedMonth] = useState(() => new Date());
   const year = displayedMonth.getFullYear();
   const month = displayedMonth.getMonth();
@@ -34,7 +38,8 @@ export default function CalendarCard({ bookings }: { bookings: ProfileBooking[] 
   }, [monthKey]);
 
   const calendarEvents = useMemo(
-    () => eventsByDate(eventResult.month === monthKey ? eventResult.events : []),
+    () =>
+      eventsByDate(eventResult.month === monthKey ? eventResult.events : []),
     [eventResult, monthKey],
   );
 
@@ -51,9 +56,8 @@ export default function CalendarCard({ bookings }: { bookings: ProfileBooking[] 
 
   const dateKey = (day: number) =>
     `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  const cells = Array.from(
-    { length: firstDay + daysInMonth },
-    (_, index) => (index < firstDay ? null : index - firstDay + 1),
+  const cells = Array.from({ length: firstDay + daysInMonth }, (_, index) =>
+    index < firstDay ? null : index - firstDay + 1,
   );
 
   return (
@@ -61,7 +65,9 @@ export default function CalendarCard({ bookings }: { bookings: ProfileBooking[] 
       <div className="mb-4 flex items-center justify-between xl:mb-5">
         <div className="flex items-center gap-2">
           <Calendar className="text-[#B22222]" />
-          <h2 className="font-serif text-lg font-bold xl:text-xl">My Calendar</h2>
+          <h2 className="font-serif text-lg font-bold xl:text-xl">
+            My Calendar
+          </h2>
         </div>
         <div className="flex gap-1">
           <button
@@ -91,13 +97,16 @@ export default function CalendarCard({ bookings }: { bookings: ProfileBooking[] 
       </p>
       <div className="grid grid-cols-7 gap-1 text-center text-xs">
         {["S", "M", "T", "W", "T", "F", "S"].map((day, index) => (
-          <span key={`${day}-${index}`} className="py-1 font-semibold text-gray-400">
+          <span
+            key={`${day}-${index}`}
+            className="py-1 font-semibold text-gray-400"
+          >
             {day}
           </span>
         ))}
         {cells.map((day, index) => {
           const dayBookings = day ? bookingsByDate[dateKey(day)] : undefined;
-          const dayEvents = day ? calendarEvents[dateKey(day)] ?? [] : [];
+          const dayEvents = day ? (calendarEvents[dateKey(day)] ?? []) : [];
           return day ? (
             <button
               type="button"
@@ -113,14 +122,24 @@ export default function CalendarCard({ bookings }: { bookings: ProfileBooking[] 
             >
               {day}
               {dayBookings && (
-                <span className={`absolute bottom-1 size-1.5 rounded-full bg-[#B22222] ${dayEvents.length ? "left-[calc(50%_-_4px)]" : "left-1/2 -translate-x-1/2"}`} />
+                <span
+                  className={`absolute bottom-1 size-1.5 rounded-full bg-[#B22222] ${dayEvents.length ? "left-[calc(50%_-_4px)]" : "left-1/2 -translate-x-1/2"}`}
+                />
               )}
               {dayEvents.length > 0 && (
-                <span className={`absolute bottom-1 size-1.5 rounded-full bg-violet-600 ${dayBookings ? "left-[calc(50%_+_4px)]" : "left-1/2 -translate-x-1/2"}`} />
+                <span
+                  className={`absolute bottom-1 size-1.5 rounded-full bg-violet-600 ${dayBookings ? "left-[calc(50%_+_4px)]" : "left-1/2 -translate-x-1/2"}`}
+                />
               )}
               <CalendarEventTooltip
                 events={dayEvents}
-                alignment={new Date(year, month, day).getDay() === 0 ? "left" : new Date(year, month, day).getDay() === 6 ? "right" : "center"}
+                alignment={
+                  new Date(year, month, day).getDay() === 0
+                    ? "left"
+                    : new Date(year, month, day).getDay() === 6
+                      ? "right"
+                      : "center"
+                }
               />
             </button>
           ) : (
@@ -129,8 +148,10 @@ export default function CalendarCard({ bookings }: { bookings: ProfileBooking[] 
         })}
       </div>
       <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] text-gray-500 xl:mt-4 xl:text-xs">
-        <span className="h-2 w-2 rounded-full bg-[#B22222]" /> Your scheduled booking
-        <span className="ml-2 h-2 w-2 rounded-full bg-violet-600" /> Parish event
+        <span className="h-2 w-2 rounded-full bg-[#B22222]" /> Your scheduled
+        booking
+        <span className="ml-2 h-2 w-2 rounded-full bg-violet-600" /> Parish
+        event
       </div>
     </div>
   );

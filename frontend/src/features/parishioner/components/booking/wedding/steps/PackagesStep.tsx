@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 
+import { Skeleton } from "@/components/ui/skeleton";
 import { BookingCard } from "../..";
 import {
   getServicePackages,
@@ -93,8 +94,16 @@ export default function PackagesStep({
   if (loading) {
     return (
       <BookingCard title="Wedding Fees & Add-ons">
-        <div className="rounded-2xl border py-10 text-center text-gray-500">
-          Loading wedding inclusions...
+        <div
+          aria-label="Loading wedding fees"
+          aria-busy="true"
+          className="space-y-4"
+        >
+          <Skeleton className="h-20 rounded-2xl" />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-36 rounded-2xl" />
+            <Skeleton className="h-36 rounded-2xl" />
+          </div>
         </div>
       </BookingCard>
     );

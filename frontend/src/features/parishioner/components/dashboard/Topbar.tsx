@@ -53,7 +53,9 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
           )}
 
           <div className="hidden md:block">
-            <p className="max-w-40 truncate text-sm font-semibold lg:text-base">{user.full_name}</p>
+            <p className="max-w-40 truncate text-sm font-semibold lg:text-base">
+              {user.full_name}
+            </p>
 
             <p className="text-xs text-gray-500 lg:text-sm">Parishioner</p>
           </div>

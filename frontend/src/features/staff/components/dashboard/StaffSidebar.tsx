@@ -9,8 +9,8 @@ import {
   Settings,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
-import logo from "../../../../assets/images/parish-logo.png";
 
+import ParishLogo from "@/components/common/ParishLogo";
 import { useAuth } from "@/contexts/AuthContext";
 import StaffLogoutButton from "./StaffLogoutButton";
 
@@ -79,32 +79,46 @@ export default function StaffSidebar({ onNavigate }: StaffSidebarProps) {
   const { user } = useAuth();
 
   return (
-    <div className="flex h-full flex-col bg-[#B22222] text-white">
-      <div className="flex flex-col items-center gap-3 border-b border-white/10 px-6 pb-7 pt-9">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full border border-white/25 bg-white/10 text-2xl">
-          <img
-            src={logo}
-            alt="Parish Logo"
-            className="rounded-full object-cover transition-all duration-300 h-20 w-20"
-          />
+    <div className="flex h-full flex-col bg-linear-to-b from-[#B22222] to-[#8F1818] text-white">
+      <div className="border-b border-white/10 px-5 pb-5 pt-6">
+        <div className="flex items-center gap-3">
+          <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-white p-1.5 shadow-lg ring-1 ring-white/30">
+            <ParishLogo className="size-full" />
+          </span>
+
+          <div className="min-w-0">
+            <p className="font-serif text-base font-bold leading-tight">
+              St. Lorenzo Ruiz Parish
+            </p>
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white/60">
+              Staff portal
+            </p>
+          </div>
         </div>
 
-        <div className="text-center">
-          <p className="font-serif text-base font-bold uppercase tracking-wide">
-            {user?.full_name ?? "User Name"}
-          </p>
-          <p className="text-xs text-white/65">{user?.username ?? "admin"}</p>
+        <div className="mt-4 flex items-center gap-3 rounded-2xl border border-white/10 bg-black/10 p-3">
+          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/15 text-sm font-bold uppercase ring-1 ring-white/10">
+            {user?.first_name?.charAt(0) ?? "S"}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold">
+              {user?.full_name ?? "Parish Staff"}
+            </p>
+            <p className="truncate text-[11px] text-white/60">
+              @{user?.username ?? "admin"}
+            </p>
+          </div>
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-5 scrollbar-none [&::-webkit-scrollbar]:hidden">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {navItems.map(({ label, to, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
             onClick={onNavigate}
             className={({ isActive }) =>
-              `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition ${
+              `flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition ${
                 isActive
                   ? "bg-white text-[#B22222] shadow-sm"
                   : "text-white/85 hover:bg-white/10 hover:text-white"
@@ -118,8 +132,8 @@ export default function StaffSidebar({ onNavigate }: StaffSidebarProps) {
         <StaffLogoutButton onLogout={onNavigate} />
       </nav>
 
-      <div className="border-t border-white/10 px-6 py-4 text-center text-[11px] text-white/50">
-        St. Lorenzo Ruiz Parish — Parish Staff Portal
+      <div className="border-t border-white/10 px-5 py-3 text-center text-[10px] leading-4 text-white/45">
+        St. Lorenzo Ruiz Parish · Dagatan, Taysan
       </div>
     </div>
   );

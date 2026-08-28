@@ -1,4 +1,12 @@
-import { BadgeCheck, CalendarDays, ContactRound, Mail, MapPin, Phone, UserRound } from "lucide-react";
+import {
+  BadgeCheck,
+  CalendarDays,
+  ContactRound,
+  Mail,
+  MapPin,
+  Phone,
+  UserRound,
+} from "lucide-react";
 
 import type { User } from "@/types/user";
 import ProfileModal from "./ProfileModal";
@@ -41,7 +49,9 @@ export default function PersonalInformation({
       icon: CalendarDays,
       label: "Birth Date",
       value: user.birth_date
-        ? new Date(`${user.birth_date.slice(0, 10)}T00:00:00`).toLocaleDateString("en-US", {
+        ? new Date(
+            `${user.birth_date.slice(0, 10)}T00:00:00`,
+          ).toLocaleDateString("en-US", {
             month: "long",
             day: "numeric",
             year: "numeric",
@@ -82,10 +92,7 @@ export default function PersonalInformation({
               className="flex items-start gap-4 rounded-xl border border-gray-100 p-4"
             >
               <div className="flex size-11 shrink-0 items-center justify-center rounded-lg bg-red-50">
-                <Icon
-                  size={18}
-                  className="text-[#B22222]"
-                />
+                <Icon size={18} className="text-[#B22222]" />
               </div>
 
               <div className="min-w-0 flex-1">
@@ -93,17 +100,20 @@ export default function PersonalInformation({
                   {item.label}
                 </p>
 
-                <p className="mt-1 break-words font-medium">
-                  {item.value}
-                </p>
+                <p className="mt-1 break-words font-medium">{item.value}</p>
               </div>
             </div>
           );
         })}
-
       </div>
       <div className="mt-6 flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
-        <button type="button" onClick={onClose} className="rounded-xl border border-gray-300 px-5 py-3 font-medium text-gray-700 hover:bg-gray-50">Close</button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-xl border border-gray-300 px-5 py-3 font-medium text-gray-700 hover:bg-gray-50"
+        >
+          Close
+        </button>
         <button
           type="button"
           onClick={onEdit}

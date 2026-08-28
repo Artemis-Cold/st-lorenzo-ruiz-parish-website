@@ -79,7 +79,10 @@ function App() {
           <Route path="/staff/requests" element={<Requests />} />
           <Route path="/staff/transactions" element={<Transactions />} />
           <Route path="/staff/settings" element={<StaffSettings />} />
-          <Route path="/staff/settings/pricing" element={<StaffPricingSettings />} />
+          <Route
+            path="/staff/settings/pricing"
+            element={<StaffPricingSettings />}
+          />
           <Route path="/staff/availability" element={<StaffAvailability />} />
         </Route>
       </Routes>

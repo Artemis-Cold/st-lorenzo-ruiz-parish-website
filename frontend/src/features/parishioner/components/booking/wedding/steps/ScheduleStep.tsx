@@ -62,7 +62,6 @@ export default function ScheduleStep({
     loadSlots();
   }, [selectedDate]);
 
-
   useEffect(() => {
     if (selectedSlot || booking.booking_slot_id === 0) return;
 

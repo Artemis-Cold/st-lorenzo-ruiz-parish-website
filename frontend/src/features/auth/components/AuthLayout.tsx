@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import authBg from "../../../assets/images/auth-bg.png";
-import parishLogo from "../../../assets/images/parish-logo.png";
+import ParishLogo from "@/components/common/ParishLogo";
 import AuthHeader from "./AuthHeader";
 
 interface AuthLayoutProps {
@@ -22,18 +22,16 @@ export default function AuthLayout({
       }}
     >
       <AuthHeader />
-      
+
       {/* Dark Overlay */}
       <div className="absolute inset-0 bg-black/45" />
 
       {/* Content */}
       <div className="relative z-10 flex w-full max-w-md flex-col items-center">
         {/* Logo */}
-        <img
-          src={parishLogo}
-          alt="Parish Logo"
-          className="mb-6 h-24 w-24 rounded-full border-4 border-white bg-white shadow-xl"
-        />
+        <span className="mb-6 grid size-21 place-items-center rounded-full bg-white p-1.5 shadow-xl ring-4 ring-white/70">
+          <ParishLogo className="size-full" />
+        </span>
 
         {/* Card */}
         <div className="w-full rounded-3xl bg-white/95 p-8 shadow-2xl backdrop-blur-sm">

@@ -1,5 +1,7 @@
 import { CalendarRange, FileText, ClipboardList } from "lucide-react";
 
+import { Skeleton } from "@/components/ui/skeleton";
+
 export interface StatItem {
   label: string;
   value: number;
@@ -21,9 +23,13 @@ const defaultStats: StatItem[] = [
 
 interface Props {
   stats?: StatItem[];
+  loading?: boolean;
 }
 
-export default function StatsOverview({ stats = defaultStats }: Props) {
+export default function StatsOverview({
+  stats = defaultStats,
+  loading = false,
+}: Props) {
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {stats.map(({ label, value, icon: Icon, color }) => (
@@ -38,9 +44,13 @@ export default function StatsOverview({ stats = defaultStats }: Props) {
             <Icon size={18} />
           </div>
 
-          <p className="font-serif text-2xl font-bold tabular-nums text-[#292524]">
-            {value}
-          </p>
+          {loading ? (
+            <Skeleton className="h-8 w-12" />
+          ) : (
+            <p className="font-serif text-2xl font-bold tabular-nums text-[#292524]">
+              {value}
+            </p>
+          )}
           <p className="mt-1 text-xs font-medium uppercase tracking-wide text-gray-500">
             {label}
           </p>

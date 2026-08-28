@@ -1,12 +1,20 @@
 import api from "@/api/axios";
 
 export type TransactionStatus = "pending" | "confirmed" | "rejected";
-export type TransactionService = "mass-intention" | "document-request" | "baptism" | "wedding" | "funeral";
+export type TransactionService =
+  "mass-intention" | "document-request" | "baptism" | "wedding" | "funeral";
 export interface StaffTransaction {
-  id: number; date: string; name: string; contactNumber: string;
-  type: "Mass Intention" | "Document Request" | "Baptism" | "Wedding" | "Funeral";
-  bookingReference: string; reference: string | null;
-  amount: number; receipt: { fileName: string; url: string }; status: TransactionStatus;
+  id: number;
+  date: string;
+  name: string;
+  contactNumber: string;
+  type:
+    "Mass Intention" | "Document Request" | "Baptism" | "Wedding" | "Funeral";
+  bookingReference: string;
+  reference: string | null;
+  amount: number;
+  receipt: { fileName: string; url: string };
+  status: TransactionStatus;
 }
 
 export interface StaffTransactionFilters {
@@ -48,7 +56,13 @@ export async function getStaffTransactions(
   return response.data;
 }
 
-export async function updateTransactionStatus(id: number, status: Exclude<TransactionStatus, "pending">): Promise<StaffTransaction> {
-  const response = await api.patch<{ data: StaffTransaction }>(`/staff/transactions/${id}/status`, { status });
+export async function updateTransactionStatus(
+  id: number,
+  status: Exclude<TransactionStatus, "pending">,
+): Promise<StaffTransaction> {
+  const response = await api.patch<{ data: StaffTransaction }>(
+    `/staff/transactions/${id}/status`,
+    { status },
+  );
   return response.data.data;
 }

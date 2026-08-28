@@ -2,9 +2,17 @@ import { CircleCheckBig, Clock3, Megaphone } from "lucide-react";
 
 import type { ProfileBooking } from "@/api/auth";
 
-export default function AnnouncementCard({ bookings }: { bookings: ProfileBooking[] }) {
-  const pending = bookings.filter((booking) => booking.status === "pending").length;
-  const approved = bookings.filter((booking) => booking.status === "approved").length;
+export default function AnnouncementCard({
+  bookings,
+}: {
+  bookings: ProfileBooking[];
+}) {
+  const pending = bookings.filter(
+    (booking) => booking.status === "pending",
+  ).length;
+  const approved = bookings.filter(
+    (booking) => booking.status === "approved",
+  ).length;
 
   return (
     <div className="rounded-3xl bg-white p-6 shadow-lg">
@@ -17,7 +25,8 @@ export default function AnnouncementCard({ bookings }: { bookings: ProfileBookin
           <div className="flex gap-3 rounded-xl bg-amber-50 p-4 text-amber-800">
             <Clock3 className="mt-0.5 shrink-0" size={19} />
             <p className="text-sm">
-              {pending} {pending === 1 ? "booking is" : "bookings are"} awaiting parish review.
+              {pending} {pending === 1 ? "booking is" : "bookings are"} awaiting
+              parish review.
             </p>
           </div>
         )}
@@ -25,7 +34,8 @@ export default function AnnouncementCard({ bookings }: { bookings: ProfileBookin
           <div className="flex gap-3 rounded-xl bg-green-50 p-4 text-green-800">
             <CircleCheckBig className="mt-0.5 shrink-0" size={19} />
             <p className="text-sm">
-              {approved} {approved === 1 ? "booking has" : "bookings have"} been approved.
+              {approved} {approved === 1 ? "booking has" : "bookings have"} been
+              approved.
             </p>
           </div>
         )}

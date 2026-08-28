@@ -234,9 +234,7 @@ ${
             ),
             { document_type: type, file },
           ]
-        : prev.documents.filter(
-            (document) => document.document_type !== type,
-          ),
+        : prev.documents.filter((document) => document.document_type !== type),
     }));
   };
 
@@ -347,7 +345,9 @@ ${
                 <input
                   type="text"
                   value={booking.deceased.death_cause}
-                  onChange={(e) => updateDeceased("death_cause", e.target.value)}
+                  onChange={(e) =>
+                    updateDeceased("death_cause", e.target.value)
+                  }
                   placeholder="Cause of Death"
                   readOnly={readOnly}
                   className={inputClass}
@@ -374,7 +374,9 @@ ${
                   readOnly={readOnly}
                   className={inputClass}
                   value={booking.deceased.father.last_name}
-                  onChange={(e) => updateDeceasedFather("last_name", e.target.value)}
+                  onChange={(e) =>
+                    updateDeceasedFather("last_name", e.target.value)
+                  }
                 />
                 <FieldError message={getError("deceased.father.last_name")} />
               </div>
@@ -390,7 +392,9 @@ ${
                   readOnly={readOnly}
                   className={inputClass}
                   value={booking.deceased.father.first_name}
-                  onChange={(e) => updateDeceasedFather("first_name", e.target.value)}
+                  onChange={(e) =>
+                    updateDeceasedFather("first_name", e.target.value)
+                  }
                 />
                 <FieldError message={getError("deceased.father.first_name")} />
               </div>
@@ -411,7 +415,9 @@ ${
                     updateDeceasedFather("middle_initial", e.target.value)
                   }
                 />
-                <FieldError message={getError("deceased.father.middle_initial")} />
+                <FieldError
+                  message={getError("deceased.father.middle_initial")}
+                />
               </div>
 
               <div className="col-span-12 rounded-xl border border-amber-300 bg-amber-50 p-4">
@@ -473,7 +479,9 @@ ${
                     updateDeceasedMother("middle_initial", e.target.value)
                   }
                 />
-                <FieldError message={getError("deceased.mother.middle_initial")} />
+                <FieldError
+                  message={getError("deceased.mother.middle_initial")}
+                />
               </div>
 
               <div className="col-span-12 rounded-xl border border-gray-200 bg-gray-50 p-4">
@@ -482,16 +490,22 @@ ${
                     type="checkbox"
                     checked={booking.deceased.has_spouse}
                     disabled={readOnly}
-                    onChange={(event) => setBooking((previous) => ({
-                      ...previous,
-                      deceased: {
-                        ...previous.deceased,
-                        has_spouse: event.target.checked,
-                        spouse: event.target.checked
-                          ? previous.deceased.spouse
-                          : { first_name: "", middle_initial: "", last_name: "" },
-                      },
-                    }))}
+                    onChange={(event) =>
+                      setBooking((previous) => ({
+                        ...previous,
+                        deceased: {
+                          ...previous.deceased,
+                          has_spouse: event.target.checked,
+                          spouse: event.target.checked
+                            ? previous.deceased.spouse
+                            : {
+                                first_name: "",
+                                middle_initial: "",
+                                last_name: "",
+                              },
+                        },
+                      }))
+                    }
                     className="h-4 w-4 accent-[#B22222]"
                   />
                   Include spouse information
@@ -501,59 +515,71 @@ ${
                 </p>
               </div>
 
-              {booking.deceased.has_spouse && <>
+              {booking.deceased.has_spouse && (
+                <>
+                  <div className="col-span-12 md:col-span-5">
+                    <label className="mb-2 block text-sm font-medium">
+                      Spouse's Last Name <span className="text-red-600">*</span>
+                    </label>
 
-              <div className="col-span-12 md:col-span-5">
-                <label className="mb-2 block text-sm font-medium">
-                  Spouse's Last Name <span className="text-red-600">*</span>
-                </label>
+                    <input
+                      type="text"
+                      placeholder="Enter spouse's last name"
+                      readOnly={readOnly}
+                      className={inputClass}
+                      value={booking.deceased.spouse.last_name}
+                      onChange={(e) =>
+                        updateSpouse("last_name", e.target.value)
+                      }
+                    />
+                    <FieldError
+                      message={getError("deceased.spouse.last_name")}
+                    />
+                  </div>
 
-                <input
-                  type="text"
-                  placeholder="Enter spouse's last name"
-                  readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.deceased.spouse.last_name}
-                  onChange={(e) => updateSpouse("last_name", e.target.value)}
-                />
-                <FieldError message={getError("deceased.spouse.last_name")} />
-              </div>
+                  <div className="col-span-12 md:col-span-5">
+                    <label className="mb-2 block text-sm font-medium">
+                      Spouse's First Name{" "}
+                      <span className="text-red-600">*</span>
+                    </label>
 
-              <div className="col-span-12 md:col-span-5">
-                <label className="mb-2 block text-sm font-medium">
-                  Spouse's First Name <span className="text-red-600">*</span>
-                </label>
+                    <input
+                      type="text"
+                      placeholder="Enter spouse's first name"
+                      readOnly={readOnly}
+                      className={inputClass}
+                      value={booking.deceased.spouse.first_name}
+                      onChange={(e) =>
+                        updateSpouse("first_name", e.target.value)
+                      }
+                    />
+                    <FieldError
+                      message={getError("deceased.spouse.first_name")}
+                    />
+                  </div>
 
-                <input
-                  type="text"
-                  placeholder="Enter spouse's first name"
-                  readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.deceased.spouse.first_name}
-                  onChange={(e) => updateSpouse("first_name", e.target.value)}
-                />
-                <FieldError message={getError("deceased.spouse.first_name")} />
-              </div>
+                  <div className="col-span-12 md:col-span-2">
+                    <label className="mb-2 block text-sm font-medium">
+                      Spouse's MI
+                    </label>
 
-              <div className="col-span-12 md:col-span-2">
-                <label className="mb-2 block text-sm font-medium">
-                  Spouse's MI
-                </label>
-
-                <input
-                  type="text"
-                  maxLength={1}
-                  placeholder="M"
-                  readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.deceased.spouse.middle_initial}
-                  onChange={(e) =>
-                    updateSpouse("middle_initial", e.target.value)
-                  }
-                />
-                <FieldError message={getError("deceased.spouse.middle_initial")} />
-              </div>
-              </>}
+                    <input
+                      type="text"
+                      maxLength={1}
+                      placeholder="M"
+                      readOnly={readOnly}
+                      className={inputClass}
+                      value={booking.deceased.spouse.middle_initial}
+                      onChange={(e) =>
+                        updateSpouse("middle_initial", e.target.value)
+                      }
+                    />
+                    <FieldError
+                      message={getError("deceased.spouse.middle_initial")}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </section>
 
@@ -757,7 +783,8 @@ ${
                     <label
                       key={option.value}
                       className={`cursor-pointer rounded-xl border p-4 transition ${
-                        booking.deceased.church_life.attends_mass === option.value
+                        booking.deceased.church_life.attends_mass ===
+                        option.value
                           ? "border-[#B22222] bg-red-50"
                           : "border-gray-300 hover:border-[#B22222]"
                       }`}
@@ -893,9 +920,7 @@ ${
                 className={inputClass}
                 placeholder="Enter last name"
               />
-              <FieldError
-                message={getError("deceased.informant.last_name")}
-              />
+              <FieldError message={getError("deceased.informant.last_name")} />
             </div>
             <div className="col-span-12 md:col-span-5">
               <label className="mb-2 block text-sm font-medium">
@@ -910,9 +935,7 @@ ${
                 className={inputClass}
                 placeholder="Enter first name"
               />
-              <FieldError
-                message={getError("deceased.informant.first_name")}
-              />
+              <FieldError message={getError("deceased.informant.first_name")} />
             </div>
             <div className="col-span-12 md:col-span-2">
               <label className="mb-2 block text-sm font-medium">MI</label>
@@ -1019,14 +1042,10 @@ ${
                 <FileUploadField
                   label="Death Certificate"
                   file={getDocument("death_certificate")}
-                  onChange={(file) =>
-                    updateDocument("death_certificate", file)
-                  }
+                  onChange={(file) => updateDocument("death_certificate", file)}
                   readOnly={readOnly}
                 />
-                <FieldError
-                  message={getError("documents.death_certificate")}
-                />
+                <FieldError message={getError("documents.death_certificate")} />
               </div>
 
               <div className="col-span-12 md:col-span-6">

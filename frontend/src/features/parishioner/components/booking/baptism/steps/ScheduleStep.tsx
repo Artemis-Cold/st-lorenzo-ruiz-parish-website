@@ -71,12 +71,7 @@ export default function ScheduleStep({
     if (match) {
       setSelectedSlot(match);
     }
-  }, [
-    availableSlots,
-    booking.booking_slot_id,
-    selectedSlot,
-    setSelectedSlot,
-  ]);
+  }, [availableSlots, booking.booking_slot_id, selectedSlot, setSelectedSlot]);
 
   return (
     <div className="grid gap-6 lg:h-[31rem] lg:grid-cols-3 lg:items-stretch">

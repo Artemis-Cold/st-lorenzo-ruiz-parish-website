@@ -64,7 +64,12 @@ export default function ProfileModal({
             <X size={20} />
           </button>
         </header>
-        <div data-modal-scroll="true" className="overflow-y-auto px-6 py-6 sm:px-8">{children}</div>
+        <div
+          data-modal-scroll="true"
+          className="overflow-y-auto px-6 py-6 sm:px-8"
+        >
+          {children}
+        </div>
       </section>
     </div>
   );
