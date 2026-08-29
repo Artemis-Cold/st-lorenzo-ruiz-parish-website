@@ -148,8 +148,7 @@ export default function SignUp() {
           <div className="mb-3 flex items-start gap-2 text-sm text-amber-900">
             <ShieldCheck className="mt-0.5 shrink-0" size={18} />
             <p>
-              Verify your mobile number before creating an account. This helps
-              prevent bot and dummy registrations.
+              Verify your mobile number before creating an account.
             </p>
           </div>
           <button
