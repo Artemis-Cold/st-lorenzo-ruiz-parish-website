@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\RegistrationPhoneOtp;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -97,14 +98,23 @@ class ParishionerAccountSecurityTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['terms_accepted']);
 
+        RegistrationPhoneOtp::create([
+            'phone' => $payload['phone'],
+            'code_hash' => hash('sha256', '123456'),
+            'expires_at' => now()->addMinutes(10),
+        ]);
+
         $this->postJson('/api/auth/register', [
             ...$payload,
             'terms_accepted' => true,
-        ])->assertCreated();
+            'otp' => '123456',
+        ])->assertCreated()
+            ->assertJsonPath('user.phone_verified', true);
 
         $user = User::where('username', 'newparishioner')->firstOrFail();
 
         $this->assertNotNull($user->terms_accepted_at);
+        $this->assertNotNull($user->phone_verified_at);
         $this->assertSame('2026-08-28', $user->terms_version);
     }
 }

@@ -72,6 +72,7 @@ class RegisterRequest extends FormRequest
                 'regex:/^09\d{9}$/',
                 'unique:users,phone',
             ],
+            'otp' => ['required', 'digits:6'],
             'house_no' => ['nullable'],
             'street' => ['nullable'],
             'barangay' => ['nullable', 'string'],

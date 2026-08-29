@@ -16,6 +16,16 @@ export const register = async (data: RegisterRequest): Promise<AuthPayload> => {
   return response.data;
 };
 
+export const requestRegistrationPhoneOtp = async (
+  phone: string,
+): Promise<{ message: string }> => {
+  const response = await api.post<{ message: string }>(
+    "/auth/register/phone-verification/otp",
+    { phone },
+  );
+  return response.data;
+};
+
 export const login = async (data: LoginCredentials): Promise<AuthPayload> => {
   const response = await api.post<AuthPayload>("/auth/login", data);
 

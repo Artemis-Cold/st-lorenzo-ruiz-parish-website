@@ -16,7 +16,7 @@ export default function PhoneVerifiedRoute() {
   }, [user?.phone_verified]);
 
   if (!user?.phone_verified) {
-    return <Navigate to="/profile?verifyPhone=1" replace />;
+    return <Navigate to="/settings?verifyPhone=1" replace />;
   }
 
   return <Outlet />;

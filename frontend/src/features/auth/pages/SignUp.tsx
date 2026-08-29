@@ -1,8 +1,15 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { User as UserIcon } from "lucide-react";
+import {
+  LoaderCircle,
+  MessageSquareText,
+  ShieldCheck,
+  User as UserIcon,
+} from "lucide-react";
 import { AxiosError } from "axios";
+import { toast } from "sonner";
+import { requestRegistrationPhoneOtp } from "@/api/auth";
 
 import AuthLayout from "../components/AuthLayout";
 import AuthButton from "../components/AuthButton";
@@ -18,6 +25,9 @@ export default function SignUp() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [sendingOtp, setSendingOtp] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
@@ -39,6 +49,7 @@ export default function SignUp() {
         first_name: firstName,
         last_name: lastName,
         phone,
+        otp,
         username,
         password,
         password_confirmation: passwordConfirmation,
@@ -55,6 +66,26 @@ export default function SignUp() {
       }
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const sendOtp = async () => {
+    setSendingOtp(true);
+    setFieldErrors({});
+    try {
+      const response = await requestRegistrationPhoneOtp(phone);
+      setOtpSent(true);
+      toast.success(response.message);
+    } catch (err) {
+      if (err instanceof AxiosError && err.response?.status === 422) {
+        setFieldErrors(err.response.data.errors ?? {});
+      } else if (err instanceof AxiosError && err.response?.status === 429) {
+        setError("Too many code requests. Please wait before trying again.");
+      } else {
+        setError("Unable to send the verification code. Please try again.");
+      }
+    } finally {
+      setSendingOtp(false);
     }
   };
 
@@ -101,11 +132,67 @@ export default function SignUp() {
         <div>
           <PhoneField
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => {
+              setPhone(e.target.value);
+              setOtpSent(false);
+              setOtp("");
+            }}
             disabled={submitting}
           />
           {fieldErrors.phone && (
             <p className="mt-1 text-sm text-red-600">{fieldErrors.phone[0]}</p>
+          )}
+        </div>
+
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+          <div className="mb-3 flex items-start gap-2 text-sm text-amber-900">
+            <ShieldCheck className="mt-0.5 shrink-0" size={18} />
+            <p>
+              Verify your mobile number before creating an account. This helps
+              prevent bot and dummy registrations.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={sendOtp}
+            disabled={submitting || sendingOtp}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#B22222] bg-white px-4 py-2.5 font-semibold text-[#B22222] disabled:opacity-60"
+          >
+            {sendingOtp ? (
+              <LoaderCircle className="animate-spin" size={18} />
+            ) : (
+              <MessageSquareText size={18} />
+            )}
+            {sendingOtp
+              ? "Sending Code..."
+              : otpSent
+                ? "Send Another Code"
+                : "Send Verification Code"}
+          </button>
+          {otpSent && (
+            <div className="mt-3">
+              <label
+                htmlFor="signup-otp"
+                className="mb-1 block text-sm font-semibold"
+              >
+                Verification code
+              </label>
+              <input
+                id="signup-otp"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={otp}
+                onChange={(e) =>
+                  setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                }
+                placeholder="Enter 6-digit code"
+                className="w-full rounded-xl border border-gray-300 px-4 py-3 text-center text-lg font-semibold tracking-[0.3em] outline-none focus:border-[#B22222]"
+              />
+            </div>
+          )}
+          {fieldErrors.otp?.[0] && (
+            <p className="mt-1 text-sm text-red-600">{fieldErrors.otp[0]}</p>
           )}
         </div>
 
@@ -194,7 +281,10 @@ export default function SignUp() {
           )}
         </div>
 
-        <AuthButton type="submit" disabled={submitting}>
+        <AuthButton
+          type="submit"
+          disabled={submitting || !otpSent || otp.length !== 6}
+        >
           {submitting ? "Creating Account..." : "Create Account"}
         </AuthButton>
       </form>

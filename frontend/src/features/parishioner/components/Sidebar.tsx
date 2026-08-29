@@ -14,6 +14,7 @@ import {
   ScrollText,
   Cross,
   FileText,
+  Settings,
 } from "lucide-react";
 
 import ParishLogo from "@/components/common/ParishLogo";
@@ -110,6 +111,12 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
           icon={User}
           label="My Profile"
           to="/profile"
+        />
+        <SidebarItem
+          collapsed={collapsed}
+          icon={Settings}
+          label="Settings"
+          to="/settings"
         />
       </nav>
 

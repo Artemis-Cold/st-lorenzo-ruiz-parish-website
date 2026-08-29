@@ -33,6 +33,21 @@ class SmsNotificationService
         return $sms;
     }
 
+    public function queueToPhone(string $phone, string $category, string $message): SmsMessage
+    {
+        $sms = SmsMessage::create([
+            'category' => $category,
+            'recipient' => $this->normalize($phone),
+            'message' => self::withAutomatedMessageNotice($message),
+        ]);
+
+        if (config('services.sms.driver', 'log') !== 'database') {
+            SendSmsMessage::dispatch($sms->id)->afterCommit();
+        }
+
+        return $sms;
+    }
+
     public static function withAutomatedMessageNotice(string $message): string
     {
         $message = trim($message);

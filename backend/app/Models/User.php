@@ -27,6 +27,7 @@ class User extends Authenticatable
         'gender',
 
         'phone',
+        'phone_verified_at',
 
         'house_no',
         'street',

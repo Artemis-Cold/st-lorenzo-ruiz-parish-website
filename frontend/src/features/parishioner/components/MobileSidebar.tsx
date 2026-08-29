@@ -15,6 +15,7 @@ import {
   User,
   X,
   FileText,
+  Settings,
 } from "lucide-react";
 
 import ParishLogo from "@/components/common/ParishLogo";
@@ -144,6 +145,12 @@ export default function MobileSidebar({ open, onClose }: MobileSidebarProps) {
             icon={User}
             label="My Profile"
             to="/profile"
+          />
+          <SidebarItem
+            collapsed={false}
+            icon={Settings}
+            label="Settings"
+            to="/settings"
           />
         </nav>
 

@@ -25,6 +25,8 @@ export interface RegisterRequest {
 
   phone: string;
 
+  otp: string;
+
   house_no?: string;
 
   street?: string;

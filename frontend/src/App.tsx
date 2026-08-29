@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 
@@ -19,10 +20,11 @@ import Baptism from "./features/parishioner/pages/Baptism";
 import Mass from "./features/parishioner/pages/Mass";
 import Document from "./features/parishioner/pages/Document";
 import Profile from "./features/parishioner/pages/Profile";
+import ParishionerSettings from "./features/parishioner/pages/Settings";
 import Help from "./features/parishioner/pages/Help";
 import AboutParish from "./features/parishioner/pages/About";
 
-import ARTest from "./features/ar-navigation/ARTest";
+import { RouteLoadingSkeleton } from "./components/ui/skeleton";
 
 import StaffDashboard from "./features/staff/pages/Dashboard";
 import Announcements from "./features/staff/pages/Announcement";
@@ -34,6 +36,8 @@ import Transactions from "./features/staff/pages/Transactions";
 import StaffSettings from "./features/staff/pages/Settings";
 import StaffAvailability from "./features/staff/pages/Availability";
 import StaffPricingSettings from "./features/staff/pages/PricingSettings";
+
+const ARNavigationPage = lazy(() => import("./features/ar-navigation"));
 
 function App() {
   return (
@@ -55,6 +59,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
 
           <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<ParishionerSettings />} />
           <Route path="/help" element={<Help />} />
           <Route path="/about" element={<AboutParish />} />
 
@@ -66,7 +71,14 @@ function App() {
             <Route path="/services/document-request" element={<Document />} />
           </Route>
 
-          <Route path="/ar-navigation" element={<ARTest />} />
+          <Route
+            path="/ar-navigation"
+            element={
+              <Suspense fallback={<RouteLoadingSkeleton />}>
+                <ARNavigationPage />
+              </Suspense>
+            }
+          />
         </Route>
 
         <Route element={<StaffProtectedRoute />}>

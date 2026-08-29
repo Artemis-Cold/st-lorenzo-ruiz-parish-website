@@ -28,12 +28,15 @@ use App\Http\Controllers\Auth\PasswordResetOtpController;
 use App\Http\Controllers\Auth\PhoneVerificationController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Auth\RegistrationPhoneVerificationController;
 use App\Http\Controllers\Auth\StaffLoginController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
 
     Route::post('/register', RegisterController::class);
+    Route::post('/register/phone-verification/otp', RegistrationPhoneVerificationController::class)
+        ->middleware('throttle:3,10');
 
     Route::post('/login', LoginController::class)
         ->middleware('throttle:login');

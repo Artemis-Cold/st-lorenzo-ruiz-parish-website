@@ -30,6 +30,7 @@ class AuthService
             'gender' => $data['gender'] ?? null,
 
             'phone' => $data['phone'],
+            'phone_verified_at' => now(),
 
             'house_no' => $data['house_no'] ?? null,
             'street' => $data['street'] ?? null,

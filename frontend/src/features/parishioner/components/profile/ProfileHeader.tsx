@@ -25,6 +25,7 @@ interface ProfileHeaderProps {
   onVerifyPhone?: () => void;
   activeTab: "current" | "recent" | "documents";
   onTabChange: (tab: "current" | "recent" | "documents") => void;
+  showAccountActions?: boolean;
 }
 
 export default function ProfileHeader({
@@ -41,6 +42,7 @@ export default function ProfileHeader({
   onVerifyPhone,
   activeTab,
   onTabChange,
+  showAccountActions = true,
 }: ProfileHeaderProps) {
   const tabs = [
     { id: "current" as const, label: "Current Bookings" },
@@ -113,7 +115,7 @@ export default function ProfileHeader({
             </div>
 
             <div className="mt-6 flex flex-wrap justify-center gap-3 md:justify-start">
-              {!phoneVerified && (
+              {showAccountActions && !phoneVerified && (
                 <button
                   type="button"
                   onClick={onVerifyPhone}
@@ -131,22 +133,26 @@ export default function ProfileHeader({
                 <ContactRound size={18} />
                 Personal Information
               </button>
-              <button
-                type="button"
-                onClick={onEdit}
-                className="inline-flex items-center gap-2 rounded-xl border border-white px-5 py-2.5 font-medium text-white transition hover:bg-white hover:text-[#B22222]"
-              >
-                <Pencil size={18} />
-                Edit Profile
-              </button>
-              <button
-                type="button"
-                onClick={onChangePassword}
-                className="inline-flex items-center gap-2 rounded-xl border border-white px-5 py-2.5 font-medium text-white transition hover:bg-white hover:text-[#B22222]"
-              >
-                <KeyRound size={18} />
-                Change Password
-              </button>
+              {showAccountActions && (
+                <button
+                  type="button"
+                  onClick={onEdit}
+                  className="inline-flex items-center gap-2 rounded-xl border border-white px-5 py-2.5 font-medium text-white transition hover:bg-white hover:text-[#B22222]"
+                >
+                  <Pencil size={18} />
+                  Edit Profile
+                </button>
+              )}
+              {showAccountActions && (
+                <button
+                  type="button"
+                  onClick={onChangePassword}
+                  className="inline-flex items-center gap-2 rounded-xl border border-white px-5 py-2.5 font-medium text-white transition hover:bg-white hover:text-[#B22222]"
+                >
+                  <KeyRound size={18} />
+                  Change Password
+                </button>
+              )}
             </div>
           </div>
         </div>

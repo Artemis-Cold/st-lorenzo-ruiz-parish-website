@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 import DashboardLayout from "../components/DashboardLayout";
 import ProfileHeader from "../components/profile/ProfileHeader";
@@ -7,11 +7,8 @@ import CurrentBookings from "../components/profile/CurrentBookings";
 import RecentBookings from "../components/profile/RecentBookings";
 import Documents from "../components/profile/Documents";
 import PersonalInformation from "../components/profile/PersonalInformation";
-import ProfileEditForm from "../components/profile/ProfileEditForm";
 import BookingDetailModal from "../components/profile/BookingDetailModal";
-import PasswordSettingsCard from "../components/profile/PasswordSettingsCard";
 import ProfilePhotoModal from "../components/profile/ProfilePhotoModal";
-import PhoneVerificationModal from "../components/profile/PhoneVerificationModal";
 import {
   getProfile,
   type ProfileBooking,
@@ -22,7 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { User } from "@/types/user";
 
 export default function Profile() {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { user: authenticatedUser, refreshUser } = useAuth();
   const [user, setUser] = useState<User | null>(authenticatedUser);
   const [bookings, setBookings] = useState<ProfileBooking[]>([]);
@@ -31,13 +28,8 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState<
     "current" | "recent" | "documents"
   >("current");
-  const [editing, setEditing] = useState(false);
   const [editingPhoto, setEditingPhoto] = useState(false);
   const [viewingInformation, setViewingInformation] = useState(false);
-  const [changingPassword, setChangingPassword] = useState(false);
-  const [verifyingPhone, setVerifyingPhone] = useState(
-    () => searchParams.get("verifyPhone") === "1",
-  );
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(
     null,
   );
@@ -114,20 +106,6 @@ export default function Profile() {
     .filter(Boolean)
     .join(", ");
 
-  const saved = async () => {
-    await Promise.all([loadProfile(), refreshUser()]);
-    setEditing(false);
-  };
-
-  const closePhoneVerification = () => {
-    setVerifyingPhone(false);
-    if (searchParams.has("verifyPhone")) {
-      const nextParams = new URLSearchParams(searchParams);
-      nextParams.delete("verifyPhone");
-      setSearchParams(nextParams, { replace: true });
-    }
-  };
-
   return (
     <DashboardLayout>
       {error && (
@@ -142,23 +120,13 @@ export default function Profile() {
         username={user.username}
         address={address || "Address not provided"}
         avatar={user.profile_photo_url ?? undefined}
-        onEdit={() => setEditing(true)}
         onChangePhoto={() => setEditingPhoto(true)}
         onViewInformation={() => setViewingInformation(true)}
-        onChangePassword={() => setChangingPassword(true)}
         phoneVerified={user.phone_verified}
-        onVerifyPhone={() => setVerifyingPhone(true)}
         activeTab={activeTab}
         onTabChange={setActiveTab}
+        showAccountActions={false}
       />
-
-      {editing && (
-        <ProfileEditForm
-          user={user}
-          onSaved={saved}
-          onCancel={() => setEditing(false)}
-        />
-      )}
 
       {editingPhoto && (
         <ProfilePhotoModal
@@ -177,25 +145,10 @@ export default function Profile() {
           onClose={() => setViewingInformation(false)}
           onEdit={() => {
             setViewingInformation(false);
-            setEditing(true);
+            navigate("/settings");
           }}
         />
       )}
-
-      {changingPassword && (
-        <PasswordSettingsCard onClose={() => setChangingPassword(false)} />
-      )}
-
-      {verifyingPhone && !user.phone_verified && (
-        <PhoneVerificationModal
-          phone={user.phone}
-          onClose={closePhoneVerification}
-          onVerified={async () => {
-            await Promise.all([loadProfile(), refreshUser()]);
-          }}
-        />
-      )}
-
       <div className="mt-8">
         {activeTab === "current" && (
           <CurrentBookings bookings={bookings} onView={setSelectedBookingId} />
