@@ -1,45 +1,72 @@
 import { useEffect, useRef, useState } from "react";
 
-import { mockNavigationMap } from "../data/mockNavigationMap";
+import { houseNavigationMap } from "../data/houseNavigationMap";
 import { findRoute, routeNodesFromIds } from "../navigation/aStar";
 import { NavigationEngine } from "../navigation/navigationEngine";
-import {
-  createRouteGeometry,
-  pointAtRouteDistance,
-} from "../navigation/routeGeometry";
-import { IOSDevelopmentTracker } from "../tracking/IOSDevelopmentTracker";
-import type { NavigationSnapshot, UserPose } from "../types/navigation";
+import { createRouteGeometry } from "../navigation/routeGeometry";
+import { SensorFusionTracker } from "../tracking/SensorFusionTracker";
+import type {
+  NavigationLocation,
+  NavigationSnapshot,
+  UserPose,
+} from "../types/navigation";
 
-const START_NODE_ID = 1;
+const DEFAULT_ORIGIN_ID = "room-3";
+const DEFAULT_DESTINATION_ID = "room-2";
 
-function createSession(destinationId: string) {
-  const destination =
-    mockNavigationMap.destinations.find((item) => item.id === destinationId) ??
-    mockNavigationMap.destinations[0];
+function findLocation(locationId: string): NavigationLocation {
+  const location = houseNavigationMap.locations.find(
+    (item) => item.id === locationId,
+  );
+
+  if (!location) {
+    throw new Error(`Navigation location "${locationId}" does not exist.`);
+  }
+
+  return location;
+}
+
+function createSession(originId: string, destinationId: string) {
+  const origin = findLocation(originId);
+  const destination = findLocation(destinationId);
+
+  if (origin.nodeId === destination.nodeId) {
+    throw new Error("Current location and destination must be different.");
+  }
+
   const routeNodeIds = findRoute(
-    mockNavigationMap.nodes,
-    mockNavigationMap.edges,
-    START_NODE_ID,
+    houseNavigationMap.nodes,
+    houseNavigationMap.edges,
+    origin.nodeId,
     destination.nodeId,
   );
+
+  if (routeNodeIds.length < 2) {
+    throw new Error(
+      `No walkable route connects ${origin.name} to ${destination.name}.`,
+    );
+  }
+
   const route = createRouteGeometry(
-    routeNodesFromIds(mockNavigationMap.nodes, routeNodeIds),
+    routeNodesFromIds(houseNavigationMap.nodes, routeNodeIds),
   );
-  const routePosition = pointAtRouteDistance(route, 0);
+  const firstSegment = route.segments[0];
   const initialPose: UserPose = {
-    ...routePosition.point,
-    heading: routePosition.heading,
+    ...firstSegment.from,
+    heading: firstSegment.heading,
     pitch: -18,
     roll: 0,
   };
   const engine = new NavigationEngine(route);
 
   return {
+    originId,
+    origin,
     destinationId,
     destination,
-    routeNodeIds,
     route,
     initialPose,
+    calibrationTarget: firstSegment.to,
     engine,
     snapshot: engine.update(initialPose),
   };
@@ -47,19 +74,15 @@ function createSession(destinationId: string) {
 
 export function useLiveNavigation() {
   const [session, setSession] = useState(() =>
-    createSession(mockNavigationMap.destinations[0].id),
+    createSession(DEFAULT_ORIGIN_ID, DEFAULT_DESTINATION_ID),
   );
   const [snapshot, setSnapshot] = useState<NavigationSnapshot>(
     session.snapshot,
   );
-  const [tracking, setTracking] = useState(false);
   const [trackingError, setTrackingError] = useState<string | null>(null);
   const [tracker] = useState(
     () =>
-      new IOSDevelopmentTracker(
-        session.initialPose,
-        session.initialPose.heading,
-      ),
+      new SensorFusionTracker(session.initialPose, session.initialPose.heading),
   );
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const sessionRef = useRef(session);
@@ -68,12 +91,34 @@ export function useLiveNavigation() {
     setSnapshot(sessionRef.current.engine.update(pose));
   };
 
-  const setDestinationId = (destinationId: string) => {
-    const nextSession = createSession(destinationId);
+  const applySession = (nextSession: ReturnType<typeof createSession>) => {
     sessionRef.current = nextSession;
     setSession(nextSession);
     setSnapshot(nextSession.snapshot);
     tracker.calibrate(nextSession.initialPose, nextSession.initialPose.heading);
+  };
+
+  const setOriginId = (originId: string) => {
+    let destinationId = sessionRef.current.destinationId;
+    const origin = findLocation(originId);
+
+    if (findLocation(destinationId).nodeId === origin.nodeId) {
+      destinationId = houseNavigationMap.locations.find(
+        (location) => location.nodeId !== origin.nodeId,
+      )!.id;
+    }
+
+    applySession(createSession(originId, destinationId));
+  };
+
+  const setDestinationId = (destinationId: string) => {
+    if (
+      findLocation(destinationId).nodeId === sessionRef.current.origin.nodeId
+    ) {
+      return;
+    }
+
+    applySession(createSession(sessionRef.current.originId, destinationId));
   };
 
   const startTracking = async () => {
@@ -88,7 +133,6 @@ export function useLiveNavigation() {
         sessionRef.current.initialPose,
         sessionRef.current.initialPose.heading,
       );
-      setTracking(true);
     } catch (error) {
       unsubscribeRef.current?.();
       unsubscribeRef.current = null;
@@ -96,7 +140,7 @@ export function useLiveNavigation() {
       const message =
         error instanceof Error
           ? error.message
-          : "Device orientation and motion tracking could not be started.";
+          : "Motion and orientation tracking could not be started.";
       setTrackingError(message);
       throw error;
     }
@@ -106,7 +150,6 @@ export function useLiveNavigation() {
     unsubscribeRef.current?.();
     unsubscribeRef.current = null;
     tracker.stop();
-    setTracking(false);
   };
 
   const recalibrate = () => {
@@ -127,19 +170,20 @@ export function useLiveNavigation() {
   );
 
   return {
-    map: mockNavigationMap,
+    map: houseNavigationMap,
     route: session.route,
-    routeNodeIds: session.routeNodeIds,
+    origin: session.origin,
+    originId: session.originId,
+    setOriginId,
     destination: session.destination,
     destinationId: session.destinationId,
     setDestinationId,
+    calibrationTarget: session.calibrationTarget,
     snapshot,
-    tracking,
     trackingError,
     startTracking,
     stopTracking,
     recalibrate,
     trackingMode: tracker.mode,
-    calibrationAnchor: mockNavigationMap.anchors[0],
   };
 }

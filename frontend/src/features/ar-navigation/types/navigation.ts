@@ -23,35 +23,30 @@ export interface NavigationEdge {
   bidirectional?: boolean;
 }
 
-export interface NavigationDestination {
+export interface NavigationLocation {
   id: string;
   name: string;
   description: string;
   nodeId: number;
-  icon?: string;
-}
-
-export interface NavigationAnchor extends NavigationPoint {
-  id: string;
-  name: string;
-  code: string;
-  nodeId: number;
-  floorId: number;
-  rotationY: number;
 }
 
 export interface NavigationMap {
   floors: NavigationFloor[];
   nodes: NavigationNode[];
   edges: NavigationEdge[];
-  destinations: NavigationDestination[];
-  anchors: NavigationAnchor[];
+  locations: NavigationLocation[];
 }
 
 export interface UserPose extends NavigationPoint {
   heading: number;
   pitch?: number;
   roll?: number;
+  detectedSteps?: number;
+  motionIntensity?: number;
+  motionSensorActive?: boolean;
+  orientationSensorActive?: boolean;
+  orientationSource?: "absolute" | "relative" | "ios-compass";
+  stepTrackingPaused?: boolean;
   timestamp?: number;
 }
 

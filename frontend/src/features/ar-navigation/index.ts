@@ -1,8 +1,7 @@
 export { default } from "./pages/ARNavigationPage";
 export type {
-  NavigationAnchor,
-  NavigationDestination,
   NavigationEdge,
+  NavigationLocation,
   NavigationMap,
   NavigationNode,
   NavigationSnapshot,

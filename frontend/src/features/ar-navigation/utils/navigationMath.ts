@@ -15,7 +15,9 @@ export function signedHeadingDifference(from: number, to: number) {
 }
 
 export function headingBetween(from: NavigationPoint, to: NavigationPoint) {
-  const radians = Math.atan2(to.x - from.x, to.z - from.z);
+  // Three.js cameras look toward -Z by default. Keep 0° on -Z and increase
+  // headings clockwise: 90° = +X, 180° = +Z, 270° = -X.
+  const radians = Math.atan2(to.x - from.x, from.z - to.z);
   return normalizeHeading((radians * 180) / Math.PI);
 }
 

@@ -9,16 +9,15 @@ import {
 } from "lucide-react";
 
 import type {
-  NavigationAnchor,
-  NavigationDestination,
+  NavigationLocation,
   NavigationSnapshot,
 } from "../types/navigation";
 
 interface NavigationDebugPanelProps {
   snapshot: NavigationSnapshot;
-  destination: NavigationDestination;
+  origin: NavigationLocation;
+  destination: NavigationLocation;
   trackingMode: string;
-  calibrationAnchor: NavigationAnchor;
 }
 
 const meters = (value: number) => `${value.toFixed(2)} m`;
@@ -26,9 +25,9 @@ const degrees = (value: number) => `${Math.round(value)}°`;
 
 export default function NavigationDebugPanel({
   snapshot,
+  origin,
   destination,
   trackingMode,
-  calibrationAnchor,
 }: NavigationDebugPanelProps) {
   const TurnIcon =
     snapshot.turnDirection === "left"
@@ -47,14 +46,30 @@ export default function NavigationDebugPanel({
       "Position",
       `x=${snapshot.pose.x.toFixed(2)}, z=${snapshot.pose.z.toFixed(2)}`,
     ],
+    ["Detected steps", String(snapshot.pose.detectedSteps ?? 0)],
+    [
+      "Motion sensor",
+      snapshot.pose.motionSensorActive ? "Active" : "Waiting for data",
+    ],
+    [
+      "Orientation sensor",
+      snapshot.pose.orientationSensorActive
+        ? `Active (${snapshot.pose.orientationSource ?? "unknown"})`
+        : "Waiting for data",
+    ],
+    ["Motion signal", (snapshot.pose.motionIntensity ?? 0).toFixed(2)],
+    [
+      "Step tracking",
+      snapshot.pose.stepTrackingPaused ? "Paused while turning" : "Ready",
+    ],
     ["Heading", degrees(snapshot.pose.heading)],
     ["Desired heading", degrees(snapshot.desiredHeading)],
     ["Heading difference", degrees(snapshot.headingDifference)],
     ["Distance to next turn", meters(snapshot.distanceToNextTurn)],
     ["Distance remaining", meters(snapshot.distanceRemaining)],
     ["Off-route distance", meters(snapshot.closestPoint.distanceFromRoute)],
+    ["Starting location", origin.name],
     ["Destination", destination.name],
-    ["Calibration anchor", calibrationAnchor.code],
   ];
 
   return (

@@ -10,35 +10,40 @@ import {
 } from "lucide-react";
 
 import type {
-  NavigationDestination,
+  NavigationLocation,
   NavigationSnapshot,
 } from "../types/navigation";
 
 interface NavigationHUDProps {
-  destinations: NavigationDestination[];
-  destinationId: string;
+  origin: NavigationLocation;
+  destination: NavigationLocation;
   snapshot: NavigationSnapshot;
   debugVisible: boolean;
-  onDestinationChange: (destinationId: string) => void;
   onExit: () => void;
   onRecalibrate: () => void;
   onToggleDebug: () => void;
 }
 
 export default function NavigationHUD({
-  destinations,
-  destinationId,
+  origin,
+  destination,
   snapshot,
   debugVisible,
-  onDestinationChange,
   onExit,
   onRecalibrate,
   onToggleDebug,
 }: NavigationHUDProps) {
+  const needsHeadingAlignment =
+    !snapshot.arrived && Math.abs(snapshot.headingDifference) >= 28;
+  const instructionDirection = needsHeadingAlignment
+    ? snapshot.headingDifference > 0
+      ? "right"
+      : "left"
+    : snapshot.turnDirection;
   const TurnIcon =
-    snapshot.turnDirection === "left"
+    instructionDirection === "left"
       ? CornerUpLeft
-      : snapshot.turnDirection === "right"
+      : instructionDirection === "right"
         ? CornerUpRight
         : Flag;
 
@@ -54,38 +59,26 @@ export default function NavigationHUD({
         <button
           type="button"
           onClick={onExit}
-          aria-label="Exit AR navigation"
-          className="grid size-11 shrink-0 place-items-center rounded-full border border-white/25 bg-black/55 text-white shadow-lg backdrop-blur-md transition active:scale-95"
+          aria-label="Exit indoor navigation"
+          className="grid size-11 shrink-0 place-items-center rounded-full border border-white/25 bg-black/60 text-white shadow-lg backdrop-blur-md transition active:scale-95"
         >
           <ArrowLeft size={20} />
         </button>
 
-        <label className="min-w-0 flex-1 rounded-2xl border border-white/25 bg-black/55 px-3 py-2 shadow-lg backdrop-blur-md">
+        <div className="min-w-0 flex-1 rounded-2xl border border-white/25 bg-black/60 px-3 py-2 shadow-lg backdrop-blur-md">
           <span className="block text-[10px] font-semibold uppercase tracking-[0.16em] text-cyan-200">
-            Navigate to
+            {origin.name} to
           </span>
-          <select
-            value={destinationId}
-            onChange={(event) => onDestinationChange(event.target.value)}
-            className="mt-0.5 w-full bg-transparent text-sm font-bold text-white outline-none"
-          >
-            {destinations.map((destination) => (
-              <option
-                key={destination.id}
-                value={destination.id}
-                className="text-stone-900"
-              >
-                {destination.name}
-              </option>
-            ))}
-          </select>
-        </label>
+          <p className="mt-0.5 truncate text-sm font-bold text-white">
+            {destination.name}
+          </p>
+        </div>
 
         <button
           type="button"
           onClick={onRecalibrate}
-          aria-label="Recalibrate at entrance"
-          className="grid size-11 shrink-0 place-items-center rounded-full border border-white/25 bg-black/55 text-white shadow-lg backdrop-blur-md transition active:scale-95"
+          aria-label={`Recalibrate at ${origin.name}`}
+          className="grid size-11 shrink-0 place-items-center rounded-full border border-white/25 bg-black/60 text-white shadow-lg backdrop-blur-md transition active:scale-95"
         >
           <LocateFixed size={20} />
         </button>
@@ -97,7 +90,7 @@ export default function NavigationHUD({
           className={`grid size-11 shrink-0 place-items-center rounded-full border shadow-lg backdrop-blur-md transition active:scale-95 ${
             debugVisible
               ? "border-cyan-300 bg-cyan-400 text-cyan-950"
-              : "border-white/25 bg-black/55 text-white"
+              : "border-white/25 bg-black/60 text-white"
           }`}
         >
           <Bug size={19} />
@@ -107,12 +100,17 @@ export default function NavigationHUD({
       <div className="space-y-2">
         {snapshot.offRoute && !snapshot.arrived && (
           <div className="mx-auto flex w-fit max-w-full items-center gap-2 rounded-full border border-amber-300/60 bg-amber-500/90 px-4 py-2 text-xs font-bold text-amber-950 shadow-xl">
-            <TriangleAlert size={17} /> You are off route. Return toward the
-            arrows.
+            <TriangleAlert size={17} /> Move back toward the highlighted route.
           </div>
         )}
 
-        <div className="pointer-events-auto mx-auto flex w-full max-w-md items-center gap-3 rounded-2xl border border-white/25 bg-black/65 p-3 text-white shadow-2xl backdrop-blur-lg">
+        {snapshot.pose.stepTrackingPaused && !snapshot.arrived && (
+          <div className="mx-auto w-fit rounded-full border border-white/20 bg-black/55 px-3 py-1.5 text-[11px] font-medium text-white/85 backdrop-blur-md">
+            Movement paused while your phone is turning
+          </div>
+        )}
+
+        <div className="pointer-events-auto mx-auto flex w-full max-w-md items-center gap-3 rounded-2xl border border-white/25 bg-black/70 p-3 text-white shadow-2xl backdrop-blur-lg">
           <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-cyan-400 text-cyan-950">
             {snapshot.arrived ? <Flag size={25} /> : <TurnIcon size={25} />}
           </span>
@@ -120,14 +118,18 @@ export default function NavigationHUD({
             <p className="text-base font-bold">
               {snapshot.arrived
                 ? "You have arrived"
-                : snapshot.turnDirection === "arrive"
-                  ? "Continue along the route"
-                  : `Turn ${snapshot.turnDirection} ahead`}
+                : needsHeadingAlignment
+                  ? `Turn ${instructionDirection} to face the route`
+                  : snapshot.turnDirection === "arrive"
+                    ? "Continue toward the destination"
+                    : `Turn ${snapshot.turnDirection} ahead`}
             </p>
             <p className="mt-0.5 text-xs text-white/70">
               {snapshot.arrived
-                ? "Destination reached"
-                : `${snapshot.distanceToNextTurn.toFixed(1)} m to next instruction`}
+                ? destination.name
+                : needsHeadingAlignment
+                  ? "Align the phone with the highlighted line"
+                  : `${snapshot.distanceToNextTurn.toFixed(1)} m to the next instruction`}
             </p>
           </div>
           <div className="shrink-0 text-center">
@@ -137,7 +139,7 @@ export default function NavigationHUD({
               style={{ transform: `rotate(${snapshot.headingDifference}deg)` }}
             />
             <span className="mt-1 block text-[10px] text-white/60">
-              {Math.round(snapshot.distanceRemaining)} m left
+              {snapshot.distanceRemaining.toFixed(1)} m left
             </span>
           </div>
         </div>

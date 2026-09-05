@@ -12,7 +12,7 @@ import { findClosestRoutePoint } from "./routeGeometry";
 
 const TURN_THRESHOLD_DEGREES = 20;
 const OFF_ROUTE_THRESHOLD_METERS = 1.5;
-const ARRIVAL_THRESHOLD_METERS = 0.6;
+const ARRIVAL_THRESHOLD_METERS = 0.25;
 
 function nextTurn(
   route: RouteGeometry,
