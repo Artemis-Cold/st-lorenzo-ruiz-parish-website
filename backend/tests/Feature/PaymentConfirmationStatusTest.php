@@ -178,7 +178,14 @@ class PaymentConfirmationStatusTest extends TestCase
                 'file_path' => 'booking-documents/'.$code.'-receipt.jpg',
                 'status' => 'pending',
             ]);
-            $records[$code] = compact('booking', 'receipt');
+            $payment = $booking->payments()->create([
+                'method' => 'gcash',
+                'amount' => 100,
+                'status' => 'pending_verification',
+                'reference_number' => str_pad((string) (8000000000000 + count($records) + 1), 13, '0'),
+                'receipt_document_id' => $receipt->id,
+            ]);
+            $records[$code] = compact('booking', 'receipt', 'payment');
         }
 
         $this->assertDatabaseCount('bookings', 5);
@@ -189,8 +196,8 @@ class PaymentConfirmationStatusTest extends TestCase
             'status' => 'paid',
         ])->assertUnprocessable();
 
-        foreach ($records as ['booking' => $booking, 'receipt' => $receipt]) {
-            $this->patchJson("/api/staff/transactions/{$receipt->id}/status", [
+        foreach ($records as ['booking' => $booking, 'receipt' => $receipt, 'payment' => $payment]) {
+            $this->patchJson("/api/staff/transactions/{$payment->id}/status", [
                 'status' => 'confirmed',
             ])->assertOk()->assertJsonPath('data.status', 'confirmed');
 

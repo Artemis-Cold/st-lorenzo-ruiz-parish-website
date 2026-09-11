@@ -5,21 +5,41 @@ export type DocumentType =
   | "Marriage Certificate"
   | "Request of Permission";
 
+export type DocumentOwnerRelationship =
+  | ""
+  | "Self"
+  | "Parent"
+  | "Child"
+  | "Spouse"
+  | "Sibling"
+  | "Legal Guardian"
+  | "Other Relative";
+
+export interface DocumentRequesterProfile {
+  fullName: string;
+  address: string;
+  phone: string;
+  gender: string | null;
+}
+
 export interface BaptismalCertificateDetails {
   name: string;
   address: string;
   baptism_date: Date | null;
+  relationship_to_owner: DocumentOwnerRelationship;
 }
 
 export interface ConfirmationCertificateDetails {
   name: string;
   address: string;
   confirmation_date: Date | null;
+  relationship_to_owner: DocumentOwnerRelationship;
 }
 
 export interface DeathCertificateDetails {
   name: string;
   address: string;
+  relationship_to_owner: Exclude<DocumentOwnerRelationship, "Self">;
 }
 
 export interface MarriageCertificateDetails {
@@ -27,6 +47,7 @@ export interface MarriageCertificateDetails {
   groom_name: string;
   address: string;
   marriage_date: Date | null;
+  requester_role: "" | "Bride" | "Groom";
 }
 
 export interface PermissionRequestDetails {
@@ -53,6 +74,7 @@ export interface DocumentRequest {
 export interface DocumentRequestBooking {
   requests: DocumentRequest[];
   remarks: string;
+  payment_method: "gcash" | "cash";
   reference_number: string;
   receipt: File | null;
 }

@@ -16,7 +16,7 @@ import ConfirmationStep from "../components/booking/baptism/steps/ConfirmationSt
 
 import { submitBooking } from "../../../services/baptismBookingService";
 
-import type { BaptismBooking } from "../types/baptism";
+import type { BaptismBooking, GodParent } from "../types/baptism";
 import type { BookingSlot } from "../../../services/bookingSlotService";
 import type { ServicePackage } from "../../../services/servicePackageService";
 import { getServiceFees } from "@/services/serviceFeeService";
@@ -25,9 +25,20 @@ const stepLabels = [
   "Requirements",
   "Schedule",
   "Packages",
-  "Details",
+  "Personal Information",
+  "Document Uploads",
   "Confirmation",
 ];
+
+const emptyGodParent = (): GodParent => ({
+  role: "",
+  first_name: "",
+  middle_initial: "",
+  last_name: "",
+  residence: "",
+  requirement_type: "",
+  requirement_file: null,
+});
 
 export default function Baptism() {
   const [booking, setBooking] = useState<BaptismBooking>({
@@ -66,28 +77,7 @@ export default function Baptism() {
       },
     ],
 
-    god_parents: [
-      {
-        god_father: {
-          role: "godfather",
-          first_name: "",
-          middle_initial: "",
-          last_name: "",
-          residence: "",
-        },
-        god_mother: {
-          role: "godmother",
-          first_name: "",
-          middle_initial: "",
-          last_name: "",
-          residence: "",
-        },
-        requirements: {
-          marriage_contract: null,
-          confirmation_certificate: null,
-        },
-      },
-    ],
+    god_parents: [emptyGodParent(), emptyGodParent()],
 
     documents: [],
 
@@ -169,10 +159,18 @@ export default function Baptism() {
       key="packages"
     />,
     <DetailsStep
-      key="details"
+      key="information"
       booking={booking}
       setBooking={setBooking}
       errors={fieldErrors}
+      view="information"
+    />,
+    <DetailsStep
+      key="documents"
+      booking={booking}
+      setBooking={setBooking}
+      errors={fieldErrors}
+      view="documents"
     />,
     <ConfirmationStep
       booking={booking}
@@ -277,38 +275,44 @@ export default function Baptism() {
     });
 
     // Godparents
-    booking.god_parents.forEach((pair, i) => {
+    booking.god_parents.forEach((godParent, i) => {
+      requireField(`god_parents.${i}.role`, godParent.role, "Godparent role");
       requireField(
-        `god_parents.${i}.god_father.first_name`,
-        pair.god_father.first_name,
+        `god_parents.${i}.first_name`,
+        godParent.first_name,
         "First name",
       );
       requireField(
-        `god_parents.${i}.god_father.last_name`,
-        pair.god_father.last_name,
+        `god_parents.${i}.last_name`,
+        godParent.last_name,
         "Last name",
       );
       requireField(
-        `god_parents.${i}.god_father.residence`,
-        pair.god_father.residence,
+        `god_parents.${i}.residence`,
+        godParent.residence,
         "Residence",
+      );
+      requireField(
+        `god_parents.${i}.requirement_type`,
+        godParent.requirement_type,
+        "Certificate type",
       );
 
-      requireField(
-        `god_parents.${i}.god_mother.first_name`,
-        pair.god_mother.first_name,
-        "First name",
-      );
-      requireField(
-        `god_parents.${i}.god_mother.last_name`,
-        pair.god_mother.last_name,
-        "Last name",
-      );
-      requireField(
-        `god_parents.${i}.god_mother.residence`,
-        pair.god_mother.residence,
-        "Residence",
-      );
+      if (godParent.requirement_file) {
+        if (godParent.requirement_file.size > 5 * 1024 * 1024) {
+          addError(
+            `god_parents.${i}.requirement_file`,
+            `${godParent.requirement_file.name} must not exceed 5 MB.`,
+          );
+        }
+
+        if (godParent.requirement_file.type !== "application/pdf") {
+          addError(
+            `god_parents.${i}.requirement_file`,
+            `${godParent.requirement_file.name} must be a PDF file.`,
+          );
+        }
+      }
     });
 
     booking.documents.forEach((document) => {
@@ -324,6 +328,11 @@ export default function Baptism() {
   };
 
   const validateStep = (step: number): string | null => {
+    const isUploadError = (key: string) =>
+      key.startsWith("documents.") ||
+      key.endsWith(".requirement_type") ||
+      key.endsWith(".requirement_file");
+
     if (step === 2 && booking.booking_slot_id === 0) {
       return "Please select a time slot before continuing.";
     }
@@ -333,9 +342,13 @@ export default function Baptism() {
     }
 
     if (step === 4) {
-      const detailsErrors = validateDetailsStep(booking);
+      const detailsErrors = Object.fromEntries(
+        Object.entries(validateDetailsStep(booking)).filter(
+          ([key]) => !isUploadError(key),
+        ),
+      );
 
-      if (booking.god_parents.length > 1 && additionalSponsorPrice === null) {
+      if (booking.god_parents.length > 2 && additionalSponsorPrice === null) {
         detailsErrors.pricing = [
           "The additional sponsor rate could not be loaded.",
         ];
@@ -349,7 +362,22 @@ export default function Baptism() {
       setFieldErrors({});
     }
 
-    if (step === 5 && !agreedToDeclaration) {
+    if (step === 5) {
+      const documentErrors = Object.fromEntries(
+        Object.entries(validateDetailsStep(booking)).filter(([key]) =>
+          isUploadError(key),
+        ),
+      );
+
+      if (Object.keys(documentErrors).length > 0) {
+        setFieldErrors(documentErrors);
+        return "Please review the uploaded documents before continuing.";
+      }
+
+      setFieldErrors({});
+    }
+
+    if (step === 6 && !agreedToDeclaration) {
       return "Please agree to the declaration before submitting.";
     }
 

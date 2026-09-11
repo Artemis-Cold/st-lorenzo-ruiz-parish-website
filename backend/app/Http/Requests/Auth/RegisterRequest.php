@@ -4,14 +4,12 @@ namespace App\Http\Requests\Auth;
 
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Str;
 
 class RegisterRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'username' => Str::lower(trim((string) $this->input('username'))),
             'phone' => preg_replace('/\D+/', '', (string) $this->input('phone')),
         ]);
     }
@@ -33,13 +31,6 @@ class RegisterRequest extends FormRequest
     {
         return [
 
-            'username' => [
-                'required',
-                'string',
-                'min:5',
-                'max:30',
-                'unique:users,username',
-            ],
             'password' => [
                 'required',
                 'confirmed',
@@ -72,7 +63,6 @@ class RegisterRequest extends FormRequest
                 'regex:/^09\d{9}$/',
                 'unique:users,phone',
             ],
-            'otp' => ['required', 'digits:6'],
             'house_no' => ['nullable'],
             'street' => ['nullable'],
             'barangay' => ['nullable', 'string'],

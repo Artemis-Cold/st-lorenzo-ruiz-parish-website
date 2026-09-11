@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\Staff;
 
 use App\Http\Controllers\Controller;
 use App\Models\MassIntentionEntry;
+use App\Support\Money;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -108,7 +109,7 @@ class StaffMassIntentionController extends Controller
             'names' => collect($entry->names)->filter()->join(' & '),
             'contactNumber' => $booking->user->phone,
             'type' => $entry->intention_type,
-            'amount' => (float) $entry->amount,
+            'amount' => Money::decimal($entry->amount),
             'status' => $booking->status,
             'reference' => $booking->booking_reference,
             'paymentReference' => $massIntention->payment_reference,

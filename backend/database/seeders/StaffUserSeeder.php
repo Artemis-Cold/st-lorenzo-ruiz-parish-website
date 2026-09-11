@@ -13,17 +13,17 @@ class StaffUserSeeder extends Seeder
     public function run(): void
     {
         User::updateOrCreate(
-            ['username' => 'mariaclara'],
+            ['username' => 'parishadmin'],
             [
-                'parishioner_id' => 'STAFF-TEST-000001',
-                'password' => 'Maria@12345',
-                'first_name' => 'Maria',
+                'parishioner_id' => 'STAFF-MAIN-000001',
+                'password' => '111111',
+                'first_name' => 'Parish',
                 'middle_initial' => null,
-                'last_name' => 'Clara',
+                'last_name' => 'Admin',
                 'suffix' => null,
                 'birth_date' => null,
                 'gender' => null,
-                'phone' => '09170000002',
+                'phone' => '09543102130',
                 'house_no' => null,
                 'street' => null,
                 'barangay' => 'Dagatan',

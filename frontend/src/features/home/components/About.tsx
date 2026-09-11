@@ -1,5 +1,12 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight, Cross, MapPin } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Cross,
+  Mail,
+  MapPin,
+  Phone,
+} from "lucide-react";
 import { motion } from "framer-motion";
 
 import { parishImages } from "../data/images";
@@ -83,7 +90,7 @@ function ParishImageCarousel() {
 
 export default function About() {
   return (
-    <section id="about" className="bg-white py-14 md:py-16">
+    <section id="about" className="scroll-mt-18 bg-white py-14 md:py-16">
       <div className="mx-auto max-w-6xl px-6">
         {/* Heading */}
         <motion.div
@@ -105,7 +112,10 @@ export default function About() {
         </motion.div>
 
         {/* Content */}
-        <div className="grid items-stretch gap-9 lg:grid-cols-2 lg:gap-12">
+        <div
+          id="history"
+          className="grid scroll-mt-24 items-stretch gap-9 lg:grid-cols-2 lg:gap-12"
+        >
           {/* Church Image */}
           <motion.div
             initial={{ opacity: 0, x: -40 }}
@@ -128,7 +138,7 @@ export default function About() {
               Kasaysayang Hinubog ng Pananampalataya
             </h3>
 
-            <p className="mt-4 text-sm leading-6 text-gray-600 lg:text-base lg:leading-7 text-justify">
+            <p className="mt-4 text-justify text-sm leading-6 text-gray-600 lg:text-base lg:leading-7">
               Itinatag ang Parokya ng San Lorenzo Ruiz noong Setyembre 19, 2010
               sa pangunguna ni Arsobispo Ramon C. Argüelles, kasama si Rdo. P.
               Benedicto Ortega Malaluan bilang unang kura paroko. Saklaw nito
@@ -136,7 +146,7 @@ export default function About() {
               sama-samang kinikilala bilang BAPILADAMA.
             </p>
 
-            <p className="mt-3 text-sm leading-6 text-gray-600 lg:text-base lg:leading-7 text-justify">
+            <p className="mt-3 text-justify text-sm leading-6 text-gray-600 lg:text-base lg:leading-7">
               Sa 1.2 ektaryang lupang ipinagkaloob nina Gregoria Natividad
               Flores Chavez at Julia Flores Panganiban, inilagay ang panulukang
               bato noong Mayo 12, 2013. Sa pagtutulungan ng mga parokyano,
@@ -174,6 +184,66 @@ export default function About() {
             </div>
           </motion.div>
         </div>
+
+        <motion.section
+          id="contacts"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.25 }}
+          transition={{ duration: 0.55 }}
+          className="mt-10 scroll-mt-24 overflow-hidden rounded-3xl border border-[#E8E0D5] bg-[#FAF7F2] p-5 sm:p-7"
+        >
+          <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-[0.22em] text-[#B22222]">
+                Parish contacts
+              </span>
+              <h3 className="mt-2 font-serif text-2xl font-bold text-[#292524]">
+                Visit or contact the parish office
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                Reach the parish office for service inquiries, schedules, and
+                pastoral assistance.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <a
+                href="tel:09543102130"
+                className="flex min-w-0 items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-100 transition hover:-translate-y-0.5 hover:ring-red-200"
+              >
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-red-50 text-[#B22222]">
+                  <Phone size={18} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-xs font-medium text-gray-500">
+                    Contact number
+                  </span>
+                  <span className="mt-0.5 block font-semibold text-[#292524]">
+                    0954 310 2130
+                  </span>
+                </span>
+              </a>
+
+              <a
+                href="mailto:stlorenzoruizparish@gmail.com"
+                className="flex min-w-0 items-center gap-3 rounded-2xl bg-white p-4 shadow-sm ring-1 ring-stone-100 transition hover:-translate-y-0.5 hover:ring-red-200"
+              >
+                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-amber-50 text-[#B8860B]">
+                  <Mail size={18} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-xs font-medium text-gray-500">
+                    Email address
+                  </span>
+                  <span className="mt-0.5 block truncate text-sm font-semibold text-[#292524]">
+                    stlorenzoruizparish@gmail.com
+                  </span>
+                </span>
+              </a>
+            </div>
+          </div>
+        </motion.section>
       </div>
     </section>
   );

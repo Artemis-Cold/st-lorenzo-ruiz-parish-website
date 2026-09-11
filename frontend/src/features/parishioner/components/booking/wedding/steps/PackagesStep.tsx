@@ -9,6 +9,7 @@ import {
   type ServicePackage,
 } from "../../../../../../services/servicePackageService";
 import type { WeddingBooking } from "../../../../types/wedding";
+import { formatPhpCurrency } from "@/utils/currency";
 
 interface PackagesStepProps {
   booking: WeddingBooking;
@@ -152,7 +153,7 @@ export default function PackagesStep({
                   </div>
 
                   <span className="font-semibold text-[#B22222]">
-                    ₱{Number(item.price).toLocaleString()}
+                    {formatPhpCurrency(item.price)}
                   </span>
                 </div>
               ))}
@@ -185,7 +186,7 @@ export default function PackagesStep({
                   </div>
 
                   <span className="font-semibold">
-                    ₱{Number(item.price).toLocaleString()}
+                    {formatPhpCurrency(item.price)}
                   </span>
                 </label>
               ))}
@@ -199,7 +200,7 @@ export default function PackagesStep({
             <span className="text-xl font-semibold">Total Wedding Fee</span>
 
             <span className="text-3xl font-bold">
-              ₱{total.toLocaleString()}
+              {formatPhpCurrency(total)}
             </span>
           </div>
         </div>

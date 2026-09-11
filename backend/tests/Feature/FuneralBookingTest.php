@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\BookingDocument;
 use App\Models\BookingSlot;
+use App\Models\FuneralDeceased;
 use App\Models\Service;
 use App\Models\ServicePackage;
 use App\Models\User;
@@ -20,7 +21,12 @@ class FuneralBookingTest extends TestCase
     public function test_incomplete_funeral_accepts_requirements_to_follow_and_blocks_approval_until_uploaded(): void
     {
         Storage::fake('public');
-        $parishioner = User::factory()->create();
+        $parishioner = User::factory()->create([
+            'first_name' => 'John',
+            'middle_initial' => 'D',
+            'last_name' => 'Doe',
+            'phone' => '09171234567',
+        ]);
         Sanctum::actingAs($parishioner);
         $service = Service::create(['code' => 'funeral', 'name' => 'Funeral', 'description' => 'Funeral']);
         $package = ServicePackage::create(['service_id' => $service->id, 'name' => 'Standard', 'base_price' => 1000]);
@@ -44,9 +50,7 @@ class FuneralBookingTest extends TestCase
                 'church_life' => ['attends_mass' => 'regular', 'confesses' => 'sometimes'],
                 'characteristics' => 'A devoted parishioner.',
                 'informant' => [
-                    'first_name' => 'Maria', 'middle_initial' => '', 'last_name' => 'Dela Cruz',
-                    'relationship' => 'Daughter', 'contact_number' => '09171234567',
-                    'date_provided' => now()->toDateString(),
+                    'relationship' => 'Daughter',
                 ],
             ],
             'remarks' => '',
@@ -58,7 +62,19 @@ class FuneralBookingTest extends TestCase
         $this->assertDatabaseHas('funeral_deceased', [
             'first_name' => 'Juan', 'age' => 80,
             'spouse_first_name' => null, 'spouse_last_name' => null,
+            'informant_first_name' => 'John',
+            'informant_middle_initial' => 'D',
+            'informant_last_name' => 'Doe',
+            'informant_relationship' => 'Daughter',
+            'informant_contact_number' => '09171234567',
         ]);
+        $this->assertSame(
+            today()->toDateString(),
+            FuneralDeceased::where('booking_id', $bookingId)
+                ->firstOrFail()
+                ->information_date
+                ->toDateString()
+        );
         $this->assertDatabaseCount('booking_documents', 0);
         $this->assertDatabaseHas('sms_messages', [
             'booking_id' => $bookingId,
@@ -159,7 +175,7 @@ class FuneralBookingTest extends TestCase
             'receipt' => UploadedFile::fake()->image('gcash-receipt.jpg'),
         ], ['Accept' => 'application/json'])
             ->assertCreated()
-            ->assertJsonPath('data.status', 'pending');
+            ->assertJsonPath('data.status', 'pending_verification');
 
         Sanctum::actingAs($staff);
         $receiptId = $this->getJson('/api/staff/transactions')

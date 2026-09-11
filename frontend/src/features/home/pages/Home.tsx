@@ -12,11 +12,11 @@ export default function Home() {
     <>
       <Navbar />
       <Hero />
-      <About />
       <Announcements />
       <MarriageBanns />
       <Schedule />
       <Services />
+      <About />
       <ScrollToTopButton />
     </>
   );

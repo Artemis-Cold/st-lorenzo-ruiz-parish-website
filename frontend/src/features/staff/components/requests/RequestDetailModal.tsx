@@ -4,6 +4,7 @@ import RequestStatusBadge from "../requests/RequestStatusBadge";
 import type { ServiceRequest, RequestStatus } from "../../types/request";
 import { formatLabel } from "../../utils/formatLabel";
 import RejectConfirmationButton from "../RejectConfirmationButton";
+import { formatPhpCurrency } from "@/utils/currency";
 
 interface Props {
   request: ServiceRequest | null;
@@ -63,7 +64,7 @@ export default function RequestDetailModal({
                   {formatLabel(document.type)}
                 </span>
                 <span className="font-semibold text-[#B22222]">
-                  ₱{document.price.toLocaleString()}.00
+                  {formatPhpCurrency(document.price)}
                 </span>
               </div>
               {Object.entries(document.details).map(([key, value]) => (
@@ -135,7 +136,7 @@ export default function RequestDetailModal({
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">Amount</span>
             <span className="font-semibold text-[#B22222]">
-              ₱{request.amount.toLocaleString()}.00
+              {formatPhpCurrency(request.amount)}
             </span>
           </div>
         </div>
@@ -144,8 +145,8 @@ export default function RequestDetailModal({
           <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm leading-6 text-sky-800">
             <p className="font-semibold">Payment confirmed — now preparing</p>
             <p className="mt-1 text-xs leading-5">
-              The payment has been verified. Prepare the requested document,
-              then mark it Ready for Pickup to notify the parishioner.
+              The payment has been verified. Once the document is prepared,
+              select Ready for Pickup to notify the parishioner.
             </p>
           </div>
         )}
@@ -158,7 +159,7 @@ export default function RequestDetailModal({
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-3 font-semibold text-white transition hover:bg-purple-700"
               >
                 <CheckCircle2 size={18} />
-                Mark Ready for Pickup
+                Ready for Pickup
               </button>
             )}
 
@@ -168,7 +169,7 @@ export default function RequestDetailModal({
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-green-600 py-3 font-semibold text-white transition hover:bg-green-700"
               >
                 <CheckCircle2 size={18} />
-                Mark as Claimed
+                Completed
               </button>
             )}
 

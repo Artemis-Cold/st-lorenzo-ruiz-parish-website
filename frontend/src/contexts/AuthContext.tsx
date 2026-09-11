@@ -14,7 +14,7 @@ import {
   me,
 } from "@/api/auth";
 import type { User } from "@/types/user";
-import type { RegisterRequest } from "@/types/auth";
+import type { RegisterRequest, RegistrationPayload } from "@/types/auth";
 
 interface LoginCredentials {
   username: string;
@@ -30,7 +30,7 @@ interface AuthContextType {
 
   staffLogin: (credentials: LoginCredentials) => Promise<User>;
 
-  register: (data: RegisterRequest) => Promise<User>;
+  register: (data: RegisterRequest) => Promise<RegistrationPayload>;
 
   logout: () => Promise<void>;
 
@@ -108,14 +108,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response.user;
   };
 
-  const register = async (data: RegisterRequest): Promise<User> => {
+  const register = async (
+    data: RegisterRequest,
+  ): Promise<RegistrationPayload> => {
     const response = await registerApi(data);
 
     localStorage.setItem("token", response.token);
 
     setUser(response.user);
 
-    return response.user;
+    return response;
   };
 
   const logout = async () => {

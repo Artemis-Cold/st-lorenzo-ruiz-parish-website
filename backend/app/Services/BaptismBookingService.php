@@ -36,7 +36,7 @@ class BaptismBookingService
                 ]);
             }
 
-            $additionalSponsorCount = max((count($data['god_parents']) * 2) - 2, 0);
+            $additionalSponsorCount = max(count($data['god_parents']) - 2, 0);
             $fees = [];
 
             if ($additionalSponsorCount > 0) {
@@ -54,13 +54,13 @@ class BaptismBookingService
 
             $this->createParents($baptizand, $data['parents']);
 
-            $this->createGodParentPairs($baptizand, $data['god_parents']);
+            $this->createGodParents($baptizand, $data['god_parents']);
 
             $this->uploadDocuments($booking, $data['documents'] ?? []);
 
             $booking->load([
                 'baptizand.parents',
-                'baptizand.godParentPairs.godParents',
+                'baptizand.godParents',
                 'documents',
                 'package',
                 'selectedAddons',
@@ -137,44 +137,27 @@ class BaptismBookingService
         }
     }
 
-    private function createGodParentPairs(
+    private function createGodParents(
         Baptizand $baptizand,
-        array $pairs
+        array $godParents
     ): void {
-
-        foreach ($pairs as $pair) {
-
-            $marriageContractPath = isset($pair['requirements']['marriage_contract'])
-                ? $pair['requirements']['marriage_contract']->store('godparent-documents', 'public')
-                : null;
-
-            $confirmationCertPath = isset($pair['requirements']['confirmation_certificate'])
-                ? $pair['requirements']['confirmation_certificate']->store('godparent-documents', 'public')
-                : null;
-
-            $godParentPair = $baptizand->godParentPairs()->create([
-                'marriage_contract' => $marriageContractPath,
-                'confirmation_certificate' => $confirmationCertPath,
-            ]);
-
-            $godParentPair->godParents()->create([
-                'baptizand_id' => $baptizand->id,
-                'role' => 'godfather',
-                'first_name' => $pair['god_father']['first_name'],
-                'middle_initial' => $pair['god_father']['middle_initial'] ?? null,
-                'last_name' => $pair['god_father']['last_name'],
-                'suffix' => $pair['god_father']['suffix'] ?? null,
-                'residence' => $pair['god_father']['residence'],
-            ]);
-
-            $godParentPair->godParents()->create([
-                'baptizand_id' => $baptizand->id,
-                'role' => 'godmother',
-                'first_name' => $pair['god_mother']['first_name'],
-                'middle_initial' => $pair['god_mother']['middle_initial'] ?? null,
-                'last_name' => $pair['god_mother']['last_name'],
-                'suffix' => $pair['god_mother']['suffix'] ?? null,
-                'residence' => $pair['god_mother']['residence'],
+        foreach ($godParents as $index => $godParent) {
+            /** @var UploadedFile|null $requirement */
+            $requirement = $godParent['requirement_file'] ?? null;
+            $baptizand->godParents()->create([
+                'sort_order' => $index + 1,
+                'role' => $godParent['role'],
+                'first_name' => $godParent['first_name'],
+                'middle_initial' => $godParent['middle_initial'] ?? null,
+                'last_name' => $godParent['last_name'],
+                'suffix' => $godParent['suffix'] ?? null,
+                'residence' => $godParent['residence'],
+                'requirement_type' => $godParent['requirement_type'],
+                'requirement_file_name' => $requirement?->getClientOriginalName(),
+                'requirement_file_path' => $requirement?->store(
+                    'godparent-documents',
+                    'public',
+                ),
             ]);
         }
     }

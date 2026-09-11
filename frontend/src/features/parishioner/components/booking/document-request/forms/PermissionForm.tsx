@@ -20,12 +20,7 @@ export default function PermissionForm({
 }: Props) {
   const getError = (field: string) => errors?.[errorPrefix + "." + field]?.[0];
   const inputClass = `
-w-full rounded-xl border px-4 py-3 transition
-${
-  readOnly
-    ? "border-gray-200 bg-gray-50 text-gray-700"
-    : "border-gray-300 bg-white focus:border-[#B22222] focus:outline-none"
-}
+w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-gray-700
 `;
 
   return (
@@ -40,7 +35,7 @@ ${
             inputClass + (getError("full_name") ? " border-red-400" : "")
           }
           value={details.full_name}
-          readOnly={readOnly}
+          readOnly
           onChange={(e) => updateRequest("full_name", e.target.value)}
           placeholder="Enter full name"
         />
@@ -57,12 +52,18 @@ ${
             inputClass + (getError("address") ? " border-red-400" : "")
           }
           value={details.address}
-          readOnly={readOnly}
+          readOnly
           onChange={(e) => updateRequest("address", e.target.value)}
           placeholder="Complete address"
         />
         <FieldError message={getError("address")} />
       </div>
+
+      {!readOnly && (
+        <p className="col-span-12 text-xs leading-5 text-gray-500">
+          Permission requests use the registered account holder's information.
+        </p>
+      )}
     </div>
   );
 }

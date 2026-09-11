@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\RegistrationPhoneOtp;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -49,21 +48,27 @@ class ParishionerAccountSecurityTest extends TestCase
         $this->assertTrue(Hash::check('old-password', $parishioner->fresh()->password));
     }
 
-    public function test_registration_rejects_a_duplicate_normalized_username(): void
+    public function test_registration_uses_the_first_given_name_and_adds_four_digits_on_collision(): void
     {
-        User::factory()->create(['username' => 'johndoe']);
+        config(['services.sms.driver' => 'database']);
+        User::factory()->create(['username' => 'felixberto']);
 
-        $this->postJson('/api/auth/register', [
-            'username' => '  JohnDoe  ',
+        $response = $this->postJson('/api/auth/register', [
             'password' => 'password123',
             'password_confirmation' => 'password123',
-            'first_name' => 'John',
+            'first_name' => 'Felixberto Marc John',
             'last_name' => 'Doe',
             'phone' => '09171234567',
-        ])->assertUnprocessable()
-            ->assertJsonValidationErrors(['username']);
+            'terms_accepted' => true,
+        ])->assertCreated();
 
-        $this->assertSame(1, User::where('username', 'johndoe')->count());
+        $username = $response->json('user.username');
+
+        $this->assertMatchesRegularExpression('/^felixberto\d{4}$/', $username);
+        $this->assertDatabaseHas('users', [
+            'username' => $username,
+            'first_name' => 'Felixberto Marc John',
+        ]);
     }
 
     public function test_registration_rejects_a_duplicate_normalized_phone_number(): void
@@ -71,12 +76,12 @@ class ParishionerAccountSecurityTest extends TestCase
         User::factory()->create(['phone' => '09171234567']);
 
         $this->postJson('/api/auth/register', [
-            'username' => 'anotheruser',
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'first_name' => 'Maria',
             'last_name' => 'Santos',
             'phone' => '0917 123 4567',
+            'terms_accepted' => true,
         ])->assertUnprocessable()
             ->assertJsonValidationErrors(['phone']);
 
@@ -86,7 +91,6 @@ class ParishionerAccountSecurityTest extends TestCase
     public function test_registration_requires_terms_and_conditions_acceptance(): void
     {
         $payload = [
-            'username' => 'newparishioner',
             'password' => 'password123',
             'password_confirmation' => 'password123',
             'first_name' => 'Maria',
@@ -98,23 +102,17 @@ class ParishionerAccountSecurityTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors(['terms_accepted']);
 
-        RegistrationPhoneOtp::create([
-            'phone' => $payload['phone'],
-            'code_hash' => hash('sha256', '123456'),
-            'expires_at' => now()->addMinutes(10),
-        ]);
-
         $this->postJson('/api/auth/register', [
             ...$payload,
             'terms_accepted' => true,
-            'otp' => '123456',
         ])->assertCreated()
-            ->assertJsonPath('user.phone_verified', true);
+            ->assertJsonPath('user.username', 'maria')
+            ->assertJsonPath('user.phone_verified', false);
 
-        $user = User::where('username', 'newparishioner')->firstOrFail();
+        $user = User::where('username', 'maria')->firstOrFail();
 
         $this->assertNotNull($user->terms_accepted_at);
-        $this->assertNotNull($user->phone_verified_at);
-        $this->assertSame('2026-08-28', $user->terms_version);
+        $this->assertNull($user->phone_verified_at);
+        $this->assertSame('2026-09-06', $user->terms_version);
     }
 }

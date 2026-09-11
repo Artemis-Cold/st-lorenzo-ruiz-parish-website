@@ -88,6 +88,13 @@ class SacramentPaymentWorkflowTest extends TestCase
                 'status' => 'rejected',
                 'remarks' => 'Reference could not be verified.',
             ]);
+            $booking->payments()->create([
+                'method' => 'gcash',
+                'amount' => 100,
+                'status' => 'rejected',
+                'reference_number' => str_pad((string) (3900000000000 + $index), 13, '0'),
+                'receipt_document_id' => $receipt->id,
+            ]);
 
             $this->post("/api/bookings/{$booking->id}/payment", [
                 'reference_number' => $newReference,
@@ -95,7 +102,7 @@ class SacramentPaymentWorkflowTest extends TestCase
             ], ['Accept' => 'application/json'])
                 ->assertCreated()
                 ->assertJsonPath('data.referenceNumber', $newReference)
-                ->assertJsonPath('data.status', 'pending');
+                ->assertJsonPath('data.status', 'pending_verification');
 
             $this->assertDatabaseHas('bookings', [
                 'id' => $booking->id,
@@ -104,12 +111,17 @@ class SacramentPaymentWorkflowTest extends TestCase
             ]);
             $this->assertDatabaseHas('booking_documents', [
                 'id' => $receipt->id,
+                'file_name' => "rejected-{$index}.jpg",
+                'status' => 'rejected',
+                'remarks' => 'Reference could not be verified.',
+            ]);
+            $this->assertDatabaseHas('booking_documents', [
+                'booking_id' => $booking->id,
                 'file_name' => "corrected-{$index}.jpg",
                 'status' => 'pending',
-                'remarks' => null,
             ]);
-            $this->assertDatabaseCount('booking_documents', $index + 1);
-            Storage::disk('public')->assertMissing($oldPath);
+            $this->assertDatabaseCount('booking_documents', ($index + 1) * 2);
+            Storage::disk('public')->assertExists($oldPath);
 
             $paymentReference = $serviceCode === 'mass-intention'
                 ? $booking->massIntention()->value('payment_reference')
@@ -158,15 +170,15 @@ class SacramentPaymentWorkflowTest extends TestCase
             'receipt' => UploadedFile::fake()->image('first-receipt.jpg'),
         ], ['Accept' => 'application/json'])
             ->assertCreated()
-            ->assertJsonPath('data.status', 'pending');
+            ->assertJsonPath('data.status', 'pending_verification');
 
         Sanctum::actingAs($staff);
-        $receiptId = $this->getJson('/api/staff/transactions')
+        $paymentId = $this->getJson('/api/staff/transactions')
             ->assertOk()
             ->assertJsonPath('data.0.type', 'Baptism')
-            ->assertJsonPath('data.0.amount', 1500)
+            ->assertJsonPath('data.0.amount', '1500.00')
             ->json('data.0.id');
-        $this->patchJson("/api/staff/transactions/{$receiptId}/status", [
+        $this->patchJson("/api/staff/transactions/{$paymentId}/status", [
             'status' => 'rejected',
         ])->assertOk()->assertJsonPath('data.status', 'rejected');
         $this->assertDatabaseHas('bookings', [
@@ -181,10 +193,13 @@ class SacramentPaymentWorkflowTest extends TestCase
         ], ['Accept' => 'application/json'])
             ->assertCreated()
             ->assertJsonPath('data.referenceNumber', '5000000000002')
-            ->assertJsonPath('data.status', 'pending');
+            ->assertJsonPath('data.status', 'pending_verification');
 
         Sanctum::actingAs($staff);
-        $this->patchJson("/api/staff/transactions/{$receiptId}/status", [
+        $replacementPaymentId = $this->getJson('/api/staff/transactions?status=pending')
+            ->assertOk()
+            ->json('data.0.id');
+        $this->patchJson("/api/staff/transactions/{$replacementPaymentId}/status", [
             'status' => 'confirmed',
         ])->assertOk()->assertJsonPath('data.status', 'confirmed');
         $this->assertDatabaseHas('bookings', [

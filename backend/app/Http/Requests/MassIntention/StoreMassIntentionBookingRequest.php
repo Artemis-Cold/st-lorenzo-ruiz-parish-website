@@ -32,15 +32,19 @@ class StoreMassIntentionBookingRequest extends FormRequest
             'groups.*.entries' => ['required', 'array', 'min:1'],
             'groups.*.entries.*.names' => ['required', 'array', 'min:1', 'max:3'],
             'groups.*.entries.*.names.*' => ['required', 'string', 'max:150'],
+            'payment_method' => ['sometimes', 'in:gcash,cash'],
             'reference_number' => [
-                'required',
+                'required_if:payment_method,gcash',
+                'nullable',
                 'digits:13',
+                'unique:payments,reference_number',
                 'unique:bookings,payment_reference',
                 'unique:mass_intentions,payment_reference',
                 'unique:document_request_bookings,payment_reference',
             ],
             'receipt' => [
-                'required',
+                'required_if:payment_method,gcash',
+                'nullable',
                 'file',
                 'mimes:jpg,jpeg,png,pdf',
                 'max:5120',
@@ -54,6 +58,13 @@ class StoreMassIntentionBookingRequest extends FormRequest
         return [
             'reference_number.digits' => 'Enter the 13-digit GCash transaction reference number.',
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'payment_method' => $this->input('payment_method', 'gcash'),
+        ]);
     }
 
     /** @return array<int, callable(Validator): void> */

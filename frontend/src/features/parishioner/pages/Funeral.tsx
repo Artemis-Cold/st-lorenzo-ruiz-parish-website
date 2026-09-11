@@ -21,7 +21,8 @@ const stepLabels = [
   "Requirements",
   "Schedule",
   "Packages",
-  "Details",
+  "Personal Information",
+  "Document Uploads",
   "Confirmation",
 ];
 
@@ -58,10 +59,7 @@ export default function Funeral() {
       },
       characteristics: "",
       informant: {
-        ...emptyName(),
         relationship: "",
-        contact_number: "",
-        date_provided: null,
       },
     },
     documents: [],
@@ -104,10 +102,18 @@ export default function Funeral() {
       setSelectedPackage={setSelectedPackage}
     />,
     <DetailsStep
-      key="details"
+      key="information"
       booking={booking}
       setBooking={setBooking}
       errors={fieldErrors}
+      view="information"
+    />,
+    <DetailsStep
+      key="documents"
+      booking={booking}
+      setBooking={setBooking}
+      errors={fieldErrors}
+      view="documents"
     />,
     <ConfirmationStep
       key="confirmation"
@@ -181,39 +187,10 @@ export default function Funeral() {
       "Characteristics of the deceased",
     );
     required(
-      "deceased.informant.first_name",
-      deceased.informant.first_name,
-      "Informant's first name",
-    );
-    required(
-      "deceased.informant.last_name",
-      deceased.informant.last_name,
-      "Informant's last name",
-    );
-    required(
       "deceased.informant.relationship",
       deceased.informant.relationship,
       "Relationship",
     );
-    required(
-      "deceased.informant.contact_number",
-      deceased.informant.contact_number,
-      "Contact number",
-    );
-    required(
-      "deceased.informant.date_provided",
-      deceased.informant.date_provided,
-      "Date information provided",
-    );
-
-    if (
-      deceased.informant.contact_number &&
-      !/^09\d{9}$/.test(deceased.informant.contact_number.replace(/\s+/g, ""))
-    ) {
-      errors["deceased.informant.contact_number"] = [
-        "Enter a valid 11-digit mobile number.",
-      ];
-    }
     if (deceased.birth_date && deceased.birth_date > new Date()) {
       errors["deceased.birth_date"] = ["Birthday cannot be in the future."];
     }
@@ -236,13 +213,28 @@ export default function Funeral() {
       return "Please select a package before continuing.";
     }
     if (step === 4) {
-      const errors = validateDetails();
+      const errors = Object.fromEntries(
+        Object.entries(validateDetails()).filter(
+          ([key]) => !key.startsWith("documents."),
+        ),
+      );
       setFieldErrors(errors);
       if (Object.keys(errors).length > 0) {
         return "Please complete all required fields before continuing.";
       }
     }
-    if (step === 5 && !agreed) {
+    if (step === 5) {
+      const errors = Object.fromEntries(
+        Object.entries(validateDetails()).filter(([key]) =>
+          key.startsWith("documents."),
+        ),
+      );
+      setFieldErrors(errors);
+      if (Object.keys(errors).length > 0) {
+        return "Please review the uploaded documents before continuing.";
+      }
+    }
+    if (step === 6 && !agreed) {
       return "Please agree to the declaration before submitting.";
     }
     return null;

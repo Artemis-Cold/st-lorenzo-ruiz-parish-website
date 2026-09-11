@@ -18,10 +18,8 @@ export interface ChurchLife {
   confesses: Participation | "";
 }
 
-export interface Informant extends PersonName {
+export interface Informant {
   relationship: string;
-  contact_number: string;
-  date_provided: Date | null;
 }
 
 export interface Deceased extends PersonName {

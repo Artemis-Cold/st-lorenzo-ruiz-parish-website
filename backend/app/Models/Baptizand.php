@@ -43,8 +43,8 @@ class Baptizand extends Model
         return $this->hasMany(BaptizandParent::class);
     }
 
-    public function godParentPairs(): HasMany
+    public function godParents(): HasMany
     {
-        return $this->hasMany(GodParentPair::class);
+        return $this->hasMany(GodParent::class)->orderBy('sort_order');
     }
 }

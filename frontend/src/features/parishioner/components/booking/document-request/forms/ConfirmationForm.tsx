@@ -2,6 +2,7 @@ import type {
   ConfirmationCertificateDetails,
   DocumentDetailValue,
 } from "../../../../types/document";
+import { documentOwnerRelationships } from "../documentRequestOptions";
 
 interface Props {
   details: ConfirmationCertificateDetails;
@@ -44,6 +45,31 @@ ${
           placeholder="Enter full name"
         />
         <FieldError message={getError("name")} />
+      </div>
+
+      <div className="col-span-12">
+        <label className="mb-2 block text-sm font-medium">
+          Relationship to Record Owner <span className="text-red-600">*</span>
+        </label>
+
+        <select
+          className={
+            inputClass +
+            (getError("relationship_to_owner") ? " border-red-400" : "")
+          }
+          value={details.relationship_to_owner}
+          disabled={readOnly}
+          onChange={(event) =>
+            updateRequest("relationship_to_owner", event.target.value)
+          }
+        >
+          {documentOwnerRelationships.map((relationship) => (
+            <option key={relationship.value} value={relationship.value}>
+              {relationship.label}
+            </option>
+          ))}
+        </select>
+        <FieldError message={getError("relationship_to_owner")} />
       </div>
 
       <div className="col-span-12">

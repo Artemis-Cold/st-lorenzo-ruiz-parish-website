@@ -14,5 +14,8 @@ export async function getServiceFees(
     `/services/${serviceCode}/fees`,
   );
 
-  return response.data.data;
+  return response.data.data.map((fee) => ({
+    ...fee,
+    amount: Number(fee.amount),
+  }));
 }

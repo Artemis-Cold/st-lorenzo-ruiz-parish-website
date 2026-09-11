@@ -5,54 +5,69 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BookingCard } from "../..";
 
 import { getServiceFees, type ServiceFee } from "@/services/serviceFeeService";
+import { formatPhpCurrency } from "@/utils/currency";
 
 import type {
   DocumentDetails,
   DocumentRequest,
   DocumentRequestBooking,
+  DocumentRequesterProfile,
   DocumentType,
 } from "../../../../types/document";
 
 interface Props {
   booking: DocumentRequestBooking;
   setBooking: Dispatch<SetStateAction<DocumentRequestBooking>>;
+  requester: DocumentRequesterProfile;
   errors?: Record<string, string[]>;
 }
 
-function createDefaultDetails(type: DocumentType): DocumentDetails {
+function createDefaultDetails(
+  type: DocumentType,
+  requester: DocumentRequesterProfile,
+): DocumentDetails {
   switch (type) {
     case "Baptismal Certificate":
       return {
-        name: "",
-        address: "",
+        name: requester.fullName,
+        address: requester.address,
         baptism_date: null,
+        relationship_to_owner: "Self",
       };
 
     case "Confirmation Certificate":
       return {
-        name: "",
-        address: "",
+        name: requester.fullName,
+        address: requester.address,
         confirmation_date: null,
+        relationship_to_owner: "Self",
       };
 
     case "Death Certificate":
       return {
         name: "",
-        address: "",
+        address: requester.address,
+        relationship_to_owner: "",
       };
 
     case "Marriage Certificate":
       return {
-        bride_name: "",
-        groom_name: "",
-        address: "",
+        bride_name: requester.gender === "Female" ? requester.fullName : "",
+        groom_name: requester.gender === "Male" ? requester.fullName : "",
+        address: requester.address,
         marriage_date: null,
+        requester_role:
+          requester.gender === "Female"
+            ? "Bride"
+            : requester.gender === "Male"
+              ? "Groom"
+              : "",
       };
 
     case "Request of Permission":
       return {
-        full_name: "",
-        address: "",
+        full_name: requester.fullName,
+        address: requester.address,
       };
   }
 }
@@ -60,6 +75,7 @@ function createDefaultDetails(type: DocumentType): DocumentDetails {
 export default function DocumentSelectionStep({
   booking,
   setBooking,
+  requester,
   errors,
 }: Props) {
   const [documents, setDocuments] = useState<ServiceFee[]>([]);
@@ -108,7 +124,9 @@ export default function DocumentSelectionStep({
         id: Math.max(0, ...prev.requests.map((request) => request.id)) + 1,
         document_type: type,
         price: document.amount,
-        details: createDefaultDetails(type),
+        details:
+          prev.requests.find((request) => request.document_type === type)
+            ?.details ?? createDefaultDetails(type, requester),
       };
 
       return {
@@ -139,6 +157,13 @@ export default function DocumentSelectionStep({
   return (
     <BookingCard title="Select Documents" contentClassName="p-4 sm:p-6 md:p-8">
       <div className="space-y-4 sm:space-y-6">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
+          The registered account holder will be the official requester and
+          claimant. Baptismal, confirmation, and death records may name a
+          qualified family member, but the requester's relationship to the
+          record owner must be provided.
+        </div>
+
         {loading && (
           <div
             aria-label="Loading document prices"
@@ -187,9 +212,9 @@ export default function DocumentSelectionStep({
                         {document.name}
                       </p>
                       <p className="mt-1 text-xs text-gray-500 sm:text-sm">
-                        ₱{document.amount.toFixed(2)} per request
+                        {formatPhpCurrency(document.amount)} per request
                         {quantity > 0 &&
-                          ` · ₱${(document.amount * quantity).toFixed(2)} subtotal`}
+                          ` · ${formatPhpCurrency(document.amount * quantity)} subtotal`}
                       </p>
                     </div>
                   </div>
@@ -253,7 +278,7 @@ export default function DocumentSelectionStep({
                 Estimated total
               </span>
               <span className="font-bold tabular-nums text-[#B22222] sm:mt-1 sm:block sm:text-lg">
-                ₱{totalAmount.toFixed(2)}
+                {formatPhpCurrency(totalAmount)}
               </span>
             </div>
           </div>

@@ -41,7 +41,7 @@ export default function ConfirmationStep({
 
       <PackageSummary
         selectedPackage={selectedPackage}
-        additionalSponsorCount={Math.max(booking.god_parents.length * 2 - 2, 0)}
+        additionalSponsorCount={Math.max(booking.god_parents.length - 2, 0)}
         additionalSponsorPrice={additionalSponsorPrice}
       />
 

@@ -18,7 +18,10 @@ class DocumentRequestBookingController extends Controller
     ): JsonResponse {
         return response()->json([
             'message' => 'Document request submitted successfully.',
-            'data' => $this->service->store($request->validated()),
+            'data' => $this->service->store(
+                $request->validated(),
+                $request->user(),
+            ),
         ], 201);
     }
 }

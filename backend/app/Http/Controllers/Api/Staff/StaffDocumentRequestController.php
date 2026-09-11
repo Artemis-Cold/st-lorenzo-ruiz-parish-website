@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Staff\UpdateBookingStatusRequest;
 use App\Models\DocumentRequestBooking;
 use App\Services\SmsNotificationService;
+use App\Support\Money;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -93,7 +94,7 @@ class StaffDocumentRequestController extends Controller
 
         if ($request->validated('status') === 'ready_for_pickup' && $booking->status !== 'paid') {
             throw ValidationException::withMessages([
-                'status' => 'Only a document request with a confirmed payment can be marked ready for pickup.',
+                'status' => 'A document request must have a confirmed payment before it can be set to Ready for Pickup.',
             ]);
         }
 
@@ -144,7 +145,7 @@ class StaffDocumentRequestController extends Controller
             'contactNumber' => $booking->user->phone,
             'category' => 'Document',
             'subtype' => $documentRequest->items->pluck('document_type')->join(', '),
-            'amount' => (float) $documentRequest->total_amount,
+            'amount' => Money::decimal($documentRequest->total_amount),
             'status' => $booking->status,
             'reference' => $booking->booking_reference,
             'paymentReference' => $documentRequest->payment_reference,
@@ -156,7 +157,7 @@ class StaffDocumentRequestController extends Controller
             'documents' => $documentRequest->items->map(fn ($item) => [
                 'id' => $item->id,
                 'type' => $item->document_type,
-                'price' => (float) $item->price,
+                'price' => Money::decimal($item->price),
                 'details' => $item->details,
             ])->values(),
         ];

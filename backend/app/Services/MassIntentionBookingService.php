@@ -5,13 +5,14 @@ namespace App\Services;
 use App\Models\Booking;
 use App\Models\Event;
 use App\Models\Service;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class MassIntentionBookingService
 {
+    public function __construct(private readonly PaymentService $payments) {}
+
     public function store(array $data): Booking
     {
         return DB::transaction(function () use ($data) {
@@ -56,7 +57,9 @@ class MassIntentionBookingService
                 'service_id' => $service->id,
                 'service_package_id' => null,
                 'booking_slot_id' => null,
-                'payment_reference' => $data['reference_number'],
+                'payment_reference' => $data['payment_method'] === 'gcash'
+                    ? $data['reference_number']
+                    : null,
                 'status' => 'pending',
                 'remarks' => $data['remarks'] ?? null,
             ]);
@@ -67,7 +70,9 @@ class MassIntentionBookingService
                 'mass_schedule_title' => $massEvent->title,
                 'mass_starts_at' => $massEvent->starts_at,
                 'mass_location' => $massEvent->location,
-                'payment_reference' => $data['reference_number'],
+                'payment_reference' => $data['payment_method'] === 'gcash'
+                    ? $data['reference_number']
+                    : null,
                 'total_amount' => $entryCount * $linePrice,
             ]);
 
@@ -81,18 +86,17 @@ class MassIntentionBookingService
                 }
             }
 
-            /** @var UploadedFile $receipt */
-            $receipt = $data['receipt'];
-            $booking->documents()->create([
-                'document_type' => 'payment_receipt',
-                'file_name' => $receipt->getClientOriginalName(),
-                'file_path' => $receipt->store('booking-documents', 'public'),
-                'status' => 'pending',
-            ]);
+            $this->payments->createAttempt(
+                $booking,
+                $data['payment_method'],
+                $data['reference_number'] ?? null,
+                $data['receipt'] ?? null,
+            );
 
             return $booking->load([
                 'massIntention.entries',
                 'documents',
+                'payments.receiptDocument',
             ]);
         });
     }

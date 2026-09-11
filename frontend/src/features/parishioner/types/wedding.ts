@@ -1,4 +1,5 @@
 export type ApplicantType = "groom" | "bride";
+export type WeddingAccountRole = ApplicantType | "representative";
 
 export interface PersonName {
   first_name: string;
@@ -44,17 +45,10 @@ export interface WeddingDocument {
 }
 
 export interface WeddingSponsor extends PersonName {
-  role: "godfather" | "godmother";
+  role: "" | "godfather" | "godmother";
   residence: string;
-}
-
-export interface WeddingSponsorPair {
-  god_father: WeddingSponsor;
-  god_mother: WeddingSponsor;
-  requirements: {
-    marriage_contract: File | null;
-    confirmation_certificate: File | null;
-  };
+  requirement_type: "" | "marriage_contract" | "confirmation_certificate";
+  requirement_file: File | null;
 }
 
 export interface WeddingBooking {
@@ -69,7 +63,7 @@ export interface WeddingBooking {
     bride: Person;
   };
 
-  sponsors: WeddingSponsorPair[];
+  sponsors: WeddingSponsor[];
 
   documents: WeddingDocument[];
 

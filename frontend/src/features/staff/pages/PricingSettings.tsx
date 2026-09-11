@@ -69,6 +69,12 @@ function PriceInput({
           inputMode="decimal"
           value={value}
           onChange={(event) => onChange(event.target.value)}
+          onBlur={() => {
+            const parsed = Number(value);
+            if (value.trim() && Number.isFinite(parsed)) {
+              onChange(parsed.toFixed(2));
+            }
+          }}
           className="min-w-0 flex-1 px-3 py-2.5 text-right font-semibold tabular-nums outline-none"
         />
       </div>
@@ -90,16 +96,16 @@ export default function PricingSettings() {
   const applyData = (data: StaffPricingData) => {
     const values: Record<string, string> = {};
     data.packages.forEach((item) => {
-      values[keyFor("package", item.id)] = String(item.basePrice);
+      values[keyFor("package", item.id)] = item.basePrice.toFixed(2);
       item.inclusions.forEach((inclusion) => {
-        values[keyFor("inclusion", inclusion.id)] = String(inclusion.price);
+        values[keyFor("inclusion", inclusion.id)] = inclusion.price.toFixed(2);
       });
       item.addons.forEach((addon) => {
-        values[keyFor("addon", addon.id)] = String(addon.price);
+        values[keyFor("addon", addon.id)] = addon.price.toFixed(2);
       });
     });
     data.fees.forEach((fee) => {
-      values[keyFor("fee", fee.id)] = String(fee.amount);
+      values[keyFor("fee", fee.id)] = fee.amount.toFixed(2);
     });
     setPricing(data);
     setDraft(values);

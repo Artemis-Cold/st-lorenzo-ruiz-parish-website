@@ -46,14 +46,16 @@ class DocumentRequestMultipleCopiesTest extends TestCase
                         'name' => 'Juan Dela Cruz',
                         'address' => 'Dagatan, Taysan, Batangas',
                         'baptism_date' => today()->subYears(10)->toDateString(),
+                        'relationship_to_owner' => 'Parent',
                     ],
                 ],
                 [
                     'document_type' => 'Baptismal Certificate',
                     'details' => [
-                        'name' => 'Maria Dela Cruz',
+                        'name' => 'Juan Dela Cruz',
                         'address' => 'Dagatan, Taysan, Batangas',
-                        'baptism_date' => today()->subYears(8)->toDateString(),
+                        'baptism_date' => today()->subYears(10)->toDateString(),
+                        'relationship_to_owner' => 'Parent',
                     ],
                 ],
                 [
@@ -61,6 +63,7 @@ class DocumentRequestMultipleCopiesTest extends TestCase
                     'details' => [
                         'name' => 'Pedro Dela Cruz',
                         'address' => 'Dagatan, Taysan, Batangas',
+                        'relationship_to_owner' => 'Child',
                     ],
                 ],
             ],
@@ -90,6 +93,7 @@ class DocumentRequestMultipleCopiesTest extends TestCase
             'details' => [
                 'name' => "Parishioner {$number}",
                 'address' => 'Dagatan, Taysan, Batangas',
+                'relationship_to_owner' => 'Child',
             ],
         ])->all();
 
@@ -100,5 +104,129 @@ class DocumentRequestMultipleCopiesTest extends TestCase
         ], ['Accept' => 'application/json'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('requests');
+    }
+
+    public function test_multiple_copies_of_one_type_must_use_the_same_record_details(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+        $service = Service::create([
+            'code' => 'document-request',
+            'name' => 'Document Request',
+            'description' => 'Parish documents',
+        ]);
+        ServiceFee::create([
+            'service_id' => $service->id,
+            'code' => 'baptismal_certificate',
+            'name' => 'Baptismal Certificate',
+            'amount' => 120,
+        ]);
+
+        $this->post('/api/bookings/document-request', [
+            'requests' => [
+                [
+                    'document_type' => 'Baptismal Certificate',
+                    'details' => [
+                        'name' => 'Juan Dela Cruz',
+                        'address' => 'Dagatan, Taysan, Batangas',
+                        'baptism_date' => today()->subYears(10)->toDateString(),
+                        'relationship_to_owner' => 'Parent',
+                    ],
+                ],
+                [
+                    'document_type' => 'Baptismal Certificate',
+                    'details' => [
+                        'name' => 'Maria Dela Cruz',
+                        'address' => 'Dagatan, Taysan, Batangas',
+                        'baptism_date' => today()->subYears(8)->toDateString(),
+                        'relationship_to_owner' => 'Parent',
+                    ],
+                ],
+            ],
+            'reference_number' => '3000000000003',
+            'receipt' => UploadedFile::fake()->image('receipt.jpg'),
+        ], ['Accept' => 'application/json'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('requests');
+    }
+
+    public function test_account_owned_document_fields_are_taken_from_the_authenticated_user(): void
+    {
+        Storage::fake('public');
+        $parishioner = User::factory()->create([
+            'first_name' => 'Juan',
+            'middle_initial' => 'Q',
+            'last_name' => 'Dela Cruz',
+            'house_no' => '12',
+            'street' => 'Mabini Street',
+            'barangay' => 'Dagatan',
+            'municipality' => 'Taysan',
+            'province' => 'Batangas',
+            'zip_code' => '4228',
+        ]);
+        Sanctum::actingAs($parishioner);
+        $service = Service::create([
+            'code' => 'document-request',
+            'name' => 'Document Request',
+            'description' => 'Parish documents',
+        ]);
+        foreach ([
+            ['permission', 'Request of Permission', 100],
+            ['marriage_certificate', 'Marriage Certificate', 150],
+        ] as [$code, $name, $amount]) {
+            ServiceFee::create([
+                'service_id' => $service->id,
+                'code' => $code,
+                'name' => $name,
+                'amount' => $amount,
+            ]);
+        }
+
+        $this->post('/api/bookings/document-request', [
+            'requests' => [
+                [
+                    'document_type' => 'Request of Permission',
+                    'details' => [
+                        'full_name' => 'Another Person',
+                        'address' => 'Another Address',
+                    ],
+                ],
+                [
+                    'document_type' => 'Marriage Certificate',
+                    'details' => [
+                        'requester_role' => 'Groom',
+                        'bride_name' => 'Maria Santos',
+                        'groom_name' => 'Another Person',
+                        'address' => 'Another Address',
+                        'marriage_date' => today()->subYear()->toDateString(),
+                    ],
+                ],
+            ],
+            'reference_number' => '3000000000004',
+            'receipt' => UploadedFile::fake()->image('receipt.jpg'),
+        ], ['Accept' => 'application/json'])->assertCreated();
+
+        $items = DocumentRequestItem::query()->get()->keyBy('document_type');
+        $expectedAddress = '12, Mabini Street, Dagatan, Taysan, Batangas, 4228';
+
+        $this->assertSame(
+            'Juan Q. Dela Cruz',
+            $items['Request of Permission']->details['full_name'],
+        );
+        $this->assertSame(
+            $expectedAddress,
+            $items['Request of Permission']->details['address'],
+        );
+        $this->assertSame(
+            'Juan Q. Dela Cruz',
+            $items['Marriage Certificate']->details['groom_name'],
+        );
+        $this->assertSame(
+            'Maria Santos',
+            $items['Marriage Certificate']->details['bride_name'],
+        );
+        $this->assertSame(
+            $expectedAddress,
+            $items['Marriage Certificate']->details['address'],
+        );
     }
 }

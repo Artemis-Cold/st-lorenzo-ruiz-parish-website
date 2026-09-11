@@ -28,5 +28,16 @@ export async function getServicePackages(
 ): Promise<ServicePackage[]> {
   const { data } = await api.get(`/services/${serviceCode}/packages`);
 
-  return data;
+  return (data as ServicePackage[]).map((servicePackage) => ({
+    ...servicePackage,
+    base_price: Number(servicePackage.base_price),
+    inclusions: servicePackage.inclusions.map((inclusion) => ({
+      ...inclusion,
+      price: Number(inclusion.price),
+    })),
+    addons: servicePackage.addons.map((addon) => ({
+      ...addon,
+      price: Number(addon.price),
+    })),
+  }));
 }

@@ -1,6 +1,7 @@
 import { CheckCircle2 } from "lucide-react";
 import { BookingCard } from "../..";
 import type { ServicePackage } from "../../../../../../services/servicePackageService";
+import { formatPhpCurrency } from "@/utils/currency";
 
 export default function PackageSummary({
   selectedPackage,
@@ -35,7 +36,7 @@ export default function PackageSummary({
             </div>
           </div>
           <span className="text-2xl font-bold text-[#B22222]">
-            ₱{Number(selectedPackage.base_price).toLocaleString()}
+            {formatPhpCurrency(selectedPackage.base_price)}
           </span>
         </div>
       </div>

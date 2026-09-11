@@ -7,8 +7,6 @@ export interface LoginCredentials {
 }
 
 export interface RegisterRequest {
-  username: string;
-
   password: string;
 
   password_confirmation: string;
@@ -24,8 +22,6 @@ export interface RegisterRequest {
   suffix?: string;
 
   phone: string;
-
-  otp: string;
 
   house_no?: string;
 
@@ -48,6 +44,16 @@ export interface AuthPayload {
   token: string;
 
   user: User;
+}
+
+export interface RegistrationPayload extends AuthPayload {
+  message: string;
+
+  verification: {
+    required: boolean;
+    otp_sent: boolean;
+    reminder_sent: boolean;
+  };
 }
 
 export interface MeResponse {

@@ -42,7 +42,7 @@ class MarriageBannController extends Controller
         abort_unless($booking->service()->value('code') === 'wedding', 404);
         $booking->load([
             'service', 'slot', 'documents', 'weddingApplicants',
-            'weddingSponsorPairs', 'marriageBann',
+            'weddingSponsors', 'marriageBann', 'payments',
         ]);
 
         if ($booking->status !== 'approved') {
@@ -51,9 +51,7 @@ class MarriageBannController extends Controller
             ]);
         }
 
-        if (! $booking->documents->contains(fn ($document) =>
-            $document->document_type === 'payment_receipt' && $document->status === 'approved'
-        )) {
+        if (! $booking->payments->contains('status', 'confirmed')) {
             throw ValidationException::withMessages([
                 'booking' => 'The wedding payment must be confirmed before publishing its marriage banns.',
             ]);

@@ -1,6 +1,13 @@
 import api from "@/api/axios";
 
-export type TransactionStatus = "pending" | "confirmed" | "rejected";
+export type TransactionStatus =
+  | "awaiting_payment"
+  | "pending_verification"
+  | "confirmed"
+  | "rejected"
+  | "voided";
+export type TransactionFilterStatus = TransactionStatus | "pending";
+export type TransactionMethod = "gcash" | "cash";
 export type TransactionService =
   "mass-intention" | "document-request" | "baptism" | "wedding" | "funeral";
 export interface StaffTransaction {
@@ -11,14 +18,18 @@ export interface StaffTransaction {
   type:
     "Mass Intention" | "Document Request" | "Baptism" | "Wedding" | "Funeral";
   bookingReference: string;
+  method: TransactionMethod;
   reference: string | null;
+  officialReceiptNumber: string | null;
   amount: number;
-  receipt: { fileName: string; url: string };
+  receipt: { fileName: string; url: string } | null;
   status: TransactionStatus;
+  notes: string | null;
 }
 
 export interface StaffTransactionFilters {
-  status?: TransactionStatus;
+  status?: TransactionFilterStatus;
+  method?: TransactionMethod;
   service?: TransactionService;
   search?: string;
   date?: string;
@@ -45,6 +56,7 @@ export async function getStaffTransactions(
   const response = await api.get<StaffTransactionPage>("/staff/transactions", {
     params: {
       status: filters.status,
+      method: filters.method,
       service: filters.service,
       search: filters.search || undefined,
       date: filters.date || undefined,
@@ -53,16 +65,30 @@ export async function getStaffTransactions(
     },
     signal,
   });
-  return response.data;
+  return {
+    ...response.data,
+    data: response.data.data.map((transaction) => ({
+      ...transaction,
+      amount: Number(transaction.amount),
+    })),
+  };
 }
 
 export async function updateTransactionStatus(
   id: number,
-  status: Exclude<TransactionStatus, "pending">,
+  data: {
+    status: "confirmed" | "rejected";
+    amount_received?: number;
+    official_receipt_number?: string;
+    notes?: string;
+  },
 ): Promise<StaffTransaction> {
   const response = await api.patch<{ data: StaffTransaction }>(
     `/staff/transactions/${id}/status`,
-    { status },
+    data,
   );
-  return response.data.data;
+  return {
+    ...response.data.data,
+    amount: Number(response.data.data.amount),
+  };
 }

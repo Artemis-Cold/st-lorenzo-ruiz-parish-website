@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Service;
+use App\Support\Money;
 use Illuminate\Http\JsonResponse;
 
 class ServiceFeeController extends Controller
@@ -25,7 +26,7 @@ class ServiceFeeController extends Controller
                     'id' => $fee->id,
                     'code' => $fee->code,
                     'name' => $fee->name,
-                    'amount' => (float) $fee->amount,
+                    'amount' => Money::decimal($fee->amount),
                 ])
                 ->values(),
         ]);

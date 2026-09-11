@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Staff\RequestRequirementResubmissionRequest;
 use App\Http\Requests\Staff\UpdateBookingStatusRequest;
 use App\Models\Booking;
+use App\Models\Payment;
 use App\Services\BookingRequirementService;
 use App\Services\SmsNotificationService;
+use App\Support\Money;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -85,11 +87,12 @@ class StaffBookingController extends Controller
         $bookings = $query
             ->with([
                 'user', 'service', 'package.inclusions', 'selectedAddons', 'slot',
-                'documents', 'weddingApplicants', 'weddingSponsorPairs.sponsors', 'baptizand.parents',
-                'baptizand.godParentPairs.godParents',
+                'documents', 'weddingApplicants', 'weddingSponsors', 'baptizand.parents',
+                'baptizand.godParents',
                 'funeralDeceased.children',
                 'appointments',
                 'marriageBann',
+                'payments.receiptDocument',
             ])
             ->latest()
             ->paginate($filters['per_page'] ?? 10);
@@ -132,9 +135,8 @@ class StaffBookingController extends Controller
                 ]);
             }
 
-            $hasConfirmedPayment = $booking->documents()
-                ->where('document_type', 'payment_receipt')
-                ->where('status', 'approved')
+            $hasConfirmedPayment = $booking->payments()
+                ->where('status', 'confirmed')
                 ->exists();
 
             if (! $hasConfirmedPayment) {
@@ -152,11 +154,12 @@ class StaffBookingController extends Controller
 
         $booking->load([
             'user', 'service', 'package.inclusions', 'selectedAddons', 'slot',
-            'documents', 'weddingApplicants', 'weddingSponsorPairs.sponsors', 'baptizand.parents',
-            'baptizand.godParentPairs.godParents',
+            'documents', 'weddingApplicants', 'weddingSponsors', 'baptizand.parents',
+            'baptizand.godParents',
             'funeralDeceased.children',
             'appointments',
             'marriageBann',
+            'payments.receiptDocument',
         ]);
 
         return response()->json(['data' => $this->serialize($booking)]);
@@ -203,11 +206,12 @@ class StaffBookingController extends Controller
 
         $booking->load([
             'user', 'service', 'package.inclusions', 'selectedAddons', 'slot',
-            'documents', 'weddingApplicants', 'weddingSponsorPairs.sponsors', 'baptizand.parents',
-            'baptizand.godParentPairs.godParents',
+            'documents', 'weddingApplicants', 'weddingSponsors', 'baptizand.parents',
+            'baptizand.godParents',
             'funeralDeceased.children',
             'appointments',
             'marriageBann',
+            'payments.receiptDocument',
         ]);
 
         return response()->json([
@@ -225,17 +229,18 @@ class StaffBookingController extends Controller
             404
         );
 
-        $receipt = $booking->documents()
-            ->where('document_type', 'payment_receipt')
+        $payment = $booking->payments()
+            ->whereIn('status', [...Payment::ACTIVE_STATUSES, 'confirmed', 'rejected'])
+            ->latest('id')
             ->first();
 
-        if ($booking->status === 'paid' || $receipt?->status === 'approved') {
+        if ($booking->status === 'paid' || $payment?->status === 'confirmed') {
             throw ValidationException::withMessages([
                 'payment' => 'This booking payment has already been confirmed.',
             ]);
         }
 
-        if ($receipt?->status === 'pending') {
+        if ($payment?->status === 'pending_verification') {
             throw ValidationException::withMessages([
                 'payment' => 'This payment is already awaiting staff verification.',
             ]);
@@ -248,7 +253,9 @@ class StaffBookingController extends Controller
         $sms->queue(
             $booking,
             'payment_reminder',
-            "St. Lorenzo Ruiz Parish: Payment reminder for your {$service} booking (Ref: {$reference}). Amount due: PHP {$amount}. Please submit your GCash reference number and receipt through My Profile. Thank you."
+            $payment?->method === 'cash'
+                ? "St. Lorenzo Ruiz Parish: Cash payment reminder for your {$service} booking (Ref: {$reference}). Amount due: PHP {$amount}. Please pay at the parish office. Thank you."
+                : "St. Lorenzo Ruiz Parish: Payment reminder for your {$service} booking (Ref: {$reference}). Amount due: PHP {$amount}. Submit your GCash details through My Profile or select cash payment at the parish office. Thank you."
         );
 
         return response()->json([
@@ -293,21 +300,31 @@ class StaffBookingController extends Controller
             'names' => $names ?: $booking->user->full_name,
             'contactNumber' => $contact,
             'type' => $type,
-            'amount' => $booking->total_amount,
+            'amount' => Money::decimal($booking->total_amount),
             'status' => $booking->status,
             'details' => [
                 'submittedBy' => $booking->user->full_name,
                 'packageName' => $pricing['package']['name'] ?? $booking->package?->name,
-                'baseAmount' => (float) ($pricing['package']['basePrice'] ?? $booking->package?->base_price ?? 0),
-                'inclusions' => $pricing['inclusions'] ?? ($booking->package?->inclusions->map(fn ($inclusion) => [
+                'baseAmount' => Money::decimal($pricing['package']['basePrice'] ?? $booking->package?->base_price ?? 0),
+                'inclusions' => collect($pricing['inclusions'] ?? ($booking->package?->inclusions->map(fn ($inclusion) => [
                     'name' => $inclusion->name,
-                    'price' => (float) $inclusion->price,
-                ])->values() ?? []),
-                'addons' => $pricing['addons'] ?? $booking->selectedAddons->map(fn ($addon) => [
-                    'name' => $addon->name,
-                    'price' => (float) $addon->price,
+                    'price' => $inclusion->price,
+                ])->values() ?? []))->map(fn ($inclusion) => [
+                    ...$inclusion,
+                    'price' => Money::decimal($inclusion['price'] ?? 0),
                 ])->values(),
-                'fees' => $pricing['fees'] ?? [],
+                'addons' => collect($pricing['addons'] ?? $booking->selectedAddons->map(fn ($addon) => [
+                    'name' => $addon->name,
+                    'price' => $addon->price,
+                ])->values())->map(fn ($addon) => [
+                    ...$addon,
+                    'price' => Money::decimal($addon['price'] ?? 0),
+                ])->values(),
+                'fees' => collect($pricing['fees'] ?? [])->map(fn ($fee) => [
+                    ...$fee,
+                    'price' => Money::decimal($fee['price'] ?? 0),
+                    'subtotal' => Money::decimal($fee['subtotal'] ?? 0),
+                ])->values(),
                 'schedule' => [
                     'date' => $booking->slot?->booking_date?->format('F j, Y'),
                     'startTime' => $booking->slot?->start_time,
@@ -336,116 +353,120 @@ class StaffBookingController extends Controller
 
     private function paymentData(Booking $booking): array
     {
-        $receipt = $booking->documents->firstWhere('document_type', 'payment_receipt');
+        $payment = $booking->payments
+            ->whereIn('status', [...Payment::ACTIVE_STATUSES, 'confirmed', 'rejected'])
+            ->sortByDesc('id')
+            ->first();
+        $receipt = $payment?->receiptDocument;
 
         return [
-            'referenceNumber' => $booking->payment_reference,
-            'status' => match ($receipt?->status) {
-                'approved' => 'confirmed',
-                'rejected' => 'rejected',
-                'pending' => 'pending',
-                default => 'not_submitted',
-            },
+            'method' => $payment?->method,
+            'referenceNumber' => $payment?->reference_number,
+            'officialReceiptNumber' => $payment?->official_receipt_number,
+            'status' => $payment?->status ?? 'not_submitted',
             'receipt' => $receipt ? [
                 'fileName' => $receipt->file_name,
                 'url' => Storage::disk('public')->url($receipt->file_path),
             ] : null,
             'canRemind' => $booking->status === 'pending'
-                && (! $receipt || $receipt->status === 'rejected'),
+                && ! in_array($payment?->status, ['confirmed', 'pending_verification'], true),
         ];
     }
 
     private function documents(Booking $booking): Collection
     {
-        $sponsorPairs = $booking->weddingSponsorPairs->sortBy('id')->values();
-        $pairNumbers = $sponsorPairs->mapWithKeys(
-            fn ($pair, int $index) => [(string) $pair->id => $index + 1]
+        $sponsors = $booking->weddingSponsors->sortBy('sort_order')->values();
+        $sponsorNumbers = $sponsors->mapWithKeys(
+            fn ($sponsor, int $index) => [(string) $sponsor->id => $index + 1]
         );
-        $godParentPairs = $booking->baptizand?->godParentPairs?->sortBy('id')->values() ?? collect();
-        $godParentPairNumbers = $godParentPairs->mapWithKeys(
-            fn ($pair, int $index) => [(string) $pair->id => $index + 1]
+        $godParents = $booking->baptizand?->godParents?->sortBy('sort_order')->values() ?? collect();
+        $godParentNumbers = $godParents->mapWithKeys(
+            fn ($godParent, int $index) => [(string) $godParent->id => $index + 1]
         );
 
-        $documents = $booking->documents->map(function ($document) use ($pairNumbers, $godParentPairNumbers) {
-            $type = $document->document_type;
+        $documents = $booking->documents
+            ->reject(fn ($document) => $document->document_type === 'payment_receipt')
+            ->map(function ($document) use ($sponsorNumbers, $godParentNumbers) {
+                $type = $document->document_type;
 
-            if (preg_match('/^wedding_sponsor_(marriage_contract|confirmation_certificate)_(\d+)$/', $type, $matches)) {
-                $pairNumber = $pairNumbers->get($matches[2]);
+                if (preg_match('/^wedding_sponsor_individual_(marriage_contract|confirmation_certificate)_(\d+)$/', $type, $matches)) {
+                    $sponsorNumber = $sponsorNumbers->get($matches[2]);
 
-                if ($pairNumber !== null) {
-                    $type = "sponsor_pair_{$pairNumber}_{$matches[1]}";
+                    if ($sponsorNumber !== null) {
+                        $type = "sponsor_{$sponsorNumber}_{$matches[1]}";
+                    }
                 }
-            }
 
-            if (preg_match('/^godparent_(marriage_contract|confirmation_certificate)_(\d+)$/', $type, $matches)) {
-                $pairNumber = $godParentPairNumbers->get($matches[2]);
+                if (preg_match('/^baptism_godparent_individual_(marriage_contract|confirmation_certificate)_(\d+)$/', $type, $matches)) {
+                    $godParentNumber = $godParentNumbers->get($matches[2]);
 
-                if ($pairNumber !== null) {
-                    $type = "godparent_pair_{$pairNumber}_{$matches[1]}";
+                    if ($godParentNumber !== null) {
+                        $type = "godparent_{$godParentNumber}_{$matches[1]}";
+                    }
                 }
-            }
 
-            return [
-                'id' => $document->id,
-                'type' => $type,
-                'requirementType' => $document->document_type,
-                'fileName' => $document->file_name,
-                'status' => $document->status,
-                'remarks' => $document->remarks,
-                'url' => Storage::disk('public')->url($document->file_path),
-                'reviewKey' => $document->document_type === 'payment_receipt'
-                    ? null
-                    : "document:{$document->id}",
-            ];
-        });
+                return [
+                    'id' => $document->id,
+                    'type' => $type,
+                    'requirementType' => $document->document_type,
+                    'fileName' => $document->file_name,
+                    'status' => $document->status,
+                    'remarks' => $document->remarks,
+                    'url' => Storage::disk('public')->url($document->file_path),
+                    'reviewKey' => "document:{$document->id}",
+                ];
+            });
 
-        $sponsorDocuments = $sponsorPairs->flatMap(function ($pair, int $index) {
-            $pairNumber = $index + 1;
-
-            return collect([
-                'marriage_contract' => $pair->marriage_contract,
-                'confirmation_certificate' => $pair->confirmation_certificate,
-            ])->filter()->map(function (string $path, string $type) use ($pair, $pairNumber) {
-                $label = 'Sponsor Pair '.$pairNumber.' '.str($type)->headline();
+        $sponsorDocuments = $sponsors
+            ->filter(fn ($sponsor) => filled($sponsor->requirement_file_path))
+            ->map(function ($sponsor) use ($sponsorNumbers) {
+                $sponsorNumber = $sponsorNumbers->get((string) $sponsor->id);
+                $type = $sponsor->requirement_type;
+                $path = $sponsor->requirement_file_path;
+                $label = "Sponsor {$sponsorNumber} ".str($type)->headline();
                 $extension = pathinfo($path, PATHINFO_EXTENSION);
 
                 return [
                     'id' => null,
-                    'type' => "sponsor_pair_{$pairNumber}_{$type}",
-                    'requirementType' => "wedding_sponsor_{$type}_{$pair->id}",
-                    'fileName' => $label.($extension ? ".{$extension}" : ''),
+                    'type' => "sponsor_{$sponsorNumber}_{$type}",
+                    'requirementType' => "wedding_sponsor_individual_{$type}_{$sponsor->id}",
+                    'fileName' => $sponsor->requirement_file_name
+                        ?: $label.($extension ? ".{$extension}" : ''),
                     'status' => 'submitted',
                     'remarks' => null,
                     'url' => Storage::disk('public')->url($path),
-                    'reviewKey' => "wedding-sponsor:{$pair->id}:{$type}",
+                    'reviewKey' => "wedding-sponsor-individual:{$sponsor->id}",
                 ];
-            })->values();
-        });
+            })
+            ->values();
 
-        $godParentDocuments = $godParentPairs->flatMap(function ($pair, int $index) {
-            $pairNumber = $index + 1;
-
-            return collect([
-                'marriage_contract' => $pair->marriage_contract,
-                'confirmation_certificate' => $pair->confirmation_certificate,
-            ])->filter()->map(function (string $path, string $type) use ($pair, $pairNumber) {
-                $label = 'Godparent Pair '.$pairNumber.' '.str($type)->headline();
+        $godParentDocuments = $godParents
+            ->filter(fn ($godParent) => filled($godParent->requirement_file_path))
+            ->map(function ($godParent) use ($godParentNumbers) {
+                $godParentNumber = $godParentNumbers->get((string) $godParent->id);
+                $type = $godParent->requirement_type;
+                $path = $godParent->requirement_file_path;
+                $label = "Godparent {$godParentNumber} ".str($type)->headline();
                 $extension = pathinfo($path, PATHINFO_EXTENSION);
 
                 return [
                     'id' => null,
-                    'type' => "godparent_pair_{$pairNumber}_{$type}",
-                    'requirementType' => "godparent_{$type}_{$pair->id}",
-                    'fileName' => $label.($extension ? ".{$extension}" : ''),
+                    'type' => "godparent_{$godParentNumber}_{$type}",
+                    'requirementType' => "baptism_godparent_individual_{$type}_{$godParent->id}",
+                    'fileName' => $godParent->requirement_file_name
+                        ?: $label.($extension ? ".{$extension}" : ''),
                     'status' => 'submitted',
                     'remarks' => null,
                     'url' => Storage::disk('public')->url($path),
-                    'reviewKey' => "baptism-godparent:{$pair->id}:{$type}",
+                    'reviewKey' => "baptism-godparent-individual:{$godParent->id}",
                 ];
-            })->values();
-        });
+            })
+            ->values();
 
-        return $documents->concat($sponsorDocuments)->concat($godParentDocuments)->values();
+        return $documents
+            ->concat($sponsorDocuments)
+            ->concat($godParentDocuments)
+            ->values();
     }
 
     private function serviceData(Booking $booking): array
@@ -468,12 +489,11 @@ class StaffBookingController extends Controller
                         'churchAddress' => $person->church_address,
                     ],
                 ])->values(),
-                'sponsorPairs' => $booking->weddingSponsorPairs->map(fn ($pair) => [
-                    'sponsors' => $pair->sponsors->map(fn ($sponsor) => [
-                        'role' => $sponsor->role,
-                        'name' => $this->personName($sponsor->first_name, $sponsor->middle_initial, $sponsor->last_name),
-                        'residence' => $sponsor->residence,
-                    ])->values(),
+                'sponsors' => $booking->weddingSponsors->map(fn ($sponsor) => [
+                    'role' => $sponsor->role,
+                    'name' => $this->personName($sponsor->first_name, $sponsor->middle_initial, $sponsor->last_name),
+                    'residence' => $sponsor->residence,
+                    'requirementType' => $sponsor->requirement_type,
                 ])->values(),
             ];
         }
@@ -523,13 +543,12 @@ class StaffBookingController extends Controller
                 'name' => $this->personName($parent->first_name, $parent->middle_initial, $parent->last_name, $parent->suffix),
                 'birthPlace' => $parent->birth_place,
             ])->values(),
-            'godParents' => $person->godParentPairs
-                ->flatMap(fn ($pair) => $pair->godParents)
-                ->map(fn ($godParent) => [
-                    'role' => ucfirst($godParent->role),
-                    'name' => $this->personName($godParent->first_name, $godParent->middle_initial, $godParent->last_name, $godParent->suffix),
-                    'residence' => $godParent->residence,
-                ])->values(),
+            'godParents' => $person->godParents->map(fn ($godParent) => [
+                'role' => ucfirst($godParent->role),
+                'name' => $this->personName($godParent->first_name, $godParent->middle_initial, $godParent->last_name, $godParent->suffix),
+                'residence' => $godParent->residence,
+                'requirementType' => $godParent->requirement_type,
+            ])->values(),
         ] : null];
     }
 

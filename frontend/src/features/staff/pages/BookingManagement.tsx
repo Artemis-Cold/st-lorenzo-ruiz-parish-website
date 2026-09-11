@@ -31,6 +31,7 @@ import {
   drawParishPdfLetterhead,
   loadParishPdfLogo,
 } from "../utils/pdfLetterhead";
+import { formatMoneyAmount, formatPhpCurrency } from "@/utils/currency";
 
 const bookingTypes: Array<{
   label: BookingType;
@@ -59,13 +60,6 @@ const emptyMeta = {
   from: null,
   to: null,
 };
-
-const money = (amount: number) =>
-  amount.toLocaleString("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    minimumFractionDigits: 2,
-  });
 
 const requestMessage = (error: unknown, fallback: string) => {
   if (!(error instanceof AxiosError)) return fallback;
@@ -247,7 +241,7 @@ export default function BookingManagement() {
           item.names,
           item.contactNumber,
           item.type,
-          `PHP ${item.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
+          `PHP ${formatMoneyAmount(item.amount)}`,
           item.status.charAt(0).toUpperCase() + item.status.slice(1),
         ]),
         theme: "grid",
@@ -528,7 +522,7 @@ export default function BookingManagement() {
                         {item.contactNumber}
                       </td>
                       <td className="whitespace-nowrap px-5 py-4 text-right font-semibold tabular-nums text-[#292524]">
-                        {money(item.amount)}
+                        {formatPhpCurrency(item.amount)}
                       </td>
                       <td className="px-5 py-4">
                         <BookingStatusBadge status={item.status} />

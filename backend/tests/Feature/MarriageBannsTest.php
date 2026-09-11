@@ -78,12 +78,21 @@ class MarriageBannsTest extends TestCase
                     : 'booking-documents/'.$type.'.pdf',
             ]);
         }
-        BookingDocument::create([
+        $receipt = BookingDocument::create([
             'booking_id' => $booking->id,
             'document_type' => 'payment_receipt',
             'file_name' => 'receipt.jpg',
             'file_path' => 'booking-documents/receipt.jpg',
             'status' => 'approved',
+        ]);
+        $booking->payments()->create([
+            'method' => 'gcash',
+            'amount' => 100,
+            'status' => 'confirmed',
+            'reference_number' => '7000000000001',
+            'receipt_document_id' => $receipt->id,
+            'confirmed_by' => $staff->id,
+            'confirmed_at' => now(),
         ]);
 
         Sanctum::actingAs($staff);

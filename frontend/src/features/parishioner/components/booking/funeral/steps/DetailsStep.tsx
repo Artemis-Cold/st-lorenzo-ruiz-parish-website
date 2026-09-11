@@ -6,12 +6,14 @@ import type {
 } from "../../../../types/funeral";
 import type { Dispatch, SetStateAction } from "react";
 import FileUploadField from "../summary/FileUploadField";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface DetailsStepProps {
   booking: FuneralBooking;
   setBooking: Dispatch<SetStateAction<FuneralBooking>>;
   readOnly?: boolean;
   errors?: Record<string, string[]>;
+  view?: "all" | "information" | "documents";
 }
 
 function FieldError({ message }: { message?: string }) {
@@ -25,7 +27,9 @@ export default function DetailsStep({
   setBooking,
   readOnly,
   errors,
+  view = "all",
 }: DetailsStepProps) {
+  const { user } = useAuth();
   const getError = (key: string) => errors?.[key]?.[0];
   const inputClass = `
 w-full rounded-xl border px-4 py-3 transition
@@ -240,827 +244,791 @@ ${
 
   return (
     <>
-      <BookingCard title="Deceased's Information">
-        <form className="space-y-8 [&_div:has(>.field-error)>input]:border-red-400 [&_div:has(>.field-error)>input]:focus:border-red-500 [&_div:has(>.field-error)>textarea]:border-red-400 [&_div:has(>.field-error)>textarea]:focus:border-red-500">
-          <section>
-            <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
-              Personal Information
-            </h3>
+      {view !== "documents" && (
+        <BookingCard title="Deceased's Information">
+          <form className="space-y-8 [&_div:has(>.field-error)>input]:border-red-400 [&_div:has(>.field-error)>input]:focus:border-red-500 [&_div:has(>.field-error)>textarea]:border-red-400 [&_div:has(>.field-error)>textarea]:focus:border-red-500">
+            <section>
+              <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
+                Personal Information
+              </h3>
 
-            <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-12 md:col-span-5">
-                <label className="mb-2 block text-sm font-medium">
-                  Last Name <span className="text-red-600">*</span>
-                </label>
+              <div className="grid grid-cols-12 gap-4">
+                <div className="col-span-12 md:col-span-5">
+                  <label className="mb-2 block text-sm font-medium">
+                    Last Name <span className="text-red-600">*</span>
+                  </label>
 
-                <input
-                  type="text"
-                  value={booking.deceased.last_name}
-                  onChange={(e) => updateDeceased("last_name", e.target.value)}
-                  placeholder="Enter last name"
-                  readOnly={readOnly}
-                  className={inputClass}
-                />
-                <FieldError message={getError("deceased.last_name")} />
-              </div>
-
-              <div className="col-span-12 md:col-span-5">
-                <label className="mb-2 block text-sm font-medium">
-                  First Name <span className="text-red-600">*</span>
-                </label>
-
-                <input
-                  type="text"
-                  value={booking.deceased.first_name}
-                  onChange={(e) => updateDeceased("first_name", e.target.value)}
-                  placeholder="Enter first name"
-                  readOnly={readOnly}
-                  className={inputClass}
-                />
-                <FieldError message={getError("deceased.first_name")} />
-              </div>
-
-              <div className="col-span-12 md:col-span-2">
-                <label className="mb-2 block text-sm font-medium">MI</label>
-
-                <input
-                  type="text"
-                  maxLength={1}
-                  value={booking.deceased.middle_initial}
-                  onChange={(e) =>
-                    updateDeceased("middle_initial", e.target.value)
-                  }
-                  placeholder="M"
-                  readOnly={readOnly}
-                  className={inputClass}
-                />
-                <FieldError message={getError("deceased.middle_initial")} />
-              </div>
-
-              <div className="col-span-12">
-                <label className="mb-2 block text-sm font-medium">
-                  Address <span className="text-red-600">*</span>
-                </label>
-
-                <input
-                  type="text"
-                  value={booking.deceased.address}
-                  onChange={(e) => updateDeceased("address", e.target.value)}
-                  placeholder="Street, Barangay, Municipality/City"
-                  readOnly={readOnly}
-                  className={inputClass}
-                />
-                <FieldError message={getError("deceased.address")} />
-              </div>
-
-              <div className="col-span-12 md:col-span-5">
-                <label className="mb-2 block text-sm font-medium">
-                  Birthday <span className="text-red-600">*</span>
-                </label>
-
-                <input
-                  type="date"
-                  value={
-                    booking.deceased.birth_date
-                      ? booking.deceased.birth_date.toISOString().split("T")[0]
-                      : ""
-                  }
-                  onChange={(e) =>
-                    updateDeceased(
-                      "birth_date",
-                      e.target.value ? new Date(e.target.value) : null,
-                    )
-                  }
-                  readOnly={readOnly}
-                  className={inputClass}
-                />
-                <FieldError message={getError("deceased.birth_date")} />
-              </div>
-
-              <div className="col-span-12 md:col-span-7">
-                <label className="mb-2 block text-sm font-medium">
-                  Cause of Death <span className="text-red-600">*</span>
-                </label>
-
-                <input
-                  type="text"
-                  value={booking.deceased.death_cause}
-                  onChange={(e) =>
-                    updateDeceased("death_cause", e.target.value)
-                  }
-                  placeholder="Cause of Death"
-                  readOnly={readOnly}
-                  className={inputClass}
-                />
-                <FieldError message={getError("deceased.death_cause")} />
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
-              Background Information
-            </h3>
-
-            <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-12 md:col-span-5">
-                <label className="mb-2 block text-sm font-medium">
-                  Father's Last Name <span className="text-red-600">*</span>
-                </label>
-
-                <input
-                  type="text"
-                  placeholder="Enter father's last name"
-                  readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.deceased.father.last_name}
-                  onChange={(e) =>
-                    updateDeceasedFather("last_name", e.target.value)
-                  }
-                />
-                <FieldError message={getError("deceased.father.last_name")} />
-              </div>
-
-              <div className="col-span-12 md:col-span-5">
-                <label className="mb-2 block text-sm font-medium">
-                  Father's First Name <span className="text-red-600">*</span>
-                </label>
-
-                <input
-                  type="text"
-                  placeholder="Enter father's first name"
-                  readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.deceased.father.first_name}
-                  onChange={(e) =>
-                    updateDeceasedFather("first_name", e.target.value)
-                  }
-                />
-                <FieldError message={getError("deceased.father.first_name")} />
-              </div>
-
-              <div className="col-span-12 md:col-span-2">
-                <label className="mb-2 block text-sm font-medium">
-                  Father's MI
-                </label>
-
-                <input
-                  type="text"
-                  maxLength={1}
-                  placeholder="M"
-                  readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.deceased.father.middle_initial}
-                  onChange={(e) =>
-                    updateDeceasedFather("middle_initial", e.target.value)
-                  }
-                />
-                <FieldError
-                  message={getError("deceased.father.middle_initial")}
-                />
-              </div>
-
-              <div className="col-span-12 rounded-xl border border-amber-300 bg-amber-50 p-4">
-                <p className="text-sm text-amber-800">
-                  <strong>Reminder:</strong> Please enter the deceased's
-                  mother's maiden name (surname before marriage).
-                </p>
-              </div>
-
-              <div className="col-span-12 md:col-span-5">
-                <label className="mb-2 block text-sm font-medium">
-                  Mother's Last Name <span className="text-red-600">*</span>
-                </label>
-
-                <input
-                  type="text"
-                  placeholder="Enter mother's last name"
-                  readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.deceased.mother.last_name}
-                  onChange={(e) =>
-                    updateDeceasedMother("last_name", e.target.value)
-                  }
-                />
-                <FieldError message={getError("deceased.mother.last_name")} />
-              </div>
-
-              <div className="col-span-12 md:col-span-5">
-                <label className="mb-2 block text-sm font-medium">
-                  Mother's First Name <span className="text-red-600">*</span>
-                </label>
-
-                <input
-                  type="text"
-                  placeholder="Enter mother's first name"
-                  readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.deceased.mother.first_name}
-                  onChange={(e) =>
-                    updateDeceasedMother("first_name", e.target.value)
-                  }
-                />
-                <FieldError message={getError("deceased.mother.first_name")} />
-              </div>
-
-              <div className="col-span-12 md:col-span-2">
-                <label className="mb-2 block text-sm font-medium">
-                  Mother's MI
-                </label>
-
-                <input
-                  type="text"
-                  maxLength={1}
-                  placeholder="M"
-                  readOnly={readOnly}
-                  className={inputClass}
-                  value={booking.deceased.mother.middle_initial}
-                  onChange={(e) =>
-                    updateDeceasedMother("middle_initial", e.target.value)
-                  }
-                />
-                <FieldError
-                  message={getError("deceased.mother.middle_initial")}
-                />
-              </div>
-
-              <div className="col-span-12 rounded-xl border border-gray-200 bg-gray-50 p-4">
-                <label className="flex items-center gap-3 text-sm font-medium">
                   <input
-                    type="checkbox"
-                    checked={booking.deceased.has_spouse}
-                    disabled={readOnly}
-                    onChange={(event) =>
-                      setBooking((previous) => ({
-                        ...previous,
-                        deceased: {
-                          ...previous.deceased,
-                          has_spouse: event.target.checked,
-                          spouse: event.target.checked
-                            ? previous.deceased.spouse
-                            : {
-                                first_name: "",
-                                middle_initial: "",
-                                last_name: "",
-                              },
-                        },
-                      }))
+                    type="text"
+                    value={booking.deceased.last_name}
+                    onChange={(e) =>
+                      updateDeceased("last_name", e.target.value)
                     }
-                    className="h-4 w-4 accent-[#B22222]"
+                    placeholder="Enter last name"
+                    readOnly={readOnly}
+                    className={inputClass}
                   />
-                  Include spouse information
-                </label>
-                <p className="mt-1 pl-7 text-xs text-gray-500">
-                  Leave this unchecked if the deceased had no spouse.
-                </p>
+                  <FieldError message={getError("deceased.last_name")} />
+                </div>
+
+                <div className="col-span-12 md:col-span-5">
+                  <label className="mb-2 block text-sm font-medium">
+                    First Name <span className="text-red-600">*</span>
+                  </label>
+
+                  <input
+                    type="text"
+                    value={booking.deceased.first_name}
+                    onChange={(e) =>
+                      updateDeceased("first_name", e.target.value)
+                    }
+                    placeholder="Enter first name"
+                    readOnly={readOnly}
+                    className={inputClass}
+                  />
+                  <FieldError message={getError("deceased.first_name")} />
+                </div>
+
+                <div className="col-span-12 md:col-span-2">
+                  <label className="mb-2 block text-sm font-medium">MI</label>
+
+                  <input
+                    type="text"
+                    maxLength={1}
+                    value={booking.deceased.middle_initial}
+                    onChange={(e) =>
+                      updateDeceased("middle_initial", e.target.value)
+                    }
+                    placeholder="M"
+                    readOnly={readOnly}
+                    className={inputClass}
+                  />
+                  <FieldError message={getError("deceased.middle_initial")} />
+                </div>
+
+                <div className="col-span-12">
+                  <label className="mb-2 block text-sm font-medium">
+                    Address <span className="text-red-600">*</span>
+                  </label>
+
+                  <input
+                    type="text"
+                    value={booking.deceased.address}
+                    onChange={(e) => updateDeceased("address", e.target.value)}
+                    placeholder="Street, Barangay, Municipality/City"
+                    readOnly={readOnly}
+                    className={inputClass}
+                  />
+                  <FieldError message={getError("deceased.address")} />
+                </div>
+
+                <div className="col-span-12 md:col-span-5">
+                  <label className="mb-2 block text-sm font-medium">
+                    Birthday <span className="text-red-600">*</span>
+                  </label>
+
+                  <input
+                    type="date"
+                    value={
+                      booking.deceased.birth_date
+                        ? booking.deceased.birth_date
+                            .toISOString()
+                            .split("T")[0]
+                        : ""
+                    }
+                    onChange={(e) =>
+                      updateDeceased(
+                        "birth_date",
+                        e.target.value ? new Date(e.target.value) : null,
+                      )
+                    }
+                    readOnly={readOnly}
+                    className={inputClass}
+                  />
+                  <FieldError message={getError("deceased.birth_date")} />
+                </div>
+
+                <div className="col-span-12 md:col-span-7">
+                  <label className="mb-2 block text-sm font-medium">
+                    Cause of Death <span className="text-red-600">*</span>
+                  </label>
+
+                  <input
+                    type="text"
+                    value={booking.deceased.death_cause}
+                    onChange={(e) =>
+                      updateDeceased("death_cause", e.target.value)
+                    }
+                    placeholder="Cause of Death"
+                    readOnly={readOnly}
+                    className={inputClass}
+                  />
+                  <FieldError message={getError("deceased.death_cause")} />
+                </div>
               </div>
+            </section>
 
-              {booking.deceased.has_spouse && (
-                <>
-                  <div className="col-span-12 md:col-span-5">
-                    <label className="mb-2 block text-sm font-medium">
-                      Spouse's Last Name <span className="text-red-600">*</span>
-                    </label>
+            <section>
+              <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
+                Background Information
+              </h3>
 
+              <div className="grid grid-cols-12 gap-4">
+                <div className="col-span-12 md:col-span-5">
+                  <label className="mb-2 block text-sm font-medium">
+                    Father's Last Name <span className="text-red-600">*</span>
+                  </label>
+
+                  <input
+                    type="text"
+                    placeholder="Enter father's last name"
+                    readOnly={readOnly}
+                    className={inputClass}
+                    value={booking.deceased.father.last_name}
+                    onChange={(e) =>
+                      updateDeceasedFather("last_name", e.target.value)
+                    }
+                  />
+                  <FieldError message={getError("deceased.father.last_name")} />
+                </div>
+
+                <div className="col-span-12 md:col-span-5">
+                  <label className="mb-2 block text-sm font-medium">
+                    Father's First Name <span className="text-red-600">*</span>
+                  </label>
+
+                  <input
+                    type="text"
+                    placeholder="Enter father's first name"
+                    readOnly={readOnly}
+                    className={inputClass}
+                    value={booking.deceased.father.first_name}
+                    onChange={(e) =>
+                      updateDeceasedFather("first_name", e.target.value)
+                    }
+                  />
+                  <FieldError
+                    message={getError("deceased.father.first_name")}
+                  />
+                </div>
+
+                <div className="col-span-12 md:col-span-2">
+                  <label className="mb-2 block text-sm font-medium">
+                    Father's MI
+                  </label>
+
+                  <input
+                    type="text"
+                    maxLength={1}
+                    placeholder="M"
+                    readOnly={readOnly}
+                    className={inputClass}
+                    value={booking.deceased.father.middle_initial}
+                    onChange={(e) =>
+                      updateDeceasedFather("middle_initial", e.target.value)
+                    }
+                  />
+                  <FieldError
+                    message={getError("deceased.father.middle_initial")}
+                  />
+                </div>
+
+                <div className="col-span-12 rounded-xl border border-amber-300 bg-amber-50 p-4">
+                  <p className="text-sm text-amber-800">
+                    <strong>Reminder:</strong> Please enter the deceased's
+                    mother's maiden name (surname before marriage).
+                  </p>
+                </div>
+
+                <div className="col-span-12 md:col-span-5">
+                  <label className="mb-2 block text-sm font-medium">
+                    Mother's Last Name <span className="text-red-600">*</span>
+                  </label>
+
+                  <input
+                    type="text"
+                    placeholder="Enter mother's last name"
+                    readOnly={readOnly}
+                    className={inputClass}
+                    value={booking.deceased.mother.last_name}
+                    onChange={(e) =>
+                      updateDeceasedMother("last_name", e.target.value)
+                    }
+                  />
+                  <FieldError message={getError("deceased.mother.last_name")} />
+                </div>
+
+                <div className="col-span-12 md:col-span-5">
+                  <label className="mb-2 block text-sm font-medium">
+                    Mother's First Name <span className="text-red-600">*</span>
+                  </label>
+
+                  <input
+                    type="text"
+                    placeholder="Enter mother's first name"
+                    readOnly={readOnly}
+                    className={inputClass}
+                    value={booking.deceased.mother.first_name}
+                    onChange={(e) =>
+                      updateDeceasedMother("first_name", e.target.value)
+                    }
+                  />
+                  <FieldError
+                    message={getError("deceased.mother.first_name")}
+                  />
+                </div>
+
+                <div className="col-span-12 md:col-span-2">
+                  <label className="mb-2 block text-sm font-medium">
+                    Mother's MI
+                  </label>
+
+                  <input
+                    type="text"
+                    maxLength={1}
+                    placeholder="M"
+                    readOnly={readOnly}
+                    className={inputClass}
+                    value={booking.deceased.mother.middle_initial}
+                    onChange={(e) =>
+                      updateDeceasedMother("middle_initial", e.target.value)
+                    }
+                  />
+                  <FieldError
+                    message={getError("deceased.mother.middle_initial")}
+                  />
+                </div>
+
+                <div className="col-span-12 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                  <label className="flex items-center gap-3 text-sm font-medium">
                     <input
-                      type="text"
-                      placeholder="Enter spouse's last name"
-                      readOnly={readOnly}
-                      className={inputClass}
-                      value={booking.deceased.spouse.last_name}
-                      onChange={(e) =>
-                        updateSpouse("last_name", e.target.value)
+                      type="checkbox"
+                      checked={booking.deceased.has_spouse}
+                      disabled={readOnly}
+                      onChange={(event) =>
+                        setBooking((previous) => ({
+                          ...previous,
+                          deceased: {
+                            ...previous.deceased,
+                            has_spouse: event.target.checked,
+                            spouse: event.target.checked
+                              ? previous.deceased.spouse
+                              : {
+                                  first_name: "",
+                                  middle_initial: "",
+                                  last_name: "",
+                                },
+                          },
+                        }))
                       }
+                      className="h-4 w-4 accent-[#B22222]"
                     />
-                    <FieldError
-                      message={getError("deceased.spouse.last_name")}
-                    />
-                  </div>
+                    Include spouse information
+                  </label>
+                  <p className="mt-1 pl-7 text-xs text-gray-500">
+                    Leave this unchecked if the deceased had no spouse.
+                  </p>
+                </div>
 
-                  <div className="col-span-12 md:col-span-5">
-                    <label className="mb-2 block text-sm font-medium">
-                      Spouse's First Name{" "}
-                      <span className="text-red-600">*</span>
-                    </label>
-
-                    <input
-                      type="text"
-                      placeholder="Enter spouse's first name"
-                      readOnly={readOnly}
-                      className={inputClass}
-                      value={booking.deceased.spouse.first_name}
-                      onChange={(e) =>
-                        updateSpouse("first_name", e.target.value)
-                      }
-                    />
-                    <FieldError
-                      message={getError("deceased.spouse.first_name")}
-                    />
-                  </div>
-
-                  <div className="col-span-12 md:col-span-2">
-                    <label className="mb-2 block text-sm font-medium">
-                      Spouse's MI
-                    </label>
-
-                    <input
-                      type="text"
-                      maxLength={1}
-                      placeholder="M"
-                      readOnly={readOnly}
-                      className={inputClass}
-                      value={booking.deceased.spouse.middle_initial}
-                      onChange={(e) =>
-                        updateSpouse("middle_initial", e.target.value)
-                      }
-                    />
-                    <FieldError
-                      message={getError("deceased.spouse.middle_initial")}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          </section>
-
-          <section>
-            <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
-              Children
-            </h3>
-
-            <div className="space-y-6">
-              {booking.deceased.children.map((child, index) => (
-                <div
-                  key={index}
-                  className="rounded-xl border border-gray-200 p-5"
-                >
-                  <div className="mb-4 flex items-center justify-between">
-                    <h4 className="font-semibold">Child #{index + 1}</h4>
-
-                    {!readOnly && (
-                      <button
-                        type="button"
-                        onClick={() => removeChild(index)}
-                        className="text-sm font-medium text-red-600 hover:underline"
-                      >
-                        Remove
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-12 gap-4">
+                {booking.deceased.has_spouse && (
+                  <>
                     <div className="col-span-12 md:col-span-5">
                       <label className="mb-2 block text-sm font-medium">
-                        Last Name
+                        Spouse's Last Name{" "}
+                        <span className="text-red-600">*</span>
                       </label>
 
                       <input
                         type="text"
-                        value={child.last_name}
-                        onChange={(e) =>
-                          updateChild(index, "last_name", e.target.value)
-                        }
+                        placeholder="Enter spouse's last name"
                         readOnly={readOnly}
                         className={inputClass}
-                        placeholder="Enter child's last name"
+                        value={booking.deceased.spouse.last_name}
+                        onChange={(e) =>
+                          updateSpouse("last_name", e.target.value)
+                        }
                       />
                       <FieldError
-                        message={getError(
-                          "deceased.children." + index + ".last_name",
-                        )}
+                        message={getError("deceased.spouse.last_name")}
                       />
                     </div>
 
                     <div className="col-span-12 md:col-span-5">
                       <label className="mb-2 block text-sm font-medium">
-                        First Name
+                        Spouse's First Name{" "}
+                        <span className="text-red-600">*</span>
                       </label>
 
                       <input
                         type="text"
-                        value={child.first_name}
-                        onChange={(e) =>
-                          updateChild(index, "first_name", e.target.value)
-                        }
+                        placeholder="Enter spouse's first name"
                         readOnly={readOnly}
                         className={inputClass}
-                        placeholder="Enter child's first name"
+                        value={booking.deceased.spouse.first_name}
+                        onChange={(e) =>
+                          updateSpouse("first_name", e.target.value)
+                        }
                       />
                       <FieldError
-                        message={getError(
-                          "deceased.children." + index + ".first_name",
-                        )}
+                        message={getError("deceased.spouse.first_name")}
                       />
                     </div>
 
                     <div className="col-span-12 md:col-span-2">
                       <label className="mb-2 block text-sm font-medium">
-                        MI
+                        Spouse's MI
                       </label>
 
                       <input
                         type="text"
                         maxLength={1}
-                        value={child.middle_initial}
-                        onChange={(e) =>
-                          updateChild(index, "middle_initial", e.target.value)
-                        }
+                        placeholder="M"
                         readOnly={readOnly}
                         className={inputClass}
-                        placeholder="M"
+                        value={booking.deceased.spouse.middle_initial}
+                        onChange={(e) =>
+                          updateSpouse("middle_initial", e.target.value)
+                        }
                       />
                       <FieldError
-                        message={getError(
-                          "deceased.children." + index + ".middle_initial",
-                        )}
+                        message={getError("deceased.spouse.middle_initial")}
                       />
                     </div>
-                  </div>
-                </div>
-              ))}
-
-              {!readOnly && (
-                <button
-                  type="button"
-                  onClick={addChild}
-                  className="rounded-xl bg-[#B22222] px-5 py-3 font-medium text-white transition hover:bg-[#8B1C1C]"
-                >
-                  + Add Child
-                </button>
-              )}
-            </div>
-          </section>
-
-          <section>
-            <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
-              Sacramental Information
-            </h3>
-
-            <div className="grid grid-cols-12 gap-4">
-              <div className="col-span-12 md:col-span-6">
-                <label className="flex items-center gap-3 rounded-xl border p-4">
-                  <input
-                    type="checkbox"
-                    checked={booking.deceased.sacraments.baptized}
-                    onChange={(e) =>
-                      updateSacrament("baptized", e.target.checked)
-                    }
-                    disabled={readOnly}
-                    className="h-5 w-5 accent-[#B22222]"
-                  />
-
-                  <span>Baptized</span>
-                </label>
+                  </>
+                )}
               </div>
+            </section>
 
-              <div className="col-span-12 md:col-span-6">
-                <label className="flex items-center gap-3 rounded-xl border p-4">
-                  <input
-                    type="checkbox"
-                    checked={booking.deceased.sacraments.confirmed}
-                    onChange={(e) =>
-                      updateSacrament("confirmed", e.target.checked)
-                    }
-                    disabled={readOnly}
-                    className="h-5 w-5 accent-[#B22222]"
-                  />
+            <section>
+              <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
+                Children
+              </h3>
 
-                  <span>Confirmed</span>
-                </label>
-              </div>
-              <div className="col-span-12 md:col-span-6">
-                <label className="flex items-center gap-3 rounded-xl border p-4">
-                  <input
-                    type="checkbox"
-                    checked={booking.deceased.sacraments.church_married}
-                    onChange={(e) =>
-                      updateSacrament("church_married", e.target.checked)
-                    }
-                    disabled={readOnly}
-                    className="h-5 w-5 accent-[#B22222]"
-                  />
+              <div className="space-y-6">
+                {booking.deceased.children.map((child, index) => (
+                  <div
+                    key={index}
+                    className="rounded-xl border border-gray-200 p-5"
+                  >
+                    <div className="mb-4 flex items-center justify-between">
+                      <h4 className="font-semibold">Child #{index + 1}</h4>
 
-                  <span>Married in Church</span>
-                </label>
-              </div>
+                      {!readOnly && (
+                        <button
+                          type="button"
+                          onClick={() => removeChild(index)}
+                          className="text-sm font-medium text-red-600 hover:underline"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
 
-              <div className="col-span-12 md:col-span-6">
-                <label className="flex items-center gap-3 rounded-xl border p-4">
-                  <input
-                    type="checkbox"
-                    checked={booking.deceased.sacraments.anointed_of_the_sick}
-                    onChange={(e) =>
-                      updateSacrament("anointed_of_the_sick", e.target.checked)
-                    }
-                    disabled={readOnly}
-                    className="h-5 w-5 accent-[#B22222]"
-                  />
+                    <div className="grid grid-cols-12 gap-4">
+                      <div className="col-span-12 md:col-span-5">
+                        <label className="mb-2 block text-sm font-medium">
+                          Last Name
+                        </label>
 
-                  <span>Anointed of the Sick</span>
-                </label>
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
-              Church Life
-            </h3>
-
-            <div className="space-y-8">
-              {/* Mass Attendance */}
-              <div>
-                <label className="mb-3 block text-sm font-medium">
-                  Mass Attendance <span className="text-red-600">*</span>
-                </label>
-
-                <div className="grid gap-3 md:grid-cols-3">
-                  {[
-                    { value: "regular", label: "Regular" },
-                    { value: "sometimes", label: "Sometimes" },
-                    { value: "never", label: "Never" },
-                  ].map((option) => (
-                    <label
-                      key={option.value}
-                      className={`cursor-pointer rounded-xl border p-4 transition ${
-                        booking.deceased.church_life.attends_mass ===
-                        option.value
-                          ? "border-[#B22222] bg-red-50"
-                          : "border-gray-300 hover:border-[#B22222]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
                         <input
-                          type="radio"
-                          name="attends_mass"
-                          value={option.value}
-                          checked={
-                            booking.deceased.church_life.attends_mass ===
-                            option.value
+                          type="text"
+                          value={child.last_name}
+                          onChange={(e) =>
+                            updateChild(index, "last_name", e.target.value)
                           }
-                          onChange={() =>
-                            updateChurchLife(
-                              "attends_mass",
-                              option.value as Participation,
-                            )
-                          }
-                          disabled={readOnly}
-                          className="h-5 w-5 accent-[#B22222]"
+                          readOnly={readOnly}
+                          className={inputClass}
+                          placeholder="Enter child's last name"
                         />
-
-                        <span>{option.label}</span>
+                        <FieldError
+                          message={getError(
+                            "deceased.children." + index + ".last_name",
+                          )}
+                        />
                       </div>
-                    </label>
-                  ))}
-                </div>
-                <FieldError
-                  message={getError("deceased.church_life.attends_mass")}
-                />
-              </div>
 
-              {/* Confession */}
+                      <div className="col-span-12 md:col-span-5">
+                        <label className="mb-2 block text-sm font-medium">
+                          First Name
+                        </label>
+
+                        <input
+                          type="text"
+                          value={child.first_name}
+                          onChange={(e) =>
+                            updateChild(index, "first_name", e.target.value)
+                          }
+                          readOnly={readOnly}
+                          className={inputClass}
+                          placeholder="Enter child's first name"
+                        />
+                        <FieldError
+                          message={getError(
+                            "deceased.children." + index + ".first_name",
+                          )}
+                        />
+                      </div>
+
+                      <div className="col-span-12 md:col-span-2">
+                        <label className="mb-2 block text-sm font-medium">
+                          MI
+                        </label>
+
+                        <input
+                          type="text"
+                          maxLength={1}
+                          value={child.middle_initial}
+                          onChange={(e) =>
+                            updateChild(index, "middle_initial", e.target.value)
+                          }
+                          readOnly={readOnly}
+                          className={inputClass}
+                          placeholder="M"
+                        />
+                        <FieldError
+                          message={getError(
+                            "deceased.children." + index + ".middle_initial",
+                          )}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={addChild}
+                    className="rounded-xl bg-[#B22222] px-5 py-3 font-medium text-white transition hover:bg-[#8B1C1C]"
+                  >
+                    + Add Child
+                  </button>
+                )}
+              </div>
+            </section>
+
+            <section>
+              <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
+                Sacramental Information
+              </h3>
+
+              <div className="grid grid-cols-12 gap-4">
+                <div className="col-span-12 md:col-span-6">
+                  <label className="flex items-center gap-3 rounded-xl border p-4">
+                    <input
+                      type="checkbox"
+                      checked={booking.deceased.sacraments.baptized}
+                      onChange={(e) =>
+                        updateSacrament("baptized", e.target.checked)
+                      }
+                      disabled={readOnly}
+                      className="h-5 w-5 accent-[#B22222]"
+                    />
+
+                    <span>Baptized</span>
+                  </label>
+                </div>
+
+                <div className="col-span-12 md:col-span-6">
+                  <label className="flex items-center gap-3 rounded-xl border p-4">
+                    <input
+                      type="checkbox"
+                      checked={booking.deceased.sacraments.confirmed}
+                      onChange={(e) =>
+                        updateSacrament("confirmed", e.target.checked)
+                      }
+                      disabled={readOnly}
+                      className="h-5 w-5 accent-[#B22222]"
+                    />
+
+                    <span>Confirmed</span>
+                  </label>
+                </div>
+                <div className="col-span-12 md:col-span-6">
+                  <label className="flex items-center gap-3 rounded-xl border p-4">
+                    <input
+                      type="checkbox"
+                      checked={booking.deceased.sacraments.church_married}
+                      onChange={(e) =>
+                        updateSacrament("church_married", e.target.checked)
+                      }
+                      disabled={readOnly}
+                      className="h-5 w-5 accent-[#B22222]"
+                    />
+
+                    <span>Married in Church</span>
+                  </label>
+                </div>
+
+                <div className="col-span-12 md:col-span-6">
+                  <label className="flex items-center gap-3 rounded-xl border p-4">
+                    <input
+                      type="checkbox"
+                      checked={booking.deceased.sacraments.anointed_of_the_sick}
+                      onChange={(e) =>
+                        updateSacrament(
+                          "anointed_of_the_sick",
+                          e.target.checked,
+                        )
+                      }
+                      disabled={readOnly}
+                      className="h-5 w-5 accent-[#B22222]"
+                    />
+
+                    <span>Anointed of the Sick</span>
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
+                Church Life
+              </h3>
+
+              <div className="space-y-8">
+                {/* Mass Attendance */}
+                <div>
+                  <label className="mb-3 block text-sm font-medium">
+                    Mass Attendance <span className="text-red-600">*</span>
+                  </label>
+
+                  <div className="grid gap-3 md:grid-cols-3">
+                    {[
+                      { value: "regular", label: "Regular" },
+                      { value: "sometimes", label: "Sometimes" },
+                      { value: "never", label: "Never" },
+                    ].map((option) => (
+                      <label
+                        key={option.value}
+                        className={`cursor-pointer rounded-xl border p-4 transition ${
+                          booking.deceased.church_life.attends_mass ===
+                          option.value
+                            ? "border-[#B22222] bg-red-50"
+                            : "border-gray-300 hover:border-[#B22222]"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="attends_mass"
+                            value={option.value}
+                            checked={
+                              booking.deceased.church_life.attends_mass ===
+                              option.value
+                            }
+                            onChange={() =>
+                              updateChurchLife(
+                                "attends_mass",
+                                option.value as Participation,
+                              )
+                            }
+                            disabled={readOnly}
+                            className="h-5 w-5 accent-[#B22222]"
+                          />
+
+                          <span>{option.label}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  <FieldError
+                    message={getError("deceased.church_life.attends_mass")}
+                  />
+                </div>
+
+                {/* Confession */}
+                <div>
+                  <label className="mb-3 block text-sm font-medium">
+                    Frequency of Confession{" "}
+                    <span className="text-red-600">*</span>
+                  </label>
+
+                  <div className="grid gap-3 md:grid-cols-3">
+                    {[
+                      { value: "regular", label: "Regular" },
+                      { value: "sometimes", label: "Sometimes" },
+                      { value: "never", label: "Never" },
+                    ].map((option) => (
+                      <label
+                        key={option.value}
+                        className={`cursor-pointer rounded-xl border p-4 transition ${
+                          booking.deceased.church_life.confesses ===
+                          option.value
+                            ? "border-[#B22222] bg-red-50"
+                            : "border-gray-300 hover:border-[#B22222]"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="confesses"
+                            value={option.value}
+                            checked={
+                              booking.deceased.church_life.confesses ===
+                              option.value
+                            }
+                            onChange={() =>
+                              updateChurchLife(
+                                "confesses",
+                                option.value as Participation,
+                              )
+                            }
+                            disabled={readOnly}
+                            className="h-5 w-5 accent-[#B22222]"
+                          />
+
+                          <span>{option.label}</span>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  <FieldError
+                    message={getError("deceased.church_life.confesses")}
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
+                Characteristics
+              </h3>
+
               <div>
-                <label className="mb-3 block text-sm font-medium">
-                  Frequency of Confession{" "}
+                <label className="mb-2 block text-sm font-medium">
+                  Characteristics of the Deceased{" "}
                   <span className="text-red-600">*</span>
                 </label>
 
-                <div className="grid gap-3 md:grid-cols-3">
-                  {[
-                    { value: "regular", label: "Regular" },
-                    { value: "sometimes", label: "Sometimes" },
-                    { value: "never", label: "Never" },
-                  ].map((option) => (
-                    <label
-                      key={option.value}
-                      className={`cursor-pointer rounded-xl border p-4 transition ${
-                        booking.deceased.church_life.confesses === option.value
-                          ? "border-[#B22222] bg-red-50"
-                          : "border-gray-300 hover:border-[#B22222]"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="radio"
-                          name="confesses"
-                          value={option.value}
-                          checked={
-                            booking.deceased.church_life.confesses ===
-                            option.value
-                          }
-                          onChange={() =>
-                            updateChurchLife(
-                              "confesses",
-                              option.value as Participation,
-                            )
-                          }
-                          disabled={readOnly}
-                          className="h-5 w-5 accent-[#B22222]"
-                        />
-
-                        <span>{option.label}</span>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-                <FieldError
-                  message={getError("deceased.church_life.confesses")}
+                <textarea
+                  rows={6}
+                  placeholder="Describe the personality, interests, hobbies, organizations, achievements, memorable qualities, and other information about the deceased..."
+                  value={booking.deceased.characteristics}
+                  onChange={(e) => updateCharacteristics(e.target.value)}
+                  readOnly={readOnly}
+                  className={`${inputClass} resize-none`}
                 />
+                <FieldError message={getError("deceased.characteristics")} />
+
+                <p className="mt-2 text-xs text-gray-500">
+                  This information may help the parish prepare the funeral
+                  service or memorial tribute.
+                </p>
               </div>
-            </div>
-          </section>
+            </section>
+          </form>
+        </BookingCard>
+      )}
 
-          <section>
-            <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
-              Characteristics
-            </h3>
-
-            <div>
-              <label className="mb-2 block text-sm font-medium">
-                Characteristics of the Deceased{" "}
-                <span className="text-red-600">*</span>
-              </label>
-
-              <textarea
-                rows={6}
-                placeholder="Describe the personality, interests, hobbies, organizations, achievements, memorable qualities, and other information about the deceased..."
-                value={booking.deceased.characteristics}
-                onChange={(e) => updateCharacteristics(e.target.value)}
-                readOnly={readOnly}
-                className={`${inputClass} resize-none`}
-              />
-              <FieldError message={getError("deceased.characteristics")} />
-
-              <p className="mt-2 text-xs text-gray-500">
-                This information may help the parish prepare the funeral service
-                or memorial tribute.
+      {view !== "documents" && (
+        <BookingCard title="Informant Details">
+          <section className="[&_div:has(>.field-error)>input]:border-red-400 [&_div:has(>.field-error)>input]:focus:border-red-500">
+            <div className="rounded-2xl border border-red-100 bg-red-50/60 p-4 sm:p-5">
+              <h3 className="font-semibold text-[#B22222]">
+                Your parishioner profile will be used
+              </h3>
+              <p className="mt-1 text-sm leading-5 text-gray-600">
+                The informant name, contact number, and submission date are
+                recorded automatically to keep the booking information
+                consistent.
               </p>
+
+              <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+                <div className="rounded-xl bg-white px-4 py-3">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                    Informant
+                  </dt>
+                  <dd className="mt-1 font-semibold text-gray-800">
+                    {user?.full_name ?? "Signed-in parishioner"}
+                  </dd>
+                </div>
+                <div className="rounded-xl bg-white px-4 py-3">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                    Contact number
+                  </dt>
+                  <dd className="mt-1 font-semibold text-gray-800">
+                    {user?.phone ?? "From your profile"}
+                  </dd>
+                </div>
+              </dl>
             </div>
-          </section>
-        </form>
-      </BookingCard>
 
-      <BookingCard title="Informant's Detail">
-        <section className="[&_div:has(>.field-error)>input]:border-red-400 [&_div:has(>.field-error)>input]:focus:border-red-500">
-          <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
-            Informant
-          </h3>
+            <div className="mt-5 grid grid-cols-12 gap-4">
+              <div className="col-span-12 md:col-span-7">
+                <label className="mb-2 block text-sm font-medium">
+                  Relationship to the Deceased
+                  <span className="text-red-600"> *</span>
+                </label>
 
-          <div className="grid grid-cols-12 gap-4">
-            <div className="col-span-12 md:col-span-5">
-              <label className="mb-2 block text-sm font-medium">
-                Last Name <span className="text-red-600">*</span>
-              </label>
-
-              <input
-                type="text"
-                value={booking.deceased.informant.last_name}
-                onChange={(e) => updateInformant("last_name", e.target.value)}
-                readOnly={readOnly}
-                className={inputClass}
-                placeholder="Enter last name"
-              />
-              <FieldError message={getError("deceased.informant.last_name")} />
-            </div>
-            <div className="col-span-12 md:col-span-5">
-              <label className="mb-2 block text-sm font-medium">
-                First Name <span className="text-red-600">*</span>
-              </label>
-
-              <input
-                type="text"
-                value={booking.deceased.informant.first_name}
-                onChange={(e) => updateInformant("first_name", e.target.value)}
-                readOnly={readOnly}
-                className={inputClass}
-                placeholder="Enter first name"
-              />
-              <FieldError message={getError("deceased.informant.first_name")} />
-            </div>
-            <div className="col-span-12 md:col-span-2">
-              <label className="mb-2 block text-sm font-medium">MI</label>
-
-              <input
-                type="text"
-                maxLength={1}
-                value={booking.deceased.informant.middle_initial}
-                onChange={(e) =>
-                  updateInformant("middle_initial", e.target.value)
-                }
-                readOnly={readOnly}
-                className={inputClass}
-                placeholder="M"
-              />
-              <FieldError
-                message={getError("deceased.informant.middle_initial")}
-              />
-            </div>
-            <div className="col-span-12 md:col-span-6">
-              <label className="mb-2 block text-sm font-medium">
-                Relationship to the Deceased
-                <span className="text-red-600"> *</span>
-              </label>
-
-              <input
-                type="text"
-                value={booking.deceased.informant.relationship}
-                onChange={(e) =>
-                  updateInformant("relationship", e.target.value)
-                }
-                readOnly={readOnly}
-                className={inputClass}
-                placeholder="e.g. Son, Daughter, Spouse, Brother"
-              />
-              <FieldError
-                message={getError("deceased.informant.relationship")}
-              />
-            </div>
-            <div className="col-span-12 md:col-span-6">
-              <label className="mb-2 block text-sm font-medium">
-                Contact Number
-                <span className="text-red-600"> *</span>
-              </label>
-
-              <input
-                type="tel"
-                value={booking.deceased.informant.contact_number}
-                onChange={(e) =>
-                  updateInformant("contact_number", e.target.value)
-                }
-                readOnly={readOnly}
-                className={inputClass}
-                placeholder="09XX XXX XXXX"
-              />
-              <FieldError
-                message={getError("deceased.informant.contact_number")}
-              />
-            </div>
-            <div className="col-span-12 md:col-span-6">
-              <label className="mb-2 block text-sm font-medium">
-                Date Information Provided
-                <span className="text-red-600"> *</span>
-              </label>
-
-              <input
-                type="date"
-                value={
-                  booking.deceased.informant.date_provided
-                    ?.toISOString()
-                    .split("T")[0] ?? ""
-                }
-                onChange={(e) =>
-                  updateInformant(
-                    "date_provided",
-                    e.target.value ? new Date(e.target.value) : null,
-                  )
-                }
-                readOnly={readOnly}
-                className={inputClass}
-              />
-              <FieldError
-                message={getError("deceased.informant.date_provided")}
-              />
-            </div>
-          </div>
-        </section>
-      </BookingCard>
-
-      <BookingCard title="Requirements">
-        <form className="space-y-8 [&_div:has(>.field-error)>input]:border-red-400 [&_div:has(>.field-error)>input]:focus:border-red-500">
-          <section>
-            <h3 className="mb-2 border-b pb-2 text-lg font-semibold text-[#B22222]">
-              Attach Soft Copy of Requirements
-            </h3>
-
-            <p className="mb-6 text-sm text-gray-500">
-              Upload the files you currently have. Missing requirements may be
-              submitted later from My Profile while the booking remains pending.
-            </p>
-
-            <div className="grid grid-cols-12 gap-5">
-              <div className="col-span-12 md:col-span-6">
-                <FileUploadField
-                  label="Death Certificate"
-                  file={getDocument("death_certificate")}
-                  onChange={(file) => updateDocument("death_certificate", file)}
+                <input
+                  type="text"
+                  value={booking.deceased.informant.relationship}
+                  onChange={(e) =>
+                    updateInformant("relationship", e.target.value)
+                  }
                   readOnly={readOnly}
+                  className={inputClass}
+                  placeholder="e.g. Son, Daughter, Spouse, Brother"
                 />
-                <FieldError message={getError("documents.death_certificate")} />
+                <FieldError
+                  message={getError("deceased.informant.relationship")}
+                />
               </div>
-
-              <div className="col-span-12 md:col-span-6">
-                <FileUploadField
-                  label="Biography of the Deceased"
-                  file={getDocument("biography")}
-                  onChange={(file) => updateDocument("biography", file)}
-                  readOnly={readOnly}
-                />
-                <FieldError message={getError("documents.biography")} />
+              <div className="col-span-12 flex items-end md:col-span-5">
+                <p className="rounded-xl bg-gray-50 px-4 py-3 text-sm leading-5 text-gray-500">
+                  The information date will be set automatically when this
+                  booking is submitted.
+                </p>
               </div>
             </div>
           </section>
-        </form>
-      </BookingCard>
+        </BookingCard>
+      )}
+
+      {view !== "information" && (
+        <BookingCard title="Requirements">
+          <form className="space-y-8 [&_div:has(>.field-error)>input]:border-red-400 [&_div:has(>.field-error)>input]:focus:border-red-500">
+            <section>
+              <h3 className="mb-2 border-b pb-2 text-lg font-semibold text-[#B22222]">
+                Attach Soft Copy of Requirements
+              </h3>
+
+              <p className="mb-6 text-sm text-gray-500">
+                Upload the files you currently have. Missing requirements may be
+                submitted later from My Profile while the booking remains
+                pending.
+              </p>
+
+              <div className="grid grid-cols-12 gap-5">
+                <div className="col-span-12 md:col-span-6">
+                  <FileUploadField
+                    label="Death Certificate"
+                    file={getDocument("death_certificate")}
+                    onChange={(file) =>
+                      updateDocument("death_certificate", file)
+                    }
+                    readOnly={readOnly}
+                  />
+                  <FieldError
+                    message={getError("documents.death_certificate")}
+                  />
+                </div>
+
+                <div className="col-span-12 md:col-span-6">
+                  <FileUploadField
+                    label="Biography of the Deceased"
+                    file={getDocument("biography")}
+                    onChange={(file) => updateDocument("biography", file)}
+                    readOnly={readOnly}
+                  />
+                  <FieldError message={getError("documents.biography")} />
+                </div>
+              </div>
+            </section>
+          </form>
+        </BookingCard>
+      )}
     </>
   );
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Money;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -35,13 +36,13 @@ class Booking extends Model
         'pricing_snapshot' => 'array',
     ];
 
-    public function getTotalAmountAttribute(): float
+    public function getTotalAmountAttribute(): string
     {
         if (($this->attributes['total_amount'] ?? null) !== null) {
-            return (float) $this->attributes['total_amount'];
+            return Money::decimal($this->attributes['total_amount']);
         }
 
-        return (float) (($this->package?->base_price ?? 0)
+        return Money::decimal(($this->package?->base_price ?? 0)
             + ($this->package?->inclusions->sum('price') ?? 0)
             + $this->selectedAddons->sum('price'));
     }
@@ -82,14 +83,19 @@ class Booking extends Model
         return $this->hasMany(BookingDocument::class);
     }
 
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function weddingApplicants(): HasMany
     {
         return $this->hasMany(WeddingApplicant::class);
     }
 
-    public function weddingSponsorPairs(): HasMany
+    public function weddingSponsors(): HasMany
     {
-        return $this->hasMany(WeddingSponsorPair::class);
+        return $this->hasMany(WeddingSponsor::class)->orderBy('sort_order');
     }
 
     public function funeralDeceased(): HasOne

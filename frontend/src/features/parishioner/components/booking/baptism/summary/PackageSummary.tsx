@@ -2,6 +2,7 @@ import { CheckCircle2 } from "lucide-react";
 
 import { BookingCard } from "../..";
 import type { ServicePackage } from "../../../../../../services/servicePackageService";
+import { formatPhpCurrency } from "@/utils/currency";
 
 interface Props {
   selectedPackage: ServicePackage | null;
@@ -49,7 +50,7 @@ export default function PackageSummary({
           </div>
 
           <span className="text-2xl font-bold text-[#B22222]">
-            ₱{total.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+            {formatPhpCurrency(total)}
           </span>
         </div>
         {additionalSponsorCount > 0 && (
@@ -57,7 +58,7 @@ export default function PackageSummary({
             Additional sponsors: {additionalSponsorCount} ×{" "}
             {additionalSponsorPrice === null
               ? "rate unavailable"
-              : `₱${additionalSponsorPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
+              : formatPhpCurrency(additionalSponsorPrice)}
           </div>
         )}
       </div>

@@ -135,6 +135,7 @@ export default function Settings() {
       {verifyingPhone && !user.phone_verified && (
         <PhoneVerificationModal
           phone={user.phone}
+          username={user.username}
           onClose={closeVerification}
           onVerified={reload}
         />

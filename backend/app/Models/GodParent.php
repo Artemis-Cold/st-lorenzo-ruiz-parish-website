@@ -9,17 +9,20 @@ class GodParent extends Model
 {
     protected $fillable = [
         'baptizand_id',
-        'god_parent_pair_id',
+        'sort_order',
         'role',
         'first_name',
         'middle_initial',
         'last_name',
         'suffix',
         'residence',
+        'requirement_type',
+        'requirement_file_name',
+        'requirement_file_path',
     ];
 
-    public function pair(): BelongsTo
+    public function baptizand(): BelongsTo
     {
-        return $this->belongsTo(GodParentPair::class, 'god_parent_pair_id');
+        return $this->belongsTo(Baptizand::class);
     }
 }

@@ -15,6 +15,7 @@ import {
 } from "../../../../../../services/servicePackageService";
 
 import type { BaptismBooking } from "../../../../types/baptism";
+import { formatPhpCurrency } from "@/utils/currency";
 
 interface PackagesStepProps {
   booking: BaptismBooking;
@@ -177,7 +178,7 @@ export default function PackagesStep({
                 </div>
 
                 <span className="text-2xl font-semibold text-[#B22222]">
-                  ₱{Number(pkg.base_price).toLocaleString()}
+                  {formatPhpCurrency(pkg.base_price)}
                 </span>
               </label>
             ))}
@@ -190,7 +191,7 @@ export default function PackagesStep({
           </h4>
 
           <p className="text-center italic text-[#B22222]">
-            The package rate includes <b>one pair</b> of sponsors (2 persons).
+            The package rate includes the <b>first two sponsors</b>.
           </p>
 
           <p className="text-center italic text-[#B22222]">
@@ -198,7 +199,7 @@ export default function PackagesStep({
             <b>
               {additionalSponsorPrice === null
                 ? " at the current parish rate."
-                : ` ₱${additionalSponsorPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })} per person.`}
+                : ` ${formatPhpCurrency(additionalSponsorPrice)} per person.`}
             </b>
           </p>
 

@@ -34,6 +34,46 @@ interface ItemResponse<T> {
   data: T;
 }
 
+const normalizeBookingMoney = (booking: Booking): Booking => ({
+  ...booking,
+  amount: Number(booking.amount),
+  details: {
+    ...booking.details,
+    baseAmount: Number(booking.details.baseAmount),
+    inclusions: booking.details.inclusions.map((item) => ({
+      ...item,
+      price: Number(item.price),
+    })),
+    addons: booking.details.addons.map((item) => ({
+      ...item,
+      price: Number(item.price),
+    })),
+    fees: booking.details.fees.map((item) => ({
+      ...item,
+      price: Number(item.price),
+      subtotal: Number(item.subtotal),
+    })),
+  },
+});
+
+const normalizeMassIntentionMoney = (
+  intention: MassIntention,
+): MassIntention => ({
+  ...intention,
+  amount: Number(intention.amount),
+});
+
+const normalizeDocumentRequestMoney = (
+  request: ServiceRequest,
+): ServiceRequest => ({
+  ...request,
+  amount: Number(request.amount),
+  documents: request.documents.map((document) => ({
+    ...document,
+    price: Number(document.price),
+  })),
+});
+
 export async function getStaffBookings(
   filters: StaffBookingFilters = {},
   signal?: AbortSignal,
@@ -49,7 +89,10 @@ export async function getStaffBookings(
     },
     signal,
   });
-  return response.data;
+  return {
+    ...response.data,
+    data: response.data.data.map(normalizeBookingMoney),
+  };
 }
 
 export async function getAllStaffBookings(
@@ -80,7 +123,7 @@ export async function updateStaffBookingStatus(
     `/staff/bookings/${id}/status`,
     { status },
   );
-  return response.data.data;
+  return normalizeBookingMoney(response.data.data);
 }
 
 export async function sendBookingRequirementsReminder(
@@ -101,7 +144,10 @@ export async function requestBookingRequirementResubmission(
     `/staff/bookings/${id}/requirements/resubmit`,
     { document_key: documentKey, reason },
   );
-  return response.data;
+  return {
+    ...response.data,
+    data: normalizeBookingMoney(response.data.data),
+  };
 }
 
 export async function sendBookingPaymentReminder(id: number): Promise<string> {
@@ -145,7 +191,10 @@ export async function getStaffMassIntentions(
       signal,
     },
   );
-  return response.data;
+  return {
+    ...response.data,
+    data: response.data.data.map(normalizeMassIntentionMoney),
+  };
 }
 
 export async function getAllStaffMassIntentions(
@@ -198,7 +247,10 @@ export async function getStaffDocumentRequests(
       signal,
     },
   );
-  return response.data;
+  return {
+    ...response.data,
+    data: response.data.data.map(normalizeDocumentRequestMoney),
+  };
 }
 
 export async function getAllStaffDocumentRequests(
@@ -229,7 +281,7 @@ export async function updateDocumentRequestStatus(
     `/staff/document-requests/${id}/status`,
     { status },
   );
-  return response.data.data;
+  return normalizeDocumentRequestMoney(response.data.data);
 }
 
 export async function scheduleBookingAppointment(

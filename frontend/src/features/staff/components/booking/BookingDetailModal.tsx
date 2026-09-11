@@ -36,6 +36,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/alert-dialog";
+import { formatPhpCurrency } from "@/utils/currency";
 
 interface Props {
   booking: Booking | null;
@@ -282,27 +283,27 @@ export default function BookingDetailModal({
             <Detail label="Package" value={details.packageName} />
             <Detail
               label="Base amount"
-              value={`₱${details.baseAmount.toLocaleString()}.00`}
+              value={formatPhpCurrency(details.baseAmount)}
             />
             {details.inclusions.map((inclusion) => (
               <Detail
                 key={inclusion.name}
                 label={inclusion.name}
-                value={`₱${inclusion.price.toLocaleString()}.00`}
+                value={formatPhpCurrency(inclusion.price)}
               />
             ))}
             {details.addons.map((addon) => (
               <Detail
                 key={addon.name}
                 label={addon.name}
-                value={`₱${addon.price.toLocaleString()}.00`}
+                value={formatPhpCurrency(addon.price)}
               />
             ))}
             {details.fees.map((fee) => (
               <Detail
                 key={fee.name}
                 label={`${fee.name}${fee.quantity > 1 ? ` × ${fee.quantity}` : ""}`}
-                value={`₱${fee.subtotal.toLocaleString()}.00`}
+                value={formatPhpCurrency(fee.subtotal)}
               />
             ))}
             <div className="border-t border-[#E7E2DA] pt-3">
@@ -310,7 +311,7 @@ export default function BookingDetailModal({
                 label="Total"
                 value={
                   <span className="text-[#B22222]">
-                    ₱{booking.amount.toLocaleString()}.00
+                    {formatPhpCurrency(booking.amount)}
                   </span>
                 }
               />
@@ -320,9 +321,25 @@ export default function BookingDetailModal({
               value={formatLabel(details.payment.status)}
             />
             <Detail
-              label="GCash reference"
-              value={details.payment.referenceNumber}
+              label="Payment method"
+              value={
+                details.payment.method
+                  ? formatLabel(details.payment.method)
+                  : null
+              }
             />
+            {details.payment.method === "gcash" && (
+              <Detail
+                label="GCash reference"
+                value={details.payment.referenceNumber}
+              />
+            )}
+            {details.payment.officialReceiptNumber && (
+              <Detail
+                label="Official receipt"
+                value={details.payment.officialReceiptNumber}
+              />
+            )}
             {details.payment.receipt && (
               <Detail
                 label="Receipt"
@@ -338,15 +355,22 @@ export default function BookingDetailModal({
                 }
               />
             )}
-            {details.payment.status === "pending" && (
+            {details.payment.status === "pending_verification" && (
               <p className="rounded-xl bg-amber-50 p-3 text-xs leading-5 text-amber-800">
                 The submitted payment is awaiting verification in Transactions.
+              </p>
+            )}
+            {details.payment.status === "awaiting_payment" && (
+              <p className="rounded-xl bg-blue-50 p-3 text-xs leading-5 text-blue-800">
+                The parishioner selected cash and must pay at the parish office.
+                Confirm it through Transactions after issuing an official
+                receipt.
               </p>
             )}
             {details.payment.status === "rejected" && (
               <p className="rounded-xl bg-red-50 p-3 text-xs leading-5 text-red-700">
                 The payment was rejected. The parishioner may submit a corrected
-                reference and receipt.
+                GCash details or switch to cash payment.
               </p>
             )}
             {details.payment.canRemind && (
@@ -389,27 +413,26 @@ export default function BookingDetailModal({
           </section>
         ))}
 
-        {service.sponsorPairs?.map((pair, index) => (
-          <section
-            key={index}
-            className="mt-4 space-y-3 rounded-2xl border border-[#E7E2DA] p-5"
-          >
-            <h3 className="font-semibold text-[#292524]">
-              Principal sponsor pair {index + 1}
-            </h3>
-            {pair.sponsors.map((sponsor) => (
+        {!!service.sponsors?.length && (
+          <section className="mt-4 space-y-3 rounded-2xl border border-[#E7E2DA] p-5">
+            <h3 className="font-semibold text-[#292524]">Principal sponsors</h3>
+            {service.sponsors.map((sponsor, sponsorIndex) => (
               <Detail
-                key={sponsor.role}
-                label={
+                key={`${sponsor.role}-${sponsor.name}-${sponsorIndex}`}
+                label={`Sponsor ${sponsorIndex + 1} — ${
                   sponsor.role === "godfather"
                     ? "Godfather (Ninong)"
                     : "Godmother (Ninang)"
-                }
-                value={`${sponsor.name} — ${sponsor.residence}`}
+                }`}
+                value={`${sponsor.name} — ${sponsor.residence}${
+                  sponsor.requirementType
+                    ? ` — ${formatLabel(sponsor.requirementType)}`
+                    : ""
+                }`}
               />
             ))}
           </section>
-        ))}
+        )}
 
         {booking.type === "Marriage" && (
           <section className="mt-4 rounded-2xl border border-[#D4AF37]/35 bg-[#FFFDF7] p-5">
@@ -734,7 +757,11 @@ export default function BookingDetailModal({
               <Detail
                 key={`${person.role}-${index}`}
                 label={person.role}
-                value={`${person.name} — ${person.residence}`}
+                value={`${person.name} — ${person.residence}${
+                  person.requirementType
+                    ? ` — ${formatLabel(person.requirementType)}`
+                    : ""
+                }`}
               />
             ))}
           </section>

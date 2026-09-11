@@ -31,6 +31,7 @@ import {
   drawParishPdfLetterhead,
   loadParishPdfLogo,
 } from "../utils/pdfLetterhead";
+import { formatMoneyAmount, formatPhpCurrency } from "@/utils/currency";
 
 const intentionTypes: IntentionType[] = [
   "Anniversary",
@@ -64,19 +65,6 @@ const emptyMeta: StaffMassIntentionPage["meta"] = {
   from: null,
   to: null,
 };
-
-const money = (amount: number) =>
-  amount.toLocaleString("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    minimumFractionDigits: 2,
-  });
-
-const pdfMoney = (amount: number) =>
-  amount.toLocaleString("en-PH", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 
 const chunk = <T,>(items: T[], size: number): T[][] => {
   if (items.length === 0) return [[]];
@@ -140,7 +128,7 @@ function drawIntentionSection(
         doc.splitTextToSize(record.names, amountStart - left - 16)[0] ??
         record.names;
       doc.text(name, left + 10, baseline - 0.5);
-      doc.text(pdfMoney(record.amount), right - 1, baseline - 0.5, {
+      doc.text(formatMoneyAmount(record.amount), right - 1, baseline - 0.5, {
         align: "right",
       });
     }
@@ -254,7 +242,7 @@ function exportParishMassForm(
         doc.text("RECEIVED BY: ______________________________", 16, 274);
         doc.setFont("helvetica", "bold");
         doc.text(
-          `TOTAL: PHP ${pdfMoney(dateRecords.reduce((total, record) => total + record.amount, 0))}`,
+          `TOTAL: PHP ${formatMoneyAmount(dateRecords.reduce((total, record) => total + Number(record.amount), 0))}`,
           194,
           274,
           { align: "right" },
@@ -659,7 +647,7 @@ export default function MassIntentions() {
                         {item.contactNumber}
                       </td>
                       <td className="whitespace-nowrap px-5 py-4 text-right font-semibold tabular-nums text-[#292524]">
-                        {money(item.amount)}
+                        {formatPhpCurrency(item.amount)}
                       </td>
                       <td className="px-5 py-4">
                         <StatusBadge status={item.status} />

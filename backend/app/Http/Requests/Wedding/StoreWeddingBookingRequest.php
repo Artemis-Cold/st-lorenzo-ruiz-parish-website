@@ -28,20 +28,18 @@ class StoreWeddingBookingRequest extends FormRequest
                 'distinct',
                 'in:marriage_license,cenomar,baptismal_certificate,confirmation_certificate,couple_photo_1,couple_photo_2,couple_photo_3',
             ],
-            'sponsors' => ['required', 'array', 'min:1'],
-            'sponsors.*.god_father.first_name' => ['required', 'string', 'max:100'],
-            'sponsors.*.god_father.middle_initial' => ['nullable', 'string', 'max:1'],
-            'sponsors.*.god_father.last_name' => ['required', 'string', 'max:100'],
-            'sponsors.*.god_father.residence' => ['required', 'string'],
-            'sponsors.*.god_mother.first_name' => ['required', 'string', 'max:100'],
-            'sponsors.*.god_mother.middle_initial' => ['nullable', 'string', 'max:1'],
-            'sponsors.*.god_mother.last_name' => ['required', 'string', 'max:100'],
-            'sponsors.*.god_mother.residence' => ['required', 'string'],
-            'sponsors.*.requirements.marriage_contract' => [
-                'nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120',
+            'sponsors' => ['required', 'array', 'min:2', 'max:40'],
+            'sponsors.*.role' => ['required', 'in:godfather,godmother'],
+            'sponsors.*.first_name' => ['required', 'string', 'max:100'],
+            'sponsors.*.middle_initial' => ['nullable', 'string', 'max:1'],
+            'sponsors.*.last_name' => ['required', 'string', 'max:100'],
+            'sponsors.*.residence' => ['required', 'string'],
+            'sponsors.*.requirement_type' => [
+                'required',
+                'in:marriage_contract,confirmation_certificate',
             ],
-            'sponsors.*.requirements.confirmation_certificate' => [
-                'nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120',
+            'sponsors.*.requirement_file' => [
+                'nullable', 'file', 'mimes:pdf', 'max:5120',
             ],
         ];
 

@@ -15,7 +15,7 @@ class FuneralBookingController extends Controller
     {
         return response()->json([
             'message' => 'Funeral booking submitted successfully.',
-            'data' => $this->service->store($request->validated()),
+            'data' => $this->service->store($request->validated(), $request->user()),
         ], 201);
     }
 }

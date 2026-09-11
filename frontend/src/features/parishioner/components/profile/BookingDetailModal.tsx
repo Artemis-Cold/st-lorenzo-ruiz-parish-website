@@ -27,6 +27,10 @@ import {
   type ParishionerBookingDetail,
   type RescheduledBooking,
 } from "@/services/parishionerBookingService";
+import { formatPhpCurrency } from "@/utils/currency";
+import PaymentMethodChoice, {
+  type PaymentMethod,
+} from "../booking/PaymentMethodChoice";
 import RescheduleBookingModal from "./RescheduleBookingModal";
 
 const label = (value: string) =>
@@ -73,6 +77,7 @@ export default function BookingDetailModal({
     {},
   );
   const [paymentReference, setPaymentReference] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("gcash");
   const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
   const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>(
     {},
@@ -87,6 +92,7 @@ export default function BookingDetailModal({
       .then((booking) => {
         setResult({ bookingId, booking, error: "" });
         setPaymentReference(booking.payment.referenceNumber ?? "");
+        setPaymentMethod(booking.payment.method ?? "gcash");
         setPaymentReceipt(null);
         setPaymentErrors({});
       })
@@ -122,6 +128,7 @@ export default function BookingDetailModal({
     setUploadErrors({});
     setSelectedTypes({});
     setPaymentReference("");
+    setPaymentMethod("gcash");
     setPaymentReceipt(null);
     setPaymentErrors({});
     onClose();
@@ -152,12 +159,14 @@ export default function BookingDetailModal({
 
   const submitPayment = async () => {
     const errors: Record<string, string> = {};
-    if (!isValidGcashReference(paymentReference))
-      errors.reference_number = GCASH_REFERENCE_ERROR;
-    if (!paymentReceipt)
-      errors.receipt = "Choose the GCash receipt before submitting.";
+    if (paymentMethod === "gcash") {
+      if (!isValidGcashReference(paymentReference))
+        errors.reference_number = GCASH_REFERENCE_ERROR;
+      if (!paymentReceipt)
+        errors.receipt = "Choose the GCash receipt before submitting.";
+    }
     setPaymentErrors(errors);
-    if (Object.keys(errors).length > 0 || !paymentReceipt) {
+    if (Object.keys(errors).length > 0) {
       toast.error("Please complete the payment information before submitting.");
       return;
     }
@@ -166,12 +175,14 @@ export default function BookingDetailModal({
     try {
       const response = await submitParishionerBookingPayment(
         bookingId,
+        paymentMethod,
         paymentReference.trim(),
         paymentReceipt,
       );
       const refreshed = await getParishionerBooking(bookingId);
       setResult({ bookingId, booking: refreshed, error: "" });
       setPaymentReference(refreshed.payment.referenceNumber ?? "");
+      setPaymentMethod(refreshed.payment.method ?? "gcash");
       setPaymentReceipt(null);
       setPaymentErrors({});
       toast.success(response.message);
@@ -191,6 +202,7 @@ export default function BookingDetailModal({
         setPaymentErrors({
           reference_number: serverErrors?.reference_number?.[0] ?? "",
           receipt: serverErrors?.receipt?.[0] ?? "",
+          payment_method: serverErrors?.payment_method?.[0] ?? "",
         });
       } else {
         setPaymentErrors({ receipt: message });
@@ -402,10 +414,8 @@ export default function BookingDetailModal({
                     {booking.package.name}
                   </p>
                   <p>
-                    <span className="text-gray-500">Total:</span> ₱
-                    {booking.package.totalAmount.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                    })}
+                    <span className="text-gray-500">Total:</span>{" "}
+                    {formatPhpCurrency(booking.package.totalAmount)}
                   </p>
                 </div>
                 {booking.package.inclusions.length > 0 && (
@@ -443,16 +453,11 @@ export default function BookingDetailModal({
                     <CreditCard size={21} />
                   </div>
                   <div className="min-w-0">
-                    <h3 className="font-semibold text-[#292524]">
-                      GCash payment
-                    </h3>
+                    <h3 className="font-semibold text-[#292524]">Payment</h3>
                     <p className="mt-1 text-sm leading-5 text-gray-500">
                       Amount due:{" "}
                       <span className="font-semibold text-[#B22222]">
-                        ₱
-                        {booking.payment.amount.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                        })}
+                        {formatPhpCurrency(booking.payment.amount)}
                       </span>
                     </p>
                   </div>
@@ -462,7 +467,15 @@ export default function BookingDetailModal({
                   <p className="font-semibold text-[#292524]">
                     St. Lorenzo Ruiz Parish
                   </p>
-                  <p className="mt-1 text-gray-500">GCash: 09945697318</p>
+                  <p className="mt-1 text-gray-500">
+                    Method:{" "}
+                    {booking.payment.method
+                      ? label(booking.payment.method)
+                      : "Not selected"}
+                  </p>
+                  {booking.payment.method === "gcash" && (
+                    <p className="mt-1 text-gray-500">GCash: 09945697318</p>
+                  )}
                   <p className="mt-2 text-xs font-medium text-gray-500">
                     Payment status:{" "}
                     <span className="text-[#B22222]">
@@ -472,6 +485,11 @@ export default function BookingDetailModal({
                   {booking.payment.referenceNumber && (
                     <p className="mt-1 break-all text-xs text-gray-500">
                       Reference: {booking.payment.referenceNumber}
+                    </p>
+                  )}
+                  {booking.payment.officialReceiptNumber && (
+                    <p className="mt-1 break-all text-xs text-gray-500">
+                      Official receipt: {booking.payment.officialReceiptNumber}
                     </p>
                   )}
                   {booking.payment.receipt && (
@@ -486,12 +504,19 @@ export default function BookingDetailModal({
                   )}
                 </div>
 
-                {booking.payment.status === "pending" && (
+                {booking.payment.status === "pending_verification" && (
                   <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-800">
                     Your payment is awaiting parish staff verification. The
                     {booking.serviceCode === "document-request"
                       ? " document request will move to Preparing after confirmation."
                       : " booking will be marked as paid after confirmation."}
+                  </p>
+                )}
+                {booking.payment.status === "awaiting_payment" && (
+                  <p className="mt-3 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm leading-5 text-amber-800">
+                    Please pay {formatPhpCurrency(booking.payment.amount)} at
+                    the parish office. Your booking remains pending until staff
+                    records the cash received.
                   </p>
                 )}
                 {booking.payment.status === "confirmed" && (
@@ -503,77 +528,106 @@ export default function BookingDetailModal({
                 )}
                 {booking.payment.status === "rejected" && (
                   <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm leading-5 text-red-700">
-                    The previous payment could not be verified. Submit a
-                    corrected reference number and receipt below.
+                    The previous GCash payment could not be verified. Submit
+                    corrected details or switch to cash payment below.
                   </p>
                 )}
 
-                {booking.payment.canSubmit && (
+                {booking.payment.canChangeMethod && (
                   <div className="mt-4 space-y-4 border-t border-[#E7E2DA] pt-4">
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium text-[#292524]">
-                        GCash reference number{" "}
-                        <span className="text-red-600">*</span>
-                      </label>
-                      <input
-                        inputMode="numeric"
-                        pattern="[0-9]{13}"
-                        maxLength={GCASH_REFERENCE_LENGTH}
-                        value={paymentReference}
-                        onChange={(event) => {
-                          setPaymentReference(
-                            normalizeGcashReference(event.target.value),
-                          );
-                          setPaymentErrors((current) =>
-                            withoutKey(current, "reference_number"),
-                          );
-                        }}
-                        placeholder="Enter the 13-digit reference"
-                        className={`w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-[#B22222] ${paymentErrors.reference_number ? "border-red-400" : "border-gray-300"}`}
-                      />
-                      <p className="mt-1 text-xs text-gray-500">
-                        Enter the Transaction Reference ID shown on your GCash
-                        receipt.
+                    <PaymentMethodChoice
+                      value={paymentMethod}
+                      disabled={submittingPayment}
+                      onChange={(method) => {
+                        setPaymentMethod(method);
+                        setPaymentErrors({});
+                        if (method === "cash") {
+                          setPaymentReference("");
+                          setPaymentReceipt(null);
+                        }
+                      }}
+                    />
+                    {paymentErrors.payment_method && (
+                      <p className="text-sm text-red-600">
+                        {paymentErrors.payment_method}
                       </p>
-                      {paymentErrors.reference_number && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {paymentErrors.reference_number}
-                        </p>
-                      )}
-                    </div>
+                    )}
+                    {paymentMethod === "gcash" && (
+                      <>
+                        <div>
+                          <label className="mb-1.5 block text-sm font-medium text-[#292524]">
+                            GCash reference number{" "}
+                            <span className="text-red-600">*</span>
+                          </label>
+                          <input
+                            inputMode="numeric"
+                            pattern="[0-9]{13}"
+                            maxLength={GCASH_REFERENCE_LENGTH}
+                            value={paymentReference}
+                            onChange={(event) => {
+                              setPaymentReference(
+                                normalizeGcashReference(event.target.value),
+                              );
+                              setPaymentErrors((current) =>
+                                withoutKey(current, "reference_number"),
+                              );
+                            }}
+                            placeholder="Enter the 13-digit reference"
+                            className={`w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-[#B22222] ${paymentErrors.reference_number ? "border-red-400" : "border-gray-300"}`}
+                          />
+                          <p className="mt-1 text-xs text-gray-500">
+                            Enter the Transaction Reference ID shown on your
+                            GCash receipt.
+                          </p>
+                          {paymentErrors.reference_number && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {paymentErrors.reference_number}
+                            </p>
+                          )}
+                        </div>
 
-                    <div>
-                      <label className="inline-flex max-w-full cursor-pointer items-center gap-2 rounded-xl border border-[#B22222] px-4 py-2.5 text-sm font-semibold text-[#B22222] transition hover:bg-red-50">
-                        <FileUp size={16} />{" "}
-                        {paymentReceipt ? "Replace receipt" : "Choose receipt"}
-                        <input
-                          type="file"
-                          className="hidden"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          disabled={submittingPayment}
-                          onChange={(event) => {
-                            const file = event.target.files?.[0];
-                            if (file) selectPaymentReceipt(file);
-                            event.target.value = "";
-                          }}
-                        />
-                      </label>
-                      {paymentReceipt && (
-                        <p className="mt-2 break-all text-sm font-medium text-green-700">
-                          {paymentReceipt.name} ·{" "}
-                          {(paymentReceipt.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                      )}
-                      {paymentErrors.receipt && (
-                        <p className="mt-1 text-sm text-red-600">
-                          {paymentErrors.receipt}
-                        </p>
-                      )}
-                    </div>
+                        <div>
+                          <label className="inline-flex max-w-full cursor-pointer items-center gap-2 rounded-xl border border-[#B22222] px-4 py-2.5 text-sm font-semibold text-[#B22222] transition hover:bg-red-50">
+                            <FileUp size={16} />{" "}
+                            {paymentReceipt
+                              ? "Replace receipt"
+                              : "Choose receipt"}
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept=".pdf,.jpg,.jpeg,.png"
+                              disabled={submittingPayment}
+                              onChange={(event) => {
+                                const file = event.target.files?.[0];
+                                if (file) selectPaymentReceipt(file);
+                                event.target.value = "";
+                              }}
+                            />
+                          </label>
+                          {paymentReceipt && (
+                            <p className="mt-2 break-all text-sm font-medium text-green-700">
+                              {paymentReceipt.name} ·{" "}
+                              {(paymentReceipt.size / 1024 / 1024).toFixed(2)}{" "}
+                              MB
+                            </p>
+                          )}
+                          {paymentErrors.receipt && (
+                            <p className="mt-1 text-sm text-red-600">
+                              {paymentErrors.receipt}
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    )}
 
                     <button
                       type="button"
-                      disabled={submittingPayment}
+                      disabled={
+                        submittingPayment ||
+                        ((booking.payment.status === "awaiting_payment" ||
+                          booking.payment.status === "pending_verification") &&
+                          booking.payment.method === paymentMethod)
+                      }
                       onClick={() => void submitPayment()}
                       className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#B22222] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                     >
@@ -584,8 +638,18 @@ export default function BookingDetailModal({
                       )}
                       {submittingPayment
                         ? "Submitting payment..."
-                        : "Submit payment for verification"}
+                        : paymentMethod === "cash"
+                          ? "Select cash payment"
+                          : "Submit GCash payment"}
                     </button>
+                    {(booking.payment.status === "awaiting_payment" ||
+                      booking.payment.status === "pending_verification") &&
+                      booking.payment.method === paymentMethod && (
+                        <p className="text-xs text-gray-500">
+                          Select the other method if you want to change your
+                          active payment choice.
+                        </p>
+                      )}
                   </div>
                 )}
               </section>

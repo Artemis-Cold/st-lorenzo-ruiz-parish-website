@@ -9,6 +9,7 @@ use App\Models\PackageInclusion;
 use App\Models\PricingChangeLog;
 use App\Models\ServiceFee;
 use App\Models\ServicePackage;
+use App\Support\Money;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -125,17 +126,17 @@ class StaffPricingController extends Controller
                 'serviceCode' => $package->service->code,
                 'serviceName' => $package->service->name,
                 'name' => $package->name,
-                'basePrice' => (float) $package->base_price,
+                'basePrice' => Money::decimal($package->base_price),
                 'basePriceEditable' => $package->service->code !== 'wedding',
                 'inclusions' => $package->inclusions->map(fn ($item) => [
                     'id' => $item->id,
                     'name' => $item->name,
-                    'price' => (float) $item->price,
+                    'price' => Money::decimal($item->price),
                 ])->values(),
                 'addons' => $package->addons->map(fn ($item) => [
                     'id' => $item->id,
                     'name' => $item->name,
-                    'price' => (float) $item->price,
+                    'price' => Money::decimal($item->price),
                 ])->values(),
             ])
             ->values();
@@ -151,7 +152,7 @@ class StaffPricingController extends Controller
                 'serviceName' => $fee->service->name,
                 'code' => $fee->code,
                 'name' => $fee->name,
-                'amount' => (float) $fee->amount,
+                'amount' => Money::decimal($fee->amount),
             ])
             ->values();
 

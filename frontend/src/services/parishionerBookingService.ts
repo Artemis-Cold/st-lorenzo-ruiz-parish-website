@@ -33,11 +33,18 @@ export interface ParishionerBookingDetail {
   } | null;
   payment: {
     required: boolean;
+    method: "gcash" | "cash" | null;
     referenceNumber: string | null;
+    officialReceiptNumber: string | null;
     amount: number;
-    status: "not_submitted" | "pending" | "confirmed" | "rejected";
+    status:
+      | "not_submitted"
+      | "awaiting_payment"
+      | "pending_verification"
+      | "confirmed"
+      | "rejected";
     receipt: { fileName: string; url: string } | null;
-    canSubmit: boolean;
+    canChangeMethod: boolean;
   };
   sections: Array<{
     title: string;
@@ -56,19 +63,31 @@ export interface ParishionerBookingDetail {
 
 export async function submitParishionerBookingPayment(
   bookingId: number,
-  referenceNumber: string,
-  receipt: File,
+  paymentMethod: "gcash" | "cash",
+  referenceNumber?: string,
+  receipt?: File | null,
 ) {
   const formData = new FormData();
-  formData.append("reference_number", referenceNumber);
-  formData.append("receipt", receipt);
+  formData.append("payment_method", paymentMethod);
+  if (paymentMethod === "gcash" && referenceNumber) {
+    formData.append("reference_number", referenceNumber);
+  }
+  if (paymentMethod === "gcash" && receipt) {
+    formData.append("receipt", receipt);
+  }
 
   const response = await api.post<{
     message: string;
     data: ParishionerBookingDetail["payment"];
   }>(`/bookings/${bookingId}/payment`, formData);
 
-  return response.data;
+  return {
+    ...response.data,
+    data: {
+      ...response.data.data,
+      amount: Number(response.data.data.amount),
+    },
+  };
 }
 
 export interface MissingRequirement {
@@ -81,7 +100,7 @@ export async function getParishionerBooking(id: number) {
   const response = await api.get<{ data: ParishionerBookingDetail }>(
     `/bookings/${id}`,
   );
-  return response.data.data;
+  return normalizeBookingMoney(response.data.data);
 }
 
 export async function uploadParishionerBookingDocument(
@@ -112,6 +131,34 @@ export interface RescheduledBooking {
     date: string;
     startTime: string;
     endTime: string;
+  };
+}
+
+function normalizeBookingMoney(
+  booking: ParishionerBookingDetail,
+): ParishionerBookingDetail {
+  return {
+    ...booking,
+    package: booking.package
+      ? {
+          ...booking.package,
+          baseAmount: Number(booking.package.baseAmount),
+          addons: booking.package.addons.map((addon) => ({
+            ...addon,
+            price: Number(addon.price),
+          })),
+          fees: booking.package.fees.map((fee) => ({
+            ...fee,
+            price: Number(fee.price),
+            subtotal: Number(fee.subtotal),
+          })),
+          totalAmount: Number(booking.package.totalAmount),
+        }
+      : null,
+    payment: {
+      ...booking.payment,
+      amount: Number(booking.payment.amount),
+    },
   };
 }
 

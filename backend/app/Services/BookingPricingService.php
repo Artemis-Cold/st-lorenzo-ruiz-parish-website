@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\ServiceFee;
 use App\Models\ServicePackage;
+use App\Support\Money;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 
@@ -29,9 +30,9 @@ class BookingPricingService
                 'id' => $item['fee']->id,
                 'code' => $item['fee']->code,
                 'name' => $item['fee']->name,
-                'price' => $amount,
+                'price' => Money::decimal($amount),
                 'quantity' => $quantity,
-                'subtotal' => $amount * $quantity,
+                'subtotal' => Money::decimal($amount * $quantity),
             ];
         })->values();
 
@@ -46,17 +47,17 @@ class BookingPricingService
                 'package' => [
                     'id' => $package->id,
                     'name' => $package->name,
-                    'basePrice' => $basePrice,
+                    'basePrice' => Money::decimal($basePrice),
                 ],
                 'inclusions' => $package->inclusions->map(fn ($item) => [
                     'id' => $item->id,
                     'name' => $item->name,
-                    'price' => (float) $item->price,
+                    'price' => Money::decimal($item->price),
                 ])->values()->all(),
                 'addons' => $addons->map(fn ($item) => [
                     'id' => $item->id,
                     'name' => $item->name,
-                    'price' => (float) $item->price,
+                    'price' => Money::decimal($item->price),
                 ])->values()->all(),
                 'fees' => $feeItems->all(),
             ],

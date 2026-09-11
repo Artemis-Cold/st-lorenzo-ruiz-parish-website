@@ -38,11 +38,32 @@ export interface UpdatePricingInput {
   fees: Array<{ id: number; amount: number }>;
 }
 
+function normalizePricing(data: StaffPricingData): StaffPricingData {
+  return {
+    packages: data.packages.map((servicePackage) => ({
+      ...servicePackage,
+      basePrice: Number(servicePackage.basePrice),
+      inclusions: servicePackage.inclusions.map((inclusion) => ({
+        ...inclusion,
+        price: Number(inclusion.price),
+      })),
+      addons: servicePackage.addons.map((addon) => ({
+        ...addon,
+        price: Number(addon.price),
+      })),
+    })),
+    fees: data.fees.map((fee) => ({
+      ...fee,
+      amount: Number(fee.amount),
+    })),
+  };
+}
+
 export async function getStaffPricing(): Promise<StaffPricingData> {
   const response = await api.get<{ data: StaffPricingData }>(
     "/staff/settings/pricing",
   );
-  return response.data.data;
+  return normalizePricing(response.data.data);
 }
 
 export async function updateStaffPricing(input: UpdatePricingInput) {
@@ -51,5 +72,8 @@ export async function updateStaffPricing(input: UpdatePricingInput) {
     data: StaffPricingData;
   }>("/staff/settings/pricing", input);
 
-  return response.data;
+  return {
+    ...response.data,
+    data: normalizePricing(response.data.data),
+  };
 }

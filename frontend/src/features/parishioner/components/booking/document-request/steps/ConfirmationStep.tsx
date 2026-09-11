@@ -1,5 +1,6 @@
 import { BookingCard } from "../..";
 import type { DocumentRequestBooking } from "../../../../types/document";
+import { formatPhpCurrency } from "@/utils/currency";
 import { ReceiptText, FileText } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 
@@ -52,13 +53,13 @@ export default function ConfirmationStep({
                   <p className="font-medium">{item.type}</p>
 
                   <p className="text-sm text-gray-500">
-                    {item.quantity} × ₱{item.unitPrice.toLocaleString()}
+                    {item.quantity} × {formatPhpCurrency(item.unitPrice)}
                   </p>
                 </div>
               </div>
 
               <span className="font-semibold text-[#B22222]">
-                ₱{item.subtotal.toLocaleString()}
+                {formatPhpCurrency(item.subtotal)}
               </span>
             </div>
           ))}
@@ -67,7 +68,7 @@ export default function ConfirmationStep({
             <div className="flex items-center justify-between text-lg font-bold">
               <span>Total</span>
 
-              <span className="text-[#B22222]">₱{total.toLocaleString()}</span>
+              <span className="text-[#B22222]">{formatPhpCurrency(total)}</span>
             </div>
           </div>
         </div>
@@ -77,12 +78,29 @@ export default function ConfirmationStep({
       <BookingCard title="Payment Information">
         <div className="space-y-5">
           <div className="rounded-xl bg-gray-50 p-4">
-            <p className="text-sm text-gray-500">Reference Number</p>
-
+            <p className="text-sm text-gray-500">Payment Method</p>
             <p className="mt-1 font-semibold">
-              {booking.reference_number || "-"}
+              {booking.payment_method === "gcash"
+                ? "GCash"
+                : "Cash at Parish Office"}
             </p>
           </div>
+          {booking.payment_method === "gcash" ? (
+            <>
+              <div className="rounded-xl bg-gray-50 p-4">
+                <p className="text-sm text-gray-500">Reference Number</p>
+
+                <p className="mt-1 font-semibold">
+                  {booking.reference_number || "-"}
+                </p>
+              </div>
+            </>
+          ) : (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
+              Your request will remain pending until you pay at the parish
+              office and staff confirms the cash received.
+            </div>
+          )}
 
           <div className="rounded-xl border border-gray-200 p-4">
             <div className="mb-3 flex items-center gap-2">
@@ -126,8 +144,9 @@ export default function ConfirmationStep({
       <div className="rounded-3xl border border-[#B22222]/20 bg-red-50 p-6">
         <h3 className="mb-4 text-xl font-bold text-[#B22222]">Declaration</h3>
         <p className="mb-6 text-gray-700">
-          I certify that the request details and payment information provided
-          are true and accurate.
+          I certify that I am the registered account holder and official
+          claimant, and that the record-owner relationship and payment details
+          provided are true and accurate.
         </p>
         <label className="flex cursor-pointer items-start gap-3 rounded-xl border bg-white p-4">
           <input
@@ -137,8 +156,8 @@ export default function ConfirmationStep({
             className="mt-1 h-5 w-5 accent-[#B22222]"
           />
           <span className="text-sm text-gray-700">
-            I have reviewed the information and agree to the parish's request
-            policies.
+            I understand that I cannot appoint another person as the requester
+            or claimant for this online request.
           </span>
         </label>
       </div>

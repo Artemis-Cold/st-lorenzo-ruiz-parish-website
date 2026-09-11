@@ -54,14 +54,14 @@ class WeddingBookingService
                 );
             }
 
-            $this->createSponsorPairs($booking, $data['sponsors']);
+            $this->createSponsors($booking, $data['sponsors']);
 
             $booking->selectedAddons()->sync($addons->modelKeys());
             $this->uploadDocuments($booking, $data['documents'] ?? []);
 
             $booking->load([
                 'weddingApplicants',
-                'weddingSponsorPairs.sponsors',
+                'weddingSponsors',
                 'documents',
                 'package',
                 'selectedAddons',
@@ -157,34 +157,25 @@ class WeddingBookingService
         }
     }
 
-    private function createSponsorPairs(Booking $booking, array $pairs): void
+    private function createSponsors(Booking $booking, array $sponsors): void
     {
-        foreach ($pairs as $pair) {
-            $marriageContractPath = isset($pair['requirements']['marriage_contract'])
-                ? $pair['requirements']['marriage_contract']->store('wedding-sponsor-documents', 'public')
-                : null;
-            $confirmationCertificatePath = isset($pair['requirements']['confirmation_certificate'])
-                ? $pair['requirements']['confirmation_certificate']->store('wedding-sponsor-documents', 'public')
-                : null;
-
-            $sponsorPair = $booking->weddingSponsorPairs()->create([
-                'marriage_contract' => $marriageContractPath,
-                'confirmation_certificate' => $confirmationCertificatePath,
+        foreach ($sponsors as $index => $sponsor) {
+            /** @var UploadedFile|null $requirement */
+            $requirement = $sponsor['requirement_file'] ?? null;
+            $booking->weddingSponsors()->create([
+                'sort_order' => $index + 1,
+                'role' => $sponsor['role'],
+                'first_name' => $sponsor['first_name'],
+                'middle_initial' => $sponsor['middle_initial'] ?? null,
+                'last_name' => $sponsor['last_name'],
+                'residence' => $sponsor['residence'],
+                'requirement_type' => $sponsor['requirement_type'],
+                'requirement_file_name' => $requirement?->getClientOriginalName(),
+                'requirement_file_path' => $requirement?->store(
+                    'wedding-sponsor-documents',
+                    'public',
+                ),
             ]);
-
-            foreach ([
-                'god_father' => 'godfather',
-                'god_mother' => 'godmother',
-            ] as $key => $role) {
-                $sponsor = $pair[$key];
-                $sponsorPair->sponsors()->create([
-                    'role' => $role,
-                    'first_name' => $sponsor['first_name'],
-                    'middle_initial' => $sponsor['middle_initial'] ?? null,
-                    'last_name' => $sponsor['last_name'],
-                    'residence' => $sponsor['residence'],
-                ]);
-            }
         }
     }
 

@@ -19,13 +19,19 @@ import type { BookingSlot } from "@/services/bookingSlotService";
 import type { ServicePackage } from "@/services/servicePackageService";
 import { submitWeddingBooking } from "@/services/weddingBookingService";
 
-import type { WeddingBooking, Person } from "../types/wedding";
+import type {
+  Person,
+  WeddingAccountRole,
+  WeddingBooking,
+  WeddingSponsor,
+} from "../types/wedding";
 
 const stepLabels = [
   "Requirements",
   "Schedule",
   "Wedding Options",
-  "Details",
+  "Personal Information",
+  "Document Uploads",
   "Confirmation",
 ];
 
@@ -62,6 +68,16 @@ const emptyPerson = (): Person => ({
   },
 });
 
+const emptySponsor = (): WeddingSponsor => ({
+  role: "",
+  first_name: "",
+  middle_initial: "",
+  last_name: "",
+  residence: "",
+  requirement_type: "",
+  requirement_file: null,
+});
+
 export default function Wedding() {
   const [booking, setBooking] = useState<WeddingBooking>({
     booking_slot_id: 0,
@@ -75,28 +91,7 @@ export default function Wedding() {
       bride: emptyPerson(),
     },
 
-    sponsors: [
-      {
-        god_father: {
-          role: "godfather",
-          first_name: "",
-          middle_initial: "",
-          last_name: "",
-          residence: "",
-        },
-        god_mother: {
-          role: "godmother",
-          first_name: "",
-          middle_initial: "",
-          last_name: "",
-          residence: "",
-        },
-        requirements: {
-          marriage_contract: null,
-          confirmation_certificate: null,
-        },
-      },
-    ],
+    sponsors: [emptySponsor(), emptySponsor()],
 
     documents: [],
 
@@ -116,6 +111,9 @@ export default function Wedding() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const [accountRole, setAccountRole] = useState<WeddingAccountRole | null>(
+    null,
+  );
   const [agreedToDeclaration, setAgreedToDeclaration] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -134,6 +132,15 @@ export default function Wedding() {
       });
     }
   }, [stepError, submitError]);
+
+  const updateAccountRole = (role: WeddingAccountRole) => {
+    setAccountRole(role);
+    setFieldErrors((current) => {
+      const next = { ...current };
+      delete next.account_role;
+      return next;
+    });
+  };
 
   const pages = [
     <RequirementsStep key="requirements" />,
@@ -154,10 +161,20 @@ export default function Wedding() {
       key="packages"
     />,
     <DetailsStep
-      key="details"
+      key="information"
       booking={booking}
       setBooking={setBooking}
       errors={fieldErrors}
+      view="information"
+      accountRole={accountRole}
+      onAccountRoleChange={updateAccountRole}
+    />,
+    <DetailsStep
+      key="documents"
+      booking={booking}
+      setBooking={setBooking}
+      errors={fieldErrors}
+      view="documents"
     />,
     <ConfirmationStep
       booking={booking}
@@ -295,32 +312,56 @@ export default function Wedding() {
       }
     });
 
-    currentBooking.sponsors.forEach((pair, index) => {
-      (["god_father", "god_mother"] as const).forEach((role) => {
-        const sponsor = pair[role];
-        const label = role === "god_father" ? "Godfather" : "Godmother";
-        requireField(
-          `sponsors.${index}.${role}.first_name`,
-          sponsor.first_name,
-          `${label}'s first name`,
-        );
-        requireField(
-          `sponsors.${index}.${role}.last_name`,
-          sponsor.last_name,
-          `${label}'s last name`,
-        );
-        requireField(
-          `sponsors.${index}.${role}.residence`,
-          sponsor.residence,
-          `${label}'s residence`,
-        );
-      });
+    currentBooking.sponsors.forEach((sponsor, index) => {
+      const label = `Sponsor ${index + 1}`;
+      requireField(`sponsors.${index}.role`, sponsor.role, `${label}'s role`);
+      requireField(
+        `sponsors.${index}.first_name`,
+        sponsor.first_name,
+        `${label}'s first name`,
+      );
+      requireField(
+        `sponsors.${index}.last_name`,
+        sponsor.last_name,
+        `${label}'s last name`,
+      );
+      requireField(
+        `sponsors.${index}.residence`,
+        sponsor.residence,
+        `${label}'s residence`,
+      );
+      requireField(
+        `sponsors.${index}.requirement_type`,
+        sponsor.requirement_type,
+        `${label}'s certificate type`,
+      );
+
+      if (sponsor.requirement_file) {
+        if (sponsor.requirement_file.size > 5 * 1024 * 1024) {
+          addError(
+            `sponsors.${index}.requirement_file`,
+            `${sponsor.requirement_file.name} must not exceed 5 MB.`,
+          );
+        }
+
+        if (sponsor.requirement_file.type !== "application/pdf") {
+          addError(
+            `sponsors.${index}.requirement_file`,
+            `${sponsor.requirement_file.name} must be a PDF file.`,
+          );
+        }
+      }
     });
 
     return errors;
   };
 
   const validateStep = (step: number): string | null => {
+    const isUploadError = (key: string) =>
+      key.startsWith("documents.") ||
+      key.endsWith(".requirement_type") ||
+      key.endsWith(".requirement_file");
+
     if (step === 2 && booking.booking_slot_id === 0) {
       return "Please select a time slot before continuing.";
     }
@@ -330,7 +371,21 @@ export default function Wedding() {
     }
 
     if (step === 4) {
-      const detailsErrors = validateDetailsStep(booking);
+      if (!accountRole) {
+        const message =
+          "Please indicate whether this account belongs to the bride, groom, or a representative.";
+        setFieldErrors((current) => ({
+          ...current,
+          account_role: [message],
+        }));
+        return message;
+      }
+
+      const detailsErrors = Object.fromEntries(
+        Object.entries(validateDetailsStep(booking)).filter(
+          ([key]) => !isUploadError(key),
+        ),
+      );
 
       if (Object.keys(detailsErrors).length > 0) {
         setFieldErrors(detailsErrors);
@@ -340,7 +395,22 @@ export default function Wedding() {
       setFieldErrors({});
     }
 
-    if (step === 5 && !agreedToDeclaration) {
+    if (step === 5) {
+      const documentErrors = Object.fromEntries(
+        Object.entries(validateDetailsStep(booking)).filter(([key]) =>
+          isUploadError(key),
+        ),
+      );
+
+      if (Object.keys(documentErrors).length > 0) {
+        setFieldErrors(documentErrors);
+        return "Please review the uploaded documents before continuing.";
+      }
+
+      setFieldErrors({});
+    }
+
+    if (step === 6 && !agreedToDeclaration) {
       return "Please agree to the declaration before submitting.";
     }
 

@@ -35,17 +35,27 @@ const sections = [
       "You consent to receive service-related SMS messages, including verification codes, requirement reminders, schedule notices, payment updates, and document status notifications. These are transactional messages and are not intended for marketing.",
   },
   {
-    title: "5. Personal information",
+    title: "5. Compliance with the Data Privacy Act",
     content:
-      "Information submitted through the system will be used for account management, parish records, service coordination, communication, and other legitimate parish administrative purposes. Access is limited to authorized personnel.",
+      "St. Lorenzo Ruiz Parish is committed to processing personal and sensitive personal information in accordance with Republic Act No. 10173, also known as the Data Privacy Act of 2012, its Implementing Rules and Regulations, and applicable National Privacy Commission issuances. Personal data will be processed transparently, for legitimate purposes, and only to the extent necessary for parish services.",
   },
   {
-    title: "6. Responsible use",
+    title: "6. Collection, use, and protection of personal data",
+    content:
+      "Information you provide—including identity and contact details, uploaded documents and photos, booking or request information, and payment proof—may be used for account administration, identity and phone verification, parish records, service coordination, payment validation, notifications, security, and applicable legal obligations. The parish will apply reasonable safeguards, limit access to authorized personnel and necessary service providers, and retain information only for as long as reasonably necessary or required by law.",
+  },
+  {
+    title: "7. Your data privacy rights",
+    content:
+      "Subject to applicable law, you may ask to be informed about the processing of your personal data, request access or correction, object to or withdraw consent where consent is the lawful basis, and request blocking or deletion when legally permitted. For privacy questions or to exercise these rights, contact the St. Lorenzo Ruiz Parish office.",
+  },
+  {
+    title: "8. Responsible use",
     content:
       "You must not impersonate another person, submit fraudulent information, disrupt the service, attempt unauthorized access, or use the system for unlawful purposes.",
   },
   {
-    title: "7. Changes and assistance",
+    title: "9. Changes and assistance",
     content:
       "The parish may revise these terms when service procedures or legal requirements change. For questions, corrections, or assistance, contact the St. Lorenzo Ruiz Parish office.",
   },
@@ -63,7 +73,7 @@ export default function TermsAndConditionsDialog({
             Terms and Conditions
           </AlertDialogTitle>
           <AlertDialogDescription className="text-left text-sm text-gray-500">
-            St. Lorenzo Ruiz Parish Online Services
+            St. Lorenzo Ruiz Parish Online Services · Data Privacy Act
           </AlertDialogDescription>
         </AlertDialogHeader>
 

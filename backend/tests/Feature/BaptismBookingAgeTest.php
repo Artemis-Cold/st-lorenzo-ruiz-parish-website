@@ -19,7 +19,8 @@ class BaptismBookingAgeTest extends TestCase
     public function test_baptizand_age_is_calculated_from_birth_date(): void
     {
         Storage::fake('public');
-        Sanctum::actingAs(User::factory()->create());
+        $parishioner = User::factory()->create();
+        Sanctum::actingAs($parishioner);
 
         $service = Service::create([
             'code' => 'baptism',
@@ -69,36 +70,109 @@ class BaptismBookingAgeTest extends TestCase
                     'birth_place' => 'Taysan, Batangas',
                 ],
             ],
-            'god_parents' => [[
-                'god_father' => [
+            'god_parents' => [
+                [
+                    'role' => 'godfather',
                     'first_name' => 'Pedro',
                     'middle_initial' => '',
                     'last_name' => 'Santos',
                     'residence' => 'Batangas',
+                    'requirement_type' => 'marriage_contract',
+                    'requirement_file' => UploadedFile::fake()
+                        ->create('pedro-marriage.pdf', 100, 'application/pdf'),
                 ],
-                'god_mother' => [
+                [
+                    'role' => 'godmother',
                     'first_name' => 'Ana',
                     'middle_initial' => '',
                     'last_name' => 'Reyes',
                     'residence' => 'Batangas',
+                    'requirement_type' => 'confirmation_certificate',
+                    'requirement_file' => UploadedFile::fake()
+                        ->create('ana-confirmation.pdf', 100, 'application/pdf'),
                 ],
-                'requirements' => [
-                    'confirmation_certificate' => UploadedFile::fake()
-                        ->create('confirmation.pdf', 100, 'application/pdf'),
+            ],
+            'documents' => [
+                [
+                    'document_type' => 'birth_certificate',
+                    'file' => UploadedFile::fake()
+                        ->create('birth-certificate.pdf', 100, 'application/pdf'),
                 ],
-            ]],
-            'documents' => [[
-                'document_type' => 'birth_certificate',
-                'file' => UploadedFile::fake()
-                    ->create('birth-certificate.pdf', 100, 'application/pdf'),
-            ]],
+                [
+                    'document_type' => 'no_record_certificate',
+                    'file' => UploadedFile::fake()
+                        ->create('no-record-certificate.pdf', 100, 'application/pdf'),
+                ],
+            ],
             'remarks' => '',
         ]);
 
         $response->assertCreated();
+        $bookingId = $response->json('data.id');
         $this->assertDatabaseHas('baptizands', [
             'first_name' => 'John',
             'age' => 8,
         ]);
+        $this->assertDatabaseHas('god_parents', [
+            'role' => 'godfather',
+            'first_name' => 'Pedro',
+            'requirement_type' => 'marriage_contract',
+            'requirement_file_name' => 'pedro-marriage.pdf',
+        ]);
+        $this->assertDatabaseHas('god_parents', [
+            'role' => 'godmother',
+            'first_name' => 'Ana',
+            'requirement_type' => 'confirmation_certificate',
+            'requirement_file_name' => 'ana-confirmation.pdf',
+        ]);
+
+        $documents = collect(
+            $this->getJson("/api/bookings/{$bookingId}")
+                ->assertOk()
+                ->json('data.documents')
+        );
+        $this->assertSame(
+            ['godparent_1_marriage_contract', 'godparent_2_confirmation_certificate'],
+            $documents
+                ->filter(fn (array $document) => str_starts_with($document['type'], 'godparent_'))
+                ->pluck('type')
+                ->values()
+                ->all()
+        );
+
+        Sanctum::actingAs(User::factory()->create(['role' => 'staff']));
+        $staffDocuments = collect(
+            $this->getJson('/api/staff/bookings')
+                ->assertOk()
+                ->json('data.0.details.documents')
+        );
+        $firstGodParentDocument = $staffDocuments->firstWhere(
+            'type',
+            'godparent_1_marriage_contract'
+        );
+
+        $this->postJson("/api/staff/bookings/{$bookingId}/requirements/resubmit", [
+            'document_key' => $firstGodParentDocument['reviewKey'],
+            'reason' => 'The submitted godparent certificate cannot be verified.',
+        ])->assertOk()
+            ->assertJsonCount(1, 'data.details.missingRequirements');
+
+        $this->assertDatabaseHas('sms_messages', [
+            'booking_id' => $bookingId,
+            'category' => 'booking_requirement_resubmission',
+        ]);
+
+        Sanctum::actingAs($parishioner);
+        $missingRequirement = $this->getJson("/api/bookings/{$bookingId}")
+            ->assertOk()
+            ->assertJsonCount(1, 'data.missingRequirements')
+            ->json('data.missingRequirements.0');
+
+        $this->post("/api/bookings/{$bookingId}/documents", [
+            'document_type' => $missingRequirement['types'][0],
+            'file' => UploadedFile::fake()->create('valid-godparent-certificate.pdf', 100, 'application/pdf'),
+        ], ['Accept' => 'application/json'])
+            ->assertCreated()
+            ->assertJsonCount(0, 'data.missingRequirements');
     }
 }

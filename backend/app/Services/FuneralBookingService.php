@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Booking;
 use App\Models\PackageAddon;
 use App\Models\ServicePackage;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -19,9 +20,9 @@ class FuneralBookingService
         private BookingPricingService $pricing,
     ) {}
 
-    public function store(array $data): Booking
+    public function store(array $data, User $user): Booking
     {
-        return DB::transaction(function () use ($data) {
+        return DB::transaction(function () use ($data, $user) {
             $slot = $this->availability->lockBookable(
                 $data['booking_slot_id'],
                 'funeral',
@@ -49,7 +50,7 @@ class FuneralBookingService
 
             $booking = Booking::create([
                 'booking_reference' => $this->reference(),
-                'user_id' => auth()->id(),
+                'user_id' => $user->id,
                 'service_id' => $slot->service_id,
                 'service_package_id' => $package->id,
                 'booking_slot_id' => $slot->id,
@@ -73,12 +74,12 @@ class FuneralBookingService
                 'attends_mass' => $person['church_life']['attends_mass'],
                 'confesses' => $person['church_life']['confesses'],
                 'characteristics' => $person['characteristics'] ?? null,
-                'informant_first_name' => $person['informant']['first_name'],
-                'informant_middle_initial' => $person['informant']['middle_initial'] ?? null,
-                'informant_last_name' => $person['informant']['last_name'],
+                'informant_first_name' => $user->first_name,
+                'informant_middle_initial' => $user->middle_initial,
+                'informant_last_name' => $user->last_name,
                 'informant_relationship' => $person['informant']['relationship'],
-                'informant_contact_number' => $person['informant']['contact_number'],
-                'information_date' => $person['informant']['date_provided'],
+                'informant_contact_number' => $user->phone,
+                'information_date' => today()->toDateString(),
             ]);
 
             foreach ($person['children'] ?? [] as $child) {

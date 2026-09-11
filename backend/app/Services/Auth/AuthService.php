@@ -4,45 +4,22 @@ namespace App\Services\Auth;
 
 use App\Models\User;
 use App\Services\Parishioner\ParishionerIdService;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Hash;
+use RuntimeException;
 
 class AuthService
 {
-    private const TERMS_VERSION = '2026-08-28';
+    private const TERMS_VERSION = '2026-09-06';
+
+    public function __construct(private UsernameGenerator $usernames) {}
 
     /**
      * Register a new parishioner.
      */
     public function register(array $data): array
     {
-        $user = User::create([
-            'parishioner_id' => ParishionerIdService::generate(),
-
-            'username' => $data['username'],
-            'password' => Hash::make($data['password']),
-
-            'first_name' => $data['first_name'],
-            'middle_initial' => $data['middle_initial'] ?? null,
-            'last_name' => $data['last_name'],
-            'suffix' => $data['suffix'] ?? null,
-
-            'birth_date' => $data['birth_date'] ?? null,
-            'gender' => $data['gender'] ?? null,
-
-            'phone' => $data['phone'],
-            'phone_verified_at' => now(),
-
-            'house_no' => $data['house_no'] ?? null,
-            'street' => $data['street'] ?? null,
-            'barangay' => $data['barangay'] ?? null,
-            'municipality' => $data['municipality'] ?? null,
-            'province' => $data['province'] ?? null,
-            'zip_code' => $data['zip_code'] ?? null,
-
-            'role' => 'parishioner',
-            'terms_accepted_at' => now(),
-            'terms_version' => self::TERMS_VERSION,
-        ]);
+        $user = $this->createParishioner($data);
 
         /*
         |--------------------------------------------------------------------------
@@ -58,6 +35,54 @@ class AuthService
             'user' => $user->fresh(),
             'token' => $token,
         ];
+    }
+
+    private function createParishioner(array $data): User
+    {
+        for ($attempt = 0; $attempt < 5; $attempt++) {
+            $username = $this->usernames->generate($data['first_name']);
+
+            try {
+                return User::create([
+                    'parishioner_id' => ParishionerIdService::generate(),
+
+                    'username' => $username,
+                    'password' => Hash::make($data['password']),
+
+                    'first_name' => $data['first_name'],
+                    'middle_initial' => $data['middle_initial'] ?? null,
+                    'last_name' => $data['last_name'],
+                    'suffix' => $data['suffix'] ?? null,
+
+                    'birth_date' => $data['birth_date'] ?? null,
+                    'gender' => $data['gender'] ?? null,
+
+                    'phone' => $data['phone'],
+                    'phone_verified_at' => null,
+
+                    'house_no' => $data['house_no'] ?? null,
+                    'street' => $data['street'] ?? null,
+                    'barangay' => $data['barangay'] ?? null,
+                    'municipality' => $data['municipality'] ?? null,
+                    'province' => $data['province'] ?? null,
+                    'zip_code' => $data['zip_code'] ?? null,
+
+                    'role' => 'parishioner',
+                    'terms_accepted_at' => now(),
+                    'terms_version' => self::TERMS_VERSION,
+                ]);
+            } catch (UniqueConstraintViolationException $exception) {
+                $usernameWasTaken = User::query()
+                    ->where('username', $username)
+                    ->exists();
+
+                if (! $usernameWasTaken || $attempt === 4) {
+                    throw $exception;
+                }
+            }
+        }
+
+        throw new RuntimeException('Unable to create the parishioner account.');
     }
 
     /**

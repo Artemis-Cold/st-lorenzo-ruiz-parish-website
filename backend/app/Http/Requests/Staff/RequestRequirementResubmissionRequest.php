@@ -18,7 +18,7 @@ class RequestRequirementResubmissionRequest extends FormRequest
                 'required',
                 'string',
                 'max:100',
-                'regex:/^(document:\d+|wedding-sponsor:\d+:(marriage_contract|confirmation_certificate)|baptism-godparent:\d+:(marriage_contract|confirmation_certificate))$/',
+                'regex:/^(document:\d+|wedding-sponsor-individual:\d+|baptism-godparent-individual:\d+)$/',
             ],
             'reason' => ['required', 'string', 'min:5', 'max:300'],
         ];

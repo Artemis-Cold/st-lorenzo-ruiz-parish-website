@@ -51,7 +51,7 @@ class StaffPricingTest extends TestCase
             ->assertJsonPath('message', 'Service prices updated successfully.');
 
         $this->assertDatabaseCount('pricing_change_logs', 4);
-        $this->assertSame($original['total'], $booking->fresh()->total_amount);
+        $this->assertSame(number_format($original['total'], 2, '.', ''), $booking->fresh()->total_amount);
         $this->assertEquals($original['snapshot'], $booking->fresh()->pricing_snapshot);
     }
 
@@ -90,7 +90,7 @@ class StaffPricingTest extends TestCase
             ->assertOk()
             ->assertJsonFragment([
                 'id' => $wedding->id,
-                'basePrice' => 0,
+                'basePrice' => '0.00',
                 'basePriceEditable' => false,
             ]);
 

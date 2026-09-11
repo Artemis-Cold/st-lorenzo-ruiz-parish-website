@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { AxiosError } from "axios";
 import {
   ArrowUpRight,
+  Banknote,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
@@ -20,21 +21,28 @@ import {
   type StaffTransaction,
   type StaffTransactionPage,
   type TransactionService,
+  type TransactionFilterStatus,
+  type TransactionMethod,
   type TransactionStatus,
 } from "@/services/staffTransactionService";
 import StaffDashboardLayout from "../components/dashboard/StaffDashboardLayout";
 import TransactionReviewModal from "../components/transactions/TransactionReviewModal";
+import { formatPhpCurrency } from "@/utils/currency";
 
 const statusStyles: Record<TransactionStatus, string> = {
-  pending: "border-amber-200 bg-amber-50 text-amber-700",
+  awaiting_payment: "border-blue-200 bg-blue-50 text-blue-700",
+  pending_verification: "border-amber-200 bg-amber-50 text-amber-700",
   confirmed: "border-emerald-200 bg-emerald-50 text-emerald-700",
   rejected: "border-red-200 bg-red-50 text-red-700",
+  voided: "border-gray-200 bg-gray-50 text-gray-600",
 };
 
 const statusDotStyles: Record<TransactionStatus, string> = {
-  pending: "bg-amber-500",
+  awaiting_payment: "bg-blue-500",
+  pending_verification: "bg-amber-500",
   confirmed: "bg-emerald-500",
   rejected: "bg-red-500",
+  voided: "bg-gray-400",
 };
 
 const serviceOptions: Array<{ label: string; value: TransactionService | "" }> =
@@ -62,17 +70,13 @@ function TransactionStatusBadge({ status }: { status: TransactionStatus }) {
       className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold capitalize ${statusStyles[status]}`}
     >
       <span className={`size-1.5 rounded-full ${statusDotStyles[status]}`} />
-      {status}
+      {status
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")}
     </span>
   );
 }
-
-const money = (amount: number) =>
-  amount.toLocaleString("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    minimumFractionDigits: 2,
-  });
 
 const requestMessage = (error: unknown, fallback: string) => {
   if (!(error instanceof AxiosError)) return fallback;
@@ -85,7 +89,8 @@ export default function Transactions() {
   const [meta, setMeta] = useState<StaffTransactionPage["meta"]>(emptyMeta);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [status, setStatus] = useState<TransactionStatus | "">("pending");
+  const [status, setStatus] = useState<TransactionFilterStatus | "">("pending");
+  const [method, setMethod] = useState<TransactionMethod | "">("");
   const [service, setService] = useState<TransactionService | "">("");
   const [submittedDate, setSubmittedDate] = useState("");
   const [loading, setLoading] = useState(true);
@@ -108,6 +113,7 @@ export default function Transactions() {
     getStaffTransactions(
       {
         status: status || undefined,
+        method: method || undefined,
         service: service || undefined,
         date: submittedDate || undefined,
         search: debouncedSearch || undefined,
@@ -136,13 +142,22 @@ export default function Transactions() {
       });
 
     return () => controller.abort();
-  }, [status, service, submittedDate, debouncedSearch, page, reloadKey]);
+  }, [
+    status,
+    method,
+    service,
+    submittedDate,
+    debouncedSearch,
+    page,
+    reloadKey,
+  ]);
 
   const clearFilters = () => {
     setLoading(true);
     setSearch("");
     setDebouncedSearch("");
     setStatus("");
+    setMethod("");
     setService("");
     setSubmittedDate("");
     setPage(1);
@@ -151,10 +166,18 @@ export default function Transactions() {
   const changeStatus = async (
     item: StaffTransaction,
     nextStatus: "confirmed" | "rejected",
+    cashDetails?: {
+      amount_received: number;
+      official_receipt_number: string;
+      notes?: string;
+    },
   ) => {
     setProcessing(true);
     try {
-      await updateTransactionStatus(item.id, nextStatus);
+      await updateTransactionStatus(item.id, {
+        status: nextStatus,
+        ...cashDetails,
+      });
       toast.success(
         `Payment ${nextStatus}. The parishioner notification has been queued.`,
       );
@@ -170,7 +193,9 @@ export default function Transactions() {
     }
   };
 
-  const hasFilters = Boolean(search || status || service || submittedDate);
+  const hasFilters = Boolean(
+    search || status || method || service || submittedDate,
+  );
 
   return (
     <StaffDashboardLayout>
@@ -197,8 +222,8 @@ export default function Transactions() {
                   Transactions
                 </h1>
                 <p className="mt-1 text-sm text-white/75">
-                  Compare submitted GCash references and receipts before
-                  confirming payment.
+                  Verify GCash submissions and record cash received at the
+                  parish office.
                 </p>
               </div>
             </div>
@@ -218,7 +243,7 @@ export default function Transactions() {
         </div>
 
         <section className="rounded-3xl border border-[#E7E2DA] bg-white p-5 shadow-sm sm:p-6">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(250px,1fr)_180px_190px_180px_auto]">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_170px_150px_180px_170px_auto]">
             <label className="relative block">
               <span className="sr-only">Search transactions</span>
               <Search
@@ -243,15 +268,34 @@ export default function Transactions() {
                 value={status}
                 onChange={(event) => {
                   setLoading(true);
-                  setStatus(event.target.value as TransactionStatus | "");
+                  setStatus(event.target.value as TransactionFilterStatus | "");
                   setPage(1);
                 }}
                 className="h-11 w-full rounded-xl border border-[#E7E2DA] bg-white px-3 text-sm text-gray-700 outline-none transition focus:border-[#B22222]"
               >
                 <option value="">All statuses</option>
-                <option value="pending">Pending review</option>
+                <option value="pending">All pending</option>
+                <option value="awaiting_payment">Awaiting cash</option>
+                <option value="pending_verification">GCash verification</option>
                 <option value="confirmed">Confirmed</option>
                 <option value="rejected">Rejected</option>
+                <option value="voided">Voided</option>
+              </select>
+            </label>
+            <label>
+              <span className="sr-only">Filter by payment method</span>
+              <select
+                value={method}
+                onChange={(event) => {
+                  setLoading(true);
+                  setMethod(event.target.value as TransactionMethod | "");
+                  setPage(1);
+                }}
+                className="h-11 w-full rounded-xl border border-[#E7E2DA] bg-white px-3 text-sm text-gray-700 outline-none transition focus:border-[#B22222]"
+              >
+                <option value="">All methods</option>
+                <option value="gcash">GCash</option>
+                <option value="cash">Cash</option>
               </select>
             </label>
             <label>
@@ -307,7 +351,7 @@ export default function Transactions() {
                 Payment submissions
               </h2>
               <p className="mt-0.5 text-xs text-gray-500">
-                Pending payments require receipt and reference verification.
+                Review online receipts or record cash received in person.
               </p>
             </div>
             {loading && <Skeleton className="mt-2 h-3 w-24 sm:mt-0" />}
@@ -329,7 +373,8 @@ export default function Transactions() {
                   <th className="px-5 py-4">Submitted</th>
                   <th className="px-5 py-4">Parishioner</th>
                   <th className="px-5 py-4">Service</th>
-                  <th className="px-5 py-4">GCash reference</th>
+                  <th className="px-5 py-4">Method</th>
+                  <th className="px-5 py-4">Payment reference</th>
                   <th className="px-5 py-4 text-right">Amount</th>
                   <th className="px-5 py-4">Receipt</th>
                   <th className="px-5 py-4">Status</th>
@@ -340,10 +385,10 @@ export default function Transactions() {
               </thead>
               <tbody>
                 {loading ? (
-                  <TableSkeletonRows columns={9} />
+                  <TableSkeletonRows columns={10} />
                 ) : items.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-5 py-16 text-center">
+                    <td colSpan={10} className="px-5 py-16 text-center">
                       <Receipt className="mx-auto text-gray-300" size={34} />
                       <p className="mt-3 font-medium text-gray-600">
                         No payment submissions found
@@ -384,30 +429,46 @@ export default function Transactions() {
                       <td className="whitespace-nowrap px-5 py-4 text-gray-600">
                         {item.type}
                       </td>
+                      <td className="whitespace-nowrap px-5 py-4">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-semibold capitalize text-gray-700">
+                          {item.method === "cash" && <Banknote size={15} />}
+                          {item.method}
+                        </span>
+                      </td>
                       <td className="max-w-44 px-5 py-4">
                         <p
                           className="truncate font-mono text-xs font-semibold text-[#292524]"
-                          title={item.reference || "Not provided"}
+                          title={
+                            item.reference ||
+                            item.officialReceiptNumber ||
+                            "Not provided"
+                          }
                         >
-                          {item.reference || "Not provided"}
+                          {item.reference || item.officialReceiptNumber || "—"}
                         </p>
                       </td>
                       <td className="whitespace-nowrap px-5 py-4 text-right font-semibold tabular-nums text-[#292524]">
-                        {money(item.amount)}
+                        {formatPhpCurrency(item.amount)}
                       </td>
                       <td className="px-5 py-4">
-                        <a
-                          href={item.receipt.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="group/receipt inline-flex items-center gap-2 rounded-xl border border-[#E7E2DA] bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:border-[#B22222]/30 hover:bg-red-50 hover:text-[#B22222]"
-                        >
-                          <FileImage size={15} /> View{" "}
-                          <ArrowUpRight
-                            size={13}
-                            className="text-gray-400 group-hover/receipt:text-[#B22222]"
-                          />
-                        </a>
+                        {item.receipt ? (
+                          <a
+                            href={item.receipt.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="group/receipt inline-flex items-center gap-2 rounded-xl border border-[#E7E2DA] bg-white px-3 py-2 text-xs font-semibold text-gray-700 transition hover:border-[#B22222]/30 hover:bg-red-50 hover:text-[#B22222]"
+                          >
+                            <FileImage size={15} /> View{" "}
+                            <ArrowUpRight
+                              size={13}
+                              className="text-gray-400 group-hover/receipt:text-[#B22222]"
+                            />
+                          </a>
+                        ) : (
+                          <span className="text-xs text-gray-400">
+                            Not required
+                          </span>
+                        )}
                       </td>
                       <td className="px-5 py-4">
                         <TransactionStatusBadge status={item.status} />
@@ -416,10 +477,15 @@ export default function Transactions() {
                         <button
                           type="button"
                           onClick={() => setSelected(item)}
-                          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition ${item.status === "pending" ? "bg-[#B22222] text-white hover:bg-[#991B1B]" : "border border-[#E7E2DA] text-gray-600 hover:border-[#B22222]/35 hover:bg-red-50 hover:text-[#B22222]"}`}
+                          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition ${["awaiting_payment", "pending_verification"].includes(item.status) ? "bg-[#B22222] text-white hover:bg-[#991B1B]" : "border border-[#E7E2DA] text-gray-600 hover:border-[#B22222]/35 hover:bg-red-50 hover:text-[#B22222]"}`}
                         >
                           <Eye size={14} />{" "}
-                          {item.status === "pending" ? "Review" : "Details"}
+                          {[
+                            "awaiting_payment",
+                            "pending_verification",
+                          ].includes(item.status)
+                            ? "Review"
+                            : "Details"}
                         </button>
                       </td>
                     </tr>
@@ -478,12 +544,15 @@ export default function Transactions() {
       </div>
 
       <TransactionReviewModal
+        key={selected?.id ?? "closed"}
         transaction={selected}
         processing={processing}
         onClose={() => {
           if (!processing) setSelected(null);
         }}
-        onConfirm={(item) => void changeStatus(item, "confirmed")}
+        onConfirm={(item, cashDetails) =>
+          void changeStatus(item, "confirmed", cashDetails)
+        }
         onReject={(item) => void changeStatus(item, "rejected")}
       />
     </StaffDashboardLayout>

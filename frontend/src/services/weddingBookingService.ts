@@ -65,27 +65,17 @@ function buildFormData(booking: WeddingBooking): FormData {
     );
   });
 
-  booking.sponsors.forEach((pair, index) => {
-    (["god_father", "god_mother"] as const).forEach((role) => {
-      const sponsor = pair[role];
-      const prefix = `sponsors[${index}][${role}]`;
-      formData.append(`${prefix}[first_name]`, sponsor.first_name);
-      formData.append(`${prefix}[middle_initial]`, sponsor.middle_initial);
-      formData.append(`${prefix}[last_name]`, sponsor.last_name);
-      formData.append(`${prefix}[residence]`, sponsor.residence);
-    });
+  booking.sponsors.forEach((sponsor, index) => {
+    const prefix = `sponsors[${index}]`;
+    formData.append(`${prefix}[role]`, sponsor.role);
+    formData.append(`${prefix}[first_name]`, sponsor.first_name);
+    formData.append(`${prefix}[middle_initial]`, sponsor.middle_initial);
+    formData.append(`${prefix}[last_name]`, sponsor.last_name);
+    formData.append(`${prefix}[residence]`, sponsor.residence);
+    formData.append(`${prefix}[requirement_type]`, sponsor.requirement_type);
 
-    if (pair.requirements.marriage_contract) {
-      formData.append(
-        `sponsors[${index}][requirements][marriage_contract]`,
-        pair.requirements.marriage_contract,
-      );
-    }
-    if (pair.requirements.confirmation_certificate) {
-      formData.append(
-        `sponsors[${index}][requirements][confirmation_certificate]`,
-        pair.requirements.confirmation_certificate,
-      );
+    if (sponsor.requirement_file) {
+      formData.append(`${prefix}[requirement_file]`, sponsor.requirement_file);
     }
   });
 

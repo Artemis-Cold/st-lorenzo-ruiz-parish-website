@@ -105,17 +105,18 @@ class ClearSacramentBookings extends Command
             ->whereIn('booking_id', $bookingIds)
             ->pluck('file_path');
 
-        $godparentDocuments = DB::table('god_parent_pairs')
-            ->join('baptizands', 'baptizands.id', '=', 'god_parent_pairs.baptizand_id')
-            ->whereIn('baptizands.booking_id', $bookingIds)
-            ->get(['god_parent_pairs.marriage_contract', 'god_parent_pairs.confirmation_certificate'])
-            ->flatMap(fn ($pair) => [$pair->marriage_contract, $pair->confirmation_certificate]);
+        $godparentDocuments = Schema::hasColumn('god_parents', 'requirement_file_path')
+            ? DB::table('god_parents')
+                ->join('baptizands', 'baptizands.id', '=', 'god_parents.baptizand_id')
+                ->whereIn('baptizands.booking_id', $bookingIds)
+                ->pluck('god_parents.requirement_file_path')
+            : collect();
 
-        $weddingSponsorDocuments = Schema::hasTable('wedding_sponsor_pairs')
-            ? DB::table('wedding_sponsor_pairs')
+        $weddingSponsorDocuments = Schema::hasTable('wedding_sponsors')
+            && Schema::hasColumn('wedding_sponsors', 'requirement_file_path')
+            ? DB::table('wedding_sponsors')
                 ->whereIn('booking_id', $bookingIds)
-                ->get(['marriage_contract', 'confirmation_certificate'])
-                ->flatMap(fn ($pair) => [$pair->marriage_contract, $pair->confirmation_certificate])
+                ->pluck('wedding_sponsors.requirement_file_path')
             : collect();
 
         return $bookingDocuments

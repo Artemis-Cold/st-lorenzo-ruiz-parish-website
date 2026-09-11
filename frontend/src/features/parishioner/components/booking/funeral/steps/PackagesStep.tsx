@@ -9,6 +9,7 @@ import {
   type ServicePackage,
 } from "../../../../../../services/servicePackageService";
 import type { FuneralBooking } from "../../../../types/funeral";
+import { formatPhpCurrency } from "@/utils/currency";
 
 interface Props {
   booking: FuneralBooking;
@@ -105,7 +106,7 @@ export default function PackagesStep(props: Props) {
                   <div className="my-3 border-b border-red-300 sm:my-4" />
                   <p className="text-xs text-[#B22222] sm:text-sm">From</p>
                   <p className="text-xl font-semibold text-[#B22222] sm:text-3xl sm:font-light lg:text-4xl">
-                    ₱{Number(item.base_price).toLocaleString()}
+                    {formatPhpCurrency(item.base_price)}
                   </p>
                 </div>
               </button>

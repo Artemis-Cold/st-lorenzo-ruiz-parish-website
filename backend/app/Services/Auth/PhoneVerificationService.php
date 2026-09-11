@@ -37,7 +37,7 @@ class PhoneVerificationService
             $this->sms->queueToUser(
                 $user,
                 'phone_verification_otp',
-                "St. Lorenzo Ruiz Parish: Your mobile number verification code is {$code}. This code expires in 10 minutes. Do not share it with anyone."
+                "St. Lorenzo Ruiz Parish: Your username is {$user->username}. Your mobile verification code is {$code}. This code expires in 10 minutes. Do not share it with anyone."
             );
         });
     }

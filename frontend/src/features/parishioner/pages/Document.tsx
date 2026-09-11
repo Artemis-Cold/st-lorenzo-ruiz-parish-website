@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import DashboardLayout from "../components/DashboardLayout";
 import {
@@ -17,13 +17,16 @@ import type {
 } from "../types/document";
 import { submitDocumentRequest } from "@/services/documentRequestBookingService";
 import { GCASH_REFERENCE_ERROR, isValidGcashReference } from "@/utils/gcash";
+import { useAuth } from "@/contexts/AuthContext";
 
 const stepLabels = ["Selection", "Details", "Payment", "Confirmation"];
 
 export default function Document() {
+  const { user } = useAuth();
   const [booking, setBooking] = useState<DocumentRequestBooking>({
     requests: [],
     remarks: "",
+    payment_method: "gcash",
     reference_number: "",
     receipt: null,
   });
@@ -34,6 +37,26 @@ export default function Document() {
   const [submitting, setSubmitting] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const requester = useMemo(
+    () => ({
+      fullName: user?.full_name ?? "",
+      phone: user?.phone ?? "",
+      gender: user?.gender ?? null,
+      address: user
+        ? [
+            user.address.house_no,
+            user.address.street,
+            user.address.barangay,
+            user.address.municipality,
+            user.address.province,
+            user.address.zip_code,
+          ]
+            .filter((part) => typeof part === "string" && part.trim())
+            .join(", ")
+        : "",
+    }),
+    [user],
+  );
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -43,12 +66,14 @@ export default function Document() {
     <DocumentSelection
       booking={booking}
       setBooking={setBooking}
+      requester={requester}
       errors={fieldErrors}
       key="selection"
     />,
     <DetailsStep
       booking={booking}
       setBooking={setBooking}
+      requester={requester}
       errors={fieldErrors}
       key="details"
     />,
@@ -118,6 +143,7 @@ export default function Document() {
         case "Baptismal Certificate":
           require(index, "name", details.name, "Full name");
           require(index, "address", details.address, "Address");
+          require(index, "relationship_to_owner", details.relationship_to_owner, "Relationship to record owner");
           validatePastDate(
             index,
             "baptism_date",
@@ -128,6 +154,7 @@ export default function Document() {
         case "Confirmation Certificate":
           require(index, "name", details.name, "Full name");
           require(index, "address", details.address, "Address");
+          require(index, "relationship_to_owner", details.relationship_to_owner, "Relationship to record owner");
           validatePastDate(
             index,
             "confirmation_date",
@@ -138,11 +165,13 @@ export default function Document() {
         case "Death Certificate":
           require(index, "name", details.name, "Full name");
           require(index, "address", details.address, "Address");
+          require(index, "relationship_to_owner", details.relationship_to_owner, "Relationship to deceased");
           break;
         case "Marriage Certificate":
           require(index, "bride_name", details.bride_name, "Bride's full name");
           require(index, "groom_name", details.groom_name, "Groom's full name");
           require(index, "address", details.address, "Address");
+          require(index, "requester_role", details.requester_role, "Account holder's role");
           validatePastDate(
             index,
             "marriage_date",
@@ -167,11 +196,13 @@ export default function Document() {
     } else if (step === 2) {
       errors = validateDetails();
     } else if (step === 3) {
-      if (!isValidGcashReference(booking.reference_number)) {
-        errors.reference_number = [GCASH_REFERENCE_ERROR];
-      }
-      if (!booking.receipt) {
-        errors.receipt = ["Payment receipt is required."];
+      if (booking.payment_method === "gcash") {
+        if (!isValidGcashReference(booking.reference_number)) {
+          errors.reference_number = [GCASH_REFERENCE_ERROR];
+        }
+        if (!booking.receipt) {
+          errors.receipt = ["Payment receipt is required."];
+        }
       }
     }
 

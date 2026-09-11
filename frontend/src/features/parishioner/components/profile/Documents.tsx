@@ -1,6 +1,7 @@
 import { CalendarDays, FileText } from "lucide-react";
 
 import type { ProfileDocument } from "@/api/auth";
+import { formatPhpCurrency } from "@/utils/currency";
 import { BookingCard } from "../booking";
 
 const documentLabel = (value: string) =>
@@ -64,7 +65,7 @@ export default function Documents({
                     )}
                   </div>
                   <p className="mt-2 text-sm font-medium">
-                    ₱{Number(document.price).toFixed(2)}
+                    {formatPhpCurrency(document.price)}
                   </p>
                 </div>
               </div>

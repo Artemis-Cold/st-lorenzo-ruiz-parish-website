@@ -28,15 +28,12 @@ use App\Http\Controllers\Auth\PasswordResetOtpController;
 use App\Http\Controllers\Auth\PhoneVerificationController;
 use App\Http\Controllers\Auth\ProfileController;
 use App\Http\Controllers\Auth\RegisterController;
-use App\Http\Controllers\Auth\RegistrationPhoneVerificationController;
 use App\Http\Controllers\Auth\StaffLoginController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function () {
 
     Route::post('/register', RegisterController::class);
-    Route::post('/register/phone-verification/otp', RegistrationPhoneVerificationController::class)
-        ->middleware('throttle:3,10');
 
     Route::post('/login', LoginController::class)
         ->middleware('throttle:login');
@@ -85,12 +82,13 @@ Route::middleware('auth:sanctum')->group(function () {
             '/bookings/document-request',
             [DocumentRequestBookingController::class, 'store']
         );
+
+        Route::post('/bookings/{booking}/documents', [ParishionerBookingController::class, 'uploadDocument']);
+        Route::post('/bookings/{booking}/payment', [ParishionerBookingController::class, 'submitPayment']);
+        Route::patch('/bookings/{booking}/reschedule', [ParishionerBookingController::class, 'reschedule']);
     });
 
     Route::get('/bookings/{booking}', [ParishionerBookingController::class, 'show']);
-    Route::post('/bookings/{booking}/documents', [ParishionerBookingController::class, 'uploadDocument']);
-    Route::post('/bookings/{booking}/payment', [ParishionerBookingController::class, 'submitPayment']);
-    Route::patch('/bookings/{booking}/reschedule', [ParishionerBookingController::class, 'reschedule']);
 
     Route::patch('/profile/complete', [ProfileController::class, 'complete']);
     Route::patch('/profile', [ProfileController::class, 'update']);
@@ -122,7 +120,7 @@ Route::middleware(['auth:sanctum', 'staff'])
         Route::get('/settings/pricing', [StaffPricingController::class, 'index']);
         Route::put('/settings/pricing', [StaffPricingController::class, 'update']);
         Route::get('/transactions', [StaffTransactionController::class, 'index']);
-        Route::patch('/transactions/{bookingDocument}/status', [StaffTransactionController::class, 'updateStatus']);
+        Route::patch('/transactions/{payment}/status', [StaffTransactionController::class, 'updateStatus']);
         Route::get('/bookings', [StaffBookingController::class, 'index']);
         Route::get('/availability', [StaffAvailabilityController::class, 'index']);
         Route::post('/availability', [StaffAvailabilityController::class, 'store']);

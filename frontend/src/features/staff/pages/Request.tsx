@@ -33,6 +33,7 @@ import {
   drawParishPdfLetterhead,
   loadParishPdfLogo,
 } from "../utils/pdfLetterhead";
+import { formatMoneyAmount, formatPhpCurrency } from "@/utils/currency";
 
 const statusOptions: Array<{ label: string; value: RequestStatus | "" }> = [
   { label: "All statuses", value: "" },
@@ -53,13 +54,6 @@ const emptyMeta: StaffDocumentRequestPage["meta"] = {
   from: null,
   to: null,
 };
-
-const money = (amount: number) =>
-  amount.toLocaleString("en-PH", {
-    style: "currency",
-    currency: "PHP",
-    minimumFractionDigits: 2,
-  });
 
 const requestMessage = (error: unknown, fallback: string) => {
   if (!(error instanceof AxiosError)) return fallback;
@@ -145,7 +139,7 @@ export default function Requests() {
     try {
       const updated = await updateDocumentRequestStatus(id, nextStatus);
       toast.success(
-        `Request from “${updated.name}” marked as ${requestStatusLabel(nextStatus)}.`,
+        `Request from “${updated.name}” is now ${requestStatusLabel(nextStatus)}.`,
       );
       setSelected(null);
       setLoading(true);
@@ -226,7 +220,7 @@ export default function Requests() {
           item.documents
             .map((document) => formatLabel(document.type))
             .join(", "),
-          `PHP ${item.amount.toLocaleString("en-PH", { minimumFractionDigits: 2 })}`,
+          `PHP ${formatMoneyAmount(item.amount)}`,
           requestStatusLabel(item.status),
         ]),
         theme: "grid",
@@ -496,7 +490,7 @@ export default function Requests() {
                         </p>
                       </td>
                       <td className="whitespace-nowrap px-5 py-4 text-right font-semibold tabular-nums text-[#292524]">
-                        {money(item.amount)}
+                        {formatPhpCurrency(item.amount)}
                       </td>
                       <td className="px-5 py-4">
                         <RequestStatusBadge status={item.status} />

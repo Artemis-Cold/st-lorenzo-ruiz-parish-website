@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Booking;
+use App\Models\GodParent;
+use App\Models\WeddingSponsor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -15,8 +17,8 @@ class BookingRequirementService
         $booking->loadMissing([
             'service',
             'documents',
-            'baptizand.godParentPairs',
-            'weddingSponsorPairs',
+            'baptizand.godParents',
+            'weddingSponsors',
         ]);
         $uploaded = $booking->documents
             ->where('status', '!=', 'rejected')
@@ -81,28 +83,22 @@ class BookingRequirementService
                 return $document->document_type;
             }
 
-            if (preg_match('/^wedding-sponsor:(\d+):(marriage_contract|confirmation_certificate)$/', $documentKey, $matches)) {
-                $pair = $booking->weddingSponsorPairs()->whereKey((int) $matches[1])->first();
+            if (preg_match('/^wedding-sponsor-individual:(\d+)$/', $documentKey, $matches)) {
+                $sponsor = WeddingSponsor::query()
+                    ->whereKey((int) $matches[1])
+                    ->where('booking_id', $booking->id)
+                    ->first();
 
-                return $this->rejectPairDocument(
-                    $booking,
-                    $pair,
-                    $matches[2],
-                    "wedding_sponsor_{$matches[2]}_{$matches[1]}",
-                    $reason,
-                );
+                return $this->rejectSponsorDocument($booking, $sponsor, $reason);
             }
 
-            if (preg_match('/^baptism-godparent:(\d+):(marriage_contract|confirmation_certificate)$/', $documentKey, $matches)) {
-                $pair = $booking->baptizand?->godParentPairs()->whereKey((int) $matches[1])->first();
+            if (preg_match('/^baptism-godparent-individual:(\d+)$/', $documentKey, $matches)) {
+                $godParent = GodParent::query()
+                    ->whereKey((int) $matches[1])
+                    ->whereHas('baptizand', fn ($query) => $query->where('booking_id', $booking->id))
+                    ->first();
 
-                return $this->rejectPairDocument(
-                    $booking,
-                    $pair,
-                    $matches[2],
-                    "godparent_{$matches[2]}_{$matches[1]}",
-                    $reason,
-                );
+                return $this->rejectGodParentDocument($booking, $godParent, $reason);
             }
 
             throw ValidationException::withMessages([
@@ -111,14 +107,14 @@ class BookingRequirementService
         });
 
         $booking->unsetRelation('documents');
-        $booking->unsetRelation('weddingSponsorPairs');
+        $booking->unsetRelation('weddingSponsors');
         $booking->unsetRelation('baptizand');
         $booking->load([
             'user',
             'service',
             'documents',
-            'weddingSponsorPairs',
-            'baptizand.godParentPairs',
+            'weddingSponsors',
+            'baptizand.godParents',
         ]);
 
         $requirement = collect($this->missing($booking))->first(
@@ -136,31 +132,62 @@ class BookingRequirementService
         return ['documentType' => $documentType, 'label' => $label];
     }
 
-    private function rejectPairDocument(
+    private function rejectSponsorDocument(
         Booking $booking,
-        mixed $pair,
-        string $column,
-        string $documentType,
+        ?WeddingSponsor $sponsor,
         string $reason,
     ): string {
-        $path = $pair?->{$column};
-
-        if (! $pair || ! $path) {
+        if (! $sponsor?->requirement_type || ! $sponsor->requirement_file_path) {
             throw ValidationException::withMessages([
-                'document_key' => 'This supporting document is no longer available for review.',
+                'document_key' => 'This sponsor document is no longer available for review.',
             ]);
         }
 
+        $documentType = "wedding_sponsor_individual_{$sponsor->requirement_type}_{$sponsor->id}";
         $booking->documents()->updateOrCreate(
             ['document_type' => $documentType],
             [
-                'file_name' => basename($path),
-                'file_path' => $path,
+                'file_name' => $sponsor->requirement_file_name
+                    ?: basename($sponsor->requirement_file_path),
+                'file_path' => $sponsor->requirement_file_path,
                 'status' => 'rejected',
                 'remarks' => $reason,
             ]
         );
-        $pair->update([$column => null]);
+        $sponsor->update([
+            'requirement_file_name' => null,
+            'requirement_file_path' => null,
+        ]);
+
+        return $documentType;
+    }
+
+    private function rejectGodParentDocument(
+        Booking $booking,
+        ?GodParent $godParent,
+        string $reason,
+    ): string {
+        if (! $godParent?->requirement_type || ! $godParent->requirement_file_path) {
+            throw ValidationException::withMessages([
+                'document_key' => 'This godparent document is no longer available for review.',
+            ]);
+        }
+
+        $documentType = "baptism_godparent_individual_{$godParent->requirement_type}_{$godParent->id}";
+        $booking->documents()->updateOrCreate(
+            ['document_type' => $documentType],
+            [
+                'file_name' => $godParent->requirement_file_name
+                    ?: basename($godParent->requirement_file_path),
+                'file_path' => $godParent->requirement_file_path,
+                'status' => 'rejected',
+                'remarks' => $reason,
+            ]
+        );
+        $godParent->update([
+            'requirement_file_name' => null,
+            'requirement_file_path' => null,
+        ]);
 
         return $documentType;
     }
@@ -190,27 +217,18 @@ class BookingRequirementService
             ['key' => 'couple_photo_3', 'label' => '3R Couple Photo 3', 'types' => ['couple_photo_3', 'couple_photo']],
         ];
 
-        if ($booking->weddingSponsorPairs->isEmpty()) {
-            $definitions[] = [
-                'key' => 'sponsor_document',
-                'label' => 'Sponsor Marriage Contract or Confirmation Certificate',
-                'types' => ['sponsor_marriage_contract', 'sponsor_confirmation_certificate'],
-            ];
-
-            return $definitions;
-        }
-
-        foreach ($booking->weddingSponsorPairs as $index => $pair) {
-            if ($pair->marriage_contract || $pair->confirmation_certificate) {
+        foreach ($booking->weddingSponsors as $index => $sponsor) {
+            if (! $sponsor->requirement_type || $sponsor->requirement_file_path) {
                 continue;
             }
 
+            $role = $sponsor->role === 'godfather' ? 'Godfather' : 'Godmother';
+            $certificate = str($sponsor->requirement_type)->headline();
             $definitions[] = [
-                'key' => 'wedding_sponsor_document_'.$pair->id,
-                'label' => 'Wedding sponsor pair '.($index + 1).' supporting document',
+                'key' => 'wedding_sponsor_document_'.$sponsor->id,
+                'label' => 'Sponsor '.($index + 1)." ({$role}) {$certificate}",
                 'types' => [
-                    'wedding_sponsor_marriage_contract_'.$pair->id,
-                    'wedding_sponsor_confirmation_certificate_'.$pair->id,
+                    "wedding_sponsor_individual_{$sponsor->requirement_type}_{$sponsor->id}",
                 ],
             ];
         }
@@ -232,17 +250,18 @@ class BookingRequirementService
             ];
         }
 
-        foreach ($booking->baptizand?->godParentPairs ?? [] as $index => $pair) {
-            if ($pair->marriage_contract || $pair->confirmation_certificate) {
+        foreach ($booking->baptizand?->godParents ?? [] as $index => $godParent) {
+            if (! $godParent->requirement_type || $godParent->requirement_file_path) {
                 continue;
             }
 
+            $role = $godParent->role === 'godfather' ? 'Godfather' : 'Godmother';
+            $certificate = str($godParent->requirement_type)->headline();
             $definitions[] = [
-                'key' => 'godparent_document_'.$pair->id,
-                'label' => 'Godparent pair '.($index + 1).' supporting document',
+                'key' => 'baptism_godparent_document_'.$godParent->id,
+                'label' => 'Godparent '.($index + 1)." ({$role}) {$certificate}",
                 'types' => [
-                    'godparent_marriage_contract_'.$pair->id,
-                    'godparent_confirmation_certificate_'.$pair->id,
+                    "baptism_godparent_individual_{$godParent->requirement_type}_{$godParent->id}",
                 ],
             ];
         }

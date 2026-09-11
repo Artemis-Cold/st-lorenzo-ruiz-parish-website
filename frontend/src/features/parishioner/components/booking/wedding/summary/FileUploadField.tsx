@@ -22,6 +22,7 @@ export default function FileUploadField({
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [sizeError, setSizeError] = useState<string | null>(null);
+  const acceptedFormats = accept === ".pdf" ? "PDF only" : "PDF, JPG, PNG";
 
   const openPicker = () => {
     if (readOnly) return;
@@ -98,7 +99,9 @@ export default function FileUploadField({
 
           <p className="mt-1 text-sm text-gray-500">Click to browse</p>
 
-          <p className="mt-2 text-xs text-gray-400">PDF, JPG, PNG (Max 5 MB)</p>
+          <p className="mt-2 text-xs text-gray-400">
+            {acceptedFormats} (Max 5 MB)
+          </p>
         </button>
       ) : (
         <div className="rounded-2xl border border-green-300 bg-green-50 p-5">

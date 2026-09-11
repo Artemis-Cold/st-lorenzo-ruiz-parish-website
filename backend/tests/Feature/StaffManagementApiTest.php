@@ -65,12 +65,21 @@ class StaffManagementApiTest extends TestCase
                 'file_path' => 'booking-documents/'.$documentType.'.pdf',
             ]);
         }
-        BookingDocument::create([
+        $receipt = BookingDocument::create([
             'booking_id' => $booking->id,
             'document_type' => 'payment_receipt',
             'file_name' => 'confirmed-payment.jpg',
             'file_path' => 'booking-documents/confirmed-payment.jpg',
             'status' => 'approved',
+        ]);
+        $booking->payments()->create([
+            'method' => 'gcash',
+            'amount' => 13000,
+            'status' => 'confirmed',
+            'reference_number' => '8100000000001',
+            'receipt_document_id' => $receipt->id,
+            'confirmed_by' => $staff->id,
+            'confirmed_at' => now(),
         ]);
         $booking->update(['status' => 'paid']);
 
@@ -78,7 +87,7 @@ class StaffManagementApiTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.type', 'Marriage')
-            ->assertJsonPath('data.0.amount', 13000)
+            ->assertJsonPath('data.0.amount', '13000.00')
             ->assertJsonPath('data.0.details.packageName', 'Wedding Package')
             ->assertJsonPath('data.0.names', $parishioner->full_name);
 
@@ -115,11 +124,18 @@ class StaffManagementApiTest extends TestCase
             'names' => ['Juan Dela Cruz'],
             'amount' => 100,
         ]);
-        BookingDocument::create([
+        $receipt = BookingDocument::create([
             'booking_id' => $booking->id,
             'document_type' => 'payment_receipt',
             'file_name' => 'mass-receipt.jpg',
             'file_path' => 'booking-documents/mass-receipt.jpg',
+        ]);
+        $booking->payments()->create([
+            'method' => 'gcash',
+            'amount' => 100,
+            'status' => 'pending_verification',
+            'reference_number' => '8100000000002',
+            'receipt_document_id' => $receipt->id,
         ]);
 
         $this->getJson('/api/staff/mass-intentions')
@@ -159,8 +175,8 @@ class StaffManagementApiTest extends TestCase
 
         $transaction = $this->getJson('/api/staff/transactions')
             ->assertOk()
-            ->assertJsonPath('data.0.reference', 'MASS-PAYMENT-1')
-            ->assertJsonPath('data.0.status', 'pending');
+            ->assertJsonPath('data.0.reference', '8100000000002')
+            ->assertJsonPath('data.0.status', 'pending_verification');
 
         $receiptId = $transaction->json('data.0.id');
         $this->patchJson("/api/staff/transactions/{$receiptId}/status", [
@@ -208,12 +224,19 @@ class StaffManagementApiTest extends TestCase
             'file_name' => 'document-receipt.jpg',
             'file_path' => 'booking-documents/document-receipt.jpg',
         ]);
+        $payment = $booking->payments()->create([
+            'method' => 'gcash',
+            'amount' => 200,
+            'status' => 'pending_verification',
+            'reference_number' => '8100000000003',
+            'receipt_document_id' => $receipt->id,
+        ]);
 
         $this->getJson('/api/staff/document-requests')
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonCount(2, 'data.0.documents')
-            ->assertJsonPath('data.0.amount', 200)
+            ->assertJsonPath('data.0.amount', '200.00')
             ->assertJsonPath('data.0.paymentReference', 'DOCUMENT-PAYMENT-1')
             ->assertJsonPath('data.0.receipt.fileName', 'document-receipt.jpg')
             ->assertJsonPath('data.0.name', $parishioner->full_name);
@@ -224,11 +247,11 @@ class StaffManagementApiTest extends TestCase
             ->assertJsonPath('data.0.reference', $booking->booking_reference)
             ->assertJsonPath('meta.total', 1);
 
-        $this->getJson('/api/staff/transactions?status=pending&service=document-request&search=DOCUMENT-PAYMENT&date='.now()->toDateString().'&per_page=1')
+        $this->getJson('/api/staff/transactions?status=pending&service=document-request&search=8100000000003&date='.now()->toDateString().'&per_page=1')
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.bookingReference', $booking->booking_reference)
-            ->assertJsonPath('data.0.reference', 'DOCUMENT-PAYMENT-1')
+            ->assertJsonPath('data.0.reference', '8100000000003')
             ->assertJsonPath('meta.total', 1);
 
         $this->patchJson("/api/staff/document-requests/{$request->id}/status", [
@@ -238,7 +261,7 @@ class StaffManagementApiTest extends TestCase
 
         $this->assertDatabaseCount('sms_messages', 0);
 
-        $this->patchJson("/api/staff/transactions/{$receipt->id}/status", [
+        $this->patchJson("/api/staff/transactions/{$payment->id}/status", [
             'status' => 'confirmed',
         ])->assertOk()->assertJsonPath('data.status', 'confirmed');
 

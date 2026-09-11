@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 
 import StatusBadge from "../StatusBadge";
 import type { MassIntention } from "../../types/massIntention";
+import { formatPhpCurrency } from "@/utils/currency";
 
 interface Props {
   intention: MassIntention | null;
@@ -116,7 +117,7 @@ export default function MassIntentionDetailModal({
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-500">Amount</span>
             <span className="font-semibold text-[#B22222]">
-              ₱{intention.amount.toLocaleString()}.00
+              {formatPhpCurrency(intention.amount)}
             </span>
           </div>
         </div>

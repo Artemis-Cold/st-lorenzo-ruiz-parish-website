@@ -1,20 +1,23 @@
-import { Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ChevronDown, History, Menu, Phone, X } from "lucide-react";
 import { useState, type MouseEvent } from "react";
-
-import ParishLogo from "@/components/common/ParishLogo";
+import { Link } from "react-router-dom";
 
 const navItems = [
   { label: "Home", href: "#home" },
-  { label: "About", href: "#about" },
   { label: "Announcements", href: "#announcements" },
-  { label: "Banns", href: "#marriage-banns" },
+  { label: "Holy Matrimony", href: "#holy-matrimony" },
   { label: "Monthly Schedule", href: "#schedule" },
   { label: "Services", href: "#services" },
 ];
 
+const aboutItems = [
+  { label: "History", href: "#history", icon: History },
+  { label: "Contacts", href: "#contacts", icon: Phone },
+];
+
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileAboutOpen, setMobileAboutOpen] = useState(false);
 
   const scrollToSection = (
     event: MouseEvent<HTMLAnchorElement>,
@@ -26,107 +29,154 @@ export default function Navbar() {
     if (!section) return;
 
     setMobileOpen(false);
+    setMobileAboutOpen(false);
     section.scrollIntoView({ behavior: "smooth", block: "start" });
     window.history.replaceState(null, "", href);
   };
 
   return (
-    <header className="fixed top-0 left-0 z-50 w-full border-b border-[#981B1B] bg-[#B22222]/95 backdrop-blur-xl shadow-lg">
-      <div className="mx-auto flex h-18 max-w-7xl items-center justify-between px-4 lg:px-6">
-        {/* Logo */}
+    <header className="fixed left-0 top-0 z-50 w-full border-b border-[#981B1B] bg-[#B22222]/95 shadow-lg backdrop-blur-xl">
+      <div className="mx-auto flex h-18 max-w-7xl items-center justify-between gap-4 px-4 lg:px-6">
         <a
           href="#home"
           onClick={(event) => scrollToSection(event, "#home")}
-          className="flex min-w-0 items-center gap-3"
+          className="min-w-0 leading-tight text-white"
         >
-          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-white p-1 shadow-md ring-1 ring-white/40 xl:size-12">
-            <ParishLogo className="size-full" />
+          <span className="block truncate font-serif text-base font-bold tracking-wide xl:text-lg">
+            St. Lorenzo Ruiz Parish
           </span>
-
-          <div className="min-w-0 leading-tight">
-            <h1 className="truncate font-serif text-lg font-bold tracking-wide text-white xl:text-xl">
-              St. Lorenzo Ruiz Parish
-            </h1>
-
-            {/* Only show on extra large screens */}
-            <p className="hidden text-xs text-red-100 xl:block">
-              Dagatan, Taysan, Batangas, Philippines
-            </p>
-
-            {/* Show shorter location on large screens */}
-            <p className="hidden text-xs text-red-100 lg:block xl:hidden">
-              Dagatan, Batangas
-            </p>
-          </div>
+          <span className="hidden text-[11px] text-red-100 xl:block">
+            Dagatan, Taysan, Batangas
+          </span>
         </a>
 
-        {/* Desktop Navigation */}
         <nav className="hidden items-center gap-3 lg:flex xl:gap-5">
           {navItems.map((item) => (
             <a
               key={item.label}
               href={item.href}
               onClick={(event) => scrollToSection(event, item.href)}
-              className="whitespace-nowrap text-sm font-medium text-white transition duration-200 hover:text-[#D4AF37] xl:text-base"
+              className="whitespace-nowrap text-sm font-medium text-white transition duration-200 hover:text-[#F5D76E]"
             >
               {item.label}
             </a>
           ))}
+
+          <div className="group relative">
+            <button
+              type="button"
+              className="flex items-center gap-1 whitespace-nowrap py-5 text-sm font-medium text-white transition hover:text-[#F5D76E] focus-visible:outline-none focus-visible:text-[#F5D76E]"
+              aria-haspopup="true"
+            >
+              About
+              <ChevronDown
+                size={15}
+                className="transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180"
+              />
+            </button>
+
+            <div className="invisible absolute right-0 top-[calc(100%-0.25rem)] w-48 translate-y-2 rounded-2xl border border-stone-200 bg-white p-2 opacity-0 shadow-xl transition duration-200 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100">
+              {aboutItems.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    onClick={(event) => scrollToSection(event, item.href)}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-red-50 hover:text-[#B22222]"
+                  >
+                    <Icon size={16} />
+                    {item.label}
+                  </a>
+                );
+              })}
+            </div>
+          </div>
         </nav>
 
-        {/* Desktop Buttons */}
         <div className="hidden items-center gap-2 lg:flex xl:gap-3">
           <Link
             to="/login"
-            className="rounded-xl border border-white px-4 py-2 text-sm font-medium text-white transition duration-300 hover:bg-white hover:text-[#B22222] xl:px-5 xl:text-base"
+            className="rounded-xl border border-white px-4 py-2 text-sm font-medium text-white transition duration-300 hover:bg-white hover:text-[#B22222]"
           >
             Login
           </Link>
-
           <Link
             to="/register"
-            className="rounded-xl bg-[#D4AF37] px-4 py-2 text-sm font-medium text-white shadow-md transition duration-300 hover:bg-[#C9A227] xl:px-5 xl:text-base"
+            className="rounded-xl bg-[#D4AF37] px-4 py-2 text-sm font-medium text-white shadow-md transition duration-300 hover:bg-[#C9A227]"
           >
             Register
           </Link>
         </div>
 
-        {/* Mobile Menu Button */}
         <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="text-white lg:hidden"
-          aria-label="Toggle menu"
+          type="button"
+          onClick={() => setMobileOpen((open) => !open)}
+          className="grid size-10 place-items-center rounded-xl text-white transition hover:bg-white/10 lg:hidden"
+          aria-label="Toggle navigation menu"
+          aria-expanded={mobileOpen}
         >
-          {mobileOpen ? <X size={28} /> : <Menu size={28} />}
+          {mobileOpen ? <X size={25} /> : <Menu size={25} />}
         </button>
       </div>
 
-      {/* Mobile Navigation */}
       {mobileOpen && (
-        <nav className="border-t border-gray-200 bg-white shadow-xl lg:hidden">
-          <div className="flex flex-col">
+        <nav className="max-h-[calc(100svh-4.5rem)] overflow-y-auto border-t border-red-900/15 bg-white shadow-xl lg:hidden">
+          <div className="flex flex-col p-2">
             {navItems.map((item) => (
               <a
                 key={item.label}
                 href={item.href}
                 onClick={(event) => scrollToSection(event, item.href)}
-                className="px-6 py-4 font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#B22222]"
+                className="rounded-xl px-4 py-3 text-sm font-semibold text-stone-700 transition hover:bg-red-50 hover:text-[#B22222]"
               >
                 {item.label}
               </a>
             ))}
 
-            <div className="space-y-3 border-t border-gray-200 p-5">
+            <button
+              type="button"
+              onClick={() => setMobileAboutOpen((open) => !open)}
+              className="flex items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-semibold text-stone-700 transition hover:bg-red-50 hover:text-[#B22222]"
+              aria-expanded={mobileAboutOpen}
+            >
+              About
+              <ChevronDown
+                size={17}
+                className={`transition-transform ${mobileAboutOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {mobileAboutOpen && (
+              <div className="mx-3 mb-2 grid gap-1 border-l-2 border-red-100 pl-3">
+                {aboutItems.map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <a
+                      key={item.label}
+                      href={item.href}
+                      onClick={(event) => scrollToSection(event, item.href)}
+                      className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-stone-600 transition hover:bg-red-50 hover:text-[#B22222]"
+                    >
+                      <Icon size={16} /> {item.label}
+                    </a>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="grid gap-3 border-t border-stone-200 p-3 pt-4 sm:grid-cols-2">
               <Link
                 to="/login"
-                className="flex w-full items-center justify-center rounded-xl border border-[#B22222] py-2 font-medium text-[#B22222] transition hover:bg-[#B22222] hover:text-white"
+                className="flex items-center justify-center rounded-xl border border-[#B22222] py-2.5 text-sm font-semibold text-[#B22222] transition hover:bg-[#B22222] hover:text-white"
               >
                 Login
               </Link>
-
               <Link
                 to="/register"
-                className="flex w-full items-center justify-center rounded-xl bg-[#B22222] py-2 font-medium text-white no-underline transition hover:bg-[#981B1B]"
+                className="flex items-center justify-center rounded-xl bg-[#B22222] py-2.5 text-sm font-semibold text-white transition hover:bg-[#981B1B]"
               >
                 Register
               </Link>

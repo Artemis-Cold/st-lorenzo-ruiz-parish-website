@@ -36,30 +36,23 @@ function buildFormData(booking: BaptismBooking): FormData {
     formData.append(`parents[${i}][birth_place]`, parent.birth_place);
   });
 
-  // Godparent pairs
-  booking.god_parents.forEach((pair, i) => {
-    (["god_father", "god_mother"] as const).forEach((key) => {
-      const gp = pair[key];
-      formData.append(`god_parents[${i}][${key}][first_name]`, gp.first_name);
-      formData.append(
-        `god_parents[${i}][${key}][middle_initial]`,
-        gp.middle_initial ?? "",
-      );
-      formData.append(`god_parents[${i}][${key}][last_name]`, gp.last_name);
-      formData.append(`god_parents[${i}][${key}][residence]`, gp.residence);
-    });
+  // Godparents
+  booking.god_parents.forEach((godParent, i) => {
+    const prefix = `god_parents[${i}]`;
+    formData.append(`${prefix}[role]`, godParent.role);
+    formData.append(`${prefix}[first_name]`, godParent.first_name);
+    formData.append(
+      `${prefix}[middle_initial]`,
+      godParent.middle_initial ?? "",
+    );
+    formData.append(`${prefix}[last_name]`, godParent.last_name);
+    formData.append(`${prefix}[residence]`, godParent.residence);
+    formData.append(`${prefix}[requirement_type]`, godParent.requirement_type);
 
-    if (pair.requirements.marriage_contract) {
+    if (godParent.requirement_file) {
       formData.append(
-        `god_parents[${i}][requirements][marriage_contract]`,
-        pair.requirements.marriage_contract,
-      );
-    }
-
-    if (pair.requirements.confirmation_certificate) {
-      formData.append(
-        `god_parents[${i}][requirements][confirmation_certificate]`,
-        pair.requirements.confirmation_certificate,
+        `${prefix}[requirement_file]`,
+        godParent.requirement_file,
       );
     }
   });

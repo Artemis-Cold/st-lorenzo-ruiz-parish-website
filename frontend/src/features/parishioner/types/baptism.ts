@@ -9,18 +9,10 @@ export interface Parent extends PersonName {
 }
 
 export interface GodParent extends PersonName {
-  role: "godfather" | "godmother";
+  role: "" | "godfather" | "godmother";
   residence: string;
-}
-
-export interface GodParentPair {
-  god_father: GodParent;
-  god_mother: GodParent;
-
-  requirements: {
-    marriage_contract: File | null;
-    confirmation_certificate: File | null;
-  };
+  requirement_type: "" | "marriage_contract" | "confirmation_certificate";
+  requirement_file: File | null;
 }
 
 export interface Baptizand extends PersonName {
@@ -51,7 +43,7 @@ export interface BaptismBooking {
 
   parents: Parent[];
 
-  god_parents: GodParentPair[];
+  god_parents: GodParent[];
 
   documents: BaptismDocument[];
 

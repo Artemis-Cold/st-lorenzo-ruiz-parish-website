@@ -37,8 +37,6 @@ class StoreFuneralBookingRequest extends FormRequest
             'deceased.church_life.confesses' => ['required', 'in:regular,sometimes,never'],
             'deceased.characteristics' => ['required', 'string'],
             'deceased.informant.relationship' => ['required', 'string', 'max:100'],
-            'deceased.informant.contact_number' => ['required', 'regex:/^09\d{9}$/'],
-            'deceased.informant.date_provided' => ['required', 'date'],
             'documents' => ['nullable', 'array'],
             'documents.*.document_type' => [
                 'required_with:documents',
@@ -55,7 +53,6 @@ class StoreFuneralBookingRequest extends FormRequest
 
         foreach ($name as $field => $fieldRules) {
             $rules["deceased.$field"] = $fieldRules;
-            $rules["deceased.informant.$field"] = $fieldRules;
             foreach (['father', 'mother'] as $relative) {
                 $rules["deceased.$relative.$field"] = $fieldRules;
             }

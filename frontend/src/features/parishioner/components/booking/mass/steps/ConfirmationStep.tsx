@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import type { MassIntentionBooking } from "../../../../types/mass";
 import type { Dispatch, SetStateAction } from "react";
 import type { ParishEvent } from "@/services/eventService";
+import { formatPhpCurrency } from "@/utils/currency";
 
 interface ConfirmationStepProps {
   booking: MassIntentionBooking;
@@ -39,7 +40,7 @@ export default function ConfirmationStep({
               <span className="text-lg text-gray-700">Total</span>
 
               <span className="text-3xl font-semibold text-[#B22222]">
-                ₱{totalAmount.toFixed(2)}
+                {formatPhpCurrency(totalAmount)}
               </span>
             </div>
           </div>
@@ -85,7 +86,14 @@ export default function ConfirmationStep({
 
             <SummaryRow label="Venue" value={selectedMass?.location ?? "-"} />
 
-            <SummaryRow label="Payment Method" value="GCash" />
+            <SummaryRow
+              label="Payment Method"
+              value={
+                booking.payment_method === "gcash"
+                  ? "GCash"
+                  : "Cash at Parish Office"
+              }
+            />
           </div>
 
           {/* Footer */}
@@ -93,35 +101,56 @@ export default function ConfirmationStep({
             <span className="text-2xl font-medium">Amount</span>
 
             <span className="text-3xl font-semibold">
-              ₱{totalAmount.toFixed(2)}
+              {formatPhpCurrency(totalAmount)}
             </span>
           </div>
         </div>
       </BookingCard>
 
-      {/* Receipt */}
-      <BookingCard title="">
-        <div className="flex h-full min-h-107.5 items-center justify-center rounded-xl border border-red-200">
-          {booking.receipt ? (
-            booking.receipt.type.startsWith("image") ? (
-              <img
-                src={URL.createObjectURL(booking.receipt)}
-                alt="Receipt"
-                className="max-h-full max-w-full rounded-lg object-contain"
-              />
-            ) : (
-              <div className="min-w-0 max-w-full px-4 text-center">
-                <p className="break-all font-medium">{booking.receipt.name}</p>
+      <BookingCard
+        title={
+          booking.payment_method === "gcash"
+            ? "Submitted Receipt"
+            : "Cash Payment"
+        }
+      >
+        {booking.payment_method === "cash" ? (
+          <div className="flex h-full min-h-72 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 p-8 text-center">
+            <div>
+              <p className="text-lg font-semibold text-[#292524]">
+                Payment at Parish Office
+              </p>
+              <p className="mt-2 text-sm leading-6 text-gray-600">
+                Your Mass Intention will remain pending until parish staff
+                receives and confirms the cash payment.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex h-full min-h-107.5 items-center justify-center rounded-xl border border-red-200">
+            {booking.receipt ? (
+              booking.receipt.type.startsWith("image") ? (
+                <img
+                  src={URL.createObjectURL(booking.receipt)}
+                  alt="Receipt"
+                  className="max-h-full max-w-full rounded-lg object-contain"
+                />
+              ) : (
+                <div className="min-w-0 max-w-full px-4 text-center">
+                  <p className="break-all font-medium">
+                    {booking.receipt.name}
+                  </p>
 
-                <p className="mt-2 text-sm text-gray-500">
-                  PDF uploaded successfully
-                </p>
-              </div>
-            )
-          ) : (
-            <p className="text-lg text-[#B22222]">Photo of Receipt</p>
-          )}
-        </div>
+                  <p className="mt-2 text-sm text-gray-500">
+                    PDF uploaded successfully
+                  </p>
+                </div>
+              )
+            ) : (
+              <p className="text-lg text-[#B22222]">Photo of Receipt</p>
+            )}
+          </div>
+        )}
       </BookingCard>
       <div className="rounded-3xl border border-[#B22222]/20 bg-red-50 p-6 lg:col-span-2">
         <h3 className="mb-4 text-xl font-bold text-[#B22222]">Declaration</h3>

@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\PhoneVerificationOtp;
-use App\Models\RegistrationPhoneOtp;
 use App\Models\SmsMessage;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,42 +13,43 @@ class PhoneVerificationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_code_can_be_requested_before_an_account_exists(): void
+    public function test_registration_creates_an_unverified_account_and_sends_a_verification_reminder(): void
     {
         config(['services.sms.driver' => 'database']);
 
-        $this->postJson('/api/auth/register/phone-verification/otp', [
-            'phone' => '09171234567',
-        ])->assertOk();
-
-        $this->assertDatabaseHas('registration_phone_otps', ['phone' => '09171234567']);
-        $this->assertDatabaseHas('sms_messages', [
-            'user_id' => null,
-            'category' => 'registration_phone_otp',
-            'recipient' => '639171234567',
-        ]);
-    }
-
-    public function test_registration_does_not_create_an_account_with_an_invalid_code(): void
-    {
-        RegistrationPhoneOtp::create([
-            'phone' => '09171234567',
-            'code_hash' => hash('sha256', '123456'),
-            'expires_at' => now()->addMinutes(10),
-        ]);
-
-        $this->postJson('/api/auth/register', [
-            'username' => 'verifieduser',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
-            'first_name' => 'Juan',
+        $response = $this->postJson('/api/auth/register', [
+            'first_name' => 'Juan Carlos',
             'last_name' => 'Cruz',
             'phone' => '09171234567',
-            'otp' => '654321',
+            'password' => 'password123',
+            'password_confirmation' => 'password123',
             'terms_accepted' => true,
-        ])->assertUnprocessable()->assertJsonValidationErrors(['otp']);
+        ])->assertCreated()
+            ->assertJsonPath('user.username', 'juan')
+            ->assertJsonPath('user.phone_verified', false)
+            ->assertJsonPath('verification.required', true)
+            ->assertJsonPath('verification.otp_sent', false)
+            ->assertJsonPath('verification.reminder_sent', true);
 
-        $this->assertDatabaseMissing('users', ['username' => 'verifieduser']);
+        $user = User::where('username', 'juan')->firstOrFail();
+
+        $this->assertNull($user->phone_verified_at);
+        $this->assertDatabaseMissing('phone_verification_otps', [
+            'user_id' => $user->id,
+        ]);
+        $this->assertDatabaseHas('sms_messages', [
+            'user_id' => $user->id,
+            'category' => 'registration_verification_reminder',
+            'recipient' => '639171234567',
+        ]);
+        $this->assertStringContainsString(
+            'verify your mobile number in Account Settings',
+            SmsMessage::latest('id')->value('message')
+        );
+        $this->withToken($response->json('token'))
+            ->getJson('/api/auth/me')
+            ->assertOk()
+            ->assertJsonPath('user.phone_verified', false);
     }
 
     public function test_unverified_parishioner_can_request_a_verification_code(): void
@@ -78,7 +78,7 @@ class PhoneVerificationTest extends TestCase
             'status' => 'pending',
         ]);
         $this->assertStringContainsString(
-            'mobile number verification code',
+            'mobile verification code',
             SmsMessage::latest('id')->value('message')
         );
     }

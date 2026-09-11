@@ -75,7 +75,7 @@ export default function MarriageBanns() {
 
   return (
     <section
-      id="marriage-banns"
+      id="holy-matrimony"
       className="relative scroll-mt-18 overflow-hidden bg-linear-to-b from-white via-[#FCFAF7] to-white py-14 md:py-16"
     >
       <div
@@ -97,16 +97,16 @@ export default function MarriageBanns() {
         >
           <div className="inline-flex max-w-full items-center gap-2 rounded-full border border-[#B22222]/15 bg-white px-3 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#B22222] shadow-sm sm:px-4 sm:text-xs sm:tracking-[0.24em]">
             <Heart size={15} fill="currentColor" className="opacity-90" />
-            Marriage Banns
+            Holy Matrimony
           </div>
           <h2 className="mt-4 font-serif text-3xl font-bold leading-tight text-[#292524] md:text-4xl">
-            Couples preparing for Holy Matrimony
+            Couples preparing for the Sacrament of Marriage
           </h2>
           <div className="mx-auto mt-4 h-1 w-16 rounded-full bg-[#D4AF37]" />
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-gray-600 md:text-base">
-            These banns are formally published as part of each couple’s
-            preparation for marriage. Anyone aware of a canonical impediment is
-            respectfully requested to contact the parish office.
+            We prayerfully introduce the couples preparing to receive the
+            Sacrament of Holy Matrimony. For any pastoral concern, please
+            communicate privately with the parish office.
           </p>
         </motion.div>
 
@@ -130,10 +130,11 @@ export default function MarriageBanns() {
               <Heart size={30} />
             </span>
             <p className="mt-4 font-serif text-xl font-semibold text-[#292524]">
-              There are no active marriage banns at this time.
+              There are no Holy Matrimony notices at this time.
             </p>
             <p className="mt-2 text-sm text-gray-500">
-              Approved banns will appear here during their publication period.
+              Upcoming couples will appear here during their approved
+              publication period.
             </p>
           </motion.div>
         ) : (

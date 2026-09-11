@@ -31,8 +31,15 @@ export interface Booking {
     };
     remarks: string | null;
     payment: {
+      method: "gcash" | "cash" | null;
       referenceNumber: string | null;
-      status: "not_submitted" | "pending" | "confirmed" | "rejected";
+      officialReceiptNumber: string | null;
+      status:
+        | "not_submitted"
+        | "awaiting_payment"
+        | "pending_verification"
+        | "confirmed"
+        | "rejected";
       receipt: { fileName: string; url: string } | null;
       canRemind: boolean;
     };
@@ -73,12 +80,11 @@ export interface Booking {
           churchAddress: string;
         };
       }>;
-      sponsorPairs?: Array<{
-        sponsors: Array<{
-          role: "godfather" | "godmother";
-          name: string;
-          residence: string;
-        }>;
+      sponsors?: Array<{
+        role: "godfather" | "godmother";
+        name: string;
+        residence: string;
+        requirementType: string | null;
       }>;
       deceased?: {
         name: string;
@@ -113,7 +119,12 @@ export interface Booking {
           name: string;
           birthPlace: string;
         }>;
-        godParents: Array<{ role: string; name: string; residence: string }>;
+        godParents: Array<{
+          role: string;
+          name: string;
+          residence: string;
+          requirementType: string | null;
+        }>;
       };
     };
     appointments: Array<{

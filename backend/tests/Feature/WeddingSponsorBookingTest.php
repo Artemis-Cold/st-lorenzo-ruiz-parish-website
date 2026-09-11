@@ -16,7 +16,7 @@ class WeddingSponsorBookingTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_wedding_stores_three_image_photos_and_repeatable_sponsor_pairs(): void
+    public function test_wedding_stores_three_photos_and_each_sponsors_selected_pdf(): void
     {
         Storage::fake('public');
         $parishioner = User::factory()->create();
@@ -30,17 +30,24 @@ class WeddingSponsorBookingTest extends TestCase
 
         $bookingId = $response->json('data.id');
 
-        $this->assertDatabaseCount('wedding_sponsor_pairs', 2);
         $this->assertDatabaseCount('wedding_sponsors', 4);
         $this->assertDatabaseHas('wedding_sponsors', [
+            'booking_id' => $bookingId,
+            'sort_order' => 1,
             'role' => 'godfather',
             'first_name' => 'Pedro',
             'last_name' => 'Santos',
+            'requirement_type' => 'marriage_contract',
+            'requirement_file_name' => 'pedro-marriage.pdf',
         ]);
         $this->assertDatabaseHas('wedding_sponsors', [
+            'booking_id' => $bookingId,
+            'sort_order' => 2,
             'role' => 'godmother',
             'first_name' => 'Ana',
             'last_name' => 'Reyes',
+            'requirement_type' => 'confirmation_certificate',
+            'requirement_file_name' => 'ana-confirmation.pdf',
         ]);
         foreach (['couple_photo_1', 'couple_photo_2', 'couple_photo_3'] as $type) {
             $this->assertDatabaseHas('booking_documents', ['document_type' => $type]);
@@ -53,9 +60,14 @@ class WeddingSponsorBookingTest extends TestCase
         );
 
         $this->assertSame(
-            ['sponsor_pair_1_confirmation_certificate', 'sponsor_pair_2_confirmation_certificate'],
+            [
+                'sponsor_1_marriage_contract',
+                'sponsor_2_confirmation_certificate',
+                'sponsor_3_marriage_contract',
+                'sponsor_4_confirmation_certificate',
+            ],
             $parishionerDocuments
-                ->filter(fn (array $document) => str_starts_with($document['type'], 'sponsor_pair_'))
+                ->filter(fn (array $document) => str_starts_with($document['type'], 'sponsor_'))
                 ->pluck('type')
                 ->values()
                 ->all()
@@ -70,9 +82,14 @@ class WeddingSponsorBookingTest extends TestCase
         );
 
         $this->assertSame(
-            ['sponsor_pair_1_confirmation_certificate', 'sponsor_pair_2_confirmation_certificate'],
+            [
+                'sponsor_1_marriage_contract',
+                'sponsor_2_confirmation_certificate',
+                'sponsor_3_marriage_contract',
+                'sponsor_4_confirmation_certificate',
+            ],
             $staffDocuments
-                ->filter(fn (array $document) => str_starts_with($document['type'], 'sponsor_pair_'))
+                ->filter(fn (array $document) => str_starts_with($document['type'], 'sponsor_'))
                 ->pluck('type')
                 ->values()
                 ->all()
@@ -80,7 +97,7 @@ class WeddingSponsorBookingTest extends TestCase
 
         $firstSponsorDocument = $staffDocuments->firstWhere(
             'type',
-            'sponsor_pair_1_confirmation_certificate'
+            'sponsor_1_marriage_contract'
         );
 
         $this->postJson("/api/staff/bookings/{$bookingId}/requirements/resubmit", [
@@ -121,6 +138,21 @@ class WeddingSponsorBookingTest extends TestCase
         $this->post('/api/bookings/wedding', $payload)
             ->assertUnprocessable()
             ->assertInvalid('documents.4.file');
+    }
+
+    public function test_wedding_sponsor_requirement_rejects_non_pdf_files(): void
+    {
+        Storage::fake('public');
+        Sanctum::actingAs(User::factory()->create());
+
+        [$slot, $package] = $this->weddingSchedule();
+        $payload = $this->payload($slot->id, $package->id);
+        $payload['sponsors'][0]['requirement_file'] = UploadedFile::fake()
+            ->image('sponsor-certificate.jpg');
+
+        $this->post('/api/bookings/wedding', $payload)
+            ->assertUnprocessable()
+            ->assertInvalid('sponsors.0.requirement_file');
     }
 
     private function weddingSchedule(): array
@@ -170,23 +202,21 @@ class WeddingSponsorBookingTest extends TestCase
             ],
         ];
 
-        $sponsorPair = fn (string $suffix) => [
-            'god_father' => [
-                'first_name' => 'Pedro'.$suffix,
-                'middle_initial' => 'D',
-                'last_name' => 'Santos',
-                'residence' => 'Batangas',
-            ],
-            'god_mother' => [
-                'first_name' => 'Ana'.$suffix,
-                'middle_initial' => 'E',
-                'last_name' => 'Reyes',
-                'residence' => 'Batangas',
-            ],
-            'requirements' => [
-                'confirmation_certificate' => UploadedFile::fake()
-                    ->create('confirmation'.$suffix.'.pdf', 100, 'application/pdf'),
-            ],
+        $sponsor = fn (
+            string $role,
+            string $firstName,
+            string $lastName,
+            string $requirementType,
+            string $fileName,
+        ) => [
+            'role' => $role,
+            'first_name' => $firstName,
+            'middle_initial' => 'D',
+            'last_name' => $lastName,
+            'residence' => 'Batangas',
+            'requirement_type' => $requirementType,
+            'requirement_file' => UploadedFile::fake()
+                ->create($fileName, 100, 'application/pdf'),
         ];
 
         return [
@@ -197,7 +227,12 @@ class WeddingSponsorBookingTest extends TestCase
                 'groom' => $person('Jose', 'Cruz'),
                 'bride' => $person('Maria', 'Clara'),
             ],
-            'sponsors' => [$sponsorPair(''), $sponsorPair(' Two')],
+            'sponsors' => [
+                $sponsor('godfather', 'Pedro', 'Santos', 'marriage_contract', 'pedro-marriage.pdf'),
+                $sponsor('godmother', 'Ana', 'Reyes', 'confirmation_certificate', 'ana-confirmation.pdf'),
+                $sponsor('godfather', 'Pedro Two', 'Santos', 'marriage_contract', 'pedro-two-marriage.pdf'),
+                $sponsor('godmother', 'Ana Two', 'Reyes', 'confirmation_certificate', 'ana-two-confirmation.pdf'),
+            ],
             'documents' => [
                 ['document_type' => 'marriage_license', 'file' => UploadedFile::fake()->create('license.pdf', 100, 'application/pdf')],
                 ['document_type' => 'cenomar', 'file' => UploadedFile::fake()->create('cenomar.pdf', 100, 'application/pdf')],

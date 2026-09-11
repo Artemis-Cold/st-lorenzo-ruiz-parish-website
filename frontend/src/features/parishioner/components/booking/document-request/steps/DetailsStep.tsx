@@ -10,6 +10,8 @@ import type {
   DocumentRequestBooking,
   DocumentRequest,
   DocumentDetailValue,
+  DocumentRequesterProfile,
+  DocumentType,
   BaptismalCertificateDetails,
   ConfirmationCertificateDetails,
   DeathCertificateDetails,
@@ -22,6 +24,7 @@ import type { Dispatch, SetStateAction } from "react";
 interface Props {
   booking: DocumentRequestBooking;
   setBooking: Dispatch<SetStateAction<DocumentRequestBooking>>;
+  requester: DocumentRequesterProfile;
   readOnly?: boolean;
   errors?: Record<string, string[]>;
 }
@@ -29,18 +32,19 @@ interface Props {
 export default function DetailsStep({
   booking,
   setBooking,
+  requester,
   readOnly = false,
   errors,
 }: Props) {
   const updateRequest = (
-    requestId: number,
+    documentType: DocumentType,
     field: string,
     value: DocumentDetailValue,
   ) => {
     setBooking((prev) => ({
       ...prev,
       requests: prev.requests.map((request) =>
-        request.id === requestId
+        request.document_type === documentType
           ? {
               ...request,
               details: {
@@ -53,10 +57,12 @@ export default function DetailsStep({
     }));
   };
 
-  const removeRequest = (requestId: number) => {
+  const removeRequest = (documentType: DocumentType) => {
     setBooking((prev) => ({
       ...prev,
-      requests: prev.requests.filter((request) => request.id !== requestId),
+      requests: prev.requests.filter(
+        (request) => request.document_type !== documentType,
+      ),
     }));
   };
 
@@ -64,7 +70,7 @@ export default function DetailsStep({
     const sharedProps = {
       readOnly,
       updateRequest: (field: string, value: DocumentDetailValue) =>
-        updateRequest(request.id, field, value),
+        updateRequest(request.document_type, field, value),
       errors,
       errorPrefix: "requests." + index + ".details",
     };
@@ -99,6 +105,7 @@ export default function DetailsStep({
           <MarriageForm
             {...sharedProps}
             details={request.details as MarriageCertificateDetails}
+            requester={requester}
           />
         );
 
@@ -115,8 +122,29 @@ export default function DetailsStep({
     }
   };
 
+  const groupedRequests = Array.from(
+    new Map(
+      booking.requests.map((request) => [request.document_type, request]),
+    ).values(),
+  );
+
   return (
     <div className="space-y-6">
+      <BookingCard title="Requester Information">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <ReadOnlyDetail label="Account holder" value={requester.fullName} />
+          <ReadOnlyDetail label="Contact number" value={requester.phone} />
+          <div className="sm:col-span-2">
+            <ReadOnlyDetail label="Address" value={requester.address} />
+          </div>
+        </div>
+        <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-5 text-amber-800">
+          This account holder is the official requester and claimant. These
+          details come from the parishioner profile and cannot be changed in
+          this request.
+        </p>
+      </BookingCard>
+
       {booking.requests.length === 0 && (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
           <p className="font-semibold text-red-700">No documents selected</p>
@@ -131,36 +159,48 @@ export default function DetailsStep({
           )}
         </div>
       )}
-      {booking.requests.map((request, index) => (
-        <BookingCard
-          key={request.id}
-          title={(() => {
-            const matchingRequests = booking.requests.filter(
-              (item) => item.document_type === request.document_type,
-            );
-            if (matchingRequests.length === 1) return request.document_type;
-            const position =
-              matchingRequests.findIndex((item) => item.id === request.id) + 1;
-            return `${request.document_type} — Request ${position} of ${matchingRequests.length}`;
-          })()}
-        >
-          <div className="space-y-6">
-            {renderForm(request, index)}
+      {groupedRequests.map((request) => {
+        const index = booking.requests.findIndex(
+          (item) => item.id === request.id,
+        );
+        const quantity = booking.requests.filter(
+          (item) => item.document_type === request.document_type,
+        ).length;
 
-            {!readOnly && (
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => removeRequest(request.id)}
-                  className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
-                >
-                  Remove Request
-                </button>
-              </div>
-            )}
-          </div>
-        </BookingCard>
-      ))}
+        return (
+          <BookingCard
+            key={request.id}
+            title={`${request.document_type} · ${quantity} ${quantity === 1 ? "copy" : "copies"}`}
+          >
+            <div className="space-y-6">
+              {renderForm(request, index)}
+
+              {!readOnly && (
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => removeRequest(request.document_type)}
+                    className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-600 transition hover:bg-red-50"
+                  >
+                    Remove Document
+                  </button>
+                </div>
+              )}
+            </div>
+          </BookingCard>
+        );
+      })}
+    </div>
+  );
+}
+
+function ReadOnlyDetail({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+      <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+        {label}
+      </p>
+      <p className="mt-1 text-sm font-medium text-[#292524]">{value || "—"}</p>
     </div>
   );
 }

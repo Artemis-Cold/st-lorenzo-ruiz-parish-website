@@ -15,6 +15,7 @@ type FieldErrors = Record<string, string[]>;
 
 interface PhoneVerificationModalProps {
   phone: string;
+  username: string;
   onClose: () => void;
   onVerified: () => Promise<void> | void;
 }
@@ -29,6 +30,7 @@ function maskPhone(phone: string) {
 
 export default function PhoneVerificationModal({
   phone,
+  username,
   onClose,
   onVerified,
 }: PhoneVerificationModalProps) {
@@ -118,7 +120,12 @@ export default function PhoneVerificationModal({
               <p className="font-semibold text-amber-950">Booking protection</p>
               <p className="mt-1 text-sm leading-6 text-amber-800">
                 Verification is required before you can book a parish service.
-                The code will be sent through SMS to {maskPhone(phone)}.
+                The code {otpSent ? "was" : "will be"} sent through SMS to{" "}
+                {maskPhone(phone)}.
+              </p>
+              <p className="mt-2 text-sm text-amber-900">
+                Your account username is{" "}
+                <span className="font-semibold">{username}</span>.
               </p>
             </div>
           </div>
@@ -186,7 +193,7 @@ export default function PhoneVerificationModal({
                 onClick={onClose}
                 className="rounded-xl border border-gray-300 px-5 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
               >
-                Cancel
+                Verify later
               </button>
               <button
                 type="submit"

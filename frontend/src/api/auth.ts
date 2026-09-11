@@ -5,24 +5,17 @@ import type {
   RegisterRequest,
   AuthPayload,
   MeResponse,
+  RegistrationPayload,
 } from "@/types/auth";
 
 import type { User } from "@/types/user";
 import type { Address } from "@/types/address";
 
-export const register = async (data: RegisterRequest): Promise<AuthPayload> => {
-  const response = await api.post<AuthPayload>("/auth/register", data);
+export const register = async (
+  data: RegisterRequest,
+): Promise<RegistrationPayload> => {
+  const response = await api.post<RegistrationPayload>("/auth/register", data);
 
-  return response.data;
-};
-
-export const requestRegistrationPhoneOtp = async (
-  phone: string,
-): Promise<{ message: string }> => {
-  const response = await api.post<{ message: string }>(
-    "/auth/register/phone-verification/otp",
-    { phone },
-  );
   return response.data;
 };
 

@@ -1,3 +1,5 @@
+import { formatPhpCurrency } from "@/utils/currency";
+
 interface Props {
   label: string;
   price: number;
@@ -17,7 +19,7 @@ export default function PriceRow({ label, price, checked }: Props) {
         <span>{label}</span>
       </div>
 
-      <span className="font-semibold">₱{price.toLocaleString()}</span>
+      <span className="font-semibold">{formatPhpCurrency(price)}</span>
     </div>
   );
 }

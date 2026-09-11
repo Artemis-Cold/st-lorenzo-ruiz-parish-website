@@ -141,30 +141,23 @@ class StoreBaptismBookingRequest extends FormRequest
             'god_parents' => [
                 'required',
                 'array',
-                'min:1',
+                'min:2',
+                'max:40',
             ],
 
-            'god_parents.*.god_father.first_name' => ['required', 'string'],
-            'god_parents.*.god_father.middle_initial' => ['nullable', 'string', 'max:1'],
-            'god_parents.*.god_father.last_name' => ['required', 'string'],
-            'god_parents.*.god_father.residence' => ['required', 'string'],
-
-            'god_parents.*.god_mother.first_name' => ['required', 'string'],
-            'god_parents.*.god_mother.middle_initial' => ['nullable', 'string', 'max:1'],
-            'god_parents.*.god_mother.last_name' => ['required', 'string'],
-            'god_parents.*.god_mother.residence' => ['required', 'string'],
-
-            'god_parents.*.requirements.marriage_contract' => [
-                'nullable',
-                'file',
-                'mimes:jpg,jpeg,png,pdf',
-                'max:5120',
+            'god_parents.*.role' => ['required', 'in:godfather,godmother'],
+            'god_parents.*.first_name' => ['required', 'string', 'max:100'],
+            'god_parents.*.middle_initial' => ['nullable', 'string', 'max:1'],
+            'god_parents.*.last_name' => ['required', 'string', 'max:100'],
+            'god_parents.*.residence' => ['required', 'string'],
+            'god_parents.*.requirement_type' => [
+                'required',
+                'in:marriage_contract,confirmation_certificate',
             ],
-
-            'god_parents.*.requirements.confirmation_certificate' => [
+            'god_parents.*.requirement_file' => [
                 'nullable',
                 'file',
-                'mimes:jpg,jpeg,png,pdf',
+                'mimes:pdf',
                 'max:5120',
             ],
 
