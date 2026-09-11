@@ -13,6 +13,7 @@ export default function AnnouncementCard({
   const approved = bookings.filter(
     (booking) => booking.status === "approved",
   ).length;
+  const paid = bookings.filter((booking) => booking.status === "paid").length;
 
   return (
     <div className="rounded-3xl bg-white p-6 shadow-lg">
@@ -36,6 +37,15 @@ export default function AnnouncementCard({
             <p className="text-sm">
               {approved} {approved === 1 ? "booking has" : "bookings have"} been
               approved.
+            </p>
+          </div>
+        )}
+        {paid > 0 && (
+          <div className="flex gap-3 rounded-xl bg-green-50 p-4 text-green-800">
+            <CircleCheckBig className="mt-0.5 shrink-0" size={19} />
+            <p className="text-sm">
+              {paid} {paid === 1 ? "booking has" : "bookings have"} been marked as
+              paid.
             </p>
           </div>
         )}

@@ -2,13 +2,9 @@ import { useState } from "react";
 import {
   ArrowLeft,
   Camera,
-  Footprints,
   LoaderCircle,
   MapPinned,
   Navigation,
-  Route,
-  ShieldCheck,
-  Smartphone,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -142,13 +138,8 @@ export default function ARNavigationPage() {
                   Accessible indoor guidance
                 </p>
                 <h1 className="mt-1 font-serif text-2xl font-bold sm:text-3xl">
-                  House Camera Navigation
+                  AR Navigation
                 </h1>
-                <p className="mt-2 max-w-2xl text-sm leading-6 text-red-50/85">
-                  Choose where you are and where you want to go. The camera
-                  route follows your heading and advances from validated walking
-                  motion without requiring ARCore.
-                </p>
               </div>
             </div>
           </header>
@@ -196,40 +187,7 @@ export default function ARNavigationPage() {
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
-                  <Route className="text-[#B22222]" size={20} />
-                  <p className="mt-3 text-sm font-bold">Connected line</p>
-                  <p className="mt-1 text-xs leading-5 text-stone-500">
-                    Shows the current corridor and upcoming direction.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
-                  <Footprints className="text-[#B22222]" size={20} />
-                  <p className="mt-3 text-sm font-bold">Automatic progress</p>
-                  <p className="mt-1 text-xs leading-5 text-stone-500">
-                    Turning is filtered so it does not count as walking.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
-                  <Smartphone className="text-[#B22222]" size={20} />
-                  <p className="mt-3 text-sm font-bold">Broad support</p>
-                  <p className="mt-1 text-xs leading-5 text-stone-500">
-                    Uses standard phone camera and motion sensors.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 rounded-2xl bg-stone-50 p-4 text-sm leading-6 text-stone-600">
-                <ShieldCheck
-                  size={20}
-                  className="mt-0.5 shrink-0 text-emerald-600"
-                />
-                <p>
-                  Camera and motion readings stay in this browser. GPS and
-                  Google Maps are not used for indoor positioning.
-                </p>
-              </div>
+              
 
               {(startError || camera.error || navigation.trackingError) && (
                 <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-700">
