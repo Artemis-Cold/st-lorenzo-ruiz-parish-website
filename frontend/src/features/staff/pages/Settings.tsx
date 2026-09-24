@@ -3,6 +3,7 @@ import { AxiosError } from "axios";
 import {
   LockKeyhole,
   Banknote,
+  ScanLine,
   Settings as SettingsIcon,
   ChevronRight,
   ShieldCheck,
@@ -224,7 +225,7 @@ export default function Settings() {
               </p>
               <h1 className="mt-1 font-serif text-3xl font-bold">Settings</h1>
               <p className="mt-1 text-sm text-white/75">
-                Manage your profile, security, and parish staff access.
+                Manage your account, parish services, and navigation tools.
               </p>
             </div>
           </div>
@@ -237,10 +238,10 @@ export default function Settings() {
               </div>
               <div>
                 <h2 className="font-serif text-xl font-bold text-[#292524]">
-                  Account Management
+                  Staff and System Management
                 </h2>
                 <p className="mt-1 text-sm text-gray-500">
-                  Choose an option to manage parish staff access.
+                  Choose an option to manage the staff portal and parish tools.
                 </p>
               </div>
             </div>
@@ -323,6 +324,29 @@ export default function Settings() {
                 <p className="font-semibold text-[#292524]">Service Pricing</p>
                 <p className="mt-1 text-sm text-gray-500">
                   Manage package, add-on, document, and Mass intention rates.
+                </p>
+              </div>
+              <ChevronRight
+                size={20}
+                className="shrink-0 text-gray-300 transition group-hover:translate-x-1 group-hover:text-[#B22222]"
+              />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate("/staff/settings/navigation-markers")}
+              className="group flex w-full items-center gap-4 px-6 py-5 text-left transition hover:bg-[#FAF8F5] sm:px-8"
+            >
+              <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-violet-50 text-violet-700">
+                <ScanLine size={22} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold text-[#292524]">
+                  Navigation Markers
+                </p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Open, review, and print the markers used for indoor
+                  navigation.
                 </p>
               </div>
               <ChevronRight

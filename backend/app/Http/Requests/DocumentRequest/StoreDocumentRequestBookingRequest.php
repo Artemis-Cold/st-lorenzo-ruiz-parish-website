@@ -49,10 +49,9 @@ class StoreDocumentRequestBookingRequest extends FormRequest
                 'in:'.implode(',', self::TYPES),
             ],
             'requests.*.details' => ['required', 'array'],
-            'payment_method' => ['sometimes', 'in:gcash,cash'],
+            'payment_method' => ['sometimes', 'in:gcash'],
             'reference_number' => [
-                'required_if:payment_method,gcash',
-                'nullable',
+                'required',
                 'digits:13',
                 'unique:payments,reference_number',
                 'unique:bookings,payment_reference',
@@ -60,8 +59,7 @@ class StoreDocumentRequestBookingRequest extends FormRequest
                 'unique:document_request_bookings,payment_reference',
             ],
             'receipt' => [
-                'required_if:payment_method,gcash',
-                'nullable',
+                'required',
                 'file',
                 'mimes:jpg,jpeg,png,pdf',
                 'max:5120',

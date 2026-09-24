@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Resources\UserResource;
 use App\Services\Auth\AuthService;
-use App\Services\SmsNotificationService;
+use App\Services\Auth\PhoneVerificationService;
 use Illuminate\Http\JsonResponse;
 use Throwable;
 
@@ -15,33 +15,30 @@ class RegisterController extends Controller
     public function __invoke(
         RegisterRequest $request,
         AuthService $authService,
-        SmsNotificationService $sms
+        PhoneVerificationService $verification
     ): JsonResponse {
         $result = $authService->register(
             $request->validated()
         );
 
-        $reminderSent = true;
+        $otpSent = true;
 
         try {
-            $sms->queueToUser(
-                $result['user'],
-                'registration_verification_reminder',
-                "St. Lorenzo Ruiz Parish: Your account has been created. Your username is {$result['user']->username}. Please verify your mobile number in Account Settings to access parish booking services."
-            );
+            $verification->send($result['user']);
         } catch (Throwable $exception) {
             report($exception);
-            $reminderSent = false;
+            $otpSent = false;
         }
 
         return response()->json([
-            'message' => 'Account created. Verify your mobile number to access parish booking services.',
+            'message' => $otpSent
+                ? 'Account created. Enter the verification code sent to your mobile number.'
+                : 'Account created. Request a new verification code to continue.',
             'token' => $result['token'],
             'user' => new UserResource($result['user']),
             'verification' => [
                 'required' => true,
-                'otp_sent' => false,
-                'reminder_sent' => $reminderSent,
+                'otp_sent' => $otpSent,
             ],
         ], 201);
     }

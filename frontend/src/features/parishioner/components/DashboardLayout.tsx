@@ -6,6 +6,7 @@ import MobileSidebar from "./MobileSidebar";
 import Sidebar from "./Sidebar";
 import Topbar from "./dashboard/Topbar";
 import CompleteProfileModal from "./CompleteProfileModal";
+import PhoneVerificationModal from "./profile/PhoneVerificationModal";
 
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -18,7 +19,7 @@ export default function DashboardLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
 
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const phoneVerificationOpen =
     location.pathname === "/settings" &&
     new URLSearchParams(location.search).get("verifyPhone") === "1";
@@ -67,9 +68,21 @@ export default function DashboardLayout({
         </main>
       </div>
 
-      {user && !user.profile_completed && !phoneVerificationOpen && (
-        <CompleteProfileModal />
+      {user && !user.phone_verified && !phoneVerificationOpen && (
+        <PhoneVerificationModal
+          phone={user.phone}
+          username={user.username}
+          onClose={() => undefined}
+          onVerified={refreshUser}
+          required
+          initiallySent={location.state?.registrationOtpSent === true}
+        />
       )}
+
+      {user &&
+        user.phone_verified &&
+        !user.profile_completed &&
+        !phoneVerificationOpen && <CompleteProfileModal />}
     </div>
   );
 }

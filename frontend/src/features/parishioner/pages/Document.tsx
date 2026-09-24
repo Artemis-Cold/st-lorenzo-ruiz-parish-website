@@ -196,13 +196,11 @@ export default function Document() {
     } else if (step === 2) {
       errors = validateDetails();
     } else if (step === 3) {
-      if (booking.payment_method === "gcash") {
-        if (!isValidGcashReference(booking.reference_number)) {
-          errors.reference_number = [GCASH_REFERENCE_ERROR];
-        }
-        if (!booking.receipt) {
-          errors.receipt = ["Payment receipt is required."];
-        }
+      if (!isValidGcashReference(booking.reference_number)) {
+        errors.reference_number = [GCASH_REFERENCE_ERROR];
+      }
+      if (!booking.receipt) {
+        errors.receipt = ["Payment receipt is required."];
       }
     }
 

@@ -6,10 +6,12 @@ export default function PaymentMethodChoice({
   value,
   onChange,
   disabled = false,
+  allowCash = true,
 }: {
   value: PaymentMethod;
   onChange: (method: PaymentMethod) => void;
   disabled?: boolean;
+  allowCash?: boolean;
 }) {
   const options = [
     {
@@ -24,14 +26,14 @@ export default function PaymentMethodChoice({
       description: "Pay in person and receive an official receipt.",
       icon: Banknote,
     },
-  ];
+  ].filter((option) => allowCash || option.value !== "cash");
 
   return (
     <fieldset disabled={disabled}>
       <legend className="mb-3 text-sm font-semibold text-[#292524]">
         Select payment method
       </legend>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className={`grid gap-3 ${allowCash ? "sm:grid-cols-2" : ""}`}>
         {options.map((option) => {
           const Icon = option.icon;
           const selected = value === option.value;

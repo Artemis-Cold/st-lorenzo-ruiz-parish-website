@@ -1,7 +1,6 @@
 import {
   UserCircle2,
   Phone,
-  User,
   MapPin,
   Pencil,
   Camera,
@@ -31,7 +30,6 @@ interface ProfileHeaderProps {
 export default function ProfileHeader({
   fullName = "Juan Dela Cruz",
   phone = "0912 345 6789",
-  username,
   address = "Dagatan, Taysan, Batangas",
   avatar,
   onEdit,
@@ -84,11 +82,6 @@ export default function ProfileHeader({
             </h1>
 
             <div className="mt-3 space-y-2 text-left text-white/90">
-              <div className="flex items-start gap-2">
-                <User size={18} />
-                <span>@{username}</span>
-              </div>
-
               <div className="flex items-start gap-2">
                 <Phone size={18} />
                 <span>{phone}</span>

@@ -189,7 +189,8 @@ class ParishionerBookingController extends Controller
         PaymentService $payments
     ): JsonResponse {
         abort_unless($booking->user_id === $request->user()->id, 404);
-        abort_unless(in_array($booking->service()->value('code'), self::PAYMENT_SERVICES, true), 404);
+        $serviceCode = $booking->service()->value('code');
+        abort_unless(in_array($serviceCode, self::PAYMENT_SERVICES, true), 404);
 
         if (! in_array($booking->status, ['pending', 'paid'], true)) {
             throw ValidationException::withMessages([
@@ -205,8 +206,12 @@ class ParishionerBookingController extends Controller
 
         $request->mergeIfMissing(['payment_method' => 'gcash']);
 
+        $allowedMethods = in_array($serviceCode, ['mass-intention', 'document-request'], true)
+            ? ['gcash']
+            : ['gcash', 'cash'];
+
         $data = $request->validate([
-            'payment_method' => ['required', 'in:gcash,cash'],
+            'payment_method' => ['required', Rule::in($allowedMethods)],
             'reference_number' => [
                 'required_if:payment_method,gcash',
                 'nullable',
@@ -224,6 +229,7 @@ class ParishionerBookingController extends Controller
                 'max:5120',
             ],
         ], [
+            'payment_method.in' => 'GCash is the only accepted payment method for this service.',
             'reference_number.digits' => 'Enter the 13-digit GCash transaction reference number.',
         ]);
 

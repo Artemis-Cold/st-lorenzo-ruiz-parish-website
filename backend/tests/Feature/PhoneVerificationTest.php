@@ -13,7 +13,7 @@ class PhoneVerificationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_creates_an_unverified_account_and_sends_a_verification_reminder(): void
+    public function test_registration_creates_an_unverified_account_and_immediately_sends_an_otp(): void
     {
         config(['services.sms.driver' => 'database']);
 
@@ -28,22 +28,22 @@ class PhoneVerificationTest extends TestCase
             ->assertJsonPath('user.username', 'juan')
             ->assertJsonPath('user.phone_verified', false)
             ->assertJsonPath('verification.required', true)
-            ->assertJsonPath('verification.otp_sent', false)
-            ->assertJsonPath('verification.reminder_sent', true);
+            ->assertJsonPath('verification.otp_sent', true);
 
         $user = User::where('username', 'juan')->firstOrFail();
 
         $this->assertNull($user->phone_verified_at);
-        $this->assertDatabaseMissing('phone_verification_otps', [
+        $this->assertDatabaseHas('phone_verification_otps', [
             'user_id' => $user->id,
+            'attempts' => 0,
         ]);
         $this->assertDatabaseHas('sms_messages', [
             'user_id' => $user->id,
-            'category' => 'registration_verification_reminder',
+            'category' => 'phone_verification_otp',
             'recipient' => '639171234567',
         ]);
         $this->assertStringContainsString(
-            'verify your mobile number in Account Settings',
+            'mobile verification code',
             SmsMessage::latest('id')->value('message')
         );
         $this->withToken($response->json('token'))
@@ -143,6 +143,20 @@ class PhoneVerificationTest extends TestCase
                 ->assertForbidden()
                 ->assertJsonPath('code', 'phone_verification_required');
         }
+    }
+
+    public function test_profile_completion_requires_phone_verification(): void
+    {
+        Sanctum::actingAs(User::factory()->unverified()->create());
+
+        $this->patchJson('/api/profile/complete', [
+            'birth_date' => today()->subYears(20)->toDateString(),
+            'gender' => 'Male',
+            'barangay' => 'Dagatan',
+            'municipality' => 'Taysan',
+            'province' => 'Batangas',
+        ])->assertForbidden()
+            ->assertJsonPath('code', 'phone_verification_required');
     }
 
     public function test_changing_phone_number_removes_existing_verification(): void

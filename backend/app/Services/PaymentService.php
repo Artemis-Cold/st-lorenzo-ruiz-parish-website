@@ -18,6 +18,13 @@ class PaymentService
     ): Payment {
         return DB::transaction(function () use ($booking, $method, $referenceNumber, $receipt) {
             $lockedBooking = Booking::query()->lockForUpdate()->findOrFail($booking->id);
+            $serviceCode = $lockedBooking->service()->value('code');
+
+            if (in_array($serviceCode, ['mass-intention', 'document-request'], true) && $method !== 'gcash') {
+                throw ValidationException::withMessages([
+                    'payment_method' => 'GCash is the only accepted payment method for this service.',
+                ]);
+            }
 
             if ($lockedBooking->status === 'paid' || $lockedBooking->payments()->where('status', 'confirmed')->exists()) {
                 throw ValidationException::withMessages([

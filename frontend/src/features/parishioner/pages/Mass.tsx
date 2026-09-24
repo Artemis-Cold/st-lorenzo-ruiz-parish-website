@@ -152,13 +152,11 @@ export default function Mass() {
           "The current Mass Intention rate could not be loaded.",
         ];
       }
-      if (booking.payment_method === "gcash") {
-        if (!isValidGcashReference(booking.reference_number)) {
-          errors.reference_number = [GCASH_REFERENCE_ERROR];
-        }
-        if (!booking.receipt) {
-          errors.receipt = ["Payment receipt is required."];
-        }
+      if (!isValidGcashReference(booking.reference_number)) {
+        errors.reference_number = [GCASH_REFERENCE_ERROR];
+      }
+      if (!booking.receipt) {
+        errors.receipt = ["Payment receipt is required."];
       }
     }
 

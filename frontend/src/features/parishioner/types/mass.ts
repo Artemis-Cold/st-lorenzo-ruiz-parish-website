@@ -16,7 +16,7 @@ export interface MassIntentionBooking {
   mass_event_id: number;
   groups: IntentionGroup[];
   remarks: string;
-  payment_method: "gcash" | "cash";
+  payment_method: "gcash";
   reference_number: string;
   receipt: File | null;
 }

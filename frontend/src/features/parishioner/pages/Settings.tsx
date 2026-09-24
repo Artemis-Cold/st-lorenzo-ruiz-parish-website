@@ -138,6 +138,7 @@ export default function Settings() {
           username={user.username}
           onClose={closeVerification}
           onVerified={reload}
+          required
         />
       )}
     </DashboardLayout>

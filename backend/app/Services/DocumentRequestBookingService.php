@@ -48,17 +48,13 @@ class DocumentRequestBookingService
                 'service_id' => $service->id,
                 'service_package_id' => null,
                 'booking_slot_id' => null,
-                'payment_reference' => $data['payment_method'] === 'gcash'
-                    ? $data['reference_number']
-                    : null,
+                'payment_reference' => $data['reference_number'],
                 'status' => 'pending',
                 'remarks' => $data['remarks'] ?? null,
             ]);
 
             $documentRequest = $booking->documentRequest()->create([
-                'payment_reference' => $data['payment_method'] === 'gcash'
-                    ? $data['reference_number']
-                    : null,
+                'payment_reference' => $data['reference_number'],
                 'total_amount' => $total,
             ]);
 
@@ -80,9 +76,9 @@ class DocumentRequestBookingService
 
             $this->payments->createAttempt(
                 $booking,
-                $data['payment_method'],
-                $data['reference_number'] ?? null,
-                $data['receipt'] ?? null,
+                'gcash',
+                $data['reference_number'],
+                $data['receipt'],
             );
 
             return $booking->load([

@@ -57,9 +57,7 @@ class MassIntentionBookingService
                 'service_id' => $service->id,
                 'service_package_id' => null,
                 'booking_slot_id' => null,
-                'payment_reference' => $data['payment_method'] === 'gcash'
-                    ? $data['reference_number']
-                    : null,
+                'payment_reference' => $data['reference_number'],
                 'status' => 'pending',
                 'remarks' => $data['remarks'] ?? null,
             ]);
@@ -70,9 +68,7 @@ class MassIntentionBookingService
                 'mass_schedule_title' => $massEvent->title,
                 'mass_starts_at' => $massEvent->starts_at,
                 'mass_location' => $massEvent->location,
-                'payment_reference' => $data['payment_method'] === 'gcash'
-                    ? $data['reference_number']
-                    : null,
+                'payment_reference' => $data['reference_number'],
                 'total_amount' => $entryCount * $linePrice,
             ]);
 
@@ -88,9 +84,9 @@ class MassIntentionBookingService
 
             $this->payments->createAttempt(
                 $booking,
-                $data['payment_method'],
-                $data['reference_number'] ?? null,
-                $data['receipt'] ?? null,
+                'gcash',
+                $data['reference_number'],
+                $data['receipt'],
             );
 
             return $booking->load([

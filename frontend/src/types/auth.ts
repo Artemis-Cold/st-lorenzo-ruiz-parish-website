@@ -52,7 +52,6 @@ export interface RegistrationPayload extends AuthPayload {
   verification: {
     required: boolean;
     otp_sent: boolean;
-    reminder_sent: boolean;
   };
 }
 

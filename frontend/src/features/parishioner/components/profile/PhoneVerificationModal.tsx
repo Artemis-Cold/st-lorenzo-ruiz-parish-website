@@ -18,6 +18,8 @@ interface PhoneVerificationModalProps {
   username: string;
   onClose: () => void;
   onVerified: () => Promise<void> | void;
+  required?: boolean;
+  initiallySent?: boolean;
 }
 
 function maskPhone(phone: string) {
@@ -33,12 +35,16 @@ export default function PhoneVerificationModal({
   username,
   onClose,
   onVerified,
+  required = false,
+  initiallySent = false,
 }: PhoneVerificationModalProps) {
-  const [otpSent, setOtpSent] = useState(false);
+  const [otpSent, setOtpSent] = useState(initiallySent);
   const [otp, setOtp] = useState("");
   const [sending, setSending] = useState(false);
   const [verifying, setVerifying] = useState(false);
-  const [secondsUntilResend, setSecondsUntilResend] = useState(0);
+  const [secondsUntilResend, setSecondsUntilResend] = useState(
+    initiallySent ? 60 : 0,
+  );
   const [errors, setErrors] = useState<FieldErrors>({});
 
   useEffect(() => {
@@ -109,6 +115,7 @@ export default function PhoneVerificationModal({
       description="Confirm that this mobile number belongs to you."
       onClose={onClose}
       maxWidth="max-w-lg"
+      dismissible={!required}
     >
       <form onSubmit={submit} noValidate className="space-y-5">
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
@@ -188,13 +195,15 @@ export default function PhoneVerificationModal({
             </button>
 
             <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-xl border border-gray-300 px-5 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
-              >
-                Verify later
-              </button>
+              {!required && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-xl border border-gray-300 px-5 py-3 font-medium text-gray-700 transition hover:bg-gray-50"
+                >
+                  Verify later
+                </button>
+              )}
               <button
                 type="submit"
                 disabled={verifying}

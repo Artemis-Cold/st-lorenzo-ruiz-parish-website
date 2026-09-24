@@ -32,10 +32,9 @@ class StoreMassIntentionBookingRequest extends FormRequest
             'groups.*.entries' => ['required', 'array', 'min:1'],
             'groups.*.entries.*.names' => ['required', 'array', 'min:1', 'max:3'],
             'groups.*.entries.*.names.*' => ['required', 'string', 'max:150'],
-            'payment_method' => ['sometimes', 'in:gcash,cash'],
+            'payment_method' => ['sometimes', 'in:gcash'],
             'reference_number' => [
-                'required_if:payment_method,gcash',
-                'nullable',
+                'required',
                 'digits:13',
                 'unique:payments,reference_number',
                 'unique:bookings,payment_reference',
@@ -43,8 +42,7 @@ class StoreMassIntentionBookingRequest extends FormRequest
                 'unique:document_request_bookings,payment_reference',
             ],
             'receipt' => [
-                'required_if:payment_method,gcash',
-                'nullable',
+                'required',
                 'file',
                 'mimes:jpg,jpeg,png,pdf',
                 'max:5120',

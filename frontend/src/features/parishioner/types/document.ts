@@ -74,7 +74,7 @@ export interface DocumentRequest {
 export interface DocumentRequestBooking {
   requests: DocumentRequest[];
   remarks: string;
-  payment_method: "gcash" | "cash";
+  payment_method: "gcash";
   reference_number: string;
   receipt: File | null;
 }

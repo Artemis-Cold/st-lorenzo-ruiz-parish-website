@@ -1,251 +1,455 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import ParishLogo from "@/components/common/ParishLogo";
 import {
   ArrowLeft,
-  Camera,
-  LoaderCircle,
-  MapPinned,
-  Navigation,
+  ArrowUpRight,
+  Check,
+  ChevronDown,
+  CircleHelp,
+  DoorOpen,
+  MapPin,
+  RotateCcw,
+  Route,
+  ScanLine,
+  X,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import { activeMap } from "../maps/activeMap";
+import { validateTargetFile } from "../services/targetFile";
+import type { MapProfile } from "../types/checkpointNavigation";
+import { useNavigation } from "../hooks/useNavigation";
+import ARCamera from "../components/ARCamera";
+import NavigationArrow from "../components/NavigationArrow";
+import NavigationSheet from "../components/NavigationSheet";
+import "../navigation.css";
 
-import CameraView from "../components/CameraView";
-import LocationSelector from "../components/LocationSelector";
-import MiniMap from "../components/MiniMap";
-import NavigationDebugPanel from "../components/NavigationDebugPanel";
-import NavigationHUD from "../components/NavigationHUD";
-import RouteLineOverlay from "../components/RouteLineOverlay";
-import { useCameraStream } from "../hooks/useCameraStream";
-import { useLiveNavigation } from "../hooks/useLiveNavigation";
+type Panel = "help" | "route" | "destination" | null;
 
 export default function ARNavigationPage() {
-  const navigate = useNavigate();
-  const navigation = useLiveNavigation();
-  const camera = useCameraStream();
-  const [starting, setStarting] = useState(false);
-  const [active, setActive] = useState(false);
-  const [debugVisible, setDebugVisible] = useState(false);
-  const [startError, setStartError] = useState<string | null>(null);
+  return <NavigationSession key={activeMap.id} profile={activeMap} />;
+}
 
-  const destinationOptions = navigation.map.locations.filter(
-    (location) => location.nodeId !== navigation.origin.nodeId,
+function NavigationSession({ profile }: { profile: MapProfile }) {
+  const building = profile.building;
+  const indices = useMemo(
+    () =>
+      building.checkpoints.flatMap((point) =>
+        point.targetIndex === null ? [] : [point.targetIndex],
+      ),
+    [building],
+  );
+  const floorName = (nodeId: string) =>
+    building.floors?.find(
+      (floor) =>
+        floor.id ===
+        building.graph.nodes.find((node) => node.id === nodeId)?.floorId,
+    )?.name;
+  const navigation = useNavigation(building);
+  const markerLabels = useMemo(
+    () =>
+      Object.fromEntries(
+        building.checkpoints.flatMap((point) =>
+          point.targetIndex === null ? [] : [[point.targetIndex, point.name]],
+        ),
+      ),
+    [building],
+  );
+  const { state, instruction, report, reportTarget } = navigation;
+  const [active, setActive] = useState(false);
+  const [targets, setTargets] = useState<ArrayBuffer | null>(null);
+  const [targetError, setTargetError] = useState(!profile.markerSet);
+  const [loadAttempt, setLoadAttempt] = useState(0);
+  useEffect(() => {
+    const controller = new AbortController();
+    const markerSet = profile.markerSet;
+    if (!markerSet) {
+      return;
+    }
+    void fetch(markerSet.targetsUrl, { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error("Unable to load navigation");
+        const buffer = await response.arrayBuffer();
+        validateTargetFile(buffer, markerSet.markers.length);
+        if (!controller.signal.aborted) {
+          setTargets(buffer);
+          setTargetError(false);
+        }
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setTargetError(true);
+      });
+    return () => controller.abort();
+  }, [profile.markerSet, loadAttempt]);
+  const [attempt, setAttempt] = useState(0);
+  const [panel, setPanel] = useState<Panel>(null);
+  const checkpoint = building.checkpoints.find(
+    (item) => item.id === state.currentCheckpointId,
+  );
+  const visible = state.visibleCheckpointId !== null;
+  const destination = building.destinations.find(
+    (item) => item.id === state.destinationId,
+  )!;
+  const reached = instruction?.direction === "destination";
+  const stop = () => {
+    setActive(false);
+    setPanel(null);
+    report({ type: "reset" });
+  };
+  const start = () => {
+    if (!targets || !profile.markerSet) return;
+    report({ type: "reset" });
+    setActive(true);
+    setPanel(null);
+  };
+  const rescan = () => {
+    report({ type: "reset" });
+    setAttempt((value) => value + 1);
+  };
+  const destinations = (
+    <div
+      className="nav-destinations"
+      role="group"
+      aria-label="Choose a destination"
+    >
+      {building.destinations.map((item) => (
+        <button
+          key={item.id}
+          className="nav-place"
+          aria-pressed={state.destinationId === item.id}
+          onClick={() => {
+            report({ type: "destination", id: item.id });
+            if (active) setPanel(null);
+          }}
+        >
+          <DoorOpen size={19} aria-hidden />
+          <span>
+            {item.name}
+            {floorName(item.nodeId) && <small>{floorName(item.nodeId)}</small>}
+          </span>
+          {state.destinationId === item.id && <Check size={17} aria-hidden />}
+        </button>
+      ))}
+    </div>
   );
 
-  const startNavigation = async () => {
-    setStarting(true);
-    setStartError(null);
-
-    try {
-      await Promise.all([camera.start(), navigation.startTracking()]);
-      setActive(true);
-    } catch (error) {
-      camera.stop();
-      navigation.stopTracking();
-      setStartError(
-        error instanceof Error
-          ? error.message
-          : "Camera navigation could not be started.",
-      );
-    } finally {
-      setStarting(false);
-    }
-  };
-
-  const exitNavigation = () => {
-    camera.stop();
-    navigation.stopTracking();
-    setActive(false);
-    navigate("/dashboard");
-  };
-
-  const recalibrate = () => {
-    navigation.recalibrate();
-    toast.success(`Route realigned at ${navigation.origin.name}.`);
-  };
-
-  if (active) {
+  if (!active)
     return (
-      <main className="fixed inset-0 z-50 overflow-hidden bg-stone-950">
-        {camera.stream ? (
-          <CameraView stream={camera.stream} />
-        ) : (
-          <div className="absolute inset-0 grid place-items-center text-white">
-            <LoaderCircle className="animate-spin" size={28} />
-          </div>
-        )}
-
-        <RouteLineOverlay
-          route={navigation.route}
-          snapshot={navigation.snapshot}
-        />
-
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-36 bg-linear-to-b from-black/65 to-transparent" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-56 bg-linear-to-t from-black/70 to-transparent" />
-
-        <div className="absolute bottom-28 left-3 z-20 w-32 sm:bottom-32 sm:left-4 sm:w-40">
-          <MiniMap
-            compact
-            map={navigation.map}
-            route={navigation.route}
-            snapshot={navigation.snapshot}
-          />
+      <main className="nav-app nav-setup">
+        <div className="nav-setup-wrap">
+          <header className="nav-brand">
+            <Link
+              to="/dashboard"
+              className="nav-icon nav-icon-light"
+              aria-label="Back to dashboard"
+            >
+              <ArrowLeft size={20} />
+            </Link>
+            <ParishLogo className="nav-parish-logo" alt="" />
+            <span className="nav-brand-name">
+              St. Lorenzo Ruiz Parish <small>AR Navigation</small>
+            </span>
+          </header>
+          <section className="nav-welcome">
+            <h1>
+              Where would you
+              <br />
+              like to go?
+            </h1>
+            <p>
+              Choose your destination. Scan a nearby marker,
+              <br className="nav-desktop-break" /> and we’ll show you the way.
+            </p>
+          </section>
+          <section className="nav-destination-card">
+            <div className="nav-section-heading">
+              <h2>Choose a destination</h2>
+              <span>{building.schematic ? "2 floors" : "Test layout"}</span>
+            </div>
+            {destinations}
+            <button
+              className="nav-primary"
+              disabled={!targets || !profile.markerSet}
+              onClick={start}
+            >
+              <ScanLine size={21} />
+              <span>
+                {!profile.markerSet
+                  ? "Parish markers not yet configured"
+                  : targets
+                    ? "Start camera navigation"
+                    : "Preparing navigation…"}
+              </span>
+              <ArrowUpRight size={20} />
+            </button>
+            {targetError && (
+              <p role="alert" className="nav-permission-note">
+                Couldn’t load navigation.{" "}
+                <button
+                  className="underline"
+                  onClick={() => {
+                    setTargetError(false);
+                    setLoadAttempt((value) => value + 1);
+                  }}
+                >
+                  Retry
+                </button>
+              </p>
+            )}
+            <p className="nav-permission-note">
+              Guidance ends at the entrance.
+            </p>
+          </section>
+          <footer className="nav-setup-footer">
+            <MapPin size={14} /> Location is confirmed at each scanned
+            checkpoint.
+          </footer>
         </div>
-
-        {debugVisible && (
-          <div className="absolute right-3 top-20 z-40 max-h-[62vh] w-[min(22rem,calc(100%-1.5rem))] overflow-y-auto rounded-2xl sm:right-4">
-            <NavigationDebugPanel
-              snapshot={navigation.snapshot}
-              origin={navigation.origin}
-              destination={navigation.destination}
-              trackingMode={navigation.trackingMode}
-            />
-          </div>
-        )}
-
-        <NavigationHUD
-          origin={navigation.origin}
-          destination={navigation.destination}
-          snapshot={navigation.snapshot}
-          debugVisible={debugVisible}
-          onExit={exitNavigation}
-          onRecalibrate={recalibrate}
-          onToggleDebug={() => setDebugVisible((visible) => !visible)}
-        />
       </main>
     );
-  }
 
   return (
-    <main className="min-h-screen bg-stone-100 px-4 py-5 text-stone-900 sm:px-6 sm:py-8">
-      <div className="mx-auto max-w-5xl">
-        <Link
-          to="/dashboard"
-          className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-stone-600 transition hover:text-[#B22222]"
-        >
-          <ArrowLeft size={18} /> Back to dashboard
-        </Link>
+    <main className="nav-app nav-live">
+      {targets && (
+        <ARCamera
+          key={attempt}
+          buffer={targets}
+          indices={indices}
+          labels={markerLabels}
+          onTarget={reportTarget}
+          onRetry={rescan}
+          onBack={stop}
+        />
+      )}
+      <div className="nav-camera-shade" aria-hidden />
+      <header className="nav-live-header">
+        <div className="nav-topbar">
+          <button
+            className="nav-icon"
+            onClick={stop}
+            aria-label="Stop navigation"
+          >
+            <X size={21} />
+          </button>
+          <button
+            className="nav-destination-switch"
+            onClick={() => setPanel("destination")}
+            aria-label={"Change destination, currently " + destination.name}
+          >
+            <MapPin size={18} />
+            <span>
+              <small>{floorName(destination.nodeId) ?? "HEADING TO"}</small>
+              <strong>{destination.name}</strong>
+            </span>
+            <ChevronDown size={16} />
+          </button>
+          <button
+            className="nav-icon"
+            onClick={() => setPanel("help")}
+            aria-label="Navigation help"
+          >
+            <CircleHelp size={21} />
+          </button>
+        </div>
+        <div className="nav-location-pill" role="status">
+          <span
+            className={visible ? "nav-status-dot confirmed" : "nav-status-dot"}
+          />
+          {checkpoint
+            ? (visible ? "Confirmed: " : "Last confirmed: ") + checkpoint.name
+            : "Looking for a checkpoint"}
+          {checkpoint && floorName(checkpoint.nodeId) && (
+            <span> · {floorName(checkpoint.nodeId)}</span>
+          )}
+        </div>
+        {state.message === "Location updated. Route recalculated." && (
+          <p className="nav-recalculated" role="status">
+            {state.message}
+          </p>
+        )}
+      </header>
 
-        <section className="overflow-hidden rounded-3xl border border-stone-200 bg-white shadow-xl shadow-stone-200/60">
-          <header className="relative overflow-hidden bg-[#8F1D1D] px-6 py-7 text-white sm:px-8 sm:py-9">
-            <div className="absolute -right-12 -top-16 size-48 rounded-full bg-white/5" />
-            <div className="absolute -bottom-24 right-24 size-52 rounded-full bg-amber-300/10" />
-            <div className="relative flex items-start gap-4">
-              <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/15 ring-1 ring-white/25">
-                <MapPinned size={25} />
-              </span>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-red-100">
-                  Accessible indoor guidance
-                </p>
-                <h1 className="mt-1 font-serif text-2xl font-bold sm:text-3xl">
-                  AR Navigation
-                </h1>
-              </div>
+      {!instruction && !checkpoint && (
+        <div className="nav-scan-frame" aria-hidden>
+          <ScanLine size={40} strokeWidth={1} />
+          <span>Place the marker in view</span>
+        </div>
+      )}
+
+      <div className="nav-bottom">
+        {instruction &&
+          !instruction.transition &&
+          instruction.direction !== "unknown" && (
+            <div className="nav-camera-direction" aria-hidden="true">
+              <NavigationArrow direction={instruction.direction} />
             </div>
-          </header>
-
-          <div className="grid gap-7 p-5 sm:p-8 lg:grid-cols-[minmax(0,1fr)_19rem]">
-            <div className="space-y-5">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <LocationSelector
-                  type="origin"
-                  label="Current location"
-                  hint="Stand at the doorway or marked point you select."
-                  locations={navigation.map.locations}
-                  value={navigation.originId}
-                  disabled={starting}
-                  onChange={navigation.setOriginId}
-                />
-                <LocationSelector
-                  type="destination"
-                  label="Destination"
-                  hint="The shortest connected walking route is calculated locally."
-                  locations={destinationOptions}
-                  value={navigation.destinationId}
-                  disabled={starting}
-                  onChange={navigation.setDestinationId}
-                />
-              </div>
-
-              <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 sm:p-5">
-                <div className="flex items-start gap-3">
-                  <Navigation
-                    className="mt-0.5 shrink-0 text-cyan-700"
-                    size={21}
-                  />
-                  <div>
-                    <p className="text-sm font-bold text-cyan-950">
-                      Calibrate before walking
-                    </p>
-                    <p className="mt-1 text-sm leading-6 text-cyan-900/80">
-                      Stand at <strong>{navigation.origin.name}</strong> and
-                      point the phone toward{" "}
-                      <strong>{navigation.calibrationTarget.name}</strong>. Keep
-                      the phone steady, then start navigation.
-                    </p>
+          )}
+        <section
+          className={"nav-guidance" + (reached ? " arrived" : "")}
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {instruction ? (
+            <>
+              <div className="nav-instruction-row">
+                {instruction.transition && (
+                  <div className="nav-arrow-slot">
+                    <span className="nav-floor-symbol" aria-hidden>
+                      ⇅
+                    </span>
                   </div>
+                )}
+                <div className="nav-instruction-copy">
+                  <span className="nav-eyebrow">
+                    {reached ? "YOU’RE HERE" : "YOUR NEXT MOVE"}
+                  </span>
+                  <h1>{instruction.label}</h1>
+                  <p>
+                    {reached ? destination.name : "Toward " + instruction.next}
+                  </p>
                 </div>
               </div>
-
-              
-
-              {(startError || camera.error || navigation.trackingError) && (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-700">
-                  {startError ?? camera.error ?? navigation.trackingError}
+              {!reached && !building.schematic && (
+                <div className="nav-distance-row">
+                  <span>
+                    <strong>≈ {instruction.distance.toFixed(1)} m</strong> this
+                    leg
+                  </span>
+                  <span>
+                    ≈ {state.route?.totalDistance.toFixed(1)} m remaining*
+                  </span>
                 </div>
               )}
-
-              <button
-                type="button"
-                onClick={startNavigation}
-                disabled={starting}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#B22222] px-5 py-3.5 font-semibold text-white shadow-lg shadow-red-900/15 transition hover:bg-[#981B1B] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {starting ? (
-                  <LoaderCircle size={20} className="animate-spin" />
-                ) : (
-                  <Camera size={20} />
-                )}
-                {starting
-                  ? "Requesting permissions..."
-                  : "Start camera navigation"}
-              </button>
-
-              <p className="text-center text-xs leading-5 text-stone-500">
-                Use HTTPS on a phone and allow camera, orientation, and motion
-                permissions. No Next button is used during navigation.
+              <p className="nav-guidance-note">
+                {reached
+                  ? "Your destination checkpoint is confirmed."
+                  : instruction.transition
+                    ? "Scan the marker at the next landing to confirm your floor."
+                    : profile.id === "parish"
+                      ? "Keep your scanning direction when reading the arrow."
+                      : "Face toward the top of the floor plan before following the arrow."}
+              </p>
+              {!reached && (
+                <span className="nav-distance-note">
+                  {building.schematic
+                    ? "Location updates when you scan a marker."
+                    : "*From your last scan. Updates at checkpoints."}
+                </span>
+              )}
+              {reached && (
+                <button className="nav-finish" onClick={stop}>
+                  <Check size={18} /> Finish navigation
+                </button>
+              )}
+            </>
+          ) : (
+            <div className="nav-scan-copy">
+              <span className="nav-eyebrow">LET’S FIND YOUR START</span>
+              <h1>
+                {checkpoint
+                  ? "No public route available"
+                  : "Scan a nearby marker"}
+              </h1>
+              <p>
+                {checkpoint
+                  ? "This connection is restricted or has not been confirmed. Choose another destination; do not enter a staff-only area."
+                  : "Hold your phone steady with the whole marker in view."}
               </p>
             </div>
-
-            <aside className="space-y-3">
-              <div className="rounded-3xl bg-stone-950 p-3">
-                <MiniMap
-                  map={navigation.map}
-                  route={navigation.route}
-                  snapshot={navigation.snapshot}
-                />
-              </div>
-              <div className="rounded-2xl border border-stone-200 p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs font-semibold uppercase tracking-[0.14em] text-stone-500">
-                    Estimated route
-                  </span>
-                  <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-bold text-[#B22222]">
-                    {navigation.route.totalDistance.toFixed(1)} m
-                  </span>
-                </div>
-                <p className="mt-3 text-sm font-bold text-stone-900">
-                  {navigation.origin.name} → {navigation.destination.name}
-                </p>
-                <p className="mt-2 text-xs leading-5 text-stone-500">
-                  Doorway positions are based on the supplied house plan and can
-                  be refined after measuring the actual walking centreline.
-                </p>
-              </div>
-            </aside>
-          </div>
+          )}
         </section>
+        <nav className="nav-toolbar" aria-label="Navigation tools">
+          <button onClick={rescan}>
+            <RotateCcw size={17} />
+            Rescan
+          </button>
+          <button onClick={() => setPanel("route")}>
+            <Route size={17} />
+            Route
+          </button>
+        </nav>
       </div>
+
+      {panel && (
+        <NavigationSheet
+          title={
+            {
+              help: "A little help",
+              route: "Your route",
+              destination: "Change destination",
+            }[panel]
+          }
+          onClose={() => setPanel(null)}
+        >
+          {panel === "destination" && destinations}
+          {panel === "help" && (
+            <div className="nav-help">
+              <p>
+                Hold the phone steady and fit a complete checkpoint marker in
+                the camera view.
+              </p>
+              <h3>After a scan</h3>
+              <p>
+                {profile.id === "parish"
+                  ? "Directions use the facing shown for each marker on your placement map. Keep that scanning direction when reading the arrow; phone rotation is not tracked."
+                  : "Face toward the top of the floor plan before following the arrow."}{" "}
+                Your last instruction stays visible when the marker leaves view.
+              </p>
+              <h3>At the next checkpoint</h3>
+              <p>
+                Scan again to confirm your location and update the route.
+                Distance is an estimate from your last scan, not a live walking
+                measurement.
+              </p>
+              <h3>Need a fresh start?</h3>
+              <p>
+                Use Rescan to clear your last location. Use the × button to stop
+                navigation and close the camera.
+              </p>
+              <p className="nav-help-note">{profile.notice}</p>
+            </div>
+          )}
+          {panel === "route" && (
+            <div className="nav-route-panel">
+              <p>
+                Destination: <strong>{destination.name}</strong>
+              </p>
+              {state.route ? (
+                <>
+                  <p>
+                    {building.schematic
+                      ? "Route from "
+                      : `≈ ${state.route.totalDistance.toFixed(1)} m from `}
+                    {checkpoint?.name}
+                  </p>
+                  <ol>
+                    {state.route.nodes.map((id, index) => (
+                      <li key={id}>
+                        <span>{index + 1}</span>
+                        <div>
+                          {
+                            building.graph.nodes.find((node) => node.id === id)
+                              ?.name
+                          }
+                          {floorName(id) && <small>{floorName(id)}</small>}
+                          {index === 0 && (
+                            <small>Last confirmed location</small>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              ) : (
+                <p>
+                  {checkpoint
+                    ? "No confirmed public passage connects these locations."
+                    : "Scan a checkpoint to see your route."}
+                </p>
+              )}
+            </div>
+          )}
+        </NavigationSheet>
+      )}
     </main>
   );
 }

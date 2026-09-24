@@ -7,6 +7,7 @@ interface ProfileModalProps {
   children: ReactNode;
   onClose: () => void;
   maxWidth?: string;
+  dismissible?: boolean;
 }
 
 export default function ProfileModal({
@@ -15,10 +16,11 @@ export default function ProfileModal({
   children,
   onClose,
   maxWidth = "max-w-3xl",
+  dismissible = true,
 }: ProfileModalProps) {
   useEffect(() => {
     const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (dismissible && event.key === "Escape") onClose();
     };
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -28,13 +30,13 @@ export default function ProfileModal({
       document.body.style.overflow = previousOverflow;
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [onClose]);
+  }, [dismissible, onClose]);
 
   return (
     <div
       data-app-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm"
-      onMouseDown={onClose}
+      onMouseDown={dismissible ? onClose : undefined}
     >
       <section
         role="dialog"
@@ -55,14 +57,16 @@ export default function ProfileModal({
               <p className="mt-1 text-sm text-gray-500">{description}</p>
             )}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close dialog"
-            className="ml-4 grid size-10 shrink-0 place-items-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
-          >
-            <X size={20} />
-          </button>
+          {dismissible && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close dialog"
+              className="ml-4 grid size-10 shrink-0 place-items-center rounded-full text-gray-500 transition hover:bg-gray-100 hover:text-gray-900"
+            >
+              <X size={20} />
+            </button>
+          )}
         </header>
         <div
           data-modal-scroll="true"

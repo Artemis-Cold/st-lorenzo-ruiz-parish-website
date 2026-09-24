@@ -79,28 +79,15 @@ export default function ConfirmationStep({
         <div className="space-y-5">
           <div className="rounded-xl bg-gray-50 p-4">
             <p className="text-sm text-gray-500">Payment Method</p>
+            <p className="mt-1 font-semibold">GCash</p>
+          </div>
+          <div className="rounded-xl bg-gray-50 p-4">
+            <p className="text-sm text-gray-500">Reference Number</p>
+
             <p className="mt-1 font-semibold">
-              {booking.payment_method === "gcash"
-                ? "GCash"
-                : "Cash at Parish Office"}
+              {booking.reference_number || "-"}
             </p>
           </div>
-          {booking.payment_method === "gcash" ? (
-            <>
-              <div className="rounded-xl bg-gray-50 p-4">
-                <p className="text-sm text-gray-500">Reference Number</p>
-
-                <p className="mt-1 font-semibold">
-                  {booking.reference_number || "-"}
-                </p>
-              </div>
-            </>
-          ) : (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900">
-              Your request will remain pending until you pay at the parish
-              office and staff confirms the cash received.
-            </div>
-          )}
 
           <div className="rounded-xl border border-gray-200 p-4">
             <div className="mb-3 flex items-center gap-2">

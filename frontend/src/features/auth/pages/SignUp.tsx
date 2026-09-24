@@ -34,7 +34,7 @@ export default function SignUp() {
     setFieldErrors({});
 
     try {
-      await register({
+      const response = await register({
         first_name: firstName,
         last_name: lastName,
         phone,
@@ -43,8 +43,9 @@ export default function SignUp() {
         terms_accepted: termsAccepted,
       });
 
-      navigate("/settings?verifyPhone=1", {
+      navigate("/dashboard", {
         replace: true,
+        state: { registrationOtpSent: response.verification.otp_sent },
       });
     } catch (err) {
       if (err instanceof AxiosError && err.response?.status === 422) {

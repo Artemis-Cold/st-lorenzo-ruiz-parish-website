@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { Toaster } from "sonner";
 
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -36,6 +36,7 @@ import Transactions from "./features/staff/pages/Transactions";
 import StaffSettings from "./features/staff/pages/Settings";
 import StaffAvailability from "./features/staff/pages/Availability";
 import StaffPricingSettings from "./features/staff/pages/PricingSettings";
+import NavigationMarkers from "./features/staff/pages/NavigationMarkers";
 
 const ARNavigationPage = lazy(() => import("./features/ar-navigation"));
 
@@ -82,6 +83,12 @@ function App() {
         </Route>
 
         <Route element={<StaffProtectedRoute />}>
+          <Route
+            path="/staff/navigation-markers"
+            element={
+              <Navigate to="/staff/settings/navigation-markers" replace />
+            }
+          />
           <Route path="/staff/dashboard" element={<StaffDashboard />} />
           <Route path="/staff/announcements" element={<Announcements />} />
           <Route path="/staff/events" element={<Events />} />
@@ -93,6 +100,10 @@ function App() {
           <Route
             path="/staff/settings/pricing"
             element={<StaffPricingSettings />}
+          />
+          <Route
+            path="/staff/settings/navigation-markers"
+            element={<NavigationMarkers />}
           />
           <Route path="/staff/availability" element={<StaffAvailability />} />
         </Route>

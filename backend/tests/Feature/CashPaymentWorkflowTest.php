@@ -121,4 +121,34 @@ class CashPaymentWorkflowTest extends TestCase
             'payment_method' => 'gcash',
         ])->assertUnprocessable()->assertJsonValidationErrors('payment_method');
     }
+
+    public function test_mass_intentions_and_document_requests_reject_cash_payment(): void
+    {
+        $parishioner = User::factory()->create();
+        Sanctum::actingAs($parishioner);
+
+        foreach (['mass-intention', 'document-request'] as $index => $code) {
+            $service = Service::create([
+                'code' => $code,
+                'name' => str($code)->replace('-', ' ')->title(),
+                'description' => 'GCash-only service',
+            ]);
+            $booking = Booking::create([
+                'booking_reference' => 'PAY-GCASH-ONLY-'.$index,
+                'user_id' => $parishioner->id,
+                'service_id' => $service->id,
+                'status' => 'pending',
+            ]);
+
+            $this->postJson("/api/bookings/{$booking->id}/payment", [
+                'payment_method' => 'cash',
+            ])->assertUnprocessable()
+                ->assertJsonValidationErrors('payment_method');
+
+            $this->assertDatabaseMissing('payments', [
+                'booking_id' => $booking->id,
+                'method' => 'cash',
+            ]);
+        }
+    }
 }

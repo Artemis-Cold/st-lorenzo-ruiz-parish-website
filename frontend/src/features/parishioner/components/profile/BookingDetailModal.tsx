@@ -92,7 +92,11 @@ export default function BookingDetailModal({
       .then((booking) => {
         setResult({ bookingId, booking, error: "" });
         setPaymentReference(booking.payment.referenceNumber ?? "");
-        setPaymentMethod(booking.payment.method ?? "gcash");
+        setPaymentMethod(
+          ["mass-intention", "document-request"].includes(booking.serviceCode)
+            ? "gcash"
+            : (booking.payment.method ?? "gcash"),
+        );
         setPaymentReceipt(null);
         setPaymentErrors({});
       })
@@ -529,7 +533,7 @@ export default function BookingDetailModal({
                 {booking.payment.status === "rejected" && (
                   <p className="mt-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm leading-5 text-red-700">
                     The previous GCash payment could not be verified. Submit
-                    corrected details or switch to cash payment below.
+                    corrected payment details below.
                   </p>
                 )}
 
@@ -538,6 +542,11 @@ export default function BookingDetailModal({
                     <PaymentMethodChoice
                       value={paymentMethod}
                       disabled={submittingPayment}
+                      allowCash={
+                        !["mass-intention", "document-request"].includes(
+                          booking.serviceCode,
+                        )
+                      }
                       onChange={(method) => {
                         setPaymentMethod(method);
                         setPaymentErrors({});
