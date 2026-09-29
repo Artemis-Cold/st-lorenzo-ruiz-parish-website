@@ -53,11 +53,11 @@ export function transitionNavigation(
       ? state
       : { ...state, visibleCheckpointId: event.id };
   }
-  const route = calculateRoute(
-    checkpoint.nodeId,
-    destination.nodeId,
-    building.graph,
-  );
+  const routeOrigin =
+    checkpoint.nodeId === destination.nodeId
+      ? checkpoint.nodeId
+      : (checkpoint.departureNodeId ?? checkpoint.nodeId);
+  const route = calculateRoute(routeOrigin, destination.nodeId, building.graph);
   const expected = state.route?.nodes.slice(1).includes(checkpoint.nodeId);
   return {
     destinationId,
@@ -124,7 +124,7 @@ export function navigationInstruction(
       transition,
     };
   }
-  const angle =
+  const relativeAngle =
     a && b && checkpoint
       ? (((Math.atan2(b.x - a.x, a.y - b.y) * 180) / Math.PI -
           checkpoint.facing +
@@ -133,13 +133,13 @@ export function navigationInstruction(
         180
       : null;
   const direction =
-    angle === null
+    relativeAngle === null
       ? "unknown"
-      : Math.abs(angle) >= 150
+      : Math.abs(relativeAngle) >= 150
         ? "back"
-        : angle > 25
+        : relativeAngle > 25
           ? "right"
-          : angle < -25
+          : relativeAngle < -25
             ? "left"
             : "straight";
   const label = {
@@ -151,6 +151,7 @@ export function navigationInstruction(
   }[direction];
   return {
     direction,
+    relativeAngle: relativeAngle ?? undefined,
     label,
     distance: edge?.distance ?? 0,
     next: building.graph.nodes.find((item) => item.id === to)?.name ?? to,

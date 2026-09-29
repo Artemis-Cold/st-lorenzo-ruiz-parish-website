@@ -8,7 +8,7 @@ import {
   navigationInstruction,
 } from "./checkpointNavigation.ts";
 
-test("final map has ten destinations and six transit-only markers", () => {
+test("final map has eleven destinations and six transit-only markers", () => {
   assert.deepEqual(
     building.destinations.map((d) => d.name),
     [
@@ -18,6 +18,7 @@ test("final map has ten destinations and six transit-only markers", () => {
       "Parish Store",
       "Bell Tower",
       "Comfort Room",
+      "Main Church",
       "Altar",
       "Choir Stand",
       "Sacristy",
@@ -56,6 +57,7 @@ test("scan-facing matches every triangle in the final user diagram", () => {
     c_candle: 90,
     bell_entry: 90,
     comfort_entry: 90,
+    c_church: 0,
   };
   for (const m of parishMarkers) {
     assert.equal(m.facing, expected[m.nodeId], m.nodeId);
@@ -66,14 +68,37 @@ test("scan-facing matches every triangle in the final user diagram", () => {
   }
 });
 
+test("every parish marker explicitly routes from its public scan position", () => {
+  const graphNodes = new Set(building.graph.nodes.map((node) => node.id));
+
+  for (const marker of parishMarkers) {
+    const checkpoint = building.checkpoints.find(
+      (item) => item.nodeId === marker.nodeId,
+    );
+    assert.equal(checkpoint.departureNodeId, marker.departureNodeId);
+    assert.ok(graphNodes.has(checkpoint.departureNodeId));
+
+    const destination = building.destinations.find(
+      (item) => item.nodeId === marker.nodeId,
+    );
+    if (!destination) continue;
+
+    const arrival = transitionNavigation(
+      initialNavigation(destination.id),
+      { type: "found", id: marker.nodeId },
+      building,
+    );
+    assert.equal(
+      navigationInstruction(arrival, building).direction,
+      "destination",
+      marker.nodeId,
+    );
+  }
+});
+
 test("unmarked geometry cannot become a detected checkpoint", () => {
   const state = initialNavigation("altar");
-  for (const id of [
-    "b_front_hall",
-    "c_church",
-    "outside_left",
-    "outside_right",
-  ]) {
+  for (const id of ["b_front_hall", "outside_left", "outside_right"]) {
     assert.equal(
       transitionNavigation(state, { type: "found", id }, building),
       state,
@@ -81,14 +106,14 @@ test("unmarked geometry cannot become a detected checkpoint", () => {
   }
 });
 
-test("directions are relative to the scan-facing, not always the top of the plan", () => {
+test("directions and exact arrow angles are relative to the scan-facing", () => {
   // Isolate the bearing calculation for every heading without assuming a route
   // through a wall in the real map: an eastward test edge is a synthetic graph.
-  for (const [facing, direction] of [
-    [0, "right"],
-    [90, "straight"],
-    [180, "left"],
-    [270, "back"],
+  for (const [facing, direction, relativeAngle] of [
+    [0, "right", 90],
+    [90, "straight", 0],
+    [180, "left", -90],
+    [270, "back", -180],
   ]) {
     const fixture = {
       graph: {
@@ -109,6 +134,8 @@ test("directions are relative to the scan-facing, not always the top of the plan
       { type: "found", id: "a" },
       fixture,
     );
-    assert.equal(navigationInstruction(state, fixture).direction, direction);
+    const instruction = navigationInstruction(state, fixture);
+    assert.equal(instruction.direction, direction);
+    assert.equal(instruction.relativeAngle, relativeAngle);
   }
 });

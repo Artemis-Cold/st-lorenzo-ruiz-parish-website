@@ -7,7 +7,7 @@ import type { NavigationGraph } from "../../types/checkpointNavigation.ts";
  * Edges describe walking passages, not straight lines between room centres.
  * Destination entry nodes represent the accessible side of each threshold;
  * hallway nodes describe routing geometry, not additional room destinations.
- * Legacy interior nodes remain for passage geometry and route-engine fixtures.
+ * Interior nodes remain for passage geometry and do not require markers.
  */
 export const houseGraph: NavigationGraph = {
   nodes: [
@@ -44,9 +44,9 @@ export const houseGraph: NavigationGraph = {
     },
   ],
   edges: [
-    // The wall along the terrace's top is crossed only at its left-hand gap.
+    // The paired Terrace/Living Room markers share the central opening.
     { from: "terrace_entry", to: "terrace_door", distance: 2.5 },
-    { from: "terrace_door", to: "left_hall_lower", distance: 0.5 },
+    { from: "terrace_door", to: "living_room", distance: 0.5 },
     // Cross between side corridors through the lower interior of Living Room.
     { from: "left_hall_lower", to: "living_left_entry", distance: 1 },
     { from: "living_left_entry", to: "living_room", distance: 2.5 },

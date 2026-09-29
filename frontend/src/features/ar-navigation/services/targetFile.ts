@@ -1,10 +1,6 @@
 import { decode } from "@msgpack/msgpack";
-import { markerManifest } from "../data/markerManifest.ts";
 
-export function validateTargetFile(
-  buffer: ArrayBuffer,
-  expectedCount: number = markerManifest.length,
-) {
+export function validateTargetFile(buffer: ArrayBuffer, expectedCount: number) {
   if (buffer.byteLength === 0 || buffer.byteLength > 30 * 1024 * 1024)
     throw new Error("Choose a .mind file smaller than 30 MB.");
   let decoded: unknown;

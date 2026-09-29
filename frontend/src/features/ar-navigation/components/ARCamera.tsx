@@ -1,5 +1,6 @@
 import { useMindAR } from "../hooks/useMindAR";
 import { LoaderCircle, CameraOff } from "lucide-react";
+import type { MarkerGuidance } from "../services/mindarProtocol";
 
 export default function ARCamera({
   buffer,
@@ -7,16 +8,21 @@ export default function ARCamera({
   onRetry,
   onBack,
   indices,
-  labels,
+  guidance,
 }: {
   buffer: ArrayBuffer;
   onTarget: (index: number, visible: boolean) => void;
   onRetry: () => void;
   onBack: () => void;
   indices: number[];
-  labels: Record<number, string>;
+  guidance: MarkerGuidance | null;
 }) {
-  const { container, status, error } = useMindAR(buffer, onTarget, indices, labels);
+  const { container, status, error } = useMindAR(
+    buffer,
+    onTarget,
+    indices,
+    guidance,
+  );
   return (
     <>
       <div ref={container} className="fixed inset-0 z-0 bg-black" />

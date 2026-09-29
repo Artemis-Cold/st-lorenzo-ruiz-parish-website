@@ -8,9 +8,9 @@ import { checkpointForTarget } from "./targetMapper.ts";
 import { validateTargetFile } from "./targetFile.ts";
 
 test("all parish public nodes have unique, contiguous target indices", () => {
-  assert.equal(parishMarkers.length, 16);
-  assert.equal(new Set(parishMarkers.map((m) => m.nodeId)).size, 16);
-  assert.equal(new Set(parishMarkers.map((m) => m.code)).size, 16);
+  assert.equal(parishMarkers.length, 17);
+  assert.equal(new Set(parishMarkers.map((m) => m.nodeId)).size, 17);
+  assert.equal(new Set(parishMarkers.map((m) => m.code)).size, 17);
   for (const [index, marker] of parishMarkers.entries()) {
     assert.equal(marker.targetIndex, index);
     assert.equal(
@@ -33,21 +33,22 @@ test("all parish public nodes have unique, contiguous target indices", () => {
   }
 });
 
-test("parish compiled file has 16 targets and rejects the house file", () => {
+test("parish compiled file has 17 targets and rejects the house file", () => {
   const bytes = readFileSync(
     new URL("../maps/parish/assets/targets.mind", import.meta.url),
   );
-  assert.equal(validateTargetFile(new Uint8Array(bytes).buffer, 16), 16);
+  assert.equal(validateTargetFile(new Uint8Array(bytes).buffer, 17), 17);
   const house = readFileSync(
-    new URL("../assets/targets.mind", import.meta.url),
+    new URL("../maps/house/assets/targets.mind", import.meta.url),
+  );
+  assert.equal(validateTargetFile(new Uint8Array(house).buffer, 10), 10);
+  assert.throws(
+    () => validateTargetFile(new Uint8Array(house).buffer, 17),
+    /exactly 17/,
   );
   assert.throws(
-    () => validateTargetFile(new Uint8Array(house).buffer, 16),
-    /exactly 16/,
-  );
-  assert.throws(
-    () => validateTargetFile(new Uint8Array(bytes).buffer, 12),
-    /exactly 12/,
+    () => validateTargetFile(new Uint8Array(bytes).buffer, 10),
+    /exactly 10/,
   );
   assert.notEqual(
     checkpointForTarget(0, parishBuilding.checkpoints).id,
@@ -60,7 +61,7 @@ test("print pack contains exactly the same artwork as the recognition source ima
     new URL("../maps/parish/assets/markers-print.html", import.meta.url),
     "utf8",
   );
-  assert.equal((pack.match(/<article>/g) || []).length, 16);
+  assert.equal((pack.match(/<article>/g) || []).length, 17);
   for (const marker of parishMarkers) {
     const svg = readFileSync(
       new URL(
@@ -75,4 +76,5 @@ test("print pack contains exactly the same artwork as the recognition source ima
     assert.doesNotMatch(svg, /SET 2/);
     assert.ok(svg.includes(marker.code));
   }
+  assert.doesNotMatch(pack, /test markers|TEST PLACEMENT|visitor-ready/i);
 });

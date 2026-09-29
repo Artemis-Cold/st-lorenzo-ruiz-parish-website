@@ -11,7 +11,7 @@ import {
 } from "three";
 import type { NavigationDirection } from "../types/checkpointNavigation";
 
-// Screen-space shapes: no camera pose, physical floor or compass dependency.
+// Screen-space guidance calibrated by the facing of the last scanned marker.
 const straight = [
   [-0.18, -0.85],
   [0.18, -0.85],
@@ -20,30 +20,6 @@ const straight = [
   [0, 0.9],
   [-0.58, 0.25],
   [-0.18, 0.25],
-];
-const right = [
-  [-0.65, -0.85],
-  [-0.25, -0.85],
-  [-0.25, 0.12],
-  [0.25, 0.12],
-  [0.25, -0.25],
-  [0.95, 0.32],
-  [0.25, 0.9],
-  [0.25, 0.52],
-  [-0.65, 0.52],
-];
-const back = [
-  [0.65, -0.65],
-  [0.3, -0.65],
-  [0.3, 0.4],
-  [-0.3, 0.4],
-  [-0.3, -0.05],
-  [0.02, -0.05],
-  [-0.48, -0.75],
-  [-0.98, -0.05],
-  [-0.65, -0.05],
-  [-0.65, 0.75],
-  [0.65, 0.75],
 ];
 const check = [
   [-0.85, -0.05],
@@ -80,9 +56,6 @@ export function createNavigationArrow(host: HTMLDivElement) {
   });
   const shapes = {
     straight,
-    right,
-    left: right.map(([x, y]) => [-x, y]),
-    back,
     destination: check,
   };
   const geometries = Object.fromEntries(
@@ -152,11 +125,19 @@ export function createNavigationArrow(host: HTMLDivElement) {
   observer.observe(host);
   resize();
   return {
-    setDirection(next: NavigationDirection) {
+    setDirection(next: NavigationDirection, relativeAngle = 0) {
       if (disposed) return;
       direction = next;
       mesh.visible = next !== "unknown";
-      if (next !== "unknown") mesh.geometry = geometries[next];
+      if (next !== "unknown") {
+        mesh.geometry =
+          next === "destination" ? geometries.destination : geometries.straight;
+        mesh.rotation.set(
+          -0.36,
+          0,
+          next === "destination" ? 0 : (-relativeAngle * Math.PI) / 180,
+        );
+      }
       material.color.set(next === "destination" ? 0x34d399 : 0xf5d76e);
       edgeMaterial.color.set(next === "destination" ? 0x12664f : 0x946719);
       render();

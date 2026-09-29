@@ -38,6 +38,12 @@ export type NavigationDirection =
 
 export interface NavigationInstruction {
   direction: NavigationDirection;
+  /**
+   * Signed clockwise angle from the user's marker scan-facing direction to
+   * the next route leg. Zero points straight ahead; positive values point
+   * right and negative values point left.
+   */
+  relativeAngle?: number;
   label: string;
   distance: number;
   next: string | null;
@@ -47,6 +53,12 @@ export interface NavigationInstruction {
 export interface Checkpoint {
   id: string;
   nodeId: string;
+  /**
+   * Optional public-side route origin used after this marker is scanned.
+   * Doorway markers can still confirm arrival at nodeId while navigation away
+   * begins where the scanner is physically standing outside the doorway.
+   */
+  departureNodeId?: string;
   name: string;
   targetIndex: number | null;
   /** Facing clockwise from the top of the floor plan, after alignment. */
@@ -59,24 +71,26 @@ export interface BuildingConfig {
   checkpoints: readonly Checkpoint[];
   layout: Readonly<Record<string, { x: number; y: number }>>;
   floors?: readonly { id: string; name: string; level: number }[];
-  /** Draft profiles use relative costs, not claimed metre measurements. */
+  /** Profiles using relative route costs instead of metre measurements. */
   schematic?: boolean;
 }
 
 export interface MarkerSet {
   targetsUrl: string;
   printUrl: string;
+  placementMapUrl?: string;
   markers: readonly {
     name: string;
     nodeId: string;
     placement: string;
+    facing?: number;
+    code?: string;
     url: string;
   }[];
 }
 
 export interface MapProfile {
   id: string;
-  name: string;
   building: BuildingConfig;
   markerSet: MarkerSet | null;
   notice: string;

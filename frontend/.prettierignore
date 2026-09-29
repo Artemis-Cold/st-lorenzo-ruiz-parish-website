@@ -1,2 +1,4 @@
 dist
 node_modules
+src/features/ar-navigation/maps/house/assets/
+src/features/ar-navigation/maps/parish/assets/

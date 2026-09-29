@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1000" viewBox="0 0 1000 1000">
+<rect width="1000" height="1000" fill="#fff"/>
+<text x="500" y="42" text-anchor="middle" font-family="Georgia,serif" font-size="30" font-weight="bold" fill="#292524">House Navigation Marker Placement</text>
+<text x="500" y="70" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" fill="#57534e">Arrow direction = direction the user must face while scanning</text>
+<g fill="none" stroke="#292524" stroke-width="3">
+  <rect x="150" y="90" width="700" height="630"/>
+  <path d="M325 90V150 M325 185V335 M325 370V430 M325 465V720"/>
+  <path d="M675 90V205 M675 240V335 M675 370V430 M675 465V720"/>
+  <path d="M150 225H325 M150 315H255 M150 450H325 M150 585H325"/>
+  <path d="M675 315H850 M675 450H850 M675 585H850"/>
+  <path d="M375 315H625 M375 315V675 M625 315V675"/>
+  <path d="M375 720H475 M525 720H675"/>
+  <path d="M325 720V920 H675V835 M675 800V720"/>
+</g>
+<g font-family="Arial,sans-serif" font-size="18" fill="#292524" text-anchor="middle">
+  <text x="235" y="160">Bathroom 2</text><text x="235" y="275">Bathroom 1</text>
+  <text x="235" y="390">Room 2</text><text x="235" y="535">Room 1</text>
+  <text x="500" y="175">Dining Room</text><text x="760" y="175">Kitchen</text>
+  <text x="760" y="390">Room 3</text><text x="760" y="535">Room 4</text>
+  <text x="500" y="500">Living Room</text><text x="500" y="820">Terrace</text>
+</g>
+<g transform="translate(500 720)">
+<g transform="rotate(0)">
+<circle r="25" fill="#fff" stroke="#b22222" stroke-width="3"/>
+<path d="M0 -18 L14 8 H5 V19 H-5 V8 H-14 Z" fill="#b22222"/>
+</g>
+<text x="31" y="6" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#671313">H00</text>
+</g>
+<g transform="translate(500 675)">
+<g transform="rotate(180)">
+<circle r="25" fill="#fff" stroke="#b22222" stroke-width="3"/>
+<path d="M0 -18 L14 8 H5 V19 H-5 V8 H-14 Z" fill="#b22222"/>
+</g>
+<text x="31" y="6" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#671313">H01</text>
+</g>
+<g transform="translate(500 270)">
+<g transform="rotate(180)">
+<circle r="25" fill="#fff" stroke="#b22222" stroke-width="3"/>
+<path d="M0 -18 L14 8 H5 V19 H-5 V8 H-14 Z" fill="#b22222"/>
+</g>
+<text x="31" y="6" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#671313">H02</text>
+</g>
+<g transform="translate(675 240)">
+<g transform="rotate(90)">
+<circle r="25" fill="#fff" stroke="#b22222" stroke-width="3"/>
+<path d="M0 -18 L14 8 H5 V19 H-5 V8 H-14 Z" fill="#b22222"/>
+</g>
+<text x="31" y="6" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#671313">H03</text>
+</g>
+<g transform="translate(325 585)">
+<g transform="rotate(270)">
+<circle r="25" fill="#fff" stroke="#b22222" stroke-width="3"/>
+<path d="M0 -18 L14 8 H5 V19 H-5 V8 H-14 Z" fill="#b22222"/>
+</g>
+<text x="31" y="6" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#671313">H04</text>
+</g>
+<g transform="translate(325 405)">
+<g transform="rotate(270)">
+<circle r="25" fill="#fff" stroke="#b22222" stroke-width="3"/>
+<path d="M0 -18 L14 8 H5 V19 H-5 V8 H-14 Z" fill="#b22222"/>
+</g>
+<text x="31" y="6" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#671313">H05</text>
+</g>
+<g transform="translate(675 405)">
+<g transform="rotate(90)">
+<circle r="25" fill="#fff" stroke="#b22222" stroke-width="3"/>
+<path d="M0 -18 L14 8 H5 V19 H-5 V8 H-14 Z" fill="#b22222"/>
+</g>
+<text x="31" y="6" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#671313">H06</text>
+</g>
+<g transform="translate(675 585)">
+<g transform="rotate(90)">
+<circle r="25" fill="#fff" stroke="#b22222" stroke-width="3"/>
+<path d="M0 -18 L14 8 H5 V19 H-5 V8 H-14 Z" fill="#b22222"/>
+</g>
+<text x="31" y="6" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#671313">H07</text>
+</g>
+<g transform="translate(255 300)">
+<g transform="rotate(0)">
+<circle r="25" fill="#fff" stroke="#b22222" stroke-width="3"/>
+<path d="M0 -18 L14 8 H5 V19 H-5 V8 H-14 Z" fill="#b22222"/>
+</g>
+<text x="31" y="6" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#671313">H08</text>
+</g>
+<g transform="translate(325 165)">
+<g transform="rotate(270)">
+<circle r="25" fill="#fff" stroke="#b22222" stroke-width="3"/>
+<path d="M0 -18 L14 8 H5 V19 H-5 V8 H-14 Z" fill="#b22222"/>
+</g>
+<text x="31" y="6" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#671313">H09</text>
+</g>
+</svg>

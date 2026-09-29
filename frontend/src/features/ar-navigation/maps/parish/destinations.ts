@@ -10,6 +10,7 @@ export const parishDestinations: readonly Destination[] = [
   { id: "parish-store", name: "Parish Store", nodeId: "b_store" },
   { id: "bell-tower", name: "Bell Tower", nodeId: "bell_entry" },
   { id: "comfort-room", name: "Comfort Room", nodeId: "comfort_entry" },
+  { id: "main-church", name: "Main Church", nodeId: "c_church" },
   { id: "altar", name: "Altar", nodeId: "c_altar" },
   { id: "choir", name: "Choir Stand", nodeId: "c_choir" },
   { id: "sacristy", name: "Sacristy", nodeId: "c_sacristy" },

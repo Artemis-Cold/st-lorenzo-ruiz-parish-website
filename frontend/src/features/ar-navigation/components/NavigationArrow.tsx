@@ -4,29 +4,31 @@ import type { createNavigationArrow } from "../services/navigationArrow";
 
 const symbols: Record<NavigationDirection, string> = {
   straight: "↑",
-  left: "↰",
-  right: "↱",
-  back: "↶",
+  left: "↑",
+  right: "↑",
+  back: "↑",
   destination: "✓",
   unknown: "•",
 };
 
 export default function NavigationArrow({
   direction,
-  compact = false,
+  relativeAngle = 0,
 }: {
   direction: NavigationDirection;
-  compact?: boolean;
+  relativeAngle?: number;
 }) {
   const host = useRef<HTMLDivElement>(null);
   const renderer = useRef<ReturnType<typeof createNavigationArrow> | null>(
     null,
   );
   const latestDirection = useRef(direction);
+  const latestAngle = useRef(relativeAngle);
   useEffect(() => {
     latestDirection.current = direction;
-    renderer.current?.setDirection(direction);
-  }, [direction]);
+    latestAngle.current = relativeAngle;
+    renderer.current?.setDirection(direction, relativeAngle);
+  }, [direction, relativeAngle]);
   useEffect(() => {
     let cancelled = false;
     const element = host.current;
@@ -35,7 +37,10 @@ export default function NavigationArrow({
       .then(({ createNavigationArrow }) => {
         if (cancelled) return;
         renderer.current = createNavigationArrow(element);
-        renderer.current.setDirection(latestDirection.current);
+        renderer.current.setDirection(
+          latestDirection.current,
+          latestAngle.current,
+        );
       })
       .catch((error: unknown) => {
         // The visible symbol and instruction text remain usable without WebGL.
@@ -56,9 +61,17 @@ export default function NavigationArrow({
       ref={host}
       aria-hidden="true"
       data-direction={direction}
-      className={`group pointer-events-none relative mx-auto w-full ${compact ? "h-24 max-w-28" : "h-36 max-w-xs"}`}
+      className="group pointer-events-none relative mx-auto h-36 w-full max-w-xs"
     >
-      <span className={`absolute inset-0 grid place-items-center text-7xl ${direction === "destination" ? "text-emerald-400" : "text-[#F5D76E]"} group-data-[renderer=ready]:hidden`}>
+      <span
+        className={`absolute inset-0 grid place-items-center text-7xl transition-transform duration-300 ${direction === "destination" ? "text-emerald-400" : "text-[#F5D76E]"} group-data-[renderer=ready]:hidden`}
+        style={{
+          transform:
+            direction === "destination"
+              ? undefined
+              : `rotate(${relativeAngle}deg)`,
+        }}
+      >
         {symbols[direction]}
       </span>
     </div>

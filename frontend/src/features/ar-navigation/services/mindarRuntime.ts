@@ -1,7 +1,12 @@
 // Runs in its own iframe document, not a Worker. Vite's worker URL bundler emits
 // the standalone script. Removing the frame also releases MindAR's TF/WebGL realm.
-import { Controller, Compiler } from "mind-ar/dist/mindar-image.prod.js";
-import type { RuntimeRequest, RuntimeEvent } from "./mindarProtocol";
+import { Controller } from "mind-ar/dist/mindar-image.prod.js";
+import type {
+  MarkerGuidance,
+  RuntimeCommand,
+  RuntimeRequest,
+  RuntimeEvent,
+} from "./mindarProtocol";
 import { createMarkerOverlay } from "./markerOverlay";
 
 let stopped = false;
@@ -11,6 +16,7 @@ let controller: Controller | null = null;
 let overlay: ReturnType<typeof createMarkerOverlay> | null = null;
 const hostOrigin = parent.location.origin;
 const visible = new Set<number>();
+let guidance: MarkerGuidance | null = null;
 const send = (event: RuntimeEvent) => {
   if (!stopped) parent.postMessage(event, hostOrigin);
 };
@@ -41,6 +47,7 @@ window.addEventListener("unhandledrejection", () => {
 });
 
 async function run(request: RuntimeRequest) {
+  guidance = request.guidance ?? null;
   const probe = document.createElement("canvas");
   const gl = probe.getContext("webgl2") ?? probe.getContext("webgl");
   if (!gl)
@@ -48,32 +55,6 @@ async function run(request: RuntimeRequest) {
       "This browser cannot run image tracking because WebGL is unavailable. Try a supported browser with hardware acceleration enabled.",
     );
   gl.getExtension("WEBGL_lose_context")?.loseContext();
-  if (request.type === "compile") {
-    send({ type: "status", message: "Preparing test markers…" });
-    const images = await Promise.all(
-      request.images.map(async (url) => {
-        const image = new Image();
-        image.src = url;
-        await image.decode();
-        return image;
-      }),
-    );
-    const compiler = new Compiler();
-    let lastPercent = -1;
-    await compiler.compileImageTargets(images, (value) => {
-      const percent = Math.floor(value);
-      if (percent !== lastPercent)
-        send({
-          type: "status",
-          message: "Compiling markers: " + percent + "%",
-        });
-      lastPercent = percent;
-    });
-    const data = compiler.exportData();
-    const buffer = new Uint8Array(data).buffer;
-    send({ type: "compiled", buffer });
-    return;
-  }
   if (!isSecureContext || !navigator.mediaDevices?.getUserMedia)
     throw new Error(
       "Camera unavailable. Open this site using HTTPS in a supported mobile browser.",
@@ -148,8 +129,8 @@ async function run(request: RuntimeRequest) {
       video,
       controller.getProjectionMatrix(),
       dimensions,
-      request.labels ?? {},
     );
+    overlay.setGuidance(guidance);
   } catch {
     overlay = null;
   }
@@ -158,30 +139,32 @@ async function run(request: RuntimeRequest) {
   send({ type: "running" });
   void controller.processVideo(video);
 }
-window.addEventListener(
-  "message",
-  (event: MessageEvent<RuntimeRequest | { type: "stop" }>) => {
-    if (event.source !== parent || event.origin !== hostOrigin) return;
-    if (event.data.type === "stop") {
-      stop();
-      return;
-    }
-    if (started) return;
-    started = true;
-    void run(event.data).catch((error: unknown) => {
-      const denied =
-        error instanceof DOMException &&
-        (error.name === "NotAllowedError" || error.name === "SecurityError");
-      send({
-        type: "error",
-        message: denied
-          ? "Camera access is required for AR navigation. Allow camera access in your browser settings, then try again."
-          : error instanceof Error
-            ? error.message
-            : "AR could not start. Please try again.",
-      });
-      stop();
+window.addEventListener("message", (event: MessageEvent<RuntimeCommand>) => {
+  if (event.source !== parent || event.origin !== hostOrigin) return;
+  if (event.data.type === "stop") {
+    stop();
+    return;
+  }
+  if (event.data.type === "guidance") {
+    guidance = event.data.guidance;
+    overlay?.setGuidance(guidance);
+    return;
+  }
+  if (started) return;
+  started = true;
+  void run(event.data).catch((error: unknown) => {
+    const denied =
+      error instanceof DOMException &&
+      (error.name === "NotAllowedError" || error.name === "SecurityError");
+    send({
+      type: "error",
+      message: denied
+        ? "Camera access is required for AR navigation. Allow camera access in your browser settings, then try again."
+        : error instanceof Error
+          ? error.message
+          : "AR could not start. Please try again.",
     });
-  },
-);
+    stop();
+  });
+});
 send({ type: "ready" });

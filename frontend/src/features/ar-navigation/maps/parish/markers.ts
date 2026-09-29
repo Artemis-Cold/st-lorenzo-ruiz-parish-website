@@ -1,5 +1,6 @@
 import { parishPoints, type ParishNodeId } from "./layout.ts";
-// FINAL USER DIAGRAM, set 2: 16 scan points, ten destinations.
+// Current parish diagram: preserve this compiler order so installed marker
+// codes and MindAR target indices remain stable when appending new locations.
 // Facing is the user's scanning direction clockwise from the TOP OF THE PLAN.
 // These are not compass bearings or continuous phone-heading measurements.
 const placements: readonly [ParishNodeId, number, string][] = [
@@ -75,10 +76,19 @@ const placements: readonly [ParishNodeId, number, string][] = [
     90,
     "Shared Comfort Room approach outside the boys/girls corridor, via Multipurpose Hall. Face right.",
   ],
+  [
+    "c_church",
+    0,
+    "Main Church entrance between the left and right front stairs. Face up toward the Main Church.",
+  ],
 ];
 export const parishMarkers = placements.map(
   ([nodeId, facing, placement], targetIndex) => ({
     nodeId,
+    // Parish marker nodes are already placed at their public-side boundary.
+    // Keeping this explicit applies the same arrival/departure rule used by
+    // house doorway markers without inventing an interior starting position.
+    departureNodeId: nodeId,
     targetIndex,
     code: `P${String(targetIndex).padStart(2, "0")}`,
     name: parishPoints[nodeId].name,

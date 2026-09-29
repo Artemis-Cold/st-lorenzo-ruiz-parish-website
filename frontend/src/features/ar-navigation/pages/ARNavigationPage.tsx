@@ -21,6 +21,7 @@ import { useNavigation } from "../hooks/useNavigation";
 import ARCamera from "../components/ARCamera";
 import NavigationArrow from "../components/NavigationArrow";
 import NavigationSheet from "../components/NavigationSheet";
+import type { MarkerGuidance } from "../services/mindarProtocol";
 import "../navigation.css";
 
 type Panel = "help" | "route" | "destination" | null;
@@ -45,15 +46,6 @@ function NavigationSession({ profile }: { profile: MapProfile }) {
         building.graph.nodes.find((node) => node.id === nodeId)?.floorId,
     )?.name;
   const navigation = useNavigation(building);
-  const markerLabels = useMemo(
-    () =>
-      Object.fromEntries(
-        building.checkpoints.flatMap((point) =>
-          point.targetIndex === null ? [] : [[point.targetIndex, point.name]],
-        ),
-      ),
-    [building],
-  );
   const { state, instruction, report, reportTarget } = navigation;
   const [active, setActive] = useState(false);
   const [targets, setTargets] = useState<ArrayBuffer | null>(null);
@@ -90,6 +82,21 @@ function NavigationSession({ profile }: { profile: MapProfile }) {
     (item) => item.id === state.destinationId,
   )!;
   const reached = instruction?.direction === "destination";
+  const markerGuidance = useMemo<MarkerGuidance | null>(() => {
+    if (
+      checkpoint?.targetIndex === null ||
+      checkpoint?.targetIndex === undefined ||
+      !instruction ||
+      instruction.transition ||
+      instruction.direction === "unknown"
+    )
+      return null;
+    return {
+      targetIndex: checkpoint.targetIndex,
+      relativeAngle: instruction.relativeAngle ?? 0,
+      mode: reached ? "destination" : "navigate",
+    };
+  }, [checkpoint, instruction, reached]);
   const stop = () => {
     setActive(false);
     setPanel(null);
@@ -163,7 +170,11 @@ function NavigationSession({ profile }: { profile: MapProfile }) {
           <section className="nav-destination-card">
             <div className="nav-section-heading">
               <h2>Choose a destination</h2>
-              <span>{building.schematic ? "2 floors" : "Test layout"}</span>
+              <span>
+                {building.floors?.length
+                  ? `${building.floors.length} floors`
+                  : "Indoor map"}
+              </span>
             </div>
             {destinations}
             <button
@@ -214,7 +225,7 @@ function NavigationSession({ profile }: { profile: MapProfile }) {
           key={attempt}
           buffer={targets}
           indices={indices}
-          labels={markerLabels}
+          guidance={markerGuidance}
           onTarget={reportTarget}
           onRetry={rescan}
           onBack={stop}
@@ -280,7 +291,10 @@ function NavigationSession({ profile }: { profile: MapProfile }) {
           !instruction.transition &&
           instruction.direction !== "unknown" && (
             <div className="nav-camera-direction" aria-hidden="true">
-              <NavigationArrow direction={instruction.direction} />
+              <NavigationArrow
+                direction={instruction.direction}
+                relativeAngle={instruction.relativeAngle}
+              />
             </div>
           )}
         <section
@@ -324,9 +338,7 @@ function NavigationSession({ profile }: { profile: MapProfile }) {
                   ? "Your destination checkpoint is confirmed."
                   : instruction.transition
                     ? "Scan the marker at the next landing to confirm your floor."
-                    : profile.id === "parish"
-                      ? "Keep your scanning direction when reading the arrow."
-                      : "Face toward the top of the floor plan before following the arrow."}
+                    : "The arrow is oriented from the facing direction of the marker you scanned."}
               </p>
               {!reached && (
                 <span className="nav-distance-note">
@@ -389,10 +401,10 @@ function NavigationSession({ profile }: { profile: MapProfile }) {
               </p>
               <h3>After a scan</h3>
               <p>
-                {profile.id === "parish"
-                  ? "Directions use the facing shown for each marker on your placement map. Keep that scanning direction when reading the arrow; phone rotation is not tracked."
-                  : "Face toward the top of the floor plan before following the arrow."}{" "}
-                Your last instruction stays visible when the marker leaves view.
+                Each marker confirms both your location and the direction you
+                should be facing while scanning it. The arrow rotates
+                automatically relative to that direction. Your last confirmed
+                instruction stays visible when the marker leaves view.
               </p>
               <h3>At the next checkpoint</h3>
               <p>

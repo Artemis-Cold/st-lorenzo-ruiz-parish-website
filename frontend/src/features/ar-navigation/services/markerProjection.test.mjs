@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { projectMarker } from "./markerProjection.ts";
+import {
+  markerArrowPoints,
+  pointOnMarker,
+  projectMarker,
+} from "./markerProjection.ts";
 const identity = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 const world = [...identity];
 world[12] = -1;
@@ -53,4 +57,22 @@ test("rejects malformed geometry and points behind the camera", () => {
     projectMarker(behind, identity, [2, 2], [100, 100], [100, 100]),
     null,
   );
+});
+
+test("projects navigation arrows in the marker plane at exact route angles", () => {
+  const corners = [
+    { x: 0, y: 0 },
+    { x: 100, y: 0 },
+    { x: 100, y: 100 },
+    { x: 0, y: 100 },
+  ];
+  assert.deepEqual(pointOnMarker(corners, 0, 0), { x: 50, y: 50 });
+
+  const straight = markerArrowPoints(corners, 0);
+  const right = markerArrowPoints(corners, 90);
+  const left = markerArrowPoints(corners, -90);
+  assert.ok(straight[4].y < straight[0].y);
+  assert.ok(right[4].x > right[0].x);
+  assert.ok(left[4].x < left[0].x);
+  assert.equal(markerArrowPoints(corners, Number.NaN), null);
 });

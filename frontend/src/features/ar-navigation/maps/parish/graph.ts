@@ -4,7 +4,7 @@ import type {
 } from "../../types/checkpointNavigation.ts";
 import { parishPoints, type ParishNodeId } from "./layout.ts";
 
-// Relative costs for route preview, not measured walking distances.
+// Relative routing costs; these values are not displayed as measured distance.
 const passage = (
   from: ParishNodeId,
   to: ParishNodeId,

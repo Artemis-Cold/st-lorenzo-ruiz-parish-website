@@ -17,6 +17,7 @@ export const parishBuilding: BuildingConfig = {
   checkpoints: parishMarkers.map((marker) => ({
     id: marker.nodeId,
     nodeId: marker.nodeId,
+    departureNodeId: marker.departureNodeId,
     name: marker.name,
     targetIndex: marker.targetIndex,
     facing: marker.facing,

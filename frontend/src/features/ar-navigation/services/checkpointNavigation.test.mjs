@@ -1,13 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { houseBuilding } from "../data/checkpoints.ts";
+import { houseBuilding } from "../maps/house/config.ts";
 import {
   initialNavigation,
   transitionNavigation,
   navigationInstruction,
 } from "./checkpointNavigation.ts";
 import { checkpointForTarget } from "./targetMapper.ts";
-import { markerManifest } from "../data/markerManifest.ts";
+import { markerManifest } from "../maps/house/markers.ts";
 
 const change = (state, event) =>
   transitionNavigation(state, event, houseBuilding);
@@ -70,41 +70,89 @@ test("target mapping rejects unknown targets and events", () => {
 
 test("each destination has exactly one entrance marker and scanning it confirms arrival", () => {
   assert.equal(houseBuilding.destinations.length, 10);
-  assert.equal(markerManifest.length, 12);
-  assert.equal(new Set(markerManifest.map((marker) => marker.nodeId)).size, 12);
+  assert.equal(markerManifest.length, 10);
+  assert.equal(new Set(markerManifest.map((marker) => marker.nodeId)).size, 10);
   for (const destination of houseBuilding.destinations) {
-    const matches = markerManifest.filter((marker) => marker.nodeId === destination.nodeId);
+    const matches = markerManifest.filter(
+      (marker) => marker.nodeId === destination.nodeId,
+    );
     assert.equal(matches.length, 1, destination.name);
     assert.match(matches[0].name, /entrance/);
-    const state = change(initialNavigation(destination.id), {type: "found", id: destination.nodeId});
-    assert.equal(navigationInstruction(state, houseBuilding).direction, "destination");
-    assert.equal(state.route.totalDistance, 0);
-  }
-  for (const [index, marker] of markerManifest.entries()) {
-    assert.equal(checkpointForTarget(index, houseBuilding.checkpoints).nodeId, marker.nodeId);
-  }
-});
-
-test("room interiors are not destinations or physical markers", () => {
-  for (const id of ["terrace_entry", "living_room", "dining_room", "bathroom_1_entry"]) {
-    assert.ok(!houseBuilding.destinations.some((destination) => destination.nodeId === id));
-    assert.equal(houseBuilding.checkpoints.find((checkpoint) => checkpoint.id === id).targetIndex, null);
-  }
-});
-test("directions respect the documented north-facing simulation convention", () => {
-  for (const [destination, checkpoint, direction] of [
-    ["room-1", "terrace_entry", "straight"],
-    ["room-1", "left_hall_room_1", "left"],
-    ["room-4", "right_hall_room_4", "right"],
-    ["terrace", "left_hall_lower", "back"],
-  ]) {
-    const state = change(initialNavigation(destination), {
+    const state = change(initialNavigation(destination.id), {
       type: "found",
-      id: checkpoint,
+      id: destination.nodeId,
     });
     assert.equal(
       navigationInstruction(state, houseBuilding).direction,
-      direction,
+      "destination",
+    );
+    assert.equal(state.route.totalDistance, 0);
+  }
+  for (const [index, marker] of markerManifest.entries()) {
+    assert.equal(
+      checkpointForTarget(index, houseBuilding.checkpoints).nodeId,
+      marker.nodeId,
     );
   }
+});
+
+test("routing-only interior points are not destinations or physical markers", () => {
+  for (const id of ["terrace_entry", "dining_room", "bathroom_1_entry"]) {
+    assert.ok(
+      !houseBuilding.destinations.some(
+        (destination) => destination.nodeId === id,
+      ),
+    );
+    assert.equal(
+      houseBuilding.checkpoints.find((checkpoint) => checkpoint.id === id)
+        .targetIndex,
+      null,
+    );
+  }
+});
+test("scan-facing matches every triangle in the supplied house map", () => {
+  const expected = {
+    terrace_door: 0,
+    living_room: 180,
+    upper_hall: 180,
+    kitchen_entry: 90,
+    room_1_entry: 270,
+    room_2_entry: 270,
+    room_3_entry: 90,
+    room_4_entry: 90,
+    bathroom_1_door: 0,
+    bathroom_2_entry: 270,
+  };
+
+  for (const marker of markerManifest) {
+    assert.equal(marker.facing, expected[marker.nodeId], marker.nodeId);
+    assert.equal(
+      houseBuilding.checkpoints.find(
+        (checkpoint) => checkpoint.nodeId === marker.nodeId,
+      ).facing,
+      marker.facing,
+    );
+  }
+});
+
+test("doorway scans route from the corridor side while preserving arrival", () => {
+  const towardDining = change(initialNavigation("dining-room"), {
+    type: "found",
+    id: "room_1_entry",
+  });
+  const instruction = navigationInstruction(towardDining, houseBuilding);
+
+  assert.equal(towardDining.route.nodes[0], "left_hall_room_1");
+  assert.equal(instruction.direction, "right");
+  assert.equal(instruction.relativeAngle, 90);
+
+  const arrivingAtRoomOne = change(initialNavigation("room-1"), {
+    type: "found",
+    id: "room_1_entry",
+  });
+  assert.equal(arrivingAtRoomOne.route.nodes[0], "room_1_entry");
+  assert.equal(
+    navigationInstruction(arrivingAtRoomOne, houseBuilding).direction,
+    "destination",
+  );
 });

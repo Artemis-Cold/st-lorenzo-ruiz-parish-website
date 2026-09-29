@@ -47,3 +47,69 @@ export function projectMarker(
   }
   return result;
 }
+
+export interface ScreenPoint {
+  x: number;
+  y: number;
+}
+
+/** Projects a normalized marker-plane point through an already projected quad. */
+export function pointOnMarker(
+  corners: readonly ScreenPoint[],
+  x: number,
+  y: number,
+): ScreenPoint | null {
+  if (
+    corners.length !== 4 ||
+    ![...corners.flatMap((point) => [point.x, point.y]), x, y].every(
+      Number.isFinite,
+    )
+  )
+    return null;
+  const u = x + 0.5;
+  const v = y + 0.5;
+  const top = {
+    x: corners[0].x + (corners[1].x - corners[0].x) * u,
+    y: corners[0].y + (corners[1].y - corners[0].y) * u,
+  };
+  const bottom = {
+    x: corners[3].x + (corners[2].x - corners[3].x) * u,
+    y: corners[3].y + (corners[2].y - corners[3].y) * u,
+  };
+  return {
+    x: top.x + (bottom.x - top.x) * v,
+    y: top.y + (bottom.y - top.y) * v,
+  };
+}
+
+/** Arrow polygon on the marker plane; positive angles rotate clockwise. */
+export function markerArrowPoints(
+  corners: readonly ScreenPoint[],
+  relativeAngle: number,
+  scale = 1,
+): ScreenPoint[] | null {
+  if (!Number.isFinite(relativeAngle) || !Number.isFinite(scale) || scale <= 0)
+    return null;
+  const radians = (relativeAngle * Math.PI) / 180;
+  const cosine = Math.cos(radians);
+  const sine = Math.sin(radians);
+  const shape = [
+    [-0.1, 0.35],
+    [0.1, 0.35],
+    [0.1, -0.08],
+    [0.27, -0.08],
+    [0, -0.4],
+    [-0.27, -0.08],
+    [-0.1, -0.08],
+  ];
+  const points = shape.map(([x, y]) =>
+    pointOnMarker(
+      corners,
+      (x * cosine - y * sine) * scale,
+      (x * sine + y * cosine) * scale,
+    ),
+  );
+  return points.every((point) => point !== null)
+    ? (points as ScreenPoint[])
+    : null;
+}
