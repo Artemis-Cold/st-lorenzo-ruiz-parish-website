@@ -17,6 +17,7 @@ class UpdateAnnouncementRequest extends FormRequest
             'title' => ['required', 'string', 'max:255'],
             'details' => ['required', 'string', 'max:10000'],
             'postedAt' => ['required', 'date'],
+            'activityDate' => ['nullable', 'date_format:Y-m-d'],
         ];
     }
 }

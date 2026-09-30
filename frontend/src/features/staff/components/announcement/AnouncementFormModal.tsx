@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 
 export interface AnnouncementFormValues {
   title: string;
+  activityDate?: string | null;
   details: string;
   postedAt: string; // ISO datetime string, e.g. "2026-06-12T09:00"
 }
@@ -40,6 +41,9 @@ export default function AnnouncementFormModal({
   submitting = false,
 }: AnnouncementFormModalProps) {
   const [title, setTitle] = useState(initialValues?.title ?? "");
+  const [activityDate, setActivityDate] = useState(
+    initialValues?.activityDate ?? "",
+  );
   const [details, setDetails] = useState(initialValues?.details ?? "");
   const [postedAt, setPostedAt] = useState(
     initialValues?.postedAt
@@ -60,7 +64,12 @@ export default function AnnouncementFormModal({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    onSubmit({ title: title.trim(), details: details.trim(), postedAt });
+    onSubmit({
+      title: title.trim(),
+      details: details.trim(),
+      postedAt: new Date(postedAt).toISOString(),
+      activityDate: activityDate || null,
+    });
   };
 
   return (
@@ -127,7 +136,7 @@ export default function AnnouncementFormModal({
 
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">
-              Date &amp; Time
+              Publish Date &amp; Time
             </label>
             <input
               type="datetime-local"
@@ -143,6 +152,27 @@ export default function AnnouncementFormModal({
             </p>
           </div>
 
+          <div>
+            <label
+              htmlFor="announcement-activity-date"
+              className="mb-2 block text-sm font-medium text-gray-700"
+            >
+              Activity date (Philippine time)
+            </label>
+            <input
+              id="announcement-activity-date"
+              type="date"
+              value={activityDate}
+              onChange={(event) => setActivityDate(event.target.value)}
+              disabled={submitting}
+              className="w-full rounded-xl border border-[#E7E2DA] px-4 py-3 outline-none focus:border-[#B22222]"
+            />
+            <p className="mt-1.5 text-xs text-gray-500">
+              Shows on the landing page during this activity’s week
+              (Monday–Sunday), once published. Leave blank for a general notice
+              only.
+            </p>
+          </div>
           <div className="flex gap-3 pt-2">
             <button
               type="button"

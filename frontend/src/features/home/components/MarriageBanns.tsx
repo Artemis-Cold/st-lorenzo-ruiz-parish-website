@@ -100,7 +100,7 @@ export default function MarriageBanns() {
             Holy Matrimony
           </div>
           <h2 className="mt-4 font-serif text-3xl font-bold leading-tight text-[#292524] md:text-4xl">
-            Couples preparing for the Sacrament of Marriage
+            Marriage Banns
           </h2>
           <div className="mx-auto mt-4 h-1 w-16 rounded-full bg-[#D4AF37]" />
           <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-gray-600 md:text-base">

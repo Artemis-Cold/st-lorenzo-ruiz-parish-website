@@ -14,11 +14,17 @@ use Illuminate\Validation\Rule;
 
 class AnnouncementController extends Controller
 {
-    public function publicIndex(): AnonymousResourceCollection
+    public function publicIndex(Request $request): AnonymousResourceCollection
     {
+        $request->validate(['week' => ['nullable', Rule::in(['current'])]]);
+        $start = now('Asia/Manila')->startOfWeek(\Carbon\Carbon::MONDAY);
         $announcements = Announcement::query()
             ->with('creator')
             ->where('posted_at', '<=', now())
+            ->when($request->input('week') === 'current', fn ($query) => $query
+                ->whereDate('activity_date', '>=', $start->toDateString())
+                ->whereDate('activity_date', '<=', $start->copy()->addDays(6)->toDateString())
+                ->orderBy('activity_date'))
             ->latest('posted_at')
             ->get();
 
@@ -58,6 +64,7 @@ class AnnouncementController extends Controller
             'title' => $request->validated('title'),
             'details' => $request->validated('details'),
             'posted_at' => $request->validated('postedAt'),
+            'activity_date' => $request->validated('activityDate'),
         ]);
 
         return (new AnnouncementResource($announcement->load('creator')))
@@ -78,6 +85,7 @@ class AnnouncementController extends Controller
             'title' => $request->validated('title'),
             'details' => $request->validated('details'),
             'posted_at' => $request->validated('postedAt'),
+            'activity_date' => $request->validated('activityDate', $announcement->activity_date),
         ]);
 
         return new AnnouncementResource($announcement->load('creator'));

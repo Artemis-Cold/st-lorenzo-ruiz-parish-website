@@ -33,8 +33,12 @@ class RegisterRequest extends FormRequest
 
             'password' => [
                 'required',
+                'string',
                 'confirmed',
                 'min:8',
+                'regex:/[A-Z]/',
+                'regex:/[a-z]/',
+                'regex:/[0-9]/',
             ],
             'terms_accepted' => [
                 'required',
@@ -77,6 +81,7 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'password.regex' => 'The password must contain at least one uppercase letter, one lowercase letter, and one number.',
             'terms_accepted.accepted' => 'You must accept the Terms and Conditions to create an account.',
         ];
     }

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { decode } from "@msgpack/msgpack";
 import { parishMarkers } from "../maps/parish/markers.ts";
 import { parishBuilding } from "../maps/parish/config.ts";
 import { houseBuilding } from "../maps/house/config.ts";
@@ -54,14 +55,41 @@ test("parish compiled file has 17 targets and rejects the house file", () => {
     checkpointForTarget(0, parishBuilding.checkpoints).id,
     checkpointForTarget(0, houseBuilding.checkpoints).id,
   );
+
+  const compiled = decode(bytes);
+  const naturalDimensions = {
+    0: [304, 1029],
+    1: [292, 890],
+    3: [1280, 247],
+    4: [1280, 204],
+    6: [208, 929],
+    7: [351, 1146],
+    10: [960, 1280],
+    13: [963, 643],
+    15: [444, 1126],
+  };
+  for (const [index, [width, height]] of Object.entries(naturalDimensions)) {
+    assert.deepEqual(compiled.dataList[index].targetImage, { width, height });
+  }
 });
 
-test("print pack contains exactly the same artwork as the recognition source images", () => {
+test("natural landmarks replace matching codes and print pack contains only fallbacks", () => {
+  const naturalCodes = [
+    "P00",
+    "P01",
+    "P03",
+    "P04",
+    "P06",
+    "P07",
+    "P10",
+    "P13",
+    "P15",
+  ];
   const pack = readFileSync(
     new URL("../maps/parish/assets/markers-print.html", import.meta.url),
     "utf8",
   );
-  assert.equal((pack.match(/<article>/g) || []).length, 17);
+  assert.equal((pack.match(/<article>/g) || []).length, 8);
   for (const marker of parishMarkers) {
     const svg = readFileSync(
       new URL(
@@ -70,11 +98,26 @@ test("print pack contains exactly the same artwork as the recognition source ima
       ),
       "utf8",
     );
-    assert.ok(pack.includes(svg));
     assert.match(svg, /St. Lorenzo Ruiz Parish/);
     assert.match(svg, />AR NAVIGATION<\/text>/);
     assert.doesNotMatch(svg, /SET 2/);
     assert.ok(svg.includes(marker.code));
+    if (naturalCodes.includes(marker.code)) {
+      assert.ok(
+        readFileSync(
+          new URL(
+            `../maps/parish/assets/target-${marker.code}.jpg`,
+            import.meta.url,
+          ),
+        ).length > 0,
+      );
+      assert.ok(!pack.includes(`<h2>${marker.code} ·`));
+    } else {
+      assert.ok(pack.includes(svg));
+      assert.ok(pack.includes(`<h2>${marker.code} ·`));
+    }
   }
+  assert.equal(parishMarkers[6].facing, 0);
+  assert.equal(parishMarkers[7].facing, 0);
   assert.doesNotMatch(pack, /test markers|TEST PLACEMENT|visitor-ready/i);
 });

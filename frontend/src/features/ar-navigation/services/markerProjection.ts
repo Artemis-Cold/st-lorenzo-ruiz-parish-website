@@ -53,6 +53,11 @@ export interface ScreenPoint {
   y: number;
 }
 
+export interface MarkerRouteGeometry {
+  line: ScreenPoint[];
+  arrow: ScreenPoint[];
+}
+
 /** Projects a normalized marker-plane point through an already projected quad. */
 export function pointOnMarker(
   corners: readonly ScreenPoint[],
@@ -112,4 +117,43 @@ export function markerArrowPoints(
   return points.every((point) => point !== null)
     ? (points as ScreenPoint[])
     : null;
+}
+
+/**
+ * A connected route ribbon that starts near the visitor and terminates with
+ * an arrow in the exact route direction. Geometry remains attached to the
+ * tracked target instead of behaving like a screen-fixed compass.
+ */
+export function markerRouteGeometry(
+  corners: readonly ScreenPoint[],
+  relativeAngle: number,
+): MarkerRouteGeometry | null {
+  if (!Number.isFinite(relativeAngle)) return null;
+  const radians = (relativeAngle * Math.PI) / 180;
+  const direction = { x: Math.sin(radians), y: -Math.cos(radians) };
+  const normalizedLine = [
+    { x: 0, y: 0.46 },
+    { x: 0, y: 0.08 },
+    { x: direction.x * 0.38, y: 0.08 + direction.y * 0.46 },
+  ];
+  const line = normalizedLine.map(({ x, y }) => pointOnMarker(corners, x, y));
+  if (line.some((point) => point === null)) return null;
+
+  const tip = normalizedLine.at(-1)!;
+  const base = {
+    x: tip.x - direction.x * 0.14,
+    y: tip.y - direction.y * 0.14,
+  };
+  const perpendicular = { x: -direction.y * 0.1, y: direction.x * 0.1 };
+  const arrow = [
+    tip,
+    { x: base.x + perpendicular.x, y: base.y + perpendicular.y },
+    { x: base.x - perpendicular.x, y: base.y - perpendicular.y },
+  ].map(({ x, y }) => pointOnMarker(corners, x, y));
+  if (arrow.some((point) => point === null)) return null;
+
+  return {
+    line: line as ScreenPoint[],
+    arrow: arrow as ScreenPoint[],
+  };
 }

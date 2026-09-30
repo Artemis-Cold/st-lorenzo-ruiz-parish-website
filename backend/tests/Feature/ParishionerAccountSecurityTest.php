@@ -54,8 +54,8 @@ class ParishionerAccountSecurityTest extends TestCase
         User::factory()->create(['username' => 'felixberto']);
 
         $response = $this->postJson('/api/auth/register', [
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'password' => 'Password123',
+            'password_confirmation' => 'Password123',
             'first_name' => 'Felixberto Marc John',
             'last_name' => 'Doe',
             'phone' => '09171234567',
@@ -76,8 +76,8 @@ class ParishionerAccountSecurityTest extends TestCase
         User::factory()->create(['phone' => '09171234567']);
 
         $this->postJson('/api/auth/register', [
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'password' => 'Password123',
+            'password_confirmation' => 'Password123',
             'first_name' => 'Maria',
             'last_name' => 'Santos',
             'phone' => '0917 123 4567',
@@ -91,8 +91,8 @@ class ParishionerAccountSecurityTest extends TestCase
     public function test_registration_requires_terms_and_conditions_acceptance(): void
     {
         $payload = [
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'password' => 'Password123',
+            'password_confirmation' => 'Password123',
             'first_name' => 'Maria',
             'last_name' => 'Santos',
             'phone' => '09181234567',

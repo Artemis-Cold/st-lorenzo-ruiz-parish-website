@@ -14,6 +14,7 @@ class AnnouncementResource extends JsonResource
             'title' => $this->title,
             'details' => $this->details,
             'postedAt' => $this->posted_at->toIso8601String(),
+            'activityDate' => $this->activity_date?->toDateString(),
             'status' => $this->posted_at->isFuture() ? 'scheduled' : 'published',
             'createdBy' => $this->whenLoaded('creator', fn () => [
                 'id' => $this->creator->id,

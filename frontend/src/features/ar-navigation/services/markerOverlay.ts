@@ -1,6 +1,6 @@
 import type { MarkerGuidance } from "./mindarProtocol.ts";
 import {
-  markerArrowPoints,
+  markerRouteGeometry,
   pointOnMarker,
   projectMarker,
 } from "./markerProjection.ts";
@@ -100,17 +100,50 @@ export function createMarkerOverlay(
         ctx.stroke();
       }
     } else {
-      const pulse = 0.9 + ((Math.sin(performance.now() / 220) + 1) / 2) * 0.1;
-      const arrow = markerArrowPoints(corners, guidance.relativeAngle, pulse);
-      if (arrow) {
+      const route = markerRouteGeometry(corners, guidance.relativeAngle);
+      if (route) {
+        const markerWidth = Math.hypot(
+          corners[1].x - corners[0].x,
+          corners[1].y - corners[0].y,
+        );
+        const routeWidth = Math.max(9, markerWidth * 0.075);
+
         ctx.beginPath();
-        arrow.forEach((point, index) =>
+        route.line.forEach((point, index) =>
+          index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y),
+        );
+        ctx.strokeStyle = "#042f49cc";
+        ctx.lineWidth = routeWidth + 7;
+        ctx.stroke();
+
+        ctx.beginPath();
+        route.line.forEach((point, index) =>
+          index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y),
+        );
+        ctx.strokeStyle = "#22d3ee";
+        ctx.lineWidth = routeWidth;
+        ctx.stroke();
+
+        ctx.save();
+        ctx.setLineDash([routeWidth * 0.45, routeWidth * 1.1]);
+        ctx.lineDashOffset = -(performance.now() / 35);
+        ctx.beginPath();
+        route.line.forEach((point, index) =>
+          index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y),
+        );
+        ctx.strokeStyle = "#ecfeffcc";
+        ctx.lineWidth = Math.max(2, routeWidth * 0.2);
+        ctx.stroke();
+        ctx.restore();
+
+        ctx.beginPath();
+        route.arrow.forEach((point, index) =>
           index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y),
         );
         ctx.closePath();
-        ctx.fillStyle = "#f5d76e";
-        ctx.strokeStyle = "#946719";
-        ctx.lineWidth = 3;
+        ctx.fillStyle = "#22d3ee";
+        ctx.strokeStyle = "#042f49";
+        ctx.lineWidth = Math.max(3, routeWidth * 0.28);
         ctx.fill();
         ctx.stroke();
       }

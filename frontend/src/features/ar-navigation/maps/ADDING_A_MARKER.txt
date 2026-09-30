@@ -9,8 +9,8 @@ Important concepts
 1. A graph node describes a physical position on the floor plan.
 2. A graph edge describes a valid walking path between two nodes.
 3. A destination is a place a visitor can select in the navigation UI.
-4. A marker connects a printed image to one graph node and one scanning
-   direction.
+4. A marker connects either a natural landmark photo or a printed image to one
+   graph node and one scanning direction.
 5. targets.mind is the compiled recognition database for every marker image in
    that map. It is not generated automatically by the SVG generator.
 
@@ -197,8 +197,10 @@ House output is stored in:
 
   src/features/ar-navigation/maps/house/assets/
 
-The generator creates marker SVGs and markers-print.html. The house generator
-also creates marker-placement-map.svg.
+The generator creates SVG fallbacks and markers-print.html. For the parish,
+codes that have a matching natural target such as target-P01.jpg are omitted
+from the printable pack. The house generator also creates
+marker-placement-map.svg.
 
 When adding a house marker, also add its index, x position, y position and
 rotation to the arrows array in house/generateMarkers.mjs so it appears on the
@@ -215,19 +217,25 @@ PART 6: RECOMPILE targets.mind
 The .mind file must contain ALL marker images, not only the new image.
 
 Use the MindAR Image Target Compiler that is compatible with MindAR 1.2.5.
-Upload the generated marker images in exact numeric order:
+Upload exactly one recognition image per code in numeric order. For parish
+codes with an accepted natural landmark, use target-Pxx.jpg. Otherwise use the
+generated marker-Pxx.svg fallback.
 
 Parish:
 
-  marker-P00.svg, marker-P01.svg, ... marker-P17.svg
+  P00: target-P00.jpg when present, otherwise marker-P00.svg
+  P01: target-P01.jpg when present, otherwise marker-P01.svg
+  ...
+  P17: target-P17.jpg when present, otherwise marker-P17.svg
 
 House:
 
   marker-H00.svg, marker-H01.svg, ... marker-H10.svg
 
-If the compiler requires PNG or JPG, export every SVG to a 640 by 640 PNG
-without cropping, recoloring, rotating or changing the artwork. Keep the exact
-same numeric order.
+If the compiler requires PNG or JPG, export each SVG fallback to a 640 by 640
+PNG without cropping, recoloring, rotating or changing the artwork. Natural
+target JPGs must not be mirrored, rotated, stretched or enhanced after field
+approval. Keep the exact same numeric order.
 
 Compile and download targets.mind, then replace the appropriate file:
 
@@ -237,7 +245,8 @@ or:
 
   src/features/ar-navigation/maps/house/assets/targets.mind
 
-Any marker artwork change requires recompiling the COMPLETE .mind file.
+Any marker artwork or natural-target crop change requires recompiling the
+COMPLETE .mind file.
 
 
 PART 7: UPDATE AND RUN TESTS
@@ -268,7 +277,8 @@ All checks must pass before deploying.
 PART 8: PRINT, INSTALL AND FIELD-CHECK
 --------------------------------------
 
-1. Print markers-print.html at 100 percent scale and in color.
+1. Print only the fallback codes in markers-print.html at 100 percent scale
+   and in color. Natural landmark codes do not need a printed marker.
 2. Do not crop, laminate with strong glare, rotate or resize individual marker
    artwork.
 3. Mount the marker flat and away from moving doors or obstructions.

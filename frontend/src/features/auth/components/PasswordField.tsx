@@ -9,6 +9,7 @@ interface PasswordFieldProps {
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
 
   disabled?: boolean;
+  describedBy?: string;
 }
 
 export default function PasswordField({
@@ -17,6 +18,7 @@ export default function PasswordField({
   value,
   onChange,
   disabled = false,
+  describedBy,
 }: PasswordFieldProps) {
   const [show, setShow] = useState(false);
 
@@ -30,6 +32,8 @@ export default function PasswordField({
         <Lock size={18} className="mr-3 text-gray-400" />
 
         <input
+          aria-label={label}
+          aria-describedby={describedBy}
           type={show ? "text" : "password"}
           placeholder={placeholder}
           value={value}

@@ -5,6 +5,7 @@ export interface Announcement {
   title: string;
   details: string;
   postedAt: string;
+  activityDate?: string | null;
   status: "published" | "scheduled";
   createdBy: { id: number; name: string };
   createdAt: string;
@@ -15,14 +16,19 @@ export interface AnnouncementInput {
   title: string;
   details: string;
   postedAt: string;
+  activityDate?: string | null;
 }
 
 interface AnnouncementResponse {
   data: Announcement;
 }
 
-export async function getPublicAnnouncements(): Promise<Announcement[]> {
-  const response = await api.get<{ data: Announcement[] }>("/announcements");
+export async function getPublicAnnouncements(
+  week?: "current",
+): Promise<Announcement[]> {
+  const response = await api.get<{ data: Announcement[] }>("/announcements", {
+    params: { week },
+  });
   return response.data.data;
 }
 

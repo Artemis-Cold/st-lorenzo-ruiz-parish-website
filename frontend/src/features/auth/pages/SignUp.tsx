@@ -1,7 +1,7 @@
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { User as UserIcon } from "lucide-react";
+import { Check, Circle, User as UserIcon } from "lucide-react";
 import { AxiosError } from "axios";
 
 import AuthLayout from "../components/AuthLayout";
@@ -26,9 +26,19 @@ export default function SignUp() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const passwordRequirements = [
+    { label: "At least 8 characters", met: Array.from(password).length >= 8 },
+    { label: "At least 1 uppercase letter", met: /[A-Z]/.test(password) },
+    { label: "At least 1 lowercase letter", met: /[a-z]/.test(password) },
+    { label: "At least 1 number", met: /[0-9]/.test(password) },
+  ];
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!passwordRequirements.every((requirement) => requirement.met)) {
+      setFieldErrors({ password: ["Please meet all password requirements."] });
+      return;
+    }
     setSubmitting(true);
     setError(null);
     setFieldErrors({});
@@ -113,11 +123,34 @@ export default function SignUp() {
         <div>
           <PasswordField
             label="Password"
-            placeholder="Enter your password"
+            placeholder="At least 8 characters"
+            describedBy="signup-password-requirements"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={submitting}
           />
+          <div
+            id="signup-password-requirements"
+            className="mt-3 text-sm text-gray-600"
+          >
+            <p className="font-medium">Password must contain:</p>
+            <ul className="mt-2 space-y-1">
+              {passwordRequirements.map(({ label, met }) => (
+                <li
+                  key={label}
+                  className={`flex items-center gap-2 ${met ? "text-emerald-700" : ""}`}
+                >
+                  {met ? (
+                    <Check size={15} aria-hidden />
+                  ) : (
+                    <Circle size={15} aria-hidden />
+                  )}
+                  <span className="sr-only">{met ? "Met: " : "Not met: "}</span>
+                  {label}
+                </li>
+              ))}
+            </ul>
+          </div>
           {fieldErrors.password && (
             <p className="mt-1 text-sm text-red-600">
               {fieldErrors.password[0]}

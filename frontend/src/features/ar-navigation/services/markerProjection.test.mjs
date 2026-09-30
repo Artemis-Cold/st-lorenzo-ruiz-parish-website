@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   markerArrowPoints,
+  markerRouteGeometry,
   pointOnMarker,
   projectMarker,
 } from "./markerProjection.ts";
@@ -75,4 +76,23 @@ test("projects navigation arrows in the marker plane at exact route angles", () 
   assert.ok(right[4].x > right[0].x);
   assert.ok(left[4].x < left[0].x);
   assert.equal(markerArrowPoints(corners, Number.NaN), null);
+});
+
+test("projects a connected route line ending in the exact route direction", () => {
+  const corners = [
+    { x: 0, y: 0 },
+    { x: 100, y: 0 },
+    { x: 100, y: 100 },
+    { x: 0, y: 100 },
+  ];
+  const straight = markerRouteGeometry(corners, 0);
+  const right = markerRouteGeometry(corners, 90);
+  const left = markerRouteGeometry(corners, -90);
+
+  assert.equal(straight.line.length, 3);
+  assert.equal(straight.arrow.length, 3);
+  assert.ok(straight.line.at(-1).y < straight.line[1].y);
+  assert.ok(right.line.at(-1).x > right.line[1].x);
+  assert.ok(left.line.at(-1).x < left.line[1].x);
+  assert.equal(markerRouteGeometry(corners, Number.NaN), null);
 });

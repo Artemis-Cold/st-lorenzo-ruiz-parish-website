@@ -1,7 +1,7 @@
 // Run with modern Node: node src/features/ar-navigation/maps/parish/generateMarkers.mjs
 // --check verifies the generated print pack without writing any files.
 // SVG artwork and its printable copy are always generated together.
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { parishMarkers } from "./markers.ts";
 
 const escape = (value) =>
@@ -59,17 +59,20 @@ ${shapes}
 }
 
 const images = parishMarkers.map(artwork);
+const directory = new URL("./assets/", import.meta.url);
+const printableMarkers = parishMarkers.filter(
+  (marker) => !existsSync(new URL(`target-${marker.code}.jpg`, directory)),
+);
 const pack = `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Parish Navigation Markers</title>
 <style>*{box-sizing:border-box}body{margin:0;color:#292524;background:#f4efe7;font:15px Arial,sans-serif}header{text-align:center;padding:24px}h1,h2{font-family:Georgia,serif}button{background:#b22222;color:white;border:0;padding:12px 20px;border-radius:8px;cursor:pointer}article{background:white;max-width:760px;padding:24px;margin:24px auto;text-align:center;break-after:page}svg{width:155mm;max-width:100%;height:auto}p{line-height:1.5}.note{font-size:12px}table{margin:20px auto;border-collapse:collapse;text-align:left}th,td{padding:6px;border-bottom:1px solid #e7e2da}@page{size:A4 portrait;margin:12mm}@media print{body{background:white}header{display:none}article{margin:0;padding:0;max-width:none}article:last-child{break-after:auto}*{print-color-adjust:exact;-webkit-print-color-adjust:exact}}</style></head><body>
-<header><h1>St. Lorenzo Ruiz Parish</h1><p>${parishMarkers.length} navigation markers · Public entrances and landings</p><p>Print at 100% scale in color, without browser headers/footers. Do not crop or modify the artwork.</p><button onclick="window.print()">Print all parish navigation markers</button><table><thead><tr><th>Marker</th><th>Location</th><th>Floor</th></tr></thead><tbody>${parishMarkers.map((m) => `<tr><td>${m.code}</td><td>${escape(m.name)}</td><td>${floorNames[m.floorId]}</td></tr>`).join("")}</tbody></table></header>
-${parishMarkers.map((m, i) => `<article><h2>${m.code} · ${floorNames[m.floorId]}</h2>${images[i]}<p>${escape(m.placement)}</p><p class="note">PLACEMENT — Maintain the scanning direction specified above when reading the instruction (relative to the drawing, not compass north). Keep markers flat, well lit, and clear of doors and walking paths.</p></article>`).join("\n")}
+<header><h1>St. Lorenzo Ruiz Parish</h1><p>${printableMarkers.length} printable fallback markers · Natural landmarks are not included</p><p>Print at 100% scale in color, without browser headers/footers. Do not crop or modify the artwork.</p><button onclick="window.print()">Print fallback navigation markers</button><table><thead><tr><th>Marker</th><th>Location</th><th>Floor</th></tr></thead><tbody>${printableMarkers.map((m) => `<tr><td>${m.code}</td><td>${escape(m.name)}</td><td>${floorNames[m.floorId]}</td></tr>`).join("")}</tbody></table></header>
+${printableMarkers.map((m) => `<article><h2>${m.code} · ${floorNames[m.floorId]}</h2>${images[m.targetIndex]}<p>${escape(m.placement)}</p><p class="note">PLACEMENT — Maintain the scanning direction specified above when reading the instruction (relative to the drawing, not compass north). Keep markers flat, well lit, and clear of doors and walking paths.</p></article>`).join("\n")}
 </body></html>\n`;
 const artifacts = [
   ...parishMarkers.map((m, i) => [`marker-${m.code}.svg`, images[i]]),
   ["markers-print.html", pack],
 ];
 const check = process.argv.includes("--check");
-const directory = new URL("./assets/", import.meta.url);
 if (!check) mkdirSync(directory, { recursive: true });
 for (const [name, content] of artifacts) {
   const path = new URL(name, directory);
@@ -79,5 +82,5 @@ for (const [name, content] of artifacts) {
   } else writeFileSync(path, content);
 }
 console.log(
-  `${check ? "Verified" : "Generated"} ${images.length} SVG markers and matching print pack. ${check ? "" : "Recompile targets.mind before scanning."}`,
+  `${check ? "Verified" : "Generated"} ${images.length} SVG fallbacks and ${printableMarkers.length}-marker print pack. ${check ? "" : "Recompile targets.mind before scanning."}`,
 );

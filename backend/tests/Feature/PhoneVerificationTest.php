@@ -13,7 +13,7 @@ class PhoneVerificationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_registration_creates_an_unverified_account_and_immediately_sends_an_otp(): void
+    public function test_registration_only_sends_an_otp_after_an_explicit_request(): void
     {
         config(['services.sms.driver' => 'database']);
 
@@ -21,18 +21,35 @@ class PhoneVerificationTest extends TestCase
             'first_name' => 'Juan Carlos',
             'last_name' => 'Cruz',
             'phone' => '09171234567',
-            'password' => 'password123',
-            'password_confirmation' => 'password123',
+            'password' => 'Password123',
+            'password_confirmation' => 'Password123',
             'terms_accepted' => true,
         ])->assertCreated()
             ->assertJsonPath('user.username', 'juan')
             ->assertJsonPath('user.phone_verified', false)
             ->assertJsonPath('verification.required', true)
-            ->assertJsonPath('verification.otp_sent', true);
+            ->assertJsonPath('verification.otp_sent', false);
 
         $user = User::where('username', 'juan')->firstOrFail();
 
         $this->assertNull($user->phone_verified_at);
+        $this->assertDatabaseCount('phone_verification_otps', 0);
+        $this->assertDatabaseCount('sms_messages', 0);
+
+        $this->withToken($response->json('token'))
+            ->getJson('/api/auth/me')
+            ->assertOk()
+            ->assertJsonPath('user.phone_verified', false);
+
+        $this->assertDatabaseCount('phone_verification_otps', 0);
+        $this->assertDatabaseCount('sms_messages', 0);
+
+        $this->withToken($response->json('token'))
+            ->postJson('/api/profile/phone-verification/otp')
+            ->assertOk();
+
+        $this->assertDatabaseCount('phone_verification_otps', 1);
+        $this->assertDatabaseCount('sms_messages', 1);
         $this->assertDatabaseHas('phone_verification_otps', [
             'user_id' => $user->id,
             'attempts' => 0,

@@ -28,13 +28,13 @@ const placements: readonly [ParishNodeId, number, string][] = [
   ],
   [
     "c_front_left",
-    90,
-    "Left Stairs, 2nd-floor landing. Face right toward the front approach.",
+    0,
+    "Left Stairs, 2nd-floor landing. Face up toward the Altar.",
   ],
   [
     "c_front_right",
-    270,
-    "Right Stairs, 2nd-floor landing. Face left toward the front approach.",
+    0,
+    "Right Stairs, 2nd-floor landing. Face up toward the Altar.",
   ],
   [
     "c_left_aisle",
