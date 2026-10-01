@@ -1,3 +1,5 @@
+import { BookingTranslation } from "@/features/parishioner/components/booking/BookingLabel";
+import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import { useEffect, useState } from "react";
 import { Check } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
@@ -136,6 +138,7 @@ export default function PackagesStep({
           <div>
             <h3 className="mb-5 text-center text-xl font-bold text-[#B22222]">
               Included
+              <BookingTranslation text="Optional Add-ons" />
             </h3>
 
             <div className="space-y-3">
@@ -170,7 +173,7 @@ export default function PackagesStep({
 
             <div className="space-y-3">
               {selectedPackage.addons.map((item) => (
-                <label
+                <BookingLabel
                   key={item.id}
                   className="flex cursor-pointer items-center justify-between rounded-xl border p-4 transition hover:border-[#B22222]"
                 >
@@ -188,7 +191,7 @@ export default function PackagesStep({
                   <span className="font-semibold">
                     {formatPhpCurrency(item.price)}
                   </span>
-                </label>
+                </BookingLabel>
               ))}
             </div>
           </div>

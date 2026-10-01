@@ -1,3 +1,5 @@
+import { BookingTranslation } from "./BookingLabel";
+
 interface StepCircleProps {
   number: number;
   label: string;
@@ -35,6 +37,7 @@ export default function StepCircle({
         `}
       >
         {label}
+        <BookingTranslation text={label} />
       </span>
     </div>
   );

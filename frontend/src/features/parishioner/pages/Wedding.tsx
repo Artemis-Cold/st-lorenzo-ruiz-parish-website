@@ -30,7 +30,9 @@ const stepLabels = [
   "Requirements",
   "Schedule",
   "Wedding Options",
-  "Personal Information",
+  "Bride",
+  "Groom",
+  "Sponsors",
   "Document Uploads",
   "Confirmation",
 ];
@@ -166,8 +168,27 @@ export default function Wedding() {
       setBooking={setBooking}
       errors={fieldErrors}
       view="information"
+      section="bride"
       accountRole={accountRole}
       onAccountRoleChange={updateAccountRole}
+    />,
+    <DetailsStep
+      key="groom"
+      booking={booking}
+      setBooking={setBooking}
+      errors={fieldErrors}
+      view="information"
+      section="groom"
+      accountRole={accountRole}
+      onAccountRoleChange={updateAccountRole}
+    />,
+    <DetailsStep
+      key="sponsors"
+      booking={booking}
+      setBooking={setBooking}
+      errors={fieldErrors}
+      view="information"
+      section="sponsors"
     />,
     <DetailsStep
       key="documents"
@@ -370,7 +391,7 @@ export default function Wedding() {
       return "Wedding inclusions are still loading. Please try again.";
     }
 
-    if (step === 4) {
+    if (step >= 4 && step <= 6) {
       if (!accountRole) {
         const message =
           "Please indicate whether this account belongs to the bride, groom, or a representative.";
@@ -383,7 +404,13 @@ export default function Wedding() {
 
       const detailsErrors = Object.fromEntries(
         Object.entries(validateDetailsStep(booking)).filter(
-          ([key]) => !isUploadError(key),
+          ([key]) =>
+            !isUploadError(key) &&
+            (step === 4
+              ? key.startsWith("applicant.bride.")
+              : step === 5
+                ? key.startsWith("applicant.groom.")
+                : key.startsWith("sponsors")),
         ),
       );
 
@@ -395,7 +422,7 @@ export default function Wedding() {
       setFieldErrors({});
     }
 
-    if (step === 5) {
+    if (step === 7) {
       const documentErrors = Object.fromEntries(
         Object.entries(validateDetailsStep(booking)).filter(([key]) =>
           isUploadError(key),
@@ -410,7 +437,7 @@ export default function Wedding() {
       setFieldErrors({});
     }
 
-    if (step === 6 && !agreedToDeclaration) {
+    if (step === 8 && !agreedToDeclaration) {
       return "Please agree to the declaration before submitting.";
     }
 

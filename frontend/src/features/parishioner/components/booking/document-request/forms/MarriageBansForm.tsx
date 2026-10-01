@@ -1,3 +1,4 @@
+import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import type {
   DocumentDetailValue,
   DocumentRequesterProfile,
@@ -74,9 +75,9 @@ ${
   return (
     <div className="grid grid-cols-12 gap-5">
       <div className="col-span-12">
-        <label className="mb-2 block text-sm font-medium">
+        <BookingLabel className="mb-2 block text-sm font-medium">
           Account Holder Is the <span className="text-red-600">*</span>
-        </label>
+        </BookingLabel>
         <select
           className={
             inputClass + (getError("requester_role") ? " border-red-400" : "")
@@ -99,9 +100,9 @@ ${
       </div>
 
       <div className="col-span-12 md:col-span-6">
-        <label className="mb-2 block text-sm font-medium">
+        <BookingLabel className="mb-2 block text-sm font-medium">
           Bride's Full Name <span className="text-red-600">*</span>
-        </label>
+        </BookingLabel>
 
         <input
           className={
@@ -116,9 +117,9 @@ ${
       </div>
 
       <div className="col-span-12 md:col-span-6">
-        <label className="mb-2 block text-sm font-medium">
+        <BookingLabel className="mb-2 block text-sm font-medium">
           Groom's Full Name <span className="text-red-600">*</span>
-        </label>
+        </BookingLabel>
 
         <input
           className={
@@ -133,9 +134,9 @@ ${
       </div>
 
       <div className="col-span-12">
-        <label className="mb-2 block text-sm font-medium">
+        <BookingLabel className="mb-2 block text-sm font-medium">
           Address <span className="text-red-600">*</span>
-        </label>
+        </BookingLabel>
 
         <input
           className={
@@ -150,9 +151,9 @@ ${
       </div>
 
       <div className="col-span-12 md:col-span-6">
-        <label className="mb-2 block text-sm font-medium">
+        <BookingLabel className="mb-2 block text-sm font-medium">
           Date of Marriage <span className="text-red-600">*</span>
-        </label>
+        </BookingLabel>
 
         <input
           type="date"

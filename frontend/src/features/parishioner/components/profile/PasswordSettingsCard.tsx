@@ -4,6 +4,8 @@ import { LockKeyhole } from "lucide-react";
 import { toast } from "sonner";
 
 import PasswordField from "@/features/auth/components/PasswordField";
+import PasswordRequirements from "@/features/auth/components/PasswordRequirements";
+import { passwordMeetsRequirements } from "@/features/auth/passwordRules";
 import { updateParishionerPassword } from "@/api/auth";
 import ProfileModal from "./ProfileModal";
 
@@ -33,6 +35,10 @@ export default function PasswordSettingsCard({
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (!passwordMeetsRequirements(form.password)) {
+      setErrors({ password: ["Please meet all password requirements."] });
+      return;
+    }
     setSaving(true);
     setErrors({});
 
@@ -71,7 +77,7 @@ export default function PasswordSettingsCard({
         <div className="mb-2 flex items-center gap-3 rounded-2xl bg-red-50 p-4 text-[#7F1D1D]">
           <LockKeyhole size={21} className="shrink-0" />
           <p className="text-sm">
-            Use at least 8 characters for your new password.
+            Choose a new password that meets the requirements below.
           </p>
         </div>
         <div>
@@ -91,6 +97,7 @@ export default function PasswordSettingsCard({
         <div>
           <PasswordField
             label="New Password"
+            describedBy="change-password-requirements"
             placeholder="At least 8 characters"
             value={form.password}
             onChange={(event) => update("password", event.target.value)}
@@ -99,6 +106,10 @@ export default function PasswordSettingsCard({
           {newPasswordError && (
             <p className="mt-1 text-xs text-red-600">{newPasswordError}</p>
           )}
+          <PasswordRequirements
+            password={form.password}
+            id="change-password-requirements"
+          />
         </div>
         <div>
           <PasswordField

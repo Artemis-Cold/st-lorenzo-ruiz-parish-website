@@ -1,3 +1,4 @@
+import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import type { Dispatch, SetStateAction } from "react";
 import { UploadCloud, ReceiptText } from "lucide-react";
 
@@ -148,10 +149,10 @@ ${
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium">
+                  <BookingLabel className="mb-1.5 block text-sm font-medium">
                     GCash Reference Number{" "}
                     <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -182,12 +183,12 @@ ${
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium">
+              <BookingLabel className="mb-1.5 block text-sm font-medium">
                 Payment Receipt <span className="text-red-600">*</span>
-              </label>
+              </BookingLabel>
               <FieldError message={getError("receipt")} />
 
-              <label className="flex min-w-0 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-red-300 bg-red-50 px-4 py-7 text-center transition hover:border-[#B22222] hover:bg-red-100 sm:px-6 lg:flex-row lg:justify-start lg:gap-4 lg:px-5 lg:py-4 lg:text-left">
+              <BookingLabel className="flex min-w-0 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border-2 border-dashed border-red-300 bg-red-50 px-4 py-7 text-center transition hover:border-[#B22222] hover:bg-red-100 sm:px-6 lg:flex-row lg:justify-start lg:gap-4 lg:px-5 lg:py-4 lg:text-left">
                 <UploadCloud className="mb-3 size-10 shrink-0 text-[#B22222] lg:mb-0 lg:size-8" />
 
                 <div className="min-w-0">
@@ -210,7 +211,7 @@ ${
                     updateBooking("receipt", e.target.files?.[0] ?? null)
                   }
                 />
-              </label>
+              </BookingLabel>
             </div>
           </div>
         </BookingCard>

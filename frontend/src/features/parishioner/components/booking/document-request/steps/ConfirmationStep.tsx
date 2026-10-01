@@ -1,3 +1,5 @@
+import { BookingTranslation } from "@/features/parishioner/components/booking/BookingLabel";
+import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import { BookingCard } from "../..";
 import type { DocumentRequestBooking } from "../../../../types/document";
 import { formatPhpCurrency } from "@/utils/currency";
@@ -129,13 +131,16 @@ export default function ConfirmationStep({
         </div>
       </BookingCard>
       <div className="rounded-3xl border border-[#B22222]/20 bg-red-50 p-6">
-        <h3 className="mb-4 text-xl font-bold text-[#B22222]">Declaration</h3>
+        <h3 className="mb-4 text-xl font-bold text-[#B22222]">
+          Declaration
+          <BookingTranslation text="Declaration" />
+        </h3>
         <p className="mb-6 text-gray-700">
           I certify that I am the registered account holder and official
           claimant, and that the record-owner relationship and payment details
           provided are true and accurate.
         </p>
-        <label className="flex cursor-pointer items-start gap-3 rounded-xl border bg-white p-4">
+        <BookingLabel className="flex cursor-pointer items-start gap-3 rounded-xl border bg-white p-4">
           <input
             type="checkbox"
             checked={agree}
@@ -146,7 +151,7 @@ export default function ConfirmationStep({
             I understand that I cannot appoint another person as the requester
             or claimant for this online request.
           </span>
-        </label>
+        </BookingLabel>
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import {
   ContactRound,
   ShieldCheck,
   ShieldAlert,
+  UserRound,
 } from "lucide-react";
 
 interface ProfileHeaderProps {
@@ -29,6 +30,7 @@ interface ProfileHeaderProps {
 
 export default function ProfileHeader({
   fullName = "Juan Dela Cruz",
+  username = "jdc",
   phone = "0912 345 6789",
   address = "Dagatan, Taysan, Batangas",
   avatar,
@@ -82,6 +84,10 @@ export default function ProfileHeader({
             </h1>
 
             <div className="mt-3 space-y-2 text-left text-white/90">
+              <div className="flex items-start gap-2">
+                <UserRound size={18} />
+                <span className="wrap-break-word">@{username}</span>
+              </div>
               <div className="flex items-start gap-2">
                 <Phone size={18} />
                 <span>{phone}</span>

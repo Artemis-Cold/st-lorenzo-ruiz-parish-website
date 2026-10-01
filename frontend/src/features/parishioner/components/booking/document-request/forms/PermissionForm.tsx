@@ -1,3 +1,4 @@
+import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import type {
   DocumentDetailValue,
   PermissionRequestDetails,
@@ -26,9 +27,9 @@ w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-gray-700
   return (
     <div className="grid grid-cols-12 gap-5">
       <div className="col-span-12">
-        <label className="mb-2 block text-sm font-medium">
+        <BookingLabel className="mb-2 block text-sm font-medium">
           Full Name <span className="text-red-600">*</span>
-        </label>
+        </BookingLabel>
 
         <input
           className={
@@ -43,9 +44,9 @@ w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-gray-700
       </div>
 
       <div className="col-span-12">
-        <label className="mb-2 block text-sm font-medium">
+        <BookingLabel className="mb-2 block text-sm font-medium">
           Address <span className="text-red-600">*</span>
-        </label>
+        </BookingLabel>
 
         <input
           className={

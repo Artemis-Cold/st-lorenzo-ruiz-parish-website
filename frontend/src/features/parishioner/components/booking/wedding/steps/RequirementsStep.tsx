@@ -1,3 +1,4 @@
+import { BookingTranslation } from "@/features/parishioner/components/booking/BookingLabel";
 import { BookingCard } from "../..";
 
 export default function RequirementsStep() {
@@ -41,12 +42,14 @@ export default function RequirementsStep() {
         <div className="mt-10 border-t pt-8">
           <h3 className="mb-6 text-center text-2xl font-bold uppercase text-[#B22222]">
             Additional Requirements
+            <BookingTranslation text="Additional Requirements" />
           </h3>
 
           <div className="space-y-8">
             <div className="rounded-xl border border-gray-200 p-5">
               <h4 className="font-semibold text-[#B22222]">
                 Para sa mga Walang Binyag/Kumpil
+                <BookingTranslation text="Permission of Parish & Publication of Banns" />
               </h4>
 
               <p className="mt-2 text-gray-600">
@@ -70,7 +73,10 @@ export default function RequirementsStep() {
             </div>
 
             <div className="rounded-xl border border-gray-200 p-5">
-              <h4 className="font-semibold text-[#B22222]">Confession</h4>
+              <h4 className="font-semibold text-[#B22222]">
+                Confession
+                <BookingTranslation text="Confession" />
+              </h4>
 
               <p className="mt-2 text-gray-700">
                 Both the bride and groom are encouraged to receive the Sacrament
@@ -79,7 +85,10 @@ export default function RequirementsStep() {
             </div>
 
             <div className="rounded-xl border border-gray-200 p-5">
-              <h4 className="font-semibold text-[#B22222]">Couple's Photo</h4>
+              <h4 className="font-semibold text-[#B22222]">
+                Couple's Photo
+                <BookingTranslation text="Couple's Photo" />
+              </h4>
 
               <ul className="mt-3 list-disc space-y-2 pl-6 text-gray-700">
                 <li>Three (3) copies of 3R-sized photo</li>
@@ -95,6 +104,7 @@ export default function RequirementsStep() {
             <div className="rounded-xl border border-gray-200 p-5">
               <h4 className="font-semibold text-[#B22222]">
                 For Principal Sponsors
+                <BookingTranslation text="For Principal Sponsors" />
               </h4>
 
               <ul className="mt-3 list-disc space-y-2 pl-6 text-gray-700">

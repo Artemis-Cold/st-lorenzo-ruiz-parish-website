@@ -1,3 +1,4 @@
+import { BookingTranslation } from "@/features/parishioner/components/booking/BookingLabel";
 import { BookingCard } from "../..";
 
 export default function RequirementsStep() {
@@ -36,10 +37,14 @@ export default function RequirementsStep() {
         <div className="mt-10 border-t pt-8">
           <h3 className="mb-6 text-center text-2xl font-bold uppercase text-[#B22222]">
             Additional Requirements
+            <BookingTranslation text="Additional Requirements" />
           </h3>
 
           <div className="rounded-xl border border-gray-200 p-5">
-            <h4 className="font-semibold text-[#B22222]">Memorial Biography</h4>
+            <h4 className="font-semibold text-[#B22222]">
+              Memorial Biography
+              <BookingTranslation text="Memorial Biography" />
+            </h4>
 
             <ul className="mt-3 list-disc space-y-2 pl-6 text-gray-700">
               <li>A written life story honoring your loved ones.</li>

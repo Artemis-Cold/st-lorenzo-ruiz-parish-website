@@ -39,6 +39,30 @@ class BookingRequirementService
         return $defined->merge($optional)->unique()->values()->all();
     }
 
+    public function notifySubmitted(Booking $booking): void
+    {
+        $booking->loadMissing(['user', 'service', 'slot']);
+        $slot = $booking->slot;
+        if ($booking->status !== 'pending' || ! $slot) {
+            return;
+        }
+
+        $date = $slot->booking_date->format('F j, Y');
+        $time = \Carbon\CarbonImmutable::parse($slot->start_time, 'Asia/Manila')->format('g:i A');
+        $reservation = $booking->service->code === 'baptism'
+            ? "Your place in the selected baptism session on {$date} at {$time} is reserved"
+            : "Your selected schedule on {$date} at {$time} is reserved";
+        $nextStep = $this->missing($booking) !== []
+            ? 'Please submit all required documents as soon as possible through My Profile.'
+            : 'Your submitted documents are awaiting parish staff review. Check My Profile for updates.';
+
+        $this->sms->queue(
+            $booking,
+            'booking_pending',
+            "St. Lorenzo Ruiz Parish: Your {$booking->service->name} booking (Ref: {$booking->booking_reference}) is PENDING. {$reservation}, subject to parish approval. {$nextStep}"
+        );
+    }
+
     public function notifyIfIncomplete(Booking $booking): bool
     {
         $missing = $this->missing($booking);

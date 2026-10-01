@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from "react";
+import BookingLabel from "../../BookingLabel";
 
 import { BookingCard } from "../..";
 
@@ -100,7 +101,14 @@ ${
                 </span>
 
                 <div className="flex-1">
+                  <BookingLabel
+                    htmlFor={`intention-${group.type}-${entry.id}`}
+                    className="mb-2 block text-sm font-medium"
+                  >
+                    Names
+                  </BookingLabel>
                   <input
+                    id={`intention-${group.type}-${entry.id}`}
                     type="text"
                     readOnly={readOnly}
                     className={
@@ -157,6 +165,10 @@ ${
             <p className="text-xs italic text-gray-500">
               Maximum of <strong>3 names</strong> per line. Separate names using
               commas.
+              <span lang="tl" className="mt-1 block">
+                Hanggang tatlong pangalan bawat linya. Paghiwalayin ang mga
+                pangalan gamit ang kuwit.
+              </span>
             </p>
           </div>
         </BookingCard>

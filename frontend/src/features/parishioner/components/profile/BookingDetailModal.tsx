@@ -32,6 +32,7 @@ import PaymentMethodChoice, {
   type PaymentMethod,
 } from "../booking/PaymentMethodChoice";
 import RescheduleBookingModal from "./RescheduleBookingModal";
+import { canDisplayBookingPayment } from "./bookingPaymentVisibility";
 
 const label = (value: string) =>
   value
@@ -84,6 +85,7 @@ export default function BookingDetailModal({
   );
   const [submittingPayment, setSubmittingPayment] = useState(false);
   const booking = result.bookingId === bookingId ? result.booking : null;
+  const showPayment = canDisplayBookingPayment(booking);
   const error = result.bookingId === bookingId ? result.error : "";
 
   useEffect(() => {
@@ -162,6 +164,7 @@ export default function BookingDetailModal({
   };
 
   const submitPayment = async () => {
+    if (!showPayment || !booking?.payment.canChangeMethod) return;
     const errors: Record<string, string> = {};
     if (paymentMethod === "gcash") {
       if (!isValidGcashReference(paymentReference))
@@ -411,7 +414,7 @@ export default function BookingDetailModal({
 
             {booking.package && (
               <section className="rounded-2xl border p-5">
-                <h3 className="font-semibold">Package and payment</h3>
+                <h3 className="font-semibold">Package details</h3>
                 <div className="mt-3 grid gap-2 text-sm sm:grid-cols-2">
                   <p>
                     <span className="text-gray-500">Package:</span>{" "}
@@ -450,7 +453,7 @@ export default function BookingDetailModal({
               </section>
             )}
 
-            {booking.payment.required && (
+            {showPayment && (
               <section className="rounded-2xl border border-[#E7E2DA] p-5">
                 <div className="flex items-start gap-3">
                   <div className="grid size-11 shrink-0 place-items-center rounded-xl bg-red-50 text-[#B22222]">

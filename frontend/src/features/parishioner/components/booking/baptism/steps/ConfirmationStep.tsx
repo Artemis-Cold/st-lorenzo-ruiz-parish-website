@@ -1,3 +1,5 @@
+import { BookingTranslation } from "@/features/parishioner/components/booking/BookingLabel";
+import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import ConfirmationNotice from "../summary/ConfirmationNotice";
 import ScheduleSummary from "../summary/ScheduleSummary";
 import PackageSummary from "../summary/PackageSummary";
@@ -48,7 +50,10 @@ export default function ConfirmationStep({
       <DetailsStep booking={booking} setBooking={setBooking} readOnly />
 
       <div className="rounded-3xl border border-[#B22222]/20 bg-red-50 p-6">
-        <h3 className="mb-4 text-xl font-bold text-[#B22222]">Declaration</h3>
+        <h3 className="mb-4 text-xl font-bold text-[#B22222]">
+          Declaration
+          <BookingTranslation text="Declaration" />
+        </h3>
 
         <p className="mb-6 text-gray-700">
           I hereby certify that all information and uploaded documents provided
@@ -57,7 +62,7 @@ export default function ConfirmationStep({
           result in the rejection or cancellation of my booking request.
         </p>
 
-        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-white p-4">
+        <BookingLabel className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-white p-4">
           <input
             type="checkbox"
             checked={agree}
@@ -69,7 +74,7 @@ export default function ConfirmationStep({
             I have reviewed all the information above and I agree to the
             parish's booking policies and requirements.
           </span>
-        </label>
+        </BookingLabel>
       </div>
     </div>
   );

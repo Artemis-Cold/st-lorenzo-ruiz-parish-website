@@ -1,3 +1,5 @@
+import { BookingTranslation } from "@/features/parishioner/components/booking/BookingLabel";
+import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import { BookingCard } from "../..";
 import type {
   ApplicantType,
@@ -18,6 +20,7 @@ interface DetailsStepProps {
   readOnly?: boolean;
   errors?: Record<string, string[]>;
   view?: "all" | "information" | "documents";
+  section?: "bride" | "groom" | "sponsors";
   accountRole?: WeddingAccountRole | null;
   onAccountRoleChange?: (role: WeddingAccountRole) => void;
 }
@@ -34,6 +37,7 @@ export default function DetailsStep({
   readOnly,
   errors,
   view = "all",
+  section,
   accountRole,
   onAccountRoleChange,
 }: DetailsStepProps) {
@@ -348,6 +352,7 @@ ${
       <fieldset className="mt-4">
         <legend className="text-sm font-medium text-gray-800">
           Certificate to submit <span className="text-red-600">*</span>
+          <BookingTranslation text="Certificate to submit" />
         </legend>
         <div className="mt-2 grid gap-2 sm:grid-cols-2">
           {(
@@ -359,7 +364,7 @@ ${
             const selected = sponsor.requirement_type === type;
 
             return (
-              <label
+              <BookingLabel
                 key={type}
                 className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 text-sm font-medium transition ${
                   selected
@@ -382,7 +387,7 @@ ${
                   className="size-4 accent-[#B22222]"
                 />
                 {label}
-              </label>
+              </BookingLabel>
             );
           })}
         </div>
@@ -418,84 +423,90 @@ ${
 
   return (
     <>
-      {view !== "documents" && !readOnly && onAccountRoleChange && (
-        <BookingCard title="Your Role in this Booking">
-          <div className="space-y-5">
-            <div>
-              <h3 className="font-semibold text-[#292524]">
-                Who does this parishioner account belong to?{" "}
-                <span className="text-red-600">*</span>
-              </h3>
-              <p className="mt-1 text-sm leading-5 text-gray-500">
-                Selecting the bride or groom copies the account profile into the
-                corresponding form. You may still edit the copied details.
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              {(
-                [
-                  ["groom", "I am the Groom"],
-                  ["bride", "I am the Bride"],
-                  ["representative", "I am a Representative"],
-                ] as const
-              ).map(([role, label]) => {
-                const selected = accountRole === role;
-
-                return (
-                  <button
-                    key={role}
-                    type="button"
-                    aria-pressed={selected}
-                    onClick={() => selectAccountRole(role)}
-                    className={`rounded-2xl border px-4 py-4 text-left text-sm font-semibold transition ${
-                      selected
-                        ? "border-[#B22222] bg-red-50 text-[#B22222] ring-2 ring-red-100"
-                        : "border-gray-200 bg-white text-gray-700 hover:border-red-200 hover:bg-red-50/50"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-            <FieldError message={getError("account_role")} />
-
-            {accountRole && (
-              <div className="flex flex-col gap-3 rounded-2xl border border-red-100 bg-red-50/60 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
-                <p className="leading-5 text-gray-600">
-                  {accountRole === "representative"
-                    ? `${user?.full_name ?? "The signed-in parishioner"} will be recorded as the person who submitted this booking. Please complete both applicant forms.`
-                    : `Profile details were copied to the ${accountRole} form. Wedding edits will not change your account profile.`}
+      {view !== "documents" &&
+        section !== "sponsors" &&
+        !readOnly &&
+        onAccountRoleChange && (
+          <BookingCard title="Your Role in this Booking">
+            <div className="space-y-5">
+              <div>
+                <h3 className="font-semibold text-[#292524]">
+                  Who does this parishioner account belong to?{" "}
+                  <span className="text-red-600">*</span>
+                  <BookingTranslation text="Who does this parishioner account belong to?" />
+                </h3>
+                <p className="mt-1 text-sm leading-5 text-gray-500">
+                  Selecting the bride or groom copies the account profile into
+                  the corresponding form. You may still edit the copied details.
                 </p>
-                {accountRole !== "representative" && (
-                  <button
-                    type="button"
-                    onClick={() => restoreApplicantFromProfile(accountRole)}
-                    className="shrink-0 rounded-xl border border-[#B22222]/20 bg-white px-4 py-2 font-semibold text-[#B22222] transition hover:bg-red-50"
-                  >
-                    Restore from profile
-                  </button>
-                )}
               </div>
-            )}
-          </div>
-        </BookingCard>
-      )}
 
-      {view !== "documents" && (
+              <div className="grid gap-3 sm:grid-cols-3">
+                {(
+                  [
+                    ["groom", "I am the Groom"],
+                    ["bride", "I am the Bride"],
+                    ["representative", "I am a Representative"],
+                  ] as const
+                ).map(([role, label]) => {
+                  const selected = accountRole === role;
+
+                  return (
+                    <button
+                      key={role}
+                      type="button"
+                      aria-pressed={selected}
+                      onClick={() => selectAccountRole(role)}
+                      className={`rounded-2xl border px-4 py-4 text-left text-sm font-semibold transition ${
+                        selected
+                          ? "border-[#B22222] bg-red-50 text-[#B22222] ring-2 ring-red-100"
+                          : "border-gray-200 bg-white text-gray-700 hover:border-red-200 hover:bg-red-50/50"
+                      }`}
+                    >
+                      {label}
+                      <BookingTranslation text={label} />
+                    </button>
+                  );
+                })}
+              </div>
+              <FieldError message={getError("account_role")} />
+
+              {accountRole && (
+                <div className="flex flex-col gap-3 rounded-2xl border border-red-100 bg-red-50/60 px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+                  <p className="leading-5 text-gray-600">
+                    {accountRole === "representative"
+                      ? `${user?.full_name ?? "The signed-in parishioner"} will be recorded as the person who submitted this booking. Please complete both applicant forms.`
+                      : `Profile details were copied to the ${accountRole} form. Wedding edits will not change your account profile.`}
+                  </p>
+                  {accountRole !== "representative" && (
+                    <button
+                      type="button"
+                      onClick={() => restoreApplicantFromProfile(accountRole)}
+                      className="shrink-0 rounded-xl border border-[#B22222]/20 bg-white px-4 py-2 font-semibold text-[#B22222] transition hover:bg-red-50"
+                    >
+                      Restore from profile
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </BookingCard>
+        )}
+
+      {view !== "documents" && (!section || section === "groom") && (
         <BookingCard title="Groom's Information">
           <form className={formClass}>
             <section>
               <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
                 Personal Information
+                <BookingTranslation text="Personal Information" />
               </h3>
 
               <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-12 md:col-span-5">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Last Name <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -511,9 +522,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-5">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     First Name <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -531,7 +542,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium">MI</label>
+                  <BookingLabel className="mb-2 block text-sm font-medium">
+                    MI
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -550,9 +563,9 @@ ${
                 </div>
 
                 <div className="col-span-12">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Address <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -568,9 +581,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-3">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Age <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="number"
@@ -590,9 +603,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-9">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Contact Number <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="tel"
@@ -614,13 +627,14 @@ ${
             <section>
               <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
                 Church Information
+                <BookingTranslation text="Church Information" />
               </h3>
 
               <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-12 md:col-span-6">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Baptized In <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -642,9 +656,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-6">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Confirmed In <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -670,13 +684,14 @@ ${
             <section>
               <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
                 Background Information
+                <BookingTranslation text="Background Information" />
               </h3>
 
               <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-12 md:col-span-5">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Father's Last Name <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -698,9 +713,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-5">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Father's First Name <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -722,9 +737,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Father's MI
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -754,9 +769,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-5">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Mother's Last Name <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -778,9 +793,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-5">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Mother's First Name <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -802,9 +817,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Mother's MI
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -831,13 +846,14 @@ ${
             <section>
               <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
                 In Your Address
+                <BookingTranslation text="In Your Address" />
               </h3>
 
               <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-12 md:col-span-6">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Church Name <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -864,9 +880,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-6">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Parish Priest <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -891,9 +907,9 @@ ${
                   />
                 </div>
                 <div className="col-span-12">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Church Address <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -924,19 +940,20 @@ ${
         </BookingCard>
       )}
 
-      {view !== "documents" && (
+      {view !== "documents" && (!section || section === "bride") && (
         <BookingCard title="Bride's Information">
           <form className={formClass}>
             <section>
               <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
                 Personal Information
+                <BookingTranslation text="Personal Information" />
               </h3>
 
               <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-12 md:col-span-5">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Last Name <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -952,9 +969,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-5">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     First Name <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -972,7 +989,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium">MI</label>
+                  <BookingLabel className="mb-2 block text-sm font-medium">
+                    MI
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -988,9 +1007,9 @@ ${
                 </div>
 
                 <div className="col-span-12">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Address <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -1006,9 +1025,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-3">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Age <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="number"
@@ -1028,9 +1047,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-9">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Contact Number <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="tel"
@@ -1052,13 +1071,14 @@ ${
             <section>
               <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
                 Church Information
+                <BookingTranslation text="Church Information" />
               </h3>
 
               <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-12 md:col-span-6">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Baptized In <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -1080,9 +1100,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-6">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Confirmed In <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -1108,13 +1128,14 @@ ${
             <section>
               <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
                 Background Information
+                <BookingTranslation text="Background Information" />
               </h3>
 
               <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-12 md:col-span-5">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Father's Last Name <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -1136,9 +1157,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-5">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Father's First Name <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -1160,9 +1181,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Father's MI
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -1189,9 +1210,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-5">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Mother's Last Name <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -1213,9 +1234,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-5">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Mother's First Name <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -1237,9 +1258,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Mother's MI
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -1263,13 +1284,14 @@ ${
             <section>
               <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
                 In Your Address
+                <BookingTranslation text="In Your Address" />
               </h3>
 
               <div className="grid grid-cols-12 gap-4">
                 <div className="col-span-12 md:col-span-6">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Church Name <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -1296,9 +1318,9 @@ ${
                 </div>
 
                 <div className="col-span-12 md:col-span-6">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Parish Priest <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -1323,9 +1345,9 @@ ${
                   />
                 </div>
                 <div className="col-span-12">
-                  <label className="mb-2 block text-sm font-medium">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
                     Church Address <span className="text-red-600">*</span>
-                  </label>
+                  </BookingLabel>
 
                   <input
                     type="text"
@@ -1356,327 +1378,335 @@ ${
         </BookingCard>
       )}
 
-      <BookingCard
-        title={view === "information" ? "Principal Sponsors" : "Requirements"}
-      >
-        <form className={formClass}>
-          {view !== "information" && (
-            <section>
-              <h3 className="mb-2 border-b pb-2 text-lg font-semibold text-[#B22222]">
-                {readOnly
-                  ? "Submitted Requirements"
-                  : "Attach Soft Copy of Requirements"}
-              </h3>
+      {(!section || section === "sponsors") && (
+        <BookingCard
+          title={view === "information" ? "Principal Sponsors" : "Requirements"}
+        >
+          <form className={formClass}>
+            {view !== "information" && (
+              <section>
+                <h3 className="mb-2 border-b pb-2 text-lg font-semibold text-[#B22222]">
+                  {readOnly
+                    ? "Submitted Requirements"
+                    : "Attach Soft Copy of Requirements"}
+                </h3>
 
-              <p className="mb-6 text-sm text-gray-500">
-                {readOnly
-                  ? "Review the uploaded documents before submitting your booking request."
-                  : "Upload the files you currently have. Missing requirements may be submitted later from My Profile while the booking remains pending."}
-              </p>
+                <p className="mb-6 text-sm text-gray-500">
+                  {readOnly
+                    ? "Review the uploaded documents before submitting your booking request."
+                    : "Upload the files you currently have. Missing requirements may be submitted later from My Profile while the booking remains pending."}
+                </p>
 
-              <div className="grid grid-cols-12 gap-5">
-                <div className="col-span-12 md:col-span-6">
-                  <FileUploadField
-                    label="Marriage License"
-                    file={getDocument("marriage_license")}
-                    onChange={(file) =>
-                      updateDocument("marriage_license", file)
-                    }
-                    readOnly={readOnly}
-                  />
-                  <FieldError
-                    message={getError("documents.marriage_license")}
-                  />
-                </div>
-
-                <div className="col-span-12 md:col-span-6">
-                  <FileUploadField
-                    label="Certificate of No Marriage (CENOMAR)"
-                    file={getDocument("cenomar")}
-                    onChange={(file) => updateDocument("cenomar", file)}
-                    readOnly={readOnly}
-                  />
-                  <FieldError message={getError("documents.cenomar")} />
-                </div>
-
-                <div className="col-span-12 md:col-span-6">
-                  <FileUploadField
-                    label="Baptismal Certificate"
-                    file={getDocument("baptismal_certificate")}
-                    onChange={(file) =>
-                      updateDocument("baptismal_certificate", file)
-                    }
-                    readOnly={readOnly}
-                  />
-                  <FieldError
-                    message={getError("documents.baptismal_certificate")}
-                  />
-                </div>
-
-                <div className="col-span-12 md:col-span-6">
-                  <FileUploadField
-                    label="Confirmation Certificate"
-                    file={getDocument("confirmation_certificate")}
-                    onChange={(file) =>
-                      updateDocument("confirmation_certificate", file)
-                    }
-                    readOnly={readOnly}
-                  />
-                  <FieldError
-                    message={getError("documents.confirmation_certificate")}
-                  />
-                </div>
-
-                <div className="col-span-12 rounded-xl border border-blue-200 bg-blue-50 p-4">
-                  <h4 className="font-semibold text-blue-900">
-                    Three 3R Couple Photos
-                  </h4>
-                  <p className="mt-1 text-sm text-blue-700">
-                    Attach three separate JPG or PNG image files. PDF files are
-                    not accepted for these photo fields.
-                  </p>
-                </div>
-
-                {(
-                  [
-                    "couple_photo_1",
-                    "couple_photo_2",
-                    "couple_photo_3",
-                  ] as const
-                ).map((type, index) => (
-                  <div key={type} className="col-span-12 md:col-span-4">
+                <div className="grid grid-cols-12 gap-5">
+                  <div className="col-span-12 md:col-span-6">
                     <FileUploadField
-                      label={`3R Couple Photo ${index + 1}`}
-                      file={getDocument(type)}
-                      onChange={(file) => updateDocument(type, file)}
-                      accept=".jpg,.jpeg,.png"
+                      label="Marriage License"
+                      file={getDocument("marriage_license")}
+                      onChange={(file) =>
+                        updateDocument("marriage_license", file)
+                      }
                       readOnly={readOnly}
                     />
                     <FieldError
-                      message={
-                        getError(`documents.${type}`) ??
-                        getError(`documents.${getDocumentIndex(type)}.file`)
-                      }
+                      message={getError("documents.marriage_license")}
                     />
                   </div>
-                ))}
-              </div>
 
-              {view === "documents" && (
-                <div className="mt-8 space-y-5 border-t border-gray-200 pt-7">
-                  <div>
-                    <h3 className="text-lg font-semibold text-[#B22222]">
-                      Individual Sponsor Requirements
-                    </h3>
-                    <p className="mt-1 text-sm leading-6 text-gray-500">
-                      For every sponsor, select either a Marriage Certificate or
-                      Confirmation Certificate, then attach that sponsor's PDF.
-                      Files may also be submitted later while the booking is
-                      pending.
+                  <div className="col-span-12 md:col-span-6">
+                    <FileUploadField
+                      label="Certificate of No Marriage (CENOMAR)"
+                      file={getDocument("cenomar")}
+                      onChange={(file) => updateDocument("cenomar", file)}
+                      readOnly={readOnly}
+                    />
+                    <FieldError message={getError("documents.cenomar")} />
+                  </div>
+
+                  <div className="col-span-12 md:col-span-6">
+                    <FileUploadField
+                      label="Baptismal Certificate"
+                      file={getDocument("baptismal_certificate")}
+                      onChange={(file) =>
+                        updateDocument("baptismal_certificate", file)
+                      }
+                      readOnly={readOnly}
+                    />
+                    <FieldError
+                      message={getError("documents.baptismal_certificate")}
+                    />
+                  </div>
+
+                  <div className="col-span-12 md:col-span-6">
+                    <FileUploadField
+                      label="Confirmation Certificate"
+                      file={getDocument("confirmation_certificate")}
+                      onChange={(file) =>
+                        updateDocument("confirmation_certificate", file)
+                      }
+                      readOnly={readOnly}
+                    />
+                    <FieldError
+                      message={getError("documents.confirmation_certificate")}
+                    />
+                  </div>
+
+                  <div className="col-span-12 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                    <h4 className="font-semibold text-blue-900">
+                      Three 3R Couple Photos
+                      <BookingTranslation text="Three 3R Couple Photos" />
+                    </h4>
+                    <p className="mt-1 text-sm text-blue-700">
+                      Attach three separate JPG or PNG image files. PDF files
+                      are not accepted for these photo fields.
                     </p>
                   </div>
 
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    {booking.sponsors.map((sponsor, sponsorIndex) => (
-                      <div key={sponsorIndex} className="min-w-0">
-                        {renderSponsorRequirement(sponsor, sponsorIndex)}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </section>
-          )}
-
-          {view !== "documents" && (
-            <section>
-              <div className="mb-5 flex items-center justify-between gap-4 border-b pb-3">
-                <div>
-                  <h3 className="text-lg font-semibold text-[#B22222]">
-                    Principal Sponsors
-                  </h3>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Add sponsors individually and identify each one as a
-                    godfather or godmother. Each sponsor submits an individual
-                    supporting certificate.
-                  </p>
-                </div>
-                {!readOnly && (
-                  <button
-                    type="button"
-                    onClick={addSponsor}
-                    className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#B22222] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#8B1C1C]"
-                  >
-                    <Plus size={16} /> Add Sponsor
-                  </button>
-                )}
-              </div>
-
-              <div className="space-y-5">
-                <div className="grid gap-5 lg:grid-cols-2">
-                  {booking.sponsors.map((sponsor, sponsorIndex) => (
-                    <div
-                      key={sponsorIndex}
-                      className="rounded-xl bg-gray-50 p-4"
-                    >
-                      <div className="mb-4 flex items-center justify-between gap-3">
-                        <h5 className="font-semibold text-gray-700">
-                          Sponsor {sponsorIndex + 1}
-                        </h5>
-                        {!readOnly && booking.sponsors.length > 2 && (
-                          <button
-                            type="button"
-                            onClick={() => removeSponsor(sponsorIndex)}
-                            aria-label={`Remove sponsor ${sponsorIndex + 1}`}
-                            className="rounded-lg p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
-                          >
-                            <Trash2 size={17} />
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-12 gap-3">
-                        <div className="col-span-12">
-                          <label className="mb-1.5 block text-sm font-medium">
-                            Sponsor Role <span className="text-red-600">*</span>
-                          </label>
-                          <select
-                            value={sponsor.role}
-                            onChange={(event) =>
-                              updateSponsor(
-                                sponsorIndex,
-                                "role",
-                                event.target.value as WeddingSponsor["role"],
-                              )
-                            }
-                            disabled={readOnly}
-                            className={inputClass}
-                          >
-                            <option value="">Select sponsor role</option>
-                            <option value="godfather">
-                              Godfather (Ninong)
-                            </option>
-                            <option value="godmother">
-                              Godmother (Ninang)
-                            </option>
-                          </select>
-                          <FieldError
-                            message={getError(`sponsors.${sponsorIndex}.role`)}
-                          />
-                        </div>
-
-                        <div className="col-span-12 sm:col-span-5">
-                          <label className="mb-1.5 block text-sm font-medium">
-                            Last Name <span className="text-red-600">*</span>
-                          </label>
-                          <input
-                            value={sponsor.last_name}
-                            onChange={(event) =>
-                              updateSponsor(
-                                sponsorIndex,
-                                "last_name",
-                                event.target.value,
-                              )
-                            }
-                            readOnly={readOnly}
-                            placeholder="Last name"
-                            className={inputClass}
-                          />
-                          <FieldError
-                            message={getError(
-                              `sponsors.${sponsorIndex}.last_name`,
-                            )}
-                          />
-                        </div>
-                        <div className="col-span-12 sm:col-span-5">
-                          <label className="mb-1.5 block text-sm font-medium">
-                            First Name <span className="text-red-600">*</span>
-                          </label>
-                          <input
-                            value={sponsor.first_name}
-                            onChange={(event) =>
-                              updateSponsor(
-                                sponsorIndex,
-                                "first_name",
-                                event.target.value,
-                              )
-                            }
-                            readOnly={readOnly}
-                            placeholder="First name"
-                            className={inputClass}
-                          />
-                          <FieldError
-                            message={getError(
-                              `sponsors.${sponsorIndex}.first_name`,
-                            )}
-                          />
-                        </div>
-                        <div className="col-span-12 sm:col-span-2">
-                          <label className="mb-1.5 block text-sm font-medium">
-                            MI
-                          </label>
-                          <input
-                            maxLength={1}
-                            value={sponsor.middle_initial}
-                            onChange={(event) =>
-                              updateSponsor(
-                                sponsorIndex,
-                                "middle_initial",
-                                event.target.value,
-                              )
-                            }
-                            readOnly={readOnly}
-                            placeholder="M"
-                            className={inputClass}
-                          />
-                          <FieldError
-                            message={getError(
-                              `sponsors.${sponsorIndex}.middle_initial`,
-                            )}
-                          />
-                        </div>
-                        <div className="col-span-12">
-                          <label className="mb-1.5 block text-sm font-medium">
-                            Residence <span className="text-red-600">*</span>
-                          </label>
-                          <input
-                            value={sponsor.residence}
-                            onChange={(event) =>
-                              updateSponsor(
-                                sponsorIndex,
-                                "residence",
-                                event.target.value,
-                              )
-                            }
-                            readOnly={readOnly}
-                            placeholder="Complete residence"
-                            className={inputClass}
-                          />
-                          <FieldError
-                            message={getError(
-                              `sponsors.${sponsorIndex}.residence`,
-                            )}
-                          />
-                        </div>
-                      </div>
-
-                      {view === "all" && (
-                        <div className="mt-5">
-                          {renderSponsorRequirement(sponsor, sponsorIndex)}
-                        </div>
-                      )}
+                  {(
+                    [
+                      "couple_photo_1",
+                      "couple_photo_2",
+                      "couple_photo_3",
+                    ] as const
+                  ).map((type, index) => (
+                    <div key={type} className="col-span-12 md:col-span-4">
+                      <FileUploadField
+                        label={`3R Couple Photo ${index + 1}`}
+                        file={getDocument(type)}
+                        onChange={(file) => updateDocument(type, file)}
+                        accept=".jpg,.jpeg,.png"
+                        readOnly={readOnly}
+                      />
+                      <FieldError
+                        message={
+                          getError(`documents.${type}`) ??
+                          getError(`documents.${getDocumentIndex(type)}.file`)
+                        }
+                      />
                     </div>
                   ))}
                 </div>
 
-                {errors?.sponsors?.[0] && (
-                  <FieldError message={errors.sponsors[0]} />
+                {view === "documents" && (
+                  <div className="mt-8 space-y-5 border-t border-gray-200 pt-7">
+                    <div>
+                      <h3 className="text-lg font-semibold text-[#B22222]">
+                        Individual Sponsor Requirements
+                        <BookingTranslation text="Individual Sponsor Requirements" />
+                      </h3>
+                      <p className="mt-1 text-sm leading-6 text-gray-500">
+                        For every sponsor, select either a Marriage Certificate
+                        or Confirmation Certificate, then attach that sponsor's
+                        PDF. Files may also be submitted later while the booking
+                        is pending.
+                      </p>
+                    </div>
+
+                    <div className="grid gap-4 lg:grid-cols-2">
+                      {booking.sponsors.map((sponsor, sponsorIndex) => (
+                        <div key={sponsorIndex} className="min-w-0">
+                          {renderSponsorRequirement(sponsor, sponsorIndex)}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
-              </div>
-            </section>
-          )}
-        </form>
-      </BookingCard>
+              </section>
+            )}
+
+            {view !== "documents" && (
+              <section>
+                <div className="mb-5 flex flex-col items-start justify-between gap-4 border-b pb-3 sm:flex-row sm:items-center">
+                  <div>
+                    <h3 className="text-lg font-semibold text-[#B22222]">
+                      Principal Sponsors
+                      <BookingTranslation text="Principal Sponsors" />
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Add sponsors individually and identify each one as a
+                      godfather or godmother. Each sponsor submits an individual
+                      supporting certificate.
+                    </p>
+                  </div>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      onClick={addSponsor}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#B22222] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#8B1C1C]"
+                    >
+                      <Plus size={16} /> Add Sponsor
+                    </button>
+                  )}
+                </div>
+
+                <div className="space-y-5">
+                  <div className="grid gap-5 lg:grid-cols-2">
+                    {booking.sponsors.map((sponsor, sponsorIndex) => (
+                      <div
+                        key={sponsorIndex}
+                        className="rounded-xl bg-gray-50 p-4"
+                      >
+                        <div className="mb-4 flex items-center justify-between gap-3">
+                          <h5 className="font-semibold text-gray-700">
+                            Sponsor {sponsorIndex + 1}
+                          </h5>
+                          {!readOnly && booking.sponsors.length > 2 && (
+                            <button
+                              type="button"
+                              onClick={() => removeSponsor(sponsorIndex)}
+                              aria-label={`Remove sponsor ${sponsorIndex + 1}`}
+                              className="rounded-lg p-2 text-gray-400 transition hover:bg-red-50 hover:text-red-600"
+                            >
+                              <Trash2 size={17} />
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="grid grid-cols-12 gap-3">
+                          <div className="col-span-12">
+                            <BookingLabel className="mb-1.5 block text-sm font-medium">
+                              Sponsor Role{" "}
+                              <span className="text-red-600">*</span>
+                            </BookingLabel>
+                            <select
+                              value={sponsor.role}
+                              onChange={(event) =>
+                                updateSponsor(
+                                  sponsorIndex,
+                                  "role",
+                                  event.target.value as WeddingSponsor["role"],
+                                )
+                              }
+                              disabled={readOnly}
+                              className={inputClass}
+                            >
+                              <option value="">Select sponsor role</option>
+                              <option value="godfather">
+                                Godfather (Ninong)
+                              </option>
+                              <option value="godmother">
+                                Godmother (Ninang)
+                              </option>
+                            </select>
+                            <FieldError
+                              message={getError(
+                                `sponsors.${sponsorIndex}.role`,
+                              )}
+                            />
+                          </div>
+
+                          <div className="col-span-12 sm:col-span-5">
+                            <BookingLabel className="mb-1.5 block text-sm font-medium">
+                              Last Name <span className="text-red-600">*</span>
+                            </BookingLabel>
+                            <input
+                              value={sponsor.last_name}
+                              onChange={(event) =>
+                                updateSponsor(
+                                  sponsorIndex,
+                                  "last_name",
+                                  event.target.value,
+                                )
+                              }
+                              readOnly={readOnly}
+                              placeholder="Last name"
+                              className={inputClass}
+                            />
+                            <FieldError
+                              message={getError(
+                                `sponsors.${sponsorIndex}.last_name`,
+                              )}
+                            />
+                          </div>
+                          <div className="col-span-12 sm:col-span-5">
+                            <BookingLabel className="mb-1.5 block text-sm font-medium">
+                              First Name <span className="text-red-600">*</span>
+                            </BookingLabel>
+                            <input
+                              value={sponsor.first_name}
+                              onChange={(event) =>
+                                updateSponsor(
+                                  sponsorIndex,
+                                  "first_name",
+                                  event.target.value,
+                                )
+                              }
+                              readOnly={readOnly}
+                              placeholder="First name"
+                              className={inputClass}
+                            />
+                            <FieldError
+                              message={getError(
+                                `sponsors.${sponsorIndex}.first_name`,
+                              )}
+                            />
+                          </div>
+                          <div className="col-span-12 sm:col-span-2">
+                            <BookingLabel className="mb-1.5 block text-sm font-medium">
+                              MI
+                            </BookingLabel>
+                            <input
+                              maxLength={1}
+                              value={sponsor.middle_initial}
+                              onChange={(event) =>
+                                updateSponsor(
+                                  sponsorIndex,
+                                  "middle_initial",
+                                  event.target.value,
+                                )
+                              }
+                              readOnly={readOnly}
+                              placeholder="M"
+                              className={inputClass}
+                            />
+                            <FieldError
+                              message={getError(
+                                `sponsors.${sponsorIndex}.middle_initial`,
+                              )}
+                            />
+                          </div>
+                          <div className="col-span-12">
+                            <BookingLabel className="mb-1.5 block text-sm font-medium">
+                              Residence <span className="text-red-600">*</span>
+                            </BookingLabel>
+                            <input
+                              value={sponsor.residence}
+                              onChange={(event) =>
+                                updateSponsor(
+                                  sponsorIndex,
+                                  "residence",
+                                  event.target.value,
+                                )
+                              }
+                              readOnly={readOnly}
+                              placeholder="Complete residence"
+                              className={inputClass}
+                            />
+                            <FieldError
+                              message={getError(
+                                `sponsors.${sponsorIndex}.residence`,
+                              )}
+                            />
+                          </div>
+                        </div>
+
+                        {view === "all" && (
+                          <div className="mt-5">
+                            {renderSponsorRequirement(sponsor, sponsorIndex)}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {errors?.sponsors?.[0] && (
+                    <FieldError message={errors.sponsors[0]} />
+                  )}
+                </div>
+              </section>
+            )}
+          </form>
+        </BookingCard>
+      )}
     </>
   );
 }

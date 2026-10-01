@@ -1,3 +1,4 @@
+import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import type {
   DeathCertificateDetails,
   DocumentDetailValue,
@@ -32,9 +33,9 @@ ${
   return (
     <div className="grid grid-cols-12 gap-5">
       <div className="col-span-12">
-        <label className="mb-2 block text-sm font-medium">
+        <BookingLabel className="mb-2 block text-sm font-medium">
           Full Name <span className="text-red-600">*</span>
-        </label>
+        </BookingLabel>
 
         <input
           className={inputClass + (getError("name") ? " border-red-400" : "")}
@@ -47,9 +48,9 @@ ${
       </div>
 
       <div className="col-span-12">
-        <label className="mb-2 block text-sm font-medium">
+        <BookingLabel className="mb-2 block text-sm font-medium">
           Relationship to Deceased <span className="text-red-600">*</span>
-        </label>
+        </BookingLabel>
 
         <select
           className={
@@ -72,9 +73,9 @@ ${
       </div>
 
       <div className="col-span-12">
-        <label className="mb-2 block text-sm font-medium">
+        <BookingLabel className="mb-2 block text-sm font-medium">
           Address <span className="text-red-600">*</span>
-        </label>
+        </BookingLabel>
 
         <input
           className={

@@ -25,7 +25,8 @@ const stepLabels = [
   "Requirements",
   "Schedule",
   "Packages",
-  "Personal Information",
+  "Baptizand",
+  "Godparents",
   "Document Uploads",
   "Confirmation",
 ];
@@ -164,6 +165,15 @@ export default function Baptism() {
       setBooking={setBooking}
       errors={fieldErrors}
       view="information"
+      section="baptizand"
+    />,
+    <DetailsStep
+      key="godparents"
+      booking={booking}
+      setBooking={setBooking}
+      errors={fieldErrors}
+      view="information"
+      section="sponsors"
     />,
     <DetailsStep
       key="documents"
@@ -341,14 +351,22 @@ export default function Baptism() {
       return "Please select a package before continuing.";
     }
 
-    if (step === 4) {
+    if (step === 4 || step === 5) {
       const detailsErrors = Object.fromEntries(
         Object.entries(validateDetailsStep(booking)).filter(
-          ([key]) => !isUploadError(key),
+          ([key]) =>
+            !isUploadError(key) &&
+            (step === 5
+              ? key.startsWith("god_parents")
+              : !key.startsWith("god_parents")),
         ),
       );
 
-      if (booking.god_parents.length > 2 && additionalSponsorPrice === null) {
+      if (
+        step === 5 &&
+        booking.god_parents.length > 2 &&
+        additionalSponsorPrice === null
+      ) {
         detailsErrors.pricing = [
           "The additional sponsor rate could not be loaded.",
         ];
@@ -362,7 +380,7 @@ export default function Baptism() {
       setFieldErrors({});
     }
 
-    if (step === 5) {
+    if (step === 6) {
       const documentErrors = Object.fromEntries(
         Object.entries(validateDetailsStep(booking)).filter(([key]) =>
           isUploadError(key),
@@ -377,7 +395,7 @@ export default function Baptism() {
       setFieldErrors({});
     }
 
-    if (step === 6 && !agreedToDeclaration) {
+    if (step === 7 && !agreedToDeclaration) {
       return "Please agree to the declaration before submitting.";
     }
 

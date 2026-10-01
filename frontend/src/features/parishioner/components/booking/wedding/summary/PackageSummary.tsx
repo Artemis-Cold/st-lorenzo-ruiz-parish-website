@@ -1,3 +1,4 @@
+import { BookingTranslation } from "@/features/parishioner/components/booking/BookingLabel";
 import { CheckCircle2 } from "lucide-react";
 
 import { BookingCard } from "../..";
@@ -45,6 +46,7 @@ export default function PackageSummary({
             <div>
               <h3 className="text-lg font-semibold text-[#B22222]">
                 Included Wedding Services
+                <BookingTranslation text="Included Wedding Services" />
               </h3>
               <p className="text-sm text-gray-500">
                 {selectedPackage.inclusions.length} standard inclusions

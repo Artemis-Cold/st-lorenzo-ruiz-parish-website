@@ -1,5 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { AxiosError } from "axios";
+import PasswordRequirements from "@/features/auth/components/PasswordRequirements";
+import { passwordMeetsRequirements } from "@/features/auth/passwordRules";
 import {
   LockKeyhole,
   Banknote,
@@ -162,6 +164,12 @@ export default function Settings() {
 
   const savePassword = async (event: FormEvent) => {
     event.preventDefault();
+    if (!passwordMeetsRequirements(password.password)) {
+      setPasswordErrors({
+        password: ["Please meet all password requirements."],
+      });
+      return;
+    }
     setSaving(true);
     setPasswordErrors({});
     try {
@@ -433,6 +441,11 @@ export default function Settings() {
                   type="password"
                   placeholder={placeholder}
                   value={password[key]}
+                  aria-describedby={
+                    key === "password"
+                      ? "staff-password-requirements"
+                      : undefined
+                  }
                   onChange={(event) =>
                     setPassword((current) => ({
                       ...current,
@@ -442,6 +455,12 @@ export default function Settings() {
                   className={`${inputClass(Boolean(passwordErrors[key]))} mt-2`}
                 />
                 <ErrorText errors={passwordErrors} name={key} />
+                {key === "password" && (
+                  <PasswordRequirements
+                    password={password.password}
+                    id="staff-password-requirements"
+                  />
+                )}
               </label>
             ))}
             <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">

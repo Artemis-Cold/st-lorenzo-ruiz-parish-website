@@ -1,3 +1,4 @@
+import { BookingTranslation } from "@/features/parishioner/components/booking/BookingLabel";
 import { format } from "date-fns";
 import type { Dispatch, SetStateAction } from "react";
 import {
@@ -106,6 +107,7 @@ export default function IntentionSelector({ booking, setBooking }: Props) {
         <div>
           <h3 className="mb-3 text-sm font-semibold">
             Select Intention Type(s)
+            <BookingTranslation text="Select Intention Type(s)" />
           </h3>
 
           <div className="space-y-2">

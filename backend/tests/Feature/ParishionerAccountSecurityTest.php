@@ -22,12 +22,12 @@ class ParishionerAccountSecurityTest extends TestCase
 
         $this->patchJson('/api/profile/password', [
             'current_password' => 'old-password',
-            'password' => 'new-password',
-            'password_confirmation' => 'new-password',
+            'password' => 'New-password1',
+            'password_confirmation' => 'New-password1',
         ])->assertOk()
             ->assertJsonPath('message', 'Password updated successfully.');
 
-        $this->assertTrue(Hash::check('new-password', $parishioner->fresh()->password));
+        $this->assertTrue(Hash::check('New-password1', $parishioner->fresh()->password));
     }
 
     public function test_parishioner_password_update_rejects_wrong_current_password(): void
@@ -40,8 +40,8 @@ class ParishionerAccountSecurityTest extends TestCase
 
         $this->patchJson('/api/profile/password', [
             'current_password' => 'incorrect-password',
-            'password' => 'new-password',
-            'password_confirmation' => 'new-password',
+            'password' => 'New-password1',
+            'password_confirmation' => 'New-password1',
         ])->assertUnprocessable()
             ->assertJsonValidationErrors(['current_password']);
 

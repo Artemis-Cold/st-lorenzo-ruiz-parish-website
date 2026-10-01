@@ -1,3 +1,4 @@
+import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import { FileText, Upload, X } from "lucide-react";
 import { useRef, useState } from "react";
 
@@ -30,10 +31,10 @@ export default function FileUploadField({
 
   return (
     <div>
-      <label className="mb-2 block text-sm font-medium">
+      <BookingLabel className="mb-2 block text-sm font-medium">
         {label}
         {required && <span className="text-red-600"> *</span>}
-      </label>
+      </BookingLabel>
 
       <input
         ref={inputRef}

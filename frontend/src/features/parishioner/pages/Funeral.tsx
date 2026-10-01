@@ -21,7 +21,9 @@ const stepLabels = [
   "Requirements",
   "Schedule",
   "Packages",
-  "Personal Information",
+  "Deceased & Family",
+  "Faith & Character",
+  "Informant",
   "Document Uploads",
   "Confirmation",
 ];
@@ -107,6 +109,23 @@ export default function Funeral() {
       setBooking={setBooking}
       errors={fieldErrors}
       view="information"
+      section="personal"
+    />,
+    <DetailsStep
+      key="sacramental"
+      booking={booking}
+      setBooking={setBooking}
+      errors={fieldErrors}
+      view="information"
+      section="sacramental"
+    />,
+    <DetailsStep
+      key="informant"
+      booking={booking}
+      setBooking={setBooking}
+      errors={fieldErrors}
+      view="information"
+      section="informant"
     />,
     <DetailsStep
       key="documents"
@@ -212,18 +231,28 @@ export default function Funeral() {
     if (step === 3 && booking.service_package_id === 0) {
       return "Please select a package before continuing.";
     }
-    if (step === 4) {
+    if (step >= 4 && step <= 6) {
       const errors = Object.fromEntries(
-        Object.entries(validateDetails()).filter(
-          ([key]) => !key.startsWith("documents."),
-        ),
+        Object.entries(validateDetails()).filter(([key]) => {
+          if (key.startsWith("documents.")) return false;
+          const informant = key.startsWith("deceased.informant.");
+          const faith =
+            key.startsWith("deceased.sacraments.") ||
+            key.startsWith("deceased.church_life.") ||
+            key === "deceased.characteristics";
+          return step === 6
+            ? informant
+            : step === 5
+              ? faith
+              : !informant && !faith;
+        }),
       );
       setFieldErrors(errors);
       if (Object.keys(errors).length > 0) {
         return "Please complete all required fields before continuing.";
       }
     }
-    if (step === 5) {
+    if (step === 7) {
       const errors = Object.fromEntries(
         Object.entries(validateDetails()).filter(([key]) =>
           key.startsWith("documents."),
@@ -234,7 +263,7 @@ export default function Funeral() {
         return "Please review the uploaded documents before continuing.";
       }
     }
-    if (step === 6 && !agreed) {
+    if (step === 8 && !agreed) {
       return "Please agree to the declaration before submitting.";
     }
     return null;

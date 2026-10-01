@@ -31,11 +31,11 @@ class StaffSettingsApiTest extends TestCase
 
         $this->patchJson('/api/staff/settings/password', [
             'current_password' => 'old-password',
-            'password' => 'new-password',
-            'password_confirmation' => 'new-password',
+            'password' => 'New-password1',
+            'password_confirmation' => 'New-password1',
         ])->assertOk();
 
-        $this->assertTrue(Hash::check('new-password', $staff->fresh()->password));
+        $this->assertTrue(Hash::check('New-password1', $staff->fresh()->password));
     }
 
     public function test_staff_can_create_another_staff_account(): void

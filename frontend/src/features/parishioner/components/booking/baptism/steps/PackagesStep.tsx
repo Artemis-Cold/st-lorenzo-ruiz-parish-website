@@ -1,3 +1,5 @@
+import { BookingTranslation } from "@/features/parishioner/components/booking/BookingLabel";
+import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import {
   useEffect,
   useMemo,
@@ -138,7 +140,10 @@ export default function PackagesStep({
     <BookingCard title="Packages">
       <div className="space-y-8">
         <div>
-          <h3 className="mb-6 text-2xl font-bold">Baptismal Rates</h3>
+          <h3 className="mb-6 text-2xl font-bold">
+            Baptismal Rates
+            <BookingTranslation text="Baptismal Rates" />
+          </h3>
 
           {selectedDate && (
             <p className="mb-4 text-sm text-gray-500">
@@ -153,7 +158,7 @@ export default function PackagesStep({
 
           <div className="space-y-4">
             {relevantPackages.map((pkg) => (
-              <label
+              <BookingLabel
                 key={pkg.id}
                 className={`
               flex cursor-pointer items-center justify-between
@@ -180,7 +185,7 @@ export default function PackagesStep({
                 <span className="text-2xl font-semibold text-[#B22222]">
                   {formatPhpCurrency(pkg.base_price)}
                 </span>
-              </label>
+              </BookingLabel>
             ))}
           </div>
         </div>
@@ -188,6 +193,7 @@ export default function PackagesStep({
         <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
           <h4 className="mb-3 text-center font-bold italic text-[#B22222]">
             Note
+            <BookingTranslation text="Note" />
           </h4>
 
           <p className="text-center italic text-[#B22222]">

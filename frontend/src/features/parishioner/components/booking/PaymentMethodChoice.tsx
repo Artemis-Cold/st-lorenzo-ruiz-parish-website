@@ -1,3 +1,4 @@
+import { BookingTranslation } from "@/features/parishioner/components/booking/BookingLabel";
 import { Banknote, Smartphone } from "lucide-react";
 
 export type PaymentMethod = "gcash" | "cash";
@@ -32,6 +33,7 @@ export default function PaymentMethodChoice({
     <fieldset disabled={disabled}>
       <legend className="mb-3 text-sm font-semibold text-[#292524]">
         Select payment method
+        <BookingTranslation text="Select payment method" />
       </legend>
       <div className={`grid gap-3 ${allowCash ? "sm:grid-cols-2" : ""}`}>
         {options.map((option) => {

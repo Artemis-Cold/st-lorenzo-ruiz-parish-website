@@ -69,7 +69,7 @@ class WeddingBookingService
                 'user',
             ]);
 
-            $this->requirements->notifyIfIncomplete($booking);
+            $this->requirements->notifySubmitted($booking);
 
             return $booking;
         });

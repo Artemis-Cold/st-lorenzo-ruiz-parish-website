@@ -78,7 +78,7 @@ class FuneralBookingTest extends TestCase
         $this->assertDatabaseCount('booking_documents', 0);
         $this->assertDatabaseHas('sms_messages', [
             'booking_id' => $bookingId,
-            'category' => 'booking_requirements',
+            'category' => 'booking_pending',
         ]);
 
         $staff = User::factory()->create(['role' => 'staff']);

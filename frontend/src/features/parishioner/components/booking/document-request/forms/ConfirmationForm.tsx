@@ -1,3 +1,4 @@
+import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import type {
   ConfirmationCertificateDetails,
   DocumentDetailValue,
@@ -33,9 +34,9 @@ ${
   return (
     <div className="grid grid-cols-12 gap-5">
       <div className="col-span-12">
-        <label className="mb-2 block text-sm font-medium">
+        <BookingLabel className="mb-2 block text-sm font-medium">
           Full Name <span className="text-red-600">*</span>
-        </label>
+        </BookingLabel>
 
         <input
           className={inputClass + (getError("name") ? " border-red-400" : "")}
@@ -48,9 +49,9 @@ ${
       </div>
 
       <div className="col-span-12">
-        <label className="mb-2 block text-sm font-medium">
+        <BookingLabel className="mb-2 block text-sm font-medium">
           Relationship to Record Owner <span className="text-red-600">*</span>
-        </label>
+        </BookingLabel>
 
         <select
           className={
@@ -73,9 +74,9 @@ ${
       </div>
 
       <div className="col-span-12">
-        <label className="mb-2 block text-sm font-medium">
+        <BookingLabel className="mb-2 block text-sm font-medium">
           Address <span className="text-red-600">*</span>
-        </label>
+        </BookingLabel>
 
         <input
           className={
@@ -90,9 +91,9 @@ ${
       </div>
 
       <div className="col-span-12 md:col-span-6">
-        <label className="mb-2 block text-sm font-medium">
+        <BookingLabel className="mb-2 block text-sm font-medium">
           Date of Confirmation <span className="text-red-600">*</span>
-        </label>
+        </BookingLabel>
 
         <input
           type="date"

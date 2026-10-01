@@ -107,7 +107,7 @@ class FuneralBookingService
                 'user',
             ]);
 
-            $this->requirements->notifyIfIncomplete($booking);
+            $this->requirements->notifySubmitted($booking);
 
             return $booking;
         });

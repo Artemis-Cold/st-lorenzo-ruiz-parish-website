@@ -1,4 +1,5 @@
 import StepCircle from "./StepCircle";
+import { BookingTranslation } from "./BookingLabel";
 
 interface Props {
   currentStep: number;
@@ -19,6 +20,7 @@ export default function BookingStepper({ currentStep, steps }: Props) {
             </p>
             <p className="mt-1 truncate font-semibold text-[#B22222]">
               {activeLabel}
+              <BookingTranslation text={activeLabel} />
             </p>
           </div>
           <span className="shrink-0 text-sm font-semibold text-gray-500">
@@ -34,7 +36,10 @@ export default function BookingStepper({ currentStep, steps }: Props) {
       </div>
 
       <div className="hidden overflow-x-auto xl:block">
-        <div className="my-8 flex min-w-max items-center">
+        <div
+          className="my-8 flex min-w-max items-center"
+          aria-label="Booking progress"
+        >
           {steps.map((step, index) => (
             <div key={step} className="flex items-center">
               <StepCircle
