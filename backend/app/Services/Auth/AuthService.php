@@ -4,15 +4,14 @@ namespace App\Services\Auth;
 
 use App\Models\User;
 use App\Services\Parishioner\ParishionerIdService;
+use App\Support\LoginIdentity;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\Hash;
-use RuntimeException;
+use Illuminate\Validation\ValidationException;
 
 class AuthService
 {
     private const TERMS_VERSION = '2026-09-06';
-
-    public function __construct(private UsernameGenerator $usernames) {}
 
     /**
      * Register a new parishioner.
@@ -39,50 +38,43 @@ class AuthService
 
     private function createParishioner(array $data): User
     {
-        for ($attempt = 0; $attempt < 5; $attempt++) {
-            $username = $this->usernames->generate($data['first_name']);
+        try {
+            return User::create([
+                'parishioner_id' => ParishionerIdService::generate(),
 
-            try {
-                return User::create([
-                    'parishioner_id' => ParishionerIdService::generate(),
+                'username' => $data['username'],
+                'password' => Hash::make($data['password']),
 
-                    'username' => $username,
-                    'password' => Hash::make($data['password']),
+                'first_name' => $data['first_name'],
+                'middle_initial' => $data['middle_initial'] ?? null,
+                'last_name' => $data['last_name'],
+                'suffix' => $data['suffix'] ?? null,
 
-                    'first_name' => $data['first_name'],
-                    'middle_initial' => $data['middle_initial'] ?? null,
-                    'last_name' => $data['last_name'],
-                    'suffix' => $data['suffix'] ?? null,
+                'birth_date' => $data['birth_date'] ?? null,
+                'gender' => $data['gender'] ?? null,
 
-                    'birth_date' => $data['birth_date'] ?? null,
-                    'gender' => $data['gender'] ?? null,
+                'phone' => $data['phone'],
+                'phone_verified_at' => null,
 
-                    'phone' => $data['phone'],
-                    'phone_verified_at' => null,
+                'house_no' => $data['house_no'] ?? null,
+                'street' => $data['street'] ?? null,
+                'barangay' => $data['barangay'] ?? null,
+                'municipality' => $data['municipality'] ?? null,
+                'province' => $data['province'] ?? null,
+                'zip_code' => $data['zip_code'] ?? null,
 
-                    'house_no' => $data['house_no'] ?? null,
-                    'street' => $data['street'] ?? null,
-                    'barangay' => $data['barangay'] ?? null,
-                    'municipality' => $data['municipality'] ?? null,
-                    'province' => $data['province'] ?? null,
-                    'zip_code' => $data['zip_code'] ?? null,
-
-                    'role' => 'parishioner',
-                    'terms_accepted_at' => now(),
-                    'terms_version' => self::TERMS_VERSION,
-                ]);
-            } catch (UniqueConstraintViolationException $exception) {
-                $usernameWasTaken = User::query()
-                    ->where('username', $username)
-                    ->exists();
-
-                if (! $usernameWasTaken || $attempt === 4) {
-                    throw $exception;
+                'role' => 'parishioner',
+                'terms_accepted_at' => now(),
+                'terms_version' => self::TERMS_VERSION,
+            ]);
+        } catch (UniqueConstraintViolationException $exception) {
+            foreach (['username', 'phone'] as $field) {
+                if (User::where($field, $data[$field])->exists()) {
+                    throw ValidationException::withMessages([$field => "This {$field} is already taken."]);
                 }
             }
+            throw $exception;
         }
-
-        throw new RuntimeException('Unable to create the parishioner account.');
     }
 
     /**
@@ -90,17 +82,19 @@ class AuthService
      */
     public function login(array $credentials): array
     {
-        $user = User::where(
-            'username',
-            $credentials['username']
-        )->first();
+        $identifier = trim($credentials['username']);
+        $phone = LoginIdentity::phone($identifier);
+        // Phone-shaped identifiers never fall back to another user's username.
+        $user = preg_match('/^09\d{9}$/', $phone)
+            ? User::where('phone', $phone)->first()
+            : User::whereRaw('LOWER(username) = ?', [strtolower($identifier)])->first();
 
         if (
             ! $user
             || $user->role !== 'parishioner'
             || ! Hash::check($credentials['password'], $user->password)
         ) {
-            abort(401, 'Invalid username or password.');
+            abort(401, 'Invalid username/phone number or password.');
         }
 
         $token = $user

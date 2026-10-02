@@ -16,6 +16,7 @@ export default function SignUp() {
   const { register } = useAuth();
 
   const [firstName, setFirstName] = useState("");
+  const [username, setUsername] = useState("");
   const [lastName, setLastName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -45,6 +46,7 @@ export default function SignUp() {
 
     try {
       const response = await register({
+        username: username.trim(),
         first_name: firstName,
         last_name: lastName,
         phone,
@@ -109,6 +111,25 @@ export default function SignUp() {
           )}
         </div>
 
+        <div>
+          <TextField
+            label="Username"
+            placeholder="Choose a unique username"
+            icon={UserIcon}
+            value={username}
+            onChange={(event) => setUsername(event.target.value)}
+            disabled={submitting}
+          />
+          <p className="mt-1 text-xs text-gray-500">
+            Use letters, numbers, dots, underscores or hyphens, with at least
+            one letter. Usernames are not case-sensitive.
+          </p>
+          {fieldErrors.username?.[0] && (
+            <p className="mt-1 text-sm text-red-600">
+              {fieldErrors.username[0]}
+            </p>
+          )}
+        </div>
         <div>
           <PhoneField
             value={phone}

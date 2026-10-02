@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Profile;
 
+use App\Rules\UniqueUsername;
+use App\Support\LoginIdentity;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -10,8 +12,11 @@ class UpdateProfileRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'phone' => preg_replace('/\D+/', '', (string) $this->input('phone')),
+            'phone' => LoginIdentity::phone((string) $this->input('phone')),
         ]);
+        if ($this->has('username') && is_string($this->input('username'))) {
+            $this->merge(['username' => strtolower(trim($this->input('username')))]);
+        }
     }
 
     public function authorize(): bool
@@ -22,6 +27,7 @@ class UpdateProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'username' => ['bail', 'sometimes', 'required', 'string', 'max:255', 'regex:/^(?=.*[a-zA-Z])[a-zA-Z0-9_.-]+$/', new UniqueUsername($this->user()->id)],
             'first_name' => ['required', 'string', 'max:100'],
             'middle_initial' => ['nullable', 'string', 'max:1'],
             'last_name' => ['required', 'string', 'max:100'],

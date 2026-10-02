@@ -18,6 +18,7 @@ class PhoneVerificationTest extends TestCase
         config(['services.sms.driver' => 'database']);
 
         $response = $this->postJson('/api/auth/register', [
+            'username' => 'juan',
             'first_name' => 'Juan Carlos',
             'last_name' => 'Cruz',
             'phone' => '09171234567',

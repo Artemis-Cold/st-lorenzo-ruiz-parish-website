@@ -51,6 +51,7 @@ class RegistrationPasswordTest extends TestCase
     {
         return [
             'first_name' => 'Maria',
+            'username' => 'maria',
             'last_name' => 'Santos',
             'phone' => '09171234567',
             'password' => $password,

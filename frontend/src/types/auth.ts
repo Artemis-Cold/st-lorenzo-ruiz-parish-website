@@ -7,6 +7,7 @@ export interface LoginCredentials {
 }
 
 export interface RegisterRequest {
+  username: string;
   password: string;
 
   password_confirmation: string;

@@ -5,7 +5,7 @@ import { Link } from "react-router-dom";
 const navItems = [
   { label: "Home", href: "#home" },
   { label: "Announcements", href: "#announcements" },
-  { label: "Holy Matrimony", href: "#holy-matrimony" },
+  { label: "Marriage Banns", href: "#marriage-banns" },
   { label: "Monthly Schedule", href: "#schedule" },
   { label: "Services", href: "#services" },
 ];
@@ -36,7 +36,7 @@ export default function Navbar() {
 
   return (
     <header className="fixed left-0 top-0 z-50 w-full border-b border-[#981B1B] bg-[#B22222]/95 shadow-lg backdrop-blur-xl">
-      <div className="mx-auto flex h-18 max-w-7xl items-center justify-between gap-4 px-4 lg:px-2">
+      <div className="mx-auto flex h-18 max-w-7xl items-center justify-between gap-4 px-4 lg:mx-5 lg:max-w-none lg:px-2">
         <a
           href="#home"
           onClick={(event) => scrollToSection(event, "#home")}

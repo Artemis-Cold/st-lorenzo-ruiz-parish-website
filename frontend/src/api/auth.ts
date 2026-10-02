@@ -88,6 +88,7 @@ export const completeProfile = async (
 };
 
 export interface UpdateProfileData {
+  username: string;
   first_name: string;
   middle_initial: string;
   last_name: string;

@@ -203,6 +203,7 @@ class SmsNotificationTest extends TestCase
         User::factory()->create(['phone' => '09171234567']);
 
         $this->postJson('/api/auth/register', [
+            'username' => 'juan',
             'password' => 'Password123',
             'password_confirmation' => 'Password123',
             'first_name' => 'Juan',

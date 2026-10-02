@@ -48,12 +48,13 @@ class ParishionerAccountSecurityTest extends TestCase
         $this->assertTrue(Hash::check('old-password', $parishioner->fresh()->password));
     }
 
-    public function test_registration_uses_the_first_given_name_and_adds_four_digits_on_collision(): void
+    public function test_registration_uses_the_chosen_username_instead_of_generating_one(): void
     {
         config(['services.sms.driver' => 'database']);
         User::factory()->create(['username' => 'felixberto']);
 
         $response = $this->postJson('/api/auth/register', [
+            'username' => 'felix.custom',
             'password' => 'Password123',
             'password_confirmation' => 'Password123',
             'first_name' => 'Felixberto Marc John',
@@ -64,7 +65,7 @@ class ParishionerAccountSecurityTest extends TestCase
 
         $username = $response->json('user.username');
 
-        $this->assertMatchesRegularExpression('/^felixberto\d{4}$/', $username);
+        $this->assertSame('felix.custom', $username);
         $this->assertDatabaseHas('users', [
             'username' => $username,
             'first_name' => 'Felixberto Marc John',
@@ -76,6 +77,7 @@ class ParishionerAccountSecurityTest extends TestCase
         User::factory()->create(['phone' => '09171234567']);
 
         $this->postJson('/api/auth/register', [
+            'username' => 'maria',
             'password' => 'Password123',
             'password_confirmation' => 'Password123',
             'first_name' => 'Maria',
@@ -91,6 +93,7 @@ class ParishionerAccountSecurityTest extends TestCase
     public function test_registration_requires_terms_and_conditions_acceptance(): void
     {
         $payload = [
+            'username' => 'maria',
             'password' => 'Password123',
             'password_confirmation' => 'Password123',
             'first_name' => 'Maria',

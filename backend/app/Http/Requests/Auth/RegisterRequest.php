@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Rules\UniqueUsername;
+use App\Support\LoginIdentity;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -10,7 +12,8 @@ class RegisterRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'phone' => preg_replace('/\D+/', '', (string) $this->input('phone')),
+            'phone' => LoginIdentity::phone((string) $this->input('phone')),
+            'username' => is_string($this->input('username')) ? strtolower(trim($this->input('username'))) : $this->input('username'),
         ]);
     }
 
@@ -30,6 +33,7 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'username' => ['bail', 'required', 'string', 'max:255', 'regex:/^(?=.*[a-zA-Z])[a-zA-Z0-9_.-]+$/', new UniqueUsername],
 
             'password' => [
                 'required',
@@ -81,6 +85,7 @@ class RegisterRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'username.regex' => 'Use letters, numbers, dots, underscores or hyphens, including at least one letter.',
             'password.regex' => 'The password must contain at least one uppercase letter, one lowercase letter, and one number.',
             'terms_accepted.accepted' => 'You must accept the Terms and Conditions to create an account.',
         ];

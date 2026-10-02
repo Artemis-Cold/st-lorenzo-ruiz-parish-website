@@ -42,7 +42,7 @@ export default function Login() {
         const status = err.response?.status;
 
         if (status === 401) {
-          setError("Invalid username or password.");
+          setError("Invalid username/phone number or password.");
         } else if (status === 422) {
           setFieldErrors(err.response?.data?.errors ?? {});
           setError("Please check your details and try again.");
@@ -83,8 +83,8 @@ export default function Login() {
 
         <div>
           <TextField
-            label="Username"
-            placeholder="Enter your username"
+            label="Username / Phone Number"
+            placeholder="Enter username or mobile number"
             icon={User}
             value={username}
             onChange={(e) => setUsername(e.target.value)}

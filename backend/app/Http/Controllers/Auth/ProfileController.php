@@ -8,9 +8,12 @@ use App\Http\Requests\Profile\UpdatePasswordRequest;
 use App\Http\Requests\Profile\UpdateProfilePhotoRequest;
 use App\Http\Requests\Profile\UpdateProfileRequest;
 use App\Http\Resources\UserResource;
+use App\Models\User;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class ProfileController extends Controller
 {
@@ -45,13 +48,22 @@ class ProfileController extends Controller
         $validated = $request->validated();
         $phoneChanged = $validated['phone'] !== $user->phone;
 
-        $user->forceFill([
-            ...$validated,
-            'profile_completed' => true,
-            'phone_verified_at' => $phoneChanged
-                ? null
-                : $user->phone_verified_at,
-        ])->save();
+        try {
+            $user->forceFill([
+                ...$validated,
+                'profile_completed' => true,
+                'phone_verified_at' => $phoneChanged
+                    ? null
+                    : $user->phone_verified_at,
+            ])->save();
+        } catch (UniqueConstraintViolationException $exception) {
+            foreach (['username', 'phone'] as $field) {
+                if (isset($validated[$field]) && User::where($field, $validated[$field])->whereKeyNot($user->id)->exists()) {
+                    throw ValidationException::withMessages([$field => "This {$field} is already taken."]);
+                }
+            }
+            throw $exception;
+        }
 
         return response()->json([
             'message' => 'Profile updated successfully.',

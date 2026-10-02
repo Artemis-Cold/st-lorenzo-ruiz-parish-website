@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Support\LoginIdentity;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
@@ -24,7 +25,7 @@ class AppServiceProvider extends ServiceProvider
     {
         RateLimiter::for('login', function (Request $request) {
             return Limit::perMinute(5)->by(
-                strtolower((string) $request->input('username')).'|'.$request->ip()
+                strtolower(LoginIdentity::phone(trim((string) $request->input('username')))).'|'.$request->ip()
             );
         });
     }

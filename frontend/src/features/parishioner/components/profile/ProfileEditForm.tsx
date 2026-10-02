@@ -14,6 +14,7 @@ interface Props {
 
 export default function ProfileEditForm({ user, onSaved, onCancel }: Props) {
   const [form, setForm] = useState<UpdateProfileData>({
+    username: user.username,
     first_name: user.first_name,
     middle_initial: user.middle_initial ?? "",
     last_name: user.last_name,
@@ -120,6 +121,10 @@ export default function ProfileEditForm({ user, onSaved, onCancel }: Props) {
           {field("suffix", "Suffix", {
             required: false,
             placeholder: "e.g. Jr., Sr., III",
+          })}
+          {field("username", "Username", {
+            placeholder: "Your unique username",
+            maxLength: 255,
           })}
           {field("phone", "Contact Number", {
             placeholder: "e.g. 0917 123 4567",

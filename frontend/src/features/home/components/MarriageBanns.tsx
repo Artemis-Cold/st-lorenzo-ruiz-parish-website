@@ -75,7 +75,7 @@ export default function MarriageBanns() {
 
   return (
     <section
-      id="holy-matrimony"
+      id="marriage-banns"
       className="relative scroll-mt-18 overflow-hidden bg-linear-to-b from-white via-[#FCFAF7] to-white py-14 md:py-16"
     >
       <div
@@ -130,7 +130,7 @@ export default function MarriageBanns() {
               <Heart size={30} />
             </span>
             <p className="mt-4 font-serif text-xl font-semibold text-[#292524]">
-              There are no Holy Matrimony notices at this time.
+              There are no incoming marriage notices at this time.
             </p>
             <p className="mt-2 text-sm text-gray-500">
               Upcoming couples will appear here during their approved
