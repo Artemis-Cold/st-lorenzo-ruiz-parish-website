@@ -168,7 +168,7 @@ export default function PackagesStep({
         {selectedPackage.addons.length > 0 && (
           <div>
             <h3 className="mb-5 text-center text-xl font-bold text-[#B22222]">
-              Optional Add-ons
+              Add-ons
             </h3>
 
             <div className="space-y-3">

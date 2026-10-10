@@ -17,6 +17,14 @@ function buildFormData(booking: WeddingBooking): FormData {
   (["groom", "bride"] as const).forEach((role) => {
     const person = booking.applicant[role];
     const prefix = "applicant[" + role + "]";
+    formData.append(
+      prefix + "[church][baptism_status]",
+      person.church.baptism_status,
+    );
+    formData.append(
+      prefix + "[church][confirmation_status]",
+      person.church.confirmation_status,
+    );
 
     formData.append(prefix + "[first_name]", person.first_name);
     formData.append(prefix + "[middle_initial]", person.middle_initial);

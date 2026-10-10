@@ -111,8 +111,6 @@ class ParishionerBookingController extends Controller
         $documentType = (string) $request->input('document_type');
         $fileTypes = match (true) {
             str_starts_with($documentType, 'couple_photo') => 'jpg,jpeg,png',
-            str_starts_with($documentType, 'wedding_sponsor_'),
-            str_starts_with($documentType, 'baptism_godparent_') => 'pdf',
             default => 'jpg,jpeg,png,pdf',
         };
 
@@ -428,8 +426,8 @@ class ParishionerBookingController extends Controller
                 'Age' => $person->age,
                 'Contact number' => $person->contact_number,
                 'Address' => $person->address,
-                'Baptized in' => $person->baptized_in,
-                'Confirmed in' => $person->confirmed_in,
+                'Baptized in' => $person->baptism_status === 'no' ? 'No — For parish coordination' : $person->baptized_in,
+                'Confirmed in' => $person->confirmation_status === 'no' ? 'No — For parish coordination' : $person->confirmed_in,
                 "Father's name" => $this->name($person->father_first_name, $person->father_middle_initial, $person->father_last_name),
                 "Mother's name" => $this->name($person->mother_first_name, $person->mother_middle_initial, $person->mother_last_name),
             ]),

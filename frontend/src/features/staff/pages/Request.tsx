@@ -318,9 +318,9 @@ export default function Requests() {
           </div>
         </div>
 
-        <section className="rounded-3xl border border-[#E7E2DA] bg-white p-5 shadow-sm sm:p-6">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_200px_180px_auto_auto]">
-            <label className="relative block">
+        <section className="min-w-0 rounded-3xl border border-[#E7E2DA] bg-white p-5 shadow-sm sm:p-6">
+          <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-6">
+            <label className="relative block min-w-0 sm:col-span-2 xl:col-span-2">
               <span className="sr-only">Search document requests</span>
               <Search
                 size={18}
@@ -338,7 +338,7 @@ export default function Requests() {
                 className="h-11 w-full rounded-xl border border-[#E7E2DA] pl-11 pr-4 text-sm outline-none transition focus:border-[#B22222] focus:ring-3 focus:ring-[#B22222]/8"
               />
             </label>
-            <label>
+            <label className="min-w-0">
               <span className="sr-only">Filter by status</span>
               <select
                 value={status}
@@ -356,7 +356,7 @@ export default function Requests() {
                 ))}
               </select>
             </label>
-            <label className="relative block">
+            <label className="relative block min-w-0">
               <span className="sr-only">Filter by submission date</span>
               <CalendarDays
                 size={16}
@@ -373,27 +373,29 @@ export default function Requests() {
                 className="h-11 w-full rounded-xl border border-[#E7E2DA] bg-white pl-10 pr-3 text-sm text-gray-700 outline-none transition focus:border-[#B22222]"
               />
             </label>
-            <button
-              type="button"
-              onClick={clearFilters}
-              disabled={!hasFilters}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#E7E2DA] px-4 text-sm font-semibold text-gray-600 transition hover:border-[#B22222]/30 hover:bg-red-50 hover:text-[#B22222] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <FilterX size={16} /> Clear
-            </button>
-            <button
-              type="button"
-              onClick={() => void exportPdf()}
-              disabled={exporting || loading}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#B22222] px-5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {exporting ? (
-                <LoaderCircle size={17} className="animate-spin" />
-              ) : (
-                <FileDown size={17} />
-              )}
-              {exporting ? "Preparing..." : "Export PDF"}
-            </button>
+            <div className="grid min-w-0 grid-cols-1 gap-3 sm:col-span-2 sm:grid-cols-2 xl:col-span-2">
+              <button
+                type="button"
+                onClick={clearFilters}
+                disabled={!hasFilters}
+                className="inline-flex h-11 w-full min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-[#E7E2DA] px-4 text-sm font-semibold text-gray-600 transition hover:border-[#B22222]/30 hover:bg-red-50 hover:text-[#B22222] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <FilterX size={16} className="shrink-0" /> Clear
+              </button>
+              <button
+                type="button"
+                onClick={() => void exportPdf()}
+                disabled={exporting || loading}
+                className="inline-flex h-11 w-full min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[#B22222] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {exporting ? (
+                  <LoaderCircle size={17} className="shrink-0 animate-spin" />
+                ) : (
+                  <FileDown size={17} className="shrink-0" />
+                )}
+                {exporting ? "Preparing..." : "Export PDF"}
+              </button>
+            </div>
           </div>
         </section>
 

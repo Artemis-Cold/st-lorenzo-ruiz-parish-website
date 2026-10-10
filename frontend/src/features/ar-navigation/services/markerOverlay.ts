@@ -1,6 +1,6 @@
 import type { MarkerGuidance } from "./mindarProtocol.ts";
 import {
-  markerRouteGeometry,
+  markerArrowPoints,
   pointOnMarker,
   projectMarker,
 } from "./markerProjection.ts";
@@ -100,50 +100,44 @@ export function createMarkerOverlay(
         ctx.stroke();
       }
     } else {
-      const route = markerRouteGeometry(corners, guidance.relativeAngle);
-      if (route) {
+      const pulse = 1.12 + Math.sin(performance.now() / 240) * 0.045;
+      const arrow = markerArrowPoints(corners, guidance.relativeAngle, pulse);
+      if (arrow) {
         const markerWidth = Math.hypot(
           corners[1].x - corners[0].x,
           corners[1].y - corners[0].y,
         );
-        const routeWidth = Math.max(9, markerWidth * 0.075);
+        const outlineWidth = Math.max(4, markerWidth * 0.035);
+        const minX = Math.min(...arrow.map((point) => point.x));
+        const maxX = Math.max(...arrow.map((point) => point.x));
+        const minY = Math.min(...arrow.map((point) => point.y));
+        const maxY = Math.max(...arrow.map((point) => point.y));
+        const fill = ctx.createLinearGradient(minX, minY, maxX, maxY);
+        fill.addColorStop(0, "#67e8f9");
+        fill.addColorStop(0.55, "#22d3ee");
+        fill.addColorStop(1, "#0891b2");
 
-        ctx.beginPath();
-        route.line.forEach((point, index) =>
-          index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y),
-        );
-        ctx.strokeStyle = "#042f49cc";
-        ctx.lineWidth = routeWidth + 7;
-        ctx.stroke();
-
-        ctx.beginPath();
-        route.line.forEach((point, index) =>
-          index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y),
-        );
-        ctx.strokeStyle = "#22d3ee";
-        ctx.lineWidth = routeWidth;
-        ctx.stroke();
-
+        // A slightly offset silhouette gives the flat camera overlay depth
+        // without introducing a route line that could imply live tracking.
         ctx.save();
-        ctx.setLineDash([routeWidth * 0.45, routeWidth * 1.1]);
-        ctx.lineDashOffset = -(performance.now() / 35);
+        ctx.translate(0, Math.max(5, markerWidth * 0.035));
         ctx.beginPath();
-        route.line.forEach((point, index) =>
-          index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y),
-        );
-        ctx.strokeStyle = "#ecfeffcc";
-        ctx.lineWidth = Math.max(2, routeWidth * 0.2);
-        ctx.stroke();
-        ctx.restore();
-
-        ctx.beginPath();
-        route.arrow.forEach((point, index) =>
+        arrow.forEach((point, index) =>
           index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y),
         );
         ctx.closePath();
-        ctx.fillStyle = "#22d3ee";
+        ctx.fillStyle = "#042f49cc";
+        ctx.fill();
+        ctx.restore();
+
+        ctx.beginPath();
+        arrow.forEach((point, index) =>
+          index ? ctx.lineTo(point.x, point.y) : ctx.moveTo(point.x, point.y),
+        );
+        ctx.closePath();
+        ctx.fillStyle = fill;
         ctx.strokeStyle = "#042f49";
-        ctx.lineWidth = Math.max(3, routeWidth * 0.28);
+        ctx.lineWidth = outlineWidth;
         ctx.fill();
         ctx.stroke();
       }

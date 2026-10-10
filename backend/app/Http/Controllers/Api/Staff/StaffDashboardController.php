@@ -27,6 +27,9 @@ class StaffDashboardController extends Controller
 
         $announcements = Announcement::query()
             ->where('posted_at', '<=', now())
+            ->where(fn ($query) => $query
+                ->whereNull('expires_at')
+                ->orWhere('expires_at', '>', now()))
             ->latest('posted_at')
             ->limit(5)
             ->get(['id', 'title', 'details'])

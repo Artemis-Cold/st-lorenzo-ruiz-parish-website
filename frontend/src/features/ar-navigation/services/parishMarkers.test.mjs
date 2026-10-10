@@ -2,20 +2,27 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { decode } from "@msgpack/msgpack";
-import { parishMarkers } from "../maps/parish/markers.ts";
+import {
+  parishCompiledMarkers,
+  parishMarkers,
+} from "../maps/parish/markers.ts";
 import { parishBuilding } from "../maps/parish/config.ts";
 import { houseBuilding } from "../maps/house/config.ts";
 import { checkpointForTarget } from "./targetMapper.ts";
 import { validateTargetFile } from "./targetFile.ts";
 
-test("all parish public nodes have unique, contiguous target indices", () => {
-  assert.equal(parishMarkers.length, 17);
-  assert.equal(new Set(parishMarkers.map((m) => m.nodeId)).size, 17);
-  assert.equal(new Set(parishMarkers.map((m) => m.code)).size, 17);
-  for (const [index, marker] of parishMarkers.entries()) {
-    assert.equal(marker.targetIndex, index);
+test("active parish checkpoints keep their stable compiled target indices", () => {
+  assert.equal(parishMarkers.length, 14);
+  assert.equal(new Set(parishMarkers.map((m) => m.nodeId)).size, 14);
+  assert.equal(new Set(parishMarkers.map((m) => m.code)).size, 14);
+  assert.deepEqual(
+    parishMarkers.map((marker) => marker.targetIndex),
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 14, 15, 16],
+  );
+  for (const marker of parishMarkers) {
     assert.equal(
-      checkpointForTarget(index, parishBuilding.checkpoints).nodeId,
+      checkpointForTarget(marker.targetIndex, parishBuilding.checkpoints)
+        .nodeId,
       marker.nodeId,
     );
     assert.ok(!marker.nodeId.includes("rear_"));
@@ -89,8 +96,8 @@ test("natural landmarks replace matching codes and print pack contains only fall
     new URL("../maps/parish/assets/markers-print.html", import.meta.url),
     "utf8",
   );
-  assert.equal((pack.match(/<article>/g) || []).length, 8);
-  for (const marker of parishMarkers) {
+  assert.equal((pack.match(/<article>/g) || []).length, 6);
+  for (const marker of parishCompiledMarkers) {
     const svg = readFileSync(
       new URL(
         `../maps/parish/assets/marker-${marker.code}.svg`,
@@ -102,6 +109,7 @@ test("natural landmarks replace matching codes and print pack contains only fall
     assert.match(svg, />AR NAVIGATION<\/text>/);
     assert.doesNotMatch(svg, /SET 2/);
     assert.ok(svg.includes(marker.code));
+    const active = parishMarkers.some((item) => item.code === marker.code);
     if (naturalCodes.includes(marker.code)) {
       assert.ok(
         readFileSync(
@@ -111,6 +119,8 @@ test("natural landmarks replace matching codes and print pack contains only fall
           ),
         ).length > 0,
       );
+      assert.ok(!pack.includes(`<h2>${marker.code} ·`));
+    } else if (!active) {
       assert.ok(!pack.includes(`<h2>${marker.code} ·`));
     } else {
       assert.ok(pack.includes(svg));

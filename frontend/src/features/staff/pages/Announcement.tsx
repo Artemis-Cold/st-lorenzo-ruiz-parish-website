@@ -32,6 +32,7 @@ import StaffDashboardLayout from "../components/dashboard/StaffDashboardLayout";
 
 function formatPostedAt(value: string): string {
   return new Date(value).toLocaleString("en-US", {
+    timeZone: "Asia/Manila",
     month: "2-digit",
     day: "2-digit",
     year: "numeric",
@@ -55,8 +56,9 @@ const announcementGroups: Array<{
   icon: typeof Bell;
 }> = [
   { value: "all", label: "All Announcements", icon: ListFilter },
+  { value: "published", label: "Published", icon: Bell },
   { value: "scheduled", label: "Scheduled", icon: CalendarClock },
-  { value: "past", label: "Past Announcements", icon: Archive },
+  { value: "expired", label: "Expired", icon: Archive },
 ];
 
 export default function Announcements() {
@@ -228,7 +230,7 @@ export default function Announcements() {
                   )}
                 </div>
                 <p className="mt-1 text-sm text-gray-500">
-                  Find current, scheduled, and previously published notices.
+                  Find published, scheduled, and expired notices.
                 </p>
               </div>
 
@@ -295,7 +297,7 @@ export default function Announcements() {
               <ListSkeleton items={5} />
             ) : announcements.length === 0 ? (
               <div className="flex h-full min-h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-[#E7E2DA] px-6 text-center">
-                {group === "past" ? (
+                {group === "expired" ? (
                   <Archive className="mb-3 text-gray-300" size={28} />
                 ) : group === "scheduled" ? (
                   <CalendarClock className="mb-3 text-gray-300" size={28} />
@@ -305,11 +307,13 @@ export default function Announcements() {
                 <p className="text-sm font-medium text-gray-500">
                   {debouncedSearch
                     ? `No announcements found for “${debouncedSearch}”.`
-                    : group === "past"
-                      ? "No previously published announcements."
-                      : group === "scheduled"
-                        ? "No scheduled announcements."
-                        : "No announcements yet. Add one to get started."}
+                    : group === "expired"
+                      ? "No expired announcements."
+                      : group === "published"
+                        ? "No currently published announcements."
+                        : group === "scheduled"
+                          ? "No scheduled announcements."
+                          : "No announcements yet. Add one to get started."}
                 </p>
               </div>
             ) : (
@@ -329,19 +333,24 @@ export default function Announcements() {
                             {item.title}
                           </h3>
                           <span
-                            className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${item.status === "scheduled" ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"}`}
+                            className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${item.status === "scheduled" ? "bg-amber-100 text-amber-700" : item.status === "expired" ? "bg-gray-100 text-gray-600" : "bg-green-100 text-green-700"}`}
                           >
-                            {item.status === "scheduled"
-                              ? "Scheduled"
-                              : "Published"}
+                            {item.status.charAt(0).toUpperCase() +
+                              item.status.slice(1)}
                           </span>
                         </div>
                         <p className="mt-1.5 line-clamp-2 break-words text-sm leading-6 text-gray-600">
                           {item.details}
                         </p>
-                        <p className="mt-1.5 text-xs tabular-nums text-gray-400">
-                          {formatPostedAt(item.postedAt)}
-                        </p>
+                        <div className="mt-1.5 space-y-0.5 text-xs tabular-nums text-gray-400">
+                          <p>Published: {formatPostedAt(item.postedAt)}</p>
+                          <p>
+                            Post until:{" "}
+                            {item.expiresAt
+                              ? formatPostedAt(item.expiresAt)
+                              : "No expiration"}
+                          </p>
+                        </div>
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-2 self-end sm:self-auto">

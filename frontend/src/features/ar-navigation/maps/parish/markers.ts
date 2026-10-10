@@ -82,7 +82,7 @@ const placements: readonly [ParishNodeId, number, string][] = [
     "Main Church entrance between the left and right front stairs. Face up toward the Main Church.",
   ],
 ];
-export const parishMarkers = placements.map(
+export const parishCompiledMarkers = placements.map(
   ([nodeId, facing, placement], targetIndex) => ({
     nodeId,
     // Parish marker nodes are already placed at their public-side boundary.
@@ -96,4 +96,16 @@ export const parishMarkers = placements.map(
     placement,
     facing,
   }),
+);
+
+const retiredVisitorNodes = new Set<ParishNodeId>([
+  "c_choir",
+  "c_sacristy",
+  "c_candle",
+]);
+
+// Keep the original compiler order above so the bundled .mind file remains
+// valid, while retired places no longer appear or react as live checkpoints.
+export const parishMarkers = parishCompiledMarkers.filter(
+  (marker) => !retiredVisitorNodes.has(marker.nodeId),
 );

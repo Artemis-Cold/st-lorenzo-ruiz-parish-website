@@ -316,10 +316,14 @@ export default function Baptism() {
           );
         }
 
-        if (godParent.requirement_file.type !== "application/pdf") {
+        if (
+          !["application/pdf", "image/jpeg", "image/png"].includes(
+            godParent.requirement_file.type,
+          )
+        ) {
           addError(
             `god_parents.${i}.requirement_file`,
-            `${godParent.requirement_file.name} must be a PDF file.`,
+            `${godParent.requirement_file.name} must be a PDF, JPG, or PNG file.`,
           );
         }
       }

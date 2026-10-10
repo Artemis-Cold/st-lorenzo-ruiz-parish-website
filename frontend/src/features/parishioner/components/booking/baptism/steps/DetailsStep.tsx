@@ -209,12 +209,12 @@ ${
               godParent.requirement_type === "marriage_contract"
                 ? "Marriage Certificate"
                 : "Confirmation Certificate"
-            } PDF`}
+            }`}
             file={godParent.requirement_file}
             onChange={(file) =>
               updateGodParent(index, "requirement_file", file)
             }
-            accept=".pdf"
+            accept=".pdf,.jpg,.jpeg,.png"
             readOnly={readOnly}
           />
           <FieldError
@@ -222,8 +222,8 @@ ${
           />
           {!readOnly && (
             <p className="mt-2 text-xs leading-5 text-amber-800">
-              PDF only, up to 5 MB. The file may be submitted later from My
-              Profile while the booking is pending.
+              PDF, JPG, or PNG, up to 5 MB. The file may be submitted later from
+              My Profile while the booking is pending.
             </p>
           )}
         </div>

@@ -168,8 +168,11 @@ test("stairs and ramps have explicit instructions; a landing scan confirms the f
 });
 
 test("destinations are public boundaries and staff checkpoints are never recognized", () => {
-  assert.equal(building.destinations.length, 11);
+  assert.equal(building.destinations.length, 8);
   assert.ok(building.destinations.every((d) => !/stair|aisle/i.test(d.name)));
+  assert.ok(
+    building.destinations.every((d) => !/choir|sacristy|candle/i.test(d.name)),
+  );
   assert.ok(building.destinations.some((d) => d.name === "Comfort Room"));
   assert.ok(building.destinations.some((d) => d.name === "Main Church"));
   assert.ok(

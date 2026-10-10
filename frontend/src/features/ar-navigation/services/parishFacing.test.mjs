@@ -8,7 +8,7 @@ import {
   navigationInstruction,
 } from "./checkpointNavigation.ts";
 
-test("final map has eleven destinations and six transit-only markers", () => {
+test("final map has eight destinations and six transit-only markers", () => {
   assert.deepEqual(
     building.destinations.map((d) => d.name),
     [
@@ -20,9 +20,6 @@ test("final map has eleven destinations and six transit-only markers", () => {
       "Comfort Room",
       "Main Church",
       "Altar",
-      "Choir Stand",
-      "Sacristy",
-      "Candle Stand",
     ],
   );
   const arrivals = new Set(building.destinations.map((d) => d.nodeId));

@@ -15,6 +15,7 @@ import ScheduleStep from "../components/booking/wedding/steps/ScheduleStep";
 import PackagesStep from "../components/booking/wedding/steps/PackagesStep";
 import DetailsStep from "../components/booking/wedding/steps/DetailsStep";
 import ConfirmationStep from "../components/booking/wedding/steps/ConfirmationStep";
+import SacramentsStep from "../components/booking/wedding/steps/SacramentsStep";
 import type { BookingSlot } from "@/services/bookingSlotService";
 import type { ServicePackage } from "@/services/servicePackageService";
 import { submitWeddingBooking } from "@/services/weddingBookingService";
@@ -33,6 +34,7 @@ const stepLabels = [
   "Bride",
   "Groom",
   "Sponsors",
+  "Baptism & Confirmation",
   "Document Uploads",
   "Confirmation",
 ];
@@ -47,6 +49,8 @@ const emptyPerson = (): Person => ({
   contact_number: "",
 
   church: {
+    baptism_status: "",
+    confirmation_status: "",
     baptized_in: "",
     confirmed_in: "",
   },
@@ -190,6 +194,12 @@ export default function Wedding() {
       view="information"
       section="sponsors"
     />,
+    <SacramentsStep
+      key="sacraments"
+      booking={booking}
+      setBooking={setBooking}
+      errors={fieldErrors}
+    />,
     <DetailsStep
       key="documents"
       booking={booking}
@@ -258,16 +268,23 @@ export default function Wedding() {
         person.contact_number,
         `${personLabel}'s contact number`,
       );
-      requireField(
-        `${prefix}.church.baptized_in`,
-        person.church.baptized_in,
-        `${personLabel}'s baptism parish`,
-      );
-      requireField(
-        `${prefix}.church.confirmed_in`,
-        person.church.confirmed_in,
-        `${personLabel}'s confirmation parish`,
-      );
+      for (const sacrament of ["baptism", "confirmation"] as const) {
+        const status = person.church[`${sacrament}_status`];
+        requireField(
+          `${prefix}.church.${sacrament}_status`,
+          status,
+          `${personLabel}'s ${sacrament} status`,
+        );
+        if (status === "yes") {
+          const parishField =
+            sacrament === "baptism" ? "baptized_in" : "confirmed_in";
+          requireField(
+            `${prefix}.church.${parishField}`,
+            person.church[parishField],
+            `${personLabel}'s ${sacrament} parish`,
+          );
+        }
+      }
 
       (["father", "mother"] as const).forEach((parent) => {
         const parentLabel = parent === "father" ? "father" : "mother";
@@ -315,6 +332,17 @@ export default function Wedding() {
     });
 
     currentBooking.documents.forEach((document) => {
+      if (
+        !document.document_type.startsWith("couple_photo_") &&
+        !["application/pdf", "image/jpeg", "image/png"].includes(
+          document.file.type,
+        )
+      ) {
+        addError(
+          `documents.${document.document_type}`,
+          `${document.file.name} must be a PDF, JPG, or PNG file.`,
+        );
+      }
       if (document.file.size > 5 * 1024 * 1024) {
         addError(
           `documents.${document.document_type}`,
@@ -365,10 +393,14 @@ export default function Wedding() {
           );
         }
 
-        if (sponsor.requirement_file.type !== "application/pdf") {
+        if (
+          !["application/pdf", "image/jpeg", "image/png"].includes(
+            sponsor.requirement_file.type,
+          )
+        ) {
           addError(
             `sponsors.${index}.requirement_file`,
-            `${sponsor.requirement_file.name} must be a PDF file.`,
+            `${sponsor.requirement_file.name} must be a PDF, JPG, or PNG file.`,
           );
         }
       }
@@ -406,6 +438,7 @@ export default function Wedding() {
         Object.entries(validateDetailsStep(booking)).filter(
           ([key]) =>
             !isUploadError(key) &&
+            !key.includes(".church.") &&
             (step === 4
               ? key.startsWith("applicant.bride.")
               : step === 5
@@ -423,6 +456,18 @@ export default function Wedding() {
     }
 
     if (step === 7) {
+      const sacramentErrors = Object.fromEntries(
+        Object.entries(validateDetailsStep(booking)).filter(
+          ([key]) =>
+            key.includes(".church.") || /^documents\.(bride|groom)_/.test(key),
+        ),
+      );
+      setFieldErrors(sacramentErrors);
+      if (Object.keys(sacramentErrors).length)
+        return "Please complete the baptism and confirmation information.";
+    }
+
+    if (step === 8) {
       const documentErrors = Object.fromEntries(
         Object.entries(validateDetailsStep(booking)).filter(([key]) =>
           isUploadError(key),
@@ -437,7 +482,7 @@ export default function Wedding() {
       setFieldErrors({});
     }
 
-    if (step === 8 && !agreedToDeclaration) {
+    if (step === 9 && !agreedToDeclaration) {
       return "Please agree to the declaration before submitting.";
     }
 

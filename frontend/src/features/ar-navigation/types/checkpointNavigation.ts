@@ -77,6 +77,8 @@ export interface BuildingConfig {
 
 export interface MarkerSet {
   targetsUrl: string;
+  /** Number of images contained in the compiled target file. */
+  targetCount?: number;
   printUrl: string;
   placementMapUrl?: string;
   markers: readonly {

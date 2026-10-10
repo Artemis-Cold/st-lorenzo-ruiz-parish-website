@@ -8,6 +8,8 @@ export interface PersonName {
 }
 
 export interface ChurchInformation {
+  baptism_status: "" | "yes" | "no";
+  confirmation_status: "" | "yes" | "no";
   baptized_in: string;
   confirmed_in: string;
 }
@@ -37,6 +39,10 @@ export interface WeddingDocument {
     | "cenomar"
     | "baptismal_certificate"
     | "confirmation_certificate"
+    | "bride_baptismal_certificate"
+    | "groom_baptismal_certificate"
+    | "bride_confirmation_certificate"
+    | "groom_confirmation_certificate"
     | "couple_photo_1"
     | "couple_photo_2"
     | "couple_photo_3";

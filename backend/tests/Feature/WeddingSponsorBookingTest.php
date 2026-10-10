@@ -119,7 +119,7 @@ class WeddingSponsorBookingTest extends TestCase
 
         $this->post("/api/bookings/{$bookingId}/documents", [
             'document_type' => $missingRequirement['types'][0],
-            'file' => UploadedFile::fake()->create('valid-sponsor-certificate.pdf', 100, 'application/pdf'),
+            'file' => UploadedFile::fake()->image('valid-sponsor-certificate.png'),
         ], ['Accept' => 'application/json'])
             ->assertCreated()
             ->assertJsonCount(0, 'data.missingRequirements');
@@ -140,7 +140,7 @@ class WeddingSponsorBookingTest extends TestCase
             ->assertInvalid('documents.4.file');
     }
 
-    public function test_wedding_sponsor_requirement_rejects_non_pdf_files(): void
+    public function test_wedding_sponsor_requirement_rejects_unsupported_files(): void
     {
         Storage::fake('public');
         Sanctum::actingAs(User::factory()->create());
@@ -148,11 +148,85 @@ class WeddingSponsorBookingTest extends TestCase
         [$slot, $package] = $this->weddingSchedule();
         $payload = $this->payload($slot->id, $package->id);
         $payload['sponsors'][0]['requirement_file'] = UploadedFile::fake()
-            ->image('sponsor-certificate.jpg');
+            ->create('sponsor-certificate.txt', 100, 'text/plain');
 
         $this->post('/api/bookings/wedding', $payload)
             ->assertUnprocessable()
             ->assertInvalid('sponsors.0.requirement_file');
+    }
+
+    public function test_wedding_sponsor_requirements_accept_jpg_and_png(): void
+    {
+        Storage::fake('public');
+        Sanctum::actingAs(User::factory()->create());
+        [$slot, $package] = $this->weddingSchedule();
+        $payload = $this->payload($slot->id, $package->id);
+        $payload['sponsors'][0]['requirement_file'] = UploadedFile::fake()->image('certificate.jpg');
+        $payload['sponsors'][1]['requirement_file'] = UploadedFile::fake()->image('certificate.png');
+
+        $this->post('/api/bookings/wedding', $payload)->assertCreated();
+    }
+
+    public function test_individual_sacraments_support_coordination_and_later_uploads(): void
+    {
+        Storage::fake('public');
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+        [$slot, $package] = $this->weddingSchedule();
+        $payload = $this->payload($slot->id, $package->id);
+        foreach (['bride', 'groom'] as $role) {
+            $payload['applicant'][$role]['church']['baptism_status'] = $role === 'bride' ? 'no' : 'yes';
+            $payload['applicant'][$role]['church']['confirmation_status'] = $role === 'bride' ? 'no' : 'yes';
+        }
+        unset($payload['applicant']['bride']['church']['baptized_in'], $payload['applicant']['bride']['church']['confirmed_in']);
+        $payload['documents'] = array_values(array_filter($payload['documents'], fn ($doc) => ! in_array($doc['document_type'], ['baptismal_certificate', 'confirmation_certificate'])));
+        $payload['documents'][] = ['document_type' => 'groom_baptismal_certificate', 'file' => UploadedFile::fake()->image('groom.jpg')];
+        $id = $this->post('/api/bookings/wedding', $payload)->assertCreated()->json('data.id');
+        $this->assertDatabaseHas('wedding_applicants', ['booking_id' => $id, 'role' => 'bride', 'baptism_status' => 'no', 'baptized_in' => '']);
+        $missing = $this->getJson("/api/bookings/{$id}")->assertOk()->assertJsonCount(3, 'data.missingRequirements')->json('data.missingRequirements');
+        $this->assertStringContainsString('For parish coordination', collect($missing)->firstWhere('key', 'bride_baptismal_certificate')['label']);
+        $this->assertContains('groom_confirmation_certificate', array_column($missing, 'key'));
+
+        foreach (['bride_baptismal_certificate', 'bride_confirmation_certificate', 'groom_confirmation_certificate'] as $type) {
+            $this->post("/api/bookings/{$id}/documents", [
+                'document_type' => $type, 'file' => UploadedFile::fake()->image($type.'.png'),
+            ], ['Accept' => 'application/json'])->assertCreated();
+        }
+        $this->getJson("/api/bookings/{$id}")->assertOk()->assertJsonCount(0, 'data.missingRequirements');
+        Sanctum::actingAs(User::factory()->create(['role' => 'staff']));
+        $applicants = $this->getJson('/api/staff/bookings')->assertOk()->json('data.0.details.serviceData.applicants');
+        $this->assertStringContainsString('For parish coordination', collect($applicants)->firstWhere('role', 'Bride')['baptizedIn']);
+    }
+
+    public function test_sacramental_status_accepts_only_yes_or_no_and_requires_parish_for_yes(): void
+    {
+        Storage::fake('public');
+        Sanctum::actingAs(User::factory()->create());
+        [$slot, $package] = $this->weddingSchedule();
+        $payload = $this->payload($slot->id, $package->id);
+        $payload['applicant']['bride']['church'] = ['baptism_status' => 'not sure', 'confirmation_status' => 'yes'];
+        $this->postJson('/api/bookings/wedding', $payload)->assertUnprocessable()->assertInvalid([
+            'applicant.bride.church.baptism_status', 'applicant.bride.church.confirmed_in',
+            'applicant.groom.church.baptism_status', 'applicant.groom.church.confirmation_status',
+        ]);
+    }
+
+    public function test_shared_certificates_do_not_satisfy_new_person_specific_requirements(): void
+    {
+        Storage::fake('public');
+        Sanctum::actingAs(User::factory()->create());
+        [$slot, $package] = $this->weddingSchedule();
+        $payload = $this->payload($slot->id, $package->id);
+        foreach (['bride', 'groom'] as $role) {
+            $payload['applicant'][$role]['church']['baptism_status'] = 'yes';
+            $payload['applicant'][$role]['church']['confirmation_status'] = 'yes';
+        }
+        $id = $this->post('/api/bookings/wedding', $payload)->assertCreated()->json('data.id');
+        $missing = $this->getJson("/api/bookings/{$id}")->assertOk()->assertJsonCount(4, 'data.missingRequirements')->json('data.missingRequirements');
+        $this->assertEqualsCanonicalizing([
+            'bride_baptismal_certificate', 'bride_confirmation_certificate',
+            'groom_baptismal_certificate', 'groom_confirmation_certificate',
+        ], array_column($missing, 'key'));
     }
 
     private function weddingSchedule(): array

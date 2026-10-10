@@ -5,6 +5,7 @@ import ScheduleSummary from "../summary/ScheduleSummary";
 import PackageSummary from "../summary/PackageSummary";
 
 import DetailsStep from "./DetailsStep";
+import SacramentsStep from "./SacramentsStep";
 
 import type { Dispatch, SetStateAction } from "react";
 import type { WeddingBooking } from "../../../../types/wedding";
@@ -45,6 +46,7 @@ export default function ConfirmationStep({
       />
 
       <DetailsStep booking={booking} setBooking={setBooking} readOnly />
+      <SacramentsStep booking={booking} setBooking={setBooking} readOnly />
 
       <div className="rounded-3xl border border-[#B22222]/20 bg-red-50 p-6">
         <h3 className="mb-4 text-xl font-bold text-[#B22222]">

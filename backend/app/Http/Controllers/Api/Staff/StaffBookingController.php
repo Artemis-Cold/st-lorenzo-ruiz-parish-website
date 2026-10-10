@@ -479,8 +479,8 @@ class StaffBookingController extends Controller
                     'age' => $person->age,
                     'address' => $person->address,
                     'contactNumber' => $person->contact_number,
-                    'baptizedIn' => $person->baptized_in,
-                    'confirmedIn' => $person->confirmed_in,
+                    'baptizedIn' => $person->baptism_status === 'no' ? 'No — For parish coordination' : $person->baptized_in,
+                    'confirmedIn' => $person->confirmation_status === 'no' ? 'No — For parish coordination' : $person->confirmed_in,
                     'fatherName' => $this->personName($person->father_first_name, $person->father_middle_initial, $person->father_last_name),
                     'motherName' => $this->personName($person->mother_first_name, $person->mother_middle_initial, $person->mother_last_name),
                     'previousMarriage' => [

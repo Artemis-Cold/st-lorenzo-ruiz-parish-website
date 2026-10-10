@@ -16,15 +16,12 @@ class AnnouncementController extends Controller
 {
     public function publicIndex(Request $request): AnonymousResourceCollection
     {
-        $request->validate(['week' => ['nullable', Rule::in(['current'])]]);
-        $start = now('Asia/Manila')->startOfWeek(\Carbon\Carbon::MONDAY);
         $announcements = Announcement::query()
             ->with('creator')
             ->where('posted_at', '<=', now())
-            ->when($request->input('week') === 'current', fn ($query) => $query
-                ->whereDate('activity_date', '>=', $start->toDateString())
-                ->whereDate('activity_date', '<=', $start->copy()->addDays(6)->toDateString())
-                ->orderBy('activity_date'))
+            ->where(fn ($query) => $query
+                ->whereNull('expires_at')
+                ->orWhere('expires_at', '>', now()))
             ->latest('posted_at')
             ->get();
 
@@ -34,7 +31,7 @@ class AnnouncementController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $data = $request->validate([
-            'group' => ['nullable', Rule::in(['all', 'scheduled', 'past'])],
+            'group' => ['nullable', Rule::in(['all', 'published', 'scheduled', 'expired'])],
             'search' => ['nullable', 'string', 'max:100'],
             'perPage' => ['nullable', 'integer', 'min:5', 'max:25'],
         ]);
@@ -43,7 +40,14 @@ class AnnouncementController extends Controller
         $announcements = Announcement::query()
             ->with('creator')
             ->when($group === 'scheduled', fn ($query) => $query->where('posted_at', '>', now()))
-            ->when($group === 'past', fn ($query) => $query->where('posted_at', '<=', now()))
+            ->when($group === 'published', fn ($query) => $query
+                ->where('posted_at', '<=', now())
+                ->where(fn ($query) => $query
+                    ->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now())))
+            ->when($group === 'expired', fn ($query) => $query
+                ->whereNotNull('expires_at')
+                ->where('expires_at', '<=', now()))
             ->when(isset($data['search']), function ($query) use ($data) {
                 $search = '%'.$data['search'].'%';
                 $query->where(fn ($query) => $query
@@ -64,7 +68,7 @@ class AnnouncementController extends Controller
             'title' => $request->validated('title'),
             'details' => $request->validated('details'),
             'posted_at' => $request->validated('postedAt'),
-            'activity_date' => $request->validated('activityDate'),
+            'expires_at' => $request->validated('expiresAt'),
         ]);
 
         return (new AnnouncementResource($announcement->load('creator')))
@@ -85,7 +89,7 @@ class AnnouncementController extends Controller
             'title' => $request->validated('title'),
             'details' => $request->validated('details'),
             'posted_at' => $request->validated('postedAt'),
-            'activity_date' => $request->validated('activityDate', $announcement->activity_date),
+            'expires_at' => $request->validated('expiresAt', $announcement->expires_at),
         ]);
 
         return new AnnouncementResource($announcement->load('creator'));

@@ -2,7 +2,7 @@
 // --check verifies the generated print pack without writing any files.
 // SVG artwork and its printable copy are always generated together.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { parishMarkers } from "./markers.ts";
+import { parishCompiledMarkers, parishMarkers } from "./markers.ts";
 
 const escape = (value) =>
   value
@@ -58,7 +58,7 @@ ${shapes}
 </svg>\n`;
 }
 
-const images = parishMarkers.map(artwork);
+const images = parishCompiledMarkers.map(artwork);
 const directory = new URL("./assets/", import.meta.url);
 const printableMarkers = parishMarkers.filter(
   (marker) => !existsSync(new URL(`target-${marker.code}.jpg`, directory)),
@@ -69,7 +69,7 @@ const pack = `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta n
 ${printableMarkers.map((m) => `<article><h2>${m.code} · ${floorNames[m.floorId]}</h2>${images[m.targetIndex]}<p>${escape(m.placement)}</p><p class="note">PLACEMENT — Maintain the scanning direction specified above when reading the instruction (relative to the drawing, not compass north). Keep markers flat, well lit, and clear of doors and walking paths.</p></article>`).join("\n")}
 </body></html>\n`;
 const artifacts = [
-  ...parishMarkers.map((m, i) => [`marker-${m.code}.svg`, images[i]]),
+  ...parishCompiledMarkers.map((m, i) => [`marker-${m.code}.svg`, images[i]]),
   ["markers-print.html", pack],
 ];
 const check = process.argv.includes("--check");
@@ -82,5 +82,5 @@ for (const [name, content] of artifacts) {
   } else writeFileSync(path, content);
 }
 console.log(
-  `${check ? "Verified" : "Generated"} ${images.length} SVG fallbacks and ${printableMarkers.length}-marker print pack. ${check ? "" : "Recompile targets.mind before scanning."}`,
+  `${check ? "Verified" : "Generated"} ${images.length} compiler-compatible SVG fallbacks and ${printableMarkers.length}-marker active print pack. ${check ? "" : "Recompile targets.mind only when recognition images change."}`,
 );

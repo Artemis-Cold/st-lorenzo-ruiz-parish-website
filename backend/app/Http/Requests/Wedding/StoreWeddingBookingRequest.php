@@ -26,7 +26,7 @@ class StoreWeddingBookingRequest extends FormRequest
             'documents.*.document_type' => [
                 'required_with:documents',
                 'distinct',
-                'in:marriage_license,cenomar,baptismal_certificate,confirmation_certificate,couple_photo_1,couple_photo_2,couple_photo_3',
+                'in:marriage_license,cenomar,baptismal_certificate,confirmation_certificate,bride_baptismal_certificate,groom_baptismal_certificate,bride_confirmation_certificate,groom_confirmation_certificate,couple_photo_1,couple_photo_2,couple_photo_3',
             ],
             'sponsors' => ['required', 'array', 'min:2', 'max:40'],
             'sponsors.*.role' => ['required', 'in:godfather,godmother'],
@@ -39,7 +39,7 @@ class StoreWeddingBookingRequest extends FormRequest
                 'in:marriage_contract,confirmation_certificate',
             ],
             'sponsors.*.requirement_file' => [
-                'nullable', 'file', 'mimes:pdf', 'max:5120',
+                'nullable', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120',
             ],
         ];
 
@@ -65,8 +65,18 @@ class StoreWeddingBookingRequest extends FormRequest
             $rules["$prefix.age"] = ['required', 'integer', 'min:0', 'max:150'];
             $rules["$prefix.contact_number"] = ['required', 'string', 'regex:/^09\d{9}$/'];
             $rules["$prefix.church"] = ['required', 'array'];
-            $rules["$prefix.church.baptized_in"] = ['required', 'string', 'max:255'];
-            $rules["$prefix.church.confirmed_in"] = ['required', 'string', 'max:255'];
+            foreach (['baptism' => 'baptized_in', 'confirmation' => 'confirmed_in'] as $sacrament => $parishField) {
+                $statusField = "$prefix.church.{$sacrament}_status";
+                // Legacy clients/bookings have neither status; never infer a person's answer.
+                $hasStatuses = $this->hasAny([
+                    'applicant.bride.church.baptism_status', 'applicant.bride.church.confirmation_status',
+                    'applicant.groom.church.baptism_status', 'applicant.groom.church.confirmation_status',
+                ]);
+                $rules[$statusField] = [$hasStatuses ? 'required' : 'sometimes', 'in:yes,no'];
+                $rules["$prefix.church.$parishField"] = [
+                    $this->input($statusField) === 'no' ? 'nullable' : 'required', 'string', 'max:255',
+                ];
+            }
 
             foreach (['father', 'mother'] as $parent) {
                 $rules["$prefix.$parent"] = ['required', 'array'];

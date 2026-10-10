@@ -5,8 +5,8 @@ export interface Announcement {
   title: string;
   details: string;
   postedAt: string;
-  activityDate?: string | null;
-  status: "published" | "scheduled";
+  expiresAt?: string | null;
+  status: "published" | "scheduled" | "expired";
   createdBy: { id: number; name: string };
   createdAt: string;
   updatedAt: string;
@@ -16,23 +16,20 @@ export interface AnnouncementInput {
   title: string;
   details: string;
   postedAt: string;
-  activityDate?: string | null;
+  expiresAt?: string | null;
 }
 
 interface AnnouncementResponse {
   data: Announcement;
 }
 
-export async function getPublicAnnouncements(
-  week?: "current",
-): Promise<Announcement[]> {
-  const response = await api.get<{ data: Announcement[] }>("/announcements", {
-    params: { week },
-  });
+export async function getPublicAnnouncements(): Promise<Announcement[]> {
+  const response = await api.get<{ data: Announcement[] }>("/announcements");
   return response.data.data;
 }
 
-export type StaffAnnouncementGroup = "all" | "scheduled" | "past";
+export type StaffAnnouncementGroup =
+  "all" | "published" | "scheduled" | "expired";
 
 export interface StaffAnnouncementPage {
   data: Announcement[];

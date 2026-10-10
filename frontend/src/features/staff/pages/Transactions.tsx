@@ -242,9 +242,9 @@ export default function Transactions() {
           </div>
         </div>
 
-        <section className="rounded-3xl border border-[#E7E2DA] bg-white p-5 shadow-sm sm:p-6">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(220px,1fr)_170px_150px_180px_170px_auto]">
-            <label className="relative block">
+        <section className="min-w-0 rounded-3xl border border-[#E7E2DA] bg-white p-5 shadow-sm sm:p-6">
+          <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-6">
+            <label className="relative block min-w-0 sm:col-span-2 xl:col-span-2">
               <span className="sr-only">Search transactions</span>
               <Search
                 size={18}
@@ -262,7 +262,7 @@ export default function Transactions() {
                 className="h-11 w-full rounded-xl border border-[#E7E2DA] pl-11 pr-4 text-sm outline-none transition focus:border-[#B22222] focus:ring-3 focus:ring-[#B22222]/8"
               />
             </label>
-            <label>
+            <label className="min-w-0">
               <span className="sr-only">Filter by payment status</span>
               <select
                 value={status}
@@ -282,7 +282,7 @@ export default function Transactions() {
                 <option value="voided">Voided</option>
               </select>
             </label>
-            <label>
+            <label className="min-w-0">
               <span className="sr-only">Filter by payment method</span>
               <select
                 value={method}
@@ -298,7 +298,7 @@ export default function Transactions() {
                 <option value="cash">Cash</option>
               </select>
             </label>
-            <label>
+            <label className="min-w-0">
               <span className="sr-only">Filter by service</span>
               <select
                 value={service}
@@ -316,7 +316,7 @@ export default function Transactions() {
                 ))}
               </select>
             </label>
-            <label className="relative block">
+            <label className="relative block min-w-0">
               <span className="sr-only">Filter by submission date</span>
               <CalendarDays
                 size={16}
@@ -337,9 +337,9 @@ export default function Transactions() {
               type="button"
               onClick={clearFilters}
               disabled={!hasFilters}
-              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[#E7E2DA] px-4 text-sm font-semibold text-gray-600 transition hover:border-[#B22222]/30 hover:bg-red-50 hover:text-[#B22222] disabled:cursor-not-allowed disabled:opacity-40"
+              className="inline-flex h-11 w-full min-w-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-[#E7E2DA] px-4 text-sm font-semibold text-gray-600 transition hover:border-[#B22222]/30 hover:bg-red-50 hover:text-[#B22222] disabled:cursor-not-allowed disabled:opacity-40 sm:col-span-2 xl:col-span-6 xl:ml-auto xl:w-36"
             >
-              <FilterX size={16} /> Clear
+              <FilterX size={16} className="shrink-0" /> Clear
             </button>
           </div>
         </section>

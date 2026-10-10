@@ -3,9 +3,9 @@ import { X } from "lucide-react";
 
 export interface AnnouncementFormValues {
   title: string;
-  activityDate?: string | null;
   details: string;
-  postedAt: string; // ISO datetime string, e.g. "2026-06-12T09:00"
+  postedAt: string; // ISO datetime string with the Philippine UTC+08:00 offset
+  expiresAt?: string | null;
 }
 
 interface AnnouncementFormModalProps {
@@ -16,21 +16,32 @@ interface AnnouncementFormModalProps {
   submitting?: boolean;
 }
 
-function nowAsDatetimeLocal(): string {
-  const now = new Date();
-  const offset = now.getTimezoneOffset();
-  const local = new Date(now.getTime() - offset * 60 * 1000);
-  return local.toISOString().slice(0, 16);
-}
+const manilaDateTimeFormatter = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Manila",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
 
-function asDatetimeLocal(value: string): string {
+function asManilaDatetimeLocal(value: string): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value.slice(0, 16);
 
-  const offset = date.getTimezoneOffset();
-  return new Date(date.getTime() - offset * 60 * 1000)
-    .toISOString()
-    .slice(0, 16);
+  const parts = Object.fromEntries(
+    manilaDateTimeFormatter
+      .formatToParts(date)
+      .filter(({ type }) => type !== "literal")
+      .map(({ type, value: part }) => [type, part]),
+  );
+
+  return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+}
+
+function toManilaIso(value: string): string {
+  return `${value.length === 16 ? `${value}:00` : value}+08:00`;
 }
 
 export default function AnnouncementFormModal({
@@ -41,15 +52,18 @@ export default function AnnouncementFormModal({
   submitting = false,
 }: AnnouncementFormModalProps) {
   const [title, setTitle] = useState(initialValues?.title ?? "");
-  const [activityDate, setActivityDate] = useState(
-    initialValues?.activityDate ?? "",
-  );
   const [details, setDetails] = useState(initialValues?.details ?? "");
   const [postedAt, setPostedAt] = useState(
     initialValues?.postedAt
-      ? asDatetimeLocal(initialValues.postedAt)
-      : nowAsDatetimeLocal(),
+      ? asManilaDatetimeLocal(initialValues.postedAt)
+      : asManilaDatetimeLocal(new Date().toISOString()),
   );
+  const [expiresAt, setExpiresAt] = useState(
+    initialValues?.expiresAt
+      ? asManilaDatetimeLocal(initialValues.expiresAt)
+      : "",
+  );
+  const [expiresAtError, setExpiresAtError] = useState("");
 
   useEffect(() => {
     if (!open) return;
@@ -64,11 +78,20 @@ export default function AnnouncementFormModal({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    if (
+      expiresAt &&
+      new Date(toManilaIso(expiresAt)).getTime() <=
+        new Date(toManilaIso(postedAt)).getTime()
+    ) {
+      setExpiresAtError("Post until must be later than the publish time.");
+      return;
+    }
+
     onSubmit({
       title: title.trim(),
       details: details.trim(),
-      postedAt: new Date(postedAt).toISOString(),
-      activityDate: activityDate || null,
+      postedAt: toManilaIso(postedAt),
+      expiresAt: expiresAt ? toManilaIso(expiresAt) : null,
     });
   };
 
@@ -154,25 +177,43 @@ export default function AnnouncementFormModal({
 
           <div>
             <label
-              htmlFor="announcement-activity-date"
+              htmlFor="announcement-expires-at"
               className="mb-2 block text-sm font-medium text-gray-700"
             >
-              Activity date (Philippine time)
+              Post Until{" "}
+              <span className="font-normal text-gray-400">(Optional)</span>
             </label>
             <input
-              id="announcement-activity-date"
-              type="date"
-              value={activityDate}
-              onChange={(event) => setActivityDate(event.target.value)}
+              id="announcement-expires-at"
+              type="datetime-local"
               disabled={submitting}
-              className="w-full rounded-xl border border-[#E7E2DA] px-4 py-3 outline-none focus:border-[#B22222]"
+              min={postedAt}
+              value={expiresAt}
+              onChange={(event) => {
+                setExpiresAt(event.target.value);
+                setExpiresAtError("");
+              }}
+              aria-invalid={expiresAtError ? "true" : undefined}
+              aria-describedby={
+                expiresAtError ? "announcement-expires-at-error" : undefined
+              }
+              className={`w-full rounded-xl border px-4 py-3 outline-none transition focus:border-[#B22222] ${expiresAtError ? "border-red-400" : "border-[#E7E2DA]"}`}
             />
-            <p className="mt-1.5 text-xs text-gray-500">
-              Shows on the landing page during this activity’s week
-              (Monday–Sunday), once published. Leave blank for a general notice
-              only.
-            </p>
+            {expiresAtError ? (
+              <p
+                id="announcement-expires-at-error"
+                className="mt-1.5 text-xs font-medium text-red-600"
+              >
+                {expiresAtError}
+              </p>
+            ) : (
+              <p className="mt-1.5 text-xs text-gray-500">
+                The announcement will automatically leave public pages after
+                this time. Leave blank to keep it published indefinitely.
+              </p>
+            )}
           </div>
+
           <div className="flex gap-3 pt-2">
             <button
               type="button"

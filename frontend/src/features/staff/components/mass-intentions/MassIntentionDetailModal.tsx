@@ -70,7 +70,7 @@ export default function MassIntentionDetailModal({
                 href={intention.receipt.url}
                 target="_blank"
                 rel="noreferrer"
-                className="text-right font-medium text-[#B22222] hover:underline"
+                className="text-right font-medium text-[#B22222] hover:underline truncate"
               >
                 {intention.receipt.fileName}
               </a>

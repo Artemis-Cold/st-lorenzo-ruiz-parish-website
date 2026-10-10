@@ -61,7 +61,10 @@ function NavigationSession({ profile }: { profile: MapProfile }) {
       .then(async (response) => {
         if (!response.ok) throw new Error("Unable to load navigation");
         const buffer = await response.arrayBuffer();
-        validateTargetFile(buffer, markerSet.markers.length);
+        validateTargetFile(
+          buffer,
+          markerSet.targetCount ?? markerSet.markers.length,
+        );
         if (!controller.signal.aborted) {
           setTargets(buffer);
           setTargetError(false);

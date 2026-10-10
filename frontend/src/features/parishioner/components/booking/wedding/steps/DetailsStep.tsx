@@ -167,26 +167,6 @@ ${
     });
   };
 
-  const updateApplicantChurch = <K extends keyof Person["church"]>(
-    applicant: ApplicantType,
-    field: K,
-    value: Person["church"][K],
-  ) => {
-    setBooking((prev) => ({
-      ...prev,
-      applicant: {
-        ...prev.applicant,
-        [applicant]: {
-          ...prev.applicant[applicant],
-          church: {
-            ...prev.applicant[applicant].church,
-            [field]: value,
-          },
-        },
-      },
-    }));
-  };
-
   const updateApplicantFather = <K extends keyof Person["father"]>(
     applicant: ApplicantType,
     field: K,
@@ -401,10 +381,10 @@ ${
               sponsor.requirement_type === "marriage_contract"
                 ? "Marriage Certificate"
                 : "Confirmation Certificate"
-            } PDF`}
+            }`}
             file={sponsor.requirement_file}
             onChange={(file) => updateSponsor(index, "requirement_file", file)}
-            accept=".pdf"
+            accept=".pdf,.jpg,.jpeg,.png"
             readOnly={readOnly}
           />
           <FieldError
@@ -412,8 +392,8 @@ ${
           />
           {!readOnly && (
             <p className="mt-2 text-xs leading-5 text-amber-800">
-              PDF only, up to 5 MB. The file may be submitted later from My
-              Profile while the booking is pending.
+              PDF, JPG, or PNG, up to 5 MB. The file may be submitted later from
+              My Profile while the booking is pending.
             </p>
           )}
         </div>
@@ -619,63 +599,6 @@ ${
                   />
                   <FieldError
                     message={getError("applicant.groom.contact_number")}
-                  />
-                </div>
-              </div>
-            </section>
-
-            <section>
-              <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
-                Church Information
-                <BookingTranslation text="Church Information" />
-              </h3>
-
-              <div className="grid grid-cols-12 gap-4">
-                <div className="col-span-12 md:col-span-6">
-                  <BookingLabel className="mb-2 block text-sm font-medium">
-                    Baptized In <span className="text-red-600">*</span>
-                  </BookingLabel>
-
-                  <input
-                    type="text"
-                    placeholder="Name of Parish"
-                    readOnly={readOnly}
-                    className={inputClass}
-                    value={booking.applicant.groom.church.baptized_in}
-                    onChange={(e) =>
-                      updateApplicantChurch(
-                        "groom",
-                        "baptized_in",
-                        e.target.value,
-                      )
-                    }
-                  />
-                  <FieldError
-                    message={getError("applicant.groom.church.baptized_in")}
-                  />
-                </div>
-
-                <div className="col-span-12 md:col-span-6">
-                  <BookingLabel className="mb-2 block text-sm font-medium">
-                    Confirmed In <span className="text-red-600">*</span>
-                  </BookingLabel>
-
-                  <input
-                    type="text"
-                    placeholder="Name of Parish"
-                    readOnly={readOnly}
-                    className={inputClass}
-                    value={booking.applicant.groom.church.confirmed_in}
-                    onChange={(e) =>
-                      updateApplicantChurch(
-                        "groom",
-                        "confirmed_in",
-                        e.target.value,
-                      )
-                    }
-                  />
-                  <FieldError
-                    message={getError("applicant.groom.church.confirmed_in")}
                   />
                 </div>
               </div>
@@ -1070,63 +993,6 @@ ${
 
             <section>
               <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
-                Church Information
-                <BookingTranslation text="Church Information" />
-              </h3>
-
-              <div className="grid grid-cols-12 gap-4">
-                <div className="col-span-12 md:col-span-6">
-                  <BookingLabel className="mb-2 block text-sm font-medium">
-                    Baptized In <span className="text-red-600">*</span>
-                  </BookingLabel>
-
-                  <input
-                    type="text"
-                    placeholder="Name of Parish"
-                    readOnly={readOnly}
-                    className={inputClass}
-                    value={booking.applicant.bride.church.baptized_in}
-                    onChange={(e) =>
-                      updateApplicantChurch(
-                        "bride",
-                        "baptized_in",
-                        e.target.value,
-                      )
-                    }
-                  />
-                  <FieldError
-                    message={getError("applicant.bride.church.baptized_in")}
-                  />
-                </div>
-
-                <div className="col-span-12 md:col-span-6">
-                  <BookingLabel className="mb-2 block text-sm font-medium">
-                    Confirmed In <span className="text-red-600">*</span>
-                  </BookingLabel>
-
-                  <input
-                    type="text"
-                    placeholder="Name of Parish"
-                    readOnly={readOnly}
-                    className={inputClass}
-                    value={booking.applicant.bride.church.confirmed_in}
-                    onChange={(e) =>
-                      updateApplicantChurch(
-                        "bride",
-                        "confirmed_in",
-                        e.target.value,
-                      )
-                    }
-                  />
-                  <FieldError
-                    message={getError("applicant.bride.church.confirmed_in")}
-                  />
-                </div>
-              </div>
-            </section>
-
-            <section>
-              <h3 className="mb-5 border-b pb-2 text-lg font-semibold text-[#B22222]">
                 Background Information
                 <BookingTranslation text="Background Information" />
               </h3>
@@ -1420,34 +1286,6 @@ ${
                       readOnly={readOnly}
                     />
                     <FieldError message={getError("documents.cenomar")} />
-                  </div>
-
-                  <div className="col-span-12 md:col-span-6">
-                    <FileUploadField
-                      label="Baptismal Certificate"
-                      file={getDocument("baptismal_certificate")}
-                      onChange={(file) =>
-                        updateDocument("baptismal_certificate", file)
-                      }
-                      readOnly={readOnly}
-                    />
-                    <FieldError
-                      message={getError("documents.baptismal_certificate")}
-                    />
-                  </div>
-
-                  <div className="col-span-12 md:col-span-6">
-                    <FileUploadField
-                      label="Confirmation Certificate"
-                      file={getDocument("confirmation_certificate")}
-                      onChange={(file) =>
-                        updateDocument("confirmation_certificate", file)
-                      }
-                      readOnly={readOnly}
-                    />
-                    <FieldError
-                      message={getError("documents.confirmation_certificate")}
-                    />
                   </div>
 
                   <div className="col-span-12 rounded-xl border border-blue-200 bg-blue-50 p-4">

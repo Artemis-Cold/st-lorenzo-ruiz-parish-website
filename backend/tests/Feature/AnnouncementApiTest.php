@@ -12,38 +12,6 @@ class AnnouncementApiTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_weekly_feed_uses_activity_dates_and_philippine_week_boundaries(): void
-    {
-        // Sunday in UTC, but already Monday in the Philippines.
-        $this->travelTo(\Carbon\Carbon::parse('2026-09-27T16:30:00Z'));
-        $staff = User::factory()->create(['role' => 'staff']);
-        foreach ([
-            ['Monday', '2026-09-28', now()->subDays(20)],
-            ['Sunday', '2026-10-04', now()->subDay()],
-            ['Previous week', '2026-09-27', now()->subDay()],
-            ['Next week', '2026-10-05', now()->subDay()],
-            ['No activity date', null, now()->subDay()],
-            ['Unpublished', '2026-09-29', now()->addDay()],
-        ] as [$title, $date, $published]) {
-            Announcement::create([
-                'created_by' => $staff->id, 'title' => $title,
-                'details' => 'Activity details', 'activity_date' => $date,
-                'posted_at' => $published,
-            ]);
-        }
-        $this->getJson('/api/announcements?week=current')->assertOk()
-            ->assertJsonCount(2, 'data')
-            ->assertJsonPath('data.0.title', 'Monday')
-            ->assertJsonPath('data.0.activityDate', '2026-09-28')
-            ->assertJsonPath('data.1.title', 'Sunday');
-        $this->getJson('/api/announcements')->assertOk()->assertJsonCount(5, 'data');
-        $this->travelTo(\Carbon\Carbon::parse('2026-10-04T15:59:59Z'));
-        $this->getJson('/api/announcements?week=current')->assertJsonCount(3, 'data');
-        $this->travelTo(\Carbon\Carbon::parse('2026-10-04T16:00:00Z'));
-        $this->getJson('/api/announcements?week=current')->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.title', 'Next week');
-    }
-
     public function test_staff_can_create_update_list_and_delete_announcements(): void
     {
         $staff = User::factory()->create(['role' => 'staff']);
@@ -51,11 +19,13 @@ class AnnouncementApiTest extends TestCase
 
         $created = $this->postJson('/api/staff/announcements', [
             'title' => 'Parish Office Closed',
-            'activityDate' => '2026-09-30',
             'details' => 'The parish office will be closed tomorrow.',
             'postedAt' => now()->subMinute()->toIso8601String(),
+            'expiresAt' => now()->addDay()->toIso8601String(),
         ])->assertCreated()->assertJsonPath('data.title', 'Parish Office Closed')
-            ->assertJsonPath('data.activityDate', '2026-09-30');
+            ->assertJsonPath('data.status', 'published');
+
+        $this->assertNotNull($created->json('data.expiresAt'));
 
         $id = $created->json('data.id');
 
@@ -65,12 +35,11 @@ class AnnouncementApiTest extends TestCase
 
         $this->putJson("/api/staff/announcements/{$id}", [
             'title' => 'Updated Office Hours',
-            'activityDate' => '2026-10-07',
             'details' => 'The parish office opens at 9:00 AM.',
             'postedAt' => now()->addDay()->toIso8601String(),
+            'expiresAt' => now()->addDays(2)->toIso8601String(),
         ])->assertOk()
             ->assertJsonPath('data.title', 'Updated Office Hours')
-            ->assertJsonPath('data.activityDate', '2026-10-07')
             ->assertJsonPath('data.status', 'scheduled');
 
         $this->deleteJson("/api/staff/announcements/{$id}")
@@ -95,6 +64,14 @@ class AnnouncementApiTest extends TestCase
             'title' => 'Scheduled',
             'details' => 'Visible later.',
             'posted_at' => now()->addDay(),
+        ]);
+
+        Announcement::create([
+            'created_by' => $staff->id,
+            'title' => 'Expired',
+            'details' => 'No longer visible.',
+            'posted_at' => now()->subDays(2),
+            'expires_at' => now()->subDay(),
         ]);
 
         $this->getJson('/api/announcements')
@@ -124,11 +101,25 @@ class AnnouncementApiTest extends TestCase
             'posted_at' => now()->addDay(),
         ]);
 
+        Announcement::create([
+            'created_by' => $staff->id,
+            'title' => 'Expired Parish Notice',
+            'details' => 'This announcement is no longer public.',
+            'posted_at' => now()->subDays(3),
+            'expires_at' => now()->subDay(),
+        ]);
+
         $this->getJson('/api/staff/announcements?group=all&perPage=5')
             ->assertOk()
             ->assertJsonCount(5, 'data')
-            ->assertJsonPath('meta.total', 8)
+            ->assertJsonPath('meta.total', 9)
             ->assertJsonPath('meta.last_page', 2);
+
+        $this->getJson('/api/staff/announcements?group=published&perPage=10')
+            ->assertOk()
+            ->assertJsonCount(7, 'data')
+            ->assertJsonPath('meta.total', 7)
+            ->assertJsonPath('data.0.status', 'published');
 
         $this->getJson('/api/staff/announcements?group=scheduled&perPage=5')
             ->assertOk()
@@ -136,11 +127,12 @@ class AnnouncementApiTest extends TestCase
             ->assertJsonPath('data.0.status', 'scheduled')
             ->assertJsonPath('data.0.title', 'Scheduled Parish Notice');
 
-        $this->getJson('/api/staff/announcements?group=past&perPage=5')
+        $this->getJson('/api/staff/announcements?group=expired&perPage=5')
             ->assertOk()
-            ->assertJsonCount(5, 'data')
-            ->assertJsonPath('meta.total', 7)
-            ->assertJsonPath('data.0.status', 'published');
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('meta.total', 1)
+            ->assertJsonPath('data.0.status', 'expired')
+            ->assertJsonPath('data.0.title', 'Expired Parish Notice');
 
         $this->getJson('/api/staff/announcements?group=all&search=choir&perPage=5')
             ->assertOk()
@@ -173,18 +165,30 @@ class AnnouncementApiTest extends TestCase
             ->assertJsonValidationErrors(['title', 'details', 'postedAt']);
     }
 
-    public function test_activity_date_is_validated_and_can_be_cleared(): void
+    public function test_expiration_is_optional_validated_and_can_be_cleared(): void
     {
         Sanctum::actingAs(User::factory()->create(['role' => 'staff']), ['staff']);
-        $payload = ['title' => 'Weekly activity', 'details' => 'Details', 'postedAt' => now()->subMinute()->toIso8601String()];
-        $this->postJson('/api/staff/announcements', [...$payload, 'activityDate' => 'not-a-date'])
-            ->assertUnprocessable()->assertJsonValidationErrors('activityDate');
-        $response = $this->postJson('/api/staff/announcements', [...$payload, 'activityDate' => '2026-09-30'])
-            ->assertCreated();
-        $id = $response->json('data.id');
-        $this->putJson("/api/staff/announcements/{$id}", $payload)->assertOk()
-            ->assertJsonPath('data.activityDate', '2026-09-30');
-        $this->putJson("/api/staff/announcements/{$id}", [...$payload, 'activityDate' => null])->assertOk()
-            ->assertJsonPath('data.activityDate', null);
+        $publishedAt = now()->addHour();
+        $payload = [
+            'title' => 'Timed announcement',
+            'details' => 'Visible for a limited time.',
+            'postedAt' => $publishedAt->toIso8601String(),
+        ];
+
+        $this->postJson('/api/staff/announcements', [
+            ...$payload,
+            'expiresAt' => $publishedAt->copy()->subMinute()->toIso8601String(),
+        ])->assertUnprocessable()->assertJsonValidationErrors('expiresAt');
+
+        $created = $this->postJson('/api/staff/announcements', [
+            ...$payload,
+            'expiresAt' => $publishedAt->copy()->addDay()->toIso8601String(),
+        ])->assertCreated();
+        $id = $created->json('data.id');
+
+        $this->putJson("/api/staff/announcements/{$id}", [
+            ...$payload,
+            'expiresAt' => null,
+        ])->assertOk()->assertJsonPath('data.expiresAt', null);
     }
 }

@@ -11,10 +11,12 @@ role-protected, but printable assets are static files, not confidential document
 ## Current parish configuration
 
 The final user diagram supersedes earlier generated map illustrations.
-There are **17 markers and 11 destinations**. Public stair landings (four) and
-aisles (two) are checkpoints only. Placement and facing are in `parish/markers.ts`.
-The shared **Comfort Room** approach replaces separate boys/girls arrival markers.
-Choir Stand and Sacristy markers are at their public-side entrances beside the Altar.
+There are **17 compiled recognition targets, 14 active checkpoints, and 8 visitor
+destinations**. Choir Stand, Sacristy, and Candle Stand are retired from the
+visitor experience. Their old image slots remain only inside the compiled target
+file so the remaining target indices stay compatible. Placement and facing are in
+`parish/markers.ts`. The shared **Comfort Room** approach replaces separate
+boys/girls arrival markers.
 
 The Basement Plan is floor 1; the Ground Floor Plan is floor 2. Front stairs are
 two-way. Rear/altar stairs are staff-only and filtered before public route
@@ -30,7 +32,7 @@ schematic. No surveyed metre estimates or continuous walking tracking are claime
 - `house/assets/`: house marker SVGs, placement map, print pack and compiled target file.
 - `parish/layout.ts`: schematic node positions, names and floors.
 - `parish/graph.ts`: explicit passages, closures and access restrictions.
-- `parish/destinations.ts`: ten user-selectable public arrivals.
+- `parish/destinations.ts`: eight user-selectable public arrivals.
 - `parish/markers.ts`: stable 17-image compiler order, placement and per-marker facing.
 - `parish/config.ts`: assembled building/checkpoint configuration.
 - `parish/generateMarkers.mjs`: reproducible SVG and print-pack generator.

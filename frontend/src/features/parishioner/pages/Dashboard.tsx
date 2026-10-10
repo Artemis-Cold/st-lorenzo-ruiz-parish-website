@@ -6,13 +6,15 @@ import DashboardLayout from "../components/DashboardLayout";
 import WelcomeBanner from "../components/dashboard/WelcomeBanner";
 import EventsCard from "../components/dashboard/EventsCard";
 import CalendarCard from "../components/dashboard/CalendarCard";
-import AnnouncementCard from "../components/dashboard/AnnouncementCard";
+import BookingUpdatesNotification from "../components/dashboard/BookingUpdatesNotification";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   getPublicAnnouncements,
   type Announcement,
 } from "@/services/announcementService";
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [bookings, setBookings] = useState<ProfileBooking[]>([]);
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,24 +40,26 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="mt-8 grid gap-8 xl:grid-cols-[2fr_1fr]">
+      {!loading && !error && user && (
+        <BookingUpdatesNotification
+          key={user.id}
+          bookings={bookings}
+          userId={user.id}
+        />
+      )}
+
+      <div className="mt-8 grid items-start gap-8 xl:grid-cols-[2fr_1fr]">
         {loading ? (
           <Skeleton className="min-h-80 rounded-3xl bg-white shadow-lg" />
         ) : (
           <EventsCard announcements={announcements} />
         )}
 
-        <div className="space-y-8 md:grid md:grid-cols-2 md:items-start md:gap-6 md:space-y-0 xl:block xl:space-y-8">
+        <div>
           {loading ? (
-            <>
-              <Skeleton className="h-96 rounded-3xl bg-white shadow-lg" />
-              <Skeleton className="h-48 rounded-3xl bg-white shadow-lg" />
-            </>
+            <Skeleton className="h-96 rounded-3xl bg-white shadow-lg" />
           ) : (
-            <>
-              <CalendarCard bookings={bookings} />
-              <AnnouncementCard bookings={bookings} />
-            </>
+            <CalendarCard bookings={bookings} />
           )}
         </div>
       </div>

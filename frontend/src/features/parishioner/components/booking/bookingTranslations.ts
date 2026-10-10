@@ -1,4 +1,5 @@
 export const bookingTranslations: Record<string, string> = {
+  "Baptism & Confirmation": "Binyag at Kumpil",
   "First Name": "Pangalan",
   "Last Name": "Apelyido",
   MI: "Inisyal",

@@ -16,7 +16,10 @@ class BaptismBookingAgeTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_baptizand_age_is_calculated_from_birth_date(): void
+    #[\PHPUnit\Framework\Attributes\TestWith(['pdf', 'application/pdf'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['jpg', 'image/jpeg'])]
+    #[\PHPUnit\Framework\Attributes\TestWith(['png', 'image/png'])]
+    public function test_baptizand_age_is_calculated_from_birth_date(string $extension, string $mime): void
     {
         Storage::fake('public');
         $parishioner = User::factory()->create();
@@ -79,7 +82,7 @@ class BaptismBookingAgeTest extends TestCase
                     'residence' => 'Batangas',
                     'requirement_type' => 'marriage_contract',
                     'requirement_file' => UploadedFile::fake()
-                        ->create('pedro-marriage.pdf', 100, 'application/pdf'),
+                        ->create("pedro-marriage.{$extension}", 100, $mime),
                 ],
                 [
                     'role' => 'godmother',
@@ -89,7 +92,7 @@ class BaptismBookingAgeTest extends TestCase
                     'residence' => 'Batangas',
                     'requirement_type' => 'confirmation_certificate',
                     'requirement_file' => UploadedFile::fake()
-                        ->create('ana-confirmation.pdf', 100, 'application/pdf'),
+                        ->create("ana-confirmation.{$extension}", 100, $mime),
                 ],
             ],
             'documents' => [
@@ -117,13 +120,13 @@ class BaptismBookingAgeTest extends TestCase
             'role' => 'godfather',
             'first_name' => 'Pedro',
             'requirement_type' => 'marriage_contract',
-            'requirement_file_name' => 'pedro-marriage.pdf',
+            'requirement_file_name' => "pedro-marriage.{$extension}",
         ]);
         $this->assertDatabaseHas('god_parents', [
             'role' => 'godmother',
             'first_name' => 'Ana',
             'requirement_type' => 'confirmation_certificate',
-            'requirement_file_name' => 'ana-confirmation.pdf',
+            'requirement_file_name' => "ana-confirmation.{$extension}",
         ]);
 
         $documents = collect(
@@ -170,7 +173,7 @@ class BaptismBookingAgeTest extends TestCase
 
         $this->post("/api/bookings/{$bookingId}/documents", [
             'document_type' => $missingRequirement['types'][0],
-            'file' => UploadedFile::fake()->create('valid-godparent-certificate.pdf', 100, 'application/pdf'),
+            'file' => UploadedFile::fake()->create("valid-godparent-certificate.{$extension}", 100, $mime),
         ], ['Accept' => 'application/json'])
             ->assertCreated()
             ->assertJsonCount(0, 'data.missingRequirements');

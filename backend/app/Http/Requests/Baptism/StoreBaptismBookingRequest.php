@@ -157,7 +157,7 @@ class StoreBaptismBookingRequest extends FormRequest
             'god_parents.*.requirement_file' => [
                 'nullable',
                 'file',
-                'mimes:pdf',
+                'mimes:jpg,jpeg,png,pdf',
                 'max:5120',
             ],
 

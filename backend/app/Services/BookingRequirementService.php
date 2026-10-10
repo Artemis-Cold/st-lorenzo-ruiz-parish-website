@@ -241,6 +241,22 @@ class BookingRequirementService
             ['key' => 'couple_photo_3', 'label' => '3R Couple Photo 3', 'types' => ['couple_photo_3', 'couple_photo']],
         ];
 
+        $booking->loadMissing('weddingApplicants');
+        if ($booking->weddingApplicants->contains(fn ($person) => $person->baptism_status !== null || $person->confirmation_status !== null)) {
+            $definitions = array_values(array_filter($definitions, fn ($item) => ! in_array($item['key'], ['baptismal_certificate', 'confirmation_certificate'], true)));
+            foreach ($booking->weddingApplicants as $person) {
+                foreach (['baptism' => 'baptismal_certificate', 'confirmation' => 'confirmation_certificate'] as $sacrament => $certificate) {
+                    $type = $person->role.'_'.$certificate;
+                    $coordination = $person->{$sacrament.'_status'} === 'no' ? ' — For parish coordination; upload certificate after '.$sacrament : '';
+                    $definitions[] = [
+                        'key' => $type,
+                        'label' => ucfirst($person->role).' '.str($certificate)->headline().$coordination,
+                        'types' => [$type],
+                    ];
+                }
+            }
+        }
+
         foreach ($booking->weddingSponsors as $index => $sponsor) {
             if (! $sponsor->requirement_type || $sponsor->requirement_file_path) {
                 continue;

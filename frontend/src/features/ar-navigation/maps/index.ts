@@ -15,6 +15,7 @@ export const mapProfiles: readonly MapProfile[] = [
     building: parishBuilding,
     markerSet: {
       targetsUrl: parishTargetsUrl,
+      targetCount: 17,
       printUrl: parishPrintUrl,
       markers: parishMarkerImages,
     },

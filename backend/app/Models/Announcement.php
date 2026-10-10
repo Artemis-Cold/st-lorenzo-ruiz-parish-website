@@ -15,14 +15,14 @@ class Announcement extends Model
         'title',
         'details',
         'posted_at',
-        'activity_date',
+        'expires_at',
     ];
 
     protected function casts(): array
     {
         return [
             'posted_at' => 'datetime',
-            'activity_date' => 'date',
+            'expires_at' => 'datetime',
         ];
     }
 

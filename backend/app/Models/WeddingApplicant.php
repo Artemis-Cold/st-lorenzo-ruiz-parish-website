@@ -17,6 +17,8 @@ class WeddingApplicant extends Model
         'age',
         'contact_number',
         'baptized_in',
+        'baptism_status',
+        'confirmation_status',
         'confirmed_in',
         'father_first_name',
         'father_middle_initial',

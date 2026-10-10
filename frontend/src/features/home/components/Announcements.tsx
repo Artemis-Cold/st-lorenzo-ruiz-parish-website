@@ -8,14 +8,17 @@ import {
 } from "@/services/announcementService";
 
 const postedDate = (value: string) =>
-  new Date(
-    value.length === 10 ? `${value}T00:00:00+08:00` : value,
-  ).toLocaleDateString("en-US", {
+  new Date(value).toLocaleDateString("en-US", {
     timeZone: "Asia/Manila",
     month: "long",
     day: "numeric",
     year: "numeric",
   });
+
+const announcementDateLabel = (announcement: Announcement) =>
+  announcement.expiresAt
+    ? `Available until ${postedDate(announcement.expiresAt)}`
+    : `Posted ${postedDate(announcement.postedAt)}`;
 
 export default function Announcements() {
   const [items, setItems] = useState<Announcement[]>([]);
@@ -27,7 +30,7 @@ export default function Announcements() {
   useEffect(() => {
     let active = true;
     const load = () =>
-      getPublicAnnouncements("current")
+      getPublicAnnouncements()
         .then((announcements) => {
           if (active) {
             setItems(announcements);
@@ -88,13 +91,13 @@ export default function Announcements() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#F5D76E]">
-                  This week at the parish
+                  Latest parish announcement
                 </p>
                 <h2 className="mt-1 line-clamp-1 font-serif text-lg font-bold">
                   {featured.title}
                 </h2>
                 <p className="mt-1 text-xs text-[#F5D76E]">
-                  {postedDate(featured.activityDate!)}
+                  {announcementDateLabel(featured)}
                 </p>
                 <p className="mt-1 line-clamp-2 text-xs leading-5 text-white/75">
                   {featured.details}
@@ -114,7 +117,7 @@ export default function Announcements() {
               onClick={showAnnouncementSection}
               className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-[#F5D76E] transition hover:text-white"
             >
-              View this week’s announcements <ArrowUpRight size={15} />
+              View parish announcements <ArrowUpRight size={15} />
             </button>
           </div>
         </aside>
@@ -136,12 +139,12 @@ export default function Announcements() {
                 Parish bulletin
               </div>
               <h2 className="mt-4 max-w-3xl font-serif text-4xl font-bold leading-tight text-[#292524] md:text-5xl">
-                This week at the parish
+                Parish announcements
               </h2>
             </div>
             <p className="max-w-sm text-sm leading-6 text-gray-600">
-              Activities and announcements for this week, Monday–Sunday
-              (Philippine time), published by the parish staff.
+              Current notices published by the parish staff, shown according
+              to their publish and optional expiration times.
             </p>
           </div>
 
@@ -163,7 +166,7 @@ export default function Announcements() {
               <p className="mt-3 font-medium text-gray-600">
                 {failed
                   ? "Unable to load announcements. Please try again shortly."
-                  : "No activities have been announced for this week."}
+                  : "There are no active parish announcements at this time."}
               </p>
             </div>
           ) : (
@@ -174,12 +177,12 @@ export default function Announcements() {
                   className="absolute -right-20 -top-20 h-64 w-64 rounded-full border-[45px] border-white/5"
                 />
                 <span className="relative w-fit rounded-full border border-[#F5D76E]/40 bg-[#F5D76E]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#F5D76E]">
-                  This week
+                  Latest notice
                 </span>
                 <div className="relative mt-auto">
                   <p className="flex items-center gap-2 text-xs text-white/70">
                     <CalendarDays size={14} />
-                    {postedDate(featured.activityDate!)}
+                    {announcementDateLabel(featured)}
                   </p>
                   <h3 className="mt-3 max-w-2xl font-serif text-2xl font-bold leading-tight md:text-3xl">
                     {featured.title}
@@ -200,17 +203,17 @@ export default function Announcements() {
               <div className="rounded-3xl border border-[#DED5C9] bg-white p-5 shadow-sm">
                 <div className="flex items-center justify-between">
                   <h3 className="font-serif text-lg font-bold text-[#292524]">
-                    More this week
+                    More announcements
                   </h3>
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-gray-400">
-                    Activities
+                    Notices
                   </span>
                 </div>
                 <div className="mt-2 divide-y divide-gray-100">
                   {more.map((item) => (
                     <article key={item.id} className="py-3.5 first:pt-2">
                       <p className="text-[11px] font-medium text-[#B22222]">
-                        {postedDate(item.activityDate!)}
+                        {announcementDateLabel(item)}
                       </p>
                       <h4 className="mt-1 font-serif font-bold text-[#292524]">
                         {item.title}
