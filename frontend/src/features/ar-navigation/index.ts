@@ -1,4 +1,4 @@
-export { default } from "./pages/ARNavigationPage";
+export { default } from "./pages/QRNavigationPage";
 export type {
   CalculatedRoute,
   Destination,

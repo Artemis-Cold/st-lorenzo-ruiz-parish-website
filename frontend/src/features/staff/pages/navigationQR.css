@@ -1,0 +1,24 @@
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  .qr-print-root,
+  .qr-print-root * {
+    visibility: visible !important;
+  }
+  .qr-print-root {
+    position: absolute;
+    inset: 0;
+    display: block !important;
+  }
+  .qr-print-card {
+    break-inside: avoid;
+    break-after: page;
+    border: 0;
+    padding: 20mm;
+  }
+  .qr-print-card img {
+    width: 90mm;
+    height: 90mm;
+  }
+}

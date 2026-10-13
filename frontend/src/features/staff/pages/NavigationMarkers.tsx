@@ -1,117 +1,97 @@
-import { ArrowLeft, ExternalLink, Map, Printer, ScanLine } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import QRCode from "qrcode";
 import { activeMap } from "@/features/ar-navigation/maps/activeMap";
+import { qrPayload } from "@/features/ar-navigation/services/qrNavigation";
+import { parishMarkers } from "@/features/ar-navigation/maps/parish/markers";
+import { markerManifest } from "@/features/ar-navigation/maps/house/markers";
 import StaffDashboardLayout from "../components/dashboard/StaffDashboardLayout";
+import "./navigationQR.css";
 
 export default function NavigationMarkers() {
-  const markers = activeMap.markerSet;
-  const direction = (facing?: number) =>
-    ({ 0: "Up", 90: "Right", 180: "Down", 270: "Left" })[facing ?? -1] ??
-    "Follow placement map";
+  const [images, setImages] = useState<Record<string, string>>({});
+  const [error, setError] = useState(false);
+  const checkpoints = activeMap.building.checkpoints.filter(
+    (point) => point.targetIndex !== null,
+  );
+  const placements = activeMap.id === "parish" ? parishMarkers : markerManifest;
+  useEffect(() => {
+    let active = true;
+    void Promise.all(
+      activeMap.building.checkpoints
+        .filter((p) => p.targetIndex !== null)
+        .map(
+          async (point) =>
+            [
+              point.id,
+              await QRCode.toDataURL(qrPayload(activeMap.id, point.id), {
+                width: 600,
+                margin: 4,
+                errorCorrectionLevel: "M",
+              }),
+            ] as const,
+        ),
+    )
+      .then((values) => {
+        if (active) setImages(Object.fromEntries(values));
+      })
+      .catch(() => {
+        if (active) setError(true);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
   return (
     <StaffDashboardLayout>
       <div className="space-y-6">
-        <div>
-          <Link
-            to="/staff/settings"
-            className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-[#B22222] transition hover:text-[#8F1818]"
-          >
-            <ArrowLeft size={17} /> Back to Settings
-          </Link>
-          <div className="flex items-start gap-4">
-            <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-violet-50 text-violet-700">
-              <ScanLine size={23} />
-            </span>
-            <div>
-              <h1 className="font-serif text-3xl font-bold text-[#292524]">
-                Navigation Markers
-              </h1>
-              <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600">
-                Print and place the markers for the active navigation map.
-                Follow each placement and scanning direction so navigation
-                instructions remain correctly aligned.
-              </p>
-            </div>
-          </div>
-        </div>
-        {markers && (
-          <>
-            <div className="flex flex-wrap gap-3">
-              {markers.placementMapUrl && (
-                <a
-                  href={markers.placementMapUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-xl border border-[#B22222] bg-white px-5 py-3 font-semibold text-[#B22222] transition hover:bg-red-50"
-                >
-                  <Map size={18} /> View placement map
-                </a>
-              )}
-              <a
-                href={markers.printUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl bg-[#B22222] px-5 py-3 font-semibold text-white transition hover:bg-[#8F1818]"
-              >
-                <Printer size={18} /> Print all markers
-              </a>
-            </div>
-
-            {markers.placementMapUrl && (
-              <a
-                href={markers.placementMapUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="group block overflow-hidden rounded-3xl border border-stone-200 bg-white p-3 shadow-sm"
-              >
-                <div className="relative overflow-hidden rounded-2xl bg-stone-50">
-                  <img
-                    src={markers.placementMapUrl}
-                    alt="House navigation marker placement map"
-                    className="mx-auto max-h-150 w-full object-contain"
-                  />
-                  <span className="absolute right-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/95 px-3 py-2 text-xs font-semibold text-[#B22222] shadow-sm">
-                    Open full map <ExternalLink size={13} />
-                  </span>
-                </div>
-              </a>
-            )}
-
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {markers.markers.map((marker) => (
-                <article
-                  key={marker.name}
-                  className="rounded-2xl border border-stone-200 bg-white p-5"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <h2 className="font-semibold text-stone-900">
-                      {marker.name}
-                    </h2>
-                    {marker.code && (
-                      <span className="rounded-full bg-red-50 px-2.5 py-1 text-xs font-bold text-[#B22222]">
-                        {marker.code}
-                      </span>
-                    )}
-                  </div>
-                  <p className="my-3 text-sm text-stone-600">
-                    {marker.placement}
-                  </p>
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-stone-500">
-                    Face {direction(marker.facing)} on the map
-                  </p>
-                  <a
-                    href={marker.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-block py-2 text-sm font-semibold text-[#B22222] underline"
-                  >
-                    Open marker
-                  </a>
-                </article>
-              ))}
-            </div>
-          </>
+        <Link to="/staff/settings" className="text-[#B22222]">
+          ← Back to Settings
+        </Link>
+        <h1 className="font-serif text-3xl font-bold">Navigation QR Codes</h1>
+        <p>
+          Replace the old image markers with these QR codes. Mark a standing
+          point at each public-side checkpoint. The user must face the QR in the
+          listed direction when aligning AR.
+        </p>
+        <button
+          disabled={Object.keys(images).length !== checkpoints.length}
+          onClick={() => window.print()}
+          className="rounded-xl bg-[#B22222] px-5 py-3 font-semibold text-white disabled:opacity-50"
+        >
+          Print QR codes
+        </button>
+        {error && (
+          <p role="alert">QR generation failed. Reload this page to retry.</p>
         )}
+        <div className="qr-print-root grid gap-6 md:grid-cols-2">
+          {checkpoints.map((point) => (
+            <article
+              key={point.id}
+              className="qr-print-card rounded-2xl border border-stone-200 bg-white p-6 text-center"
+            >
+              <p className="font-serif font-bold text-[#B22222]">
+                St. Lorenzo Ruiz Parish
+              </p>
+              <h2 className="mt-2 text-xl font-bold">{point.name}</h2>
+              {images[point.id] && (
+                <img
+                  src={images[point.id]}
+                  alt={`Navigation QR for ${point.name}`}
+                  className="mx-auto w-64"
+                />
+              )}
+              <p className="text-sm">Scan in AR Navigation</p>
+              <p className="mt-3 text-xs text-stone-600">
+                {placements.find((p) => p.nodeId === point.nodeId)?.placement}
+              </p>
+              <p className="mt-2 text-xs">
+                Map: {activeMap.id} · {point.id} · Facing {point.facing}° from
+                plan north
+              </p>
+            </article>
+          ))}
+        </div>
       </div>
     </StaffDashboardLayout>
   );
