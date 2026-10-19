@@ -1,6 +1,7 @@
+import ReviewSection from "../../ReviewSection";
 import { BookingTranslation } from "@/features/parishioner/components/booking/BookingLabel";
 import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
-import { BookingCard } from "../..";
+
 import { useAuth } from "@/contexts/AuthContext";
 
 import type { MassIntentionBooking } from "../../../../types/mass";
@@ -11,6 +12,7 @@ import { formatPhpCurrency } from "@/utils/currency";
 interface ConfirmationStepProps {
   booking: MassIntentionBooking;
   agree: boolean;
+  onEdit: (step: number) => void;
   setAgree: Dispatch<SetStateAction<boolean>>;
   linePrice: number | null;
   selectedMass: ParishEvent | null;
@@ -18,6 +20,7 @@ interface ConfirmationStepProps {
 
 export default function ConfirmationStep({
   booking,
+  onEdit,
   agree,
   setAgree,
   linePrice,
@@ -32,99 +35,60 @@ export default function ConfirmationStep({
   const totalAmount = totalIntentions * (linePrice ?? 0);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_1fr]">
-      {/* Payment Summary */}
-      <BookingCard title="Payment Summary">
-        <div className="space-y-6">
-          {/* Total */}
-          <div className="rounded-xl border border-red-200 p-5">
-            <div className="flex items-center justify-between">
-              <span className="text-lg text-gray-700">Total</span>
-
-              <span className="text-3xl font-semibold text-[#B22222]">
-                {formatPhpCurrency(totalAmount)}
-              </span>
-            </div>
-          </div>
-
-          {/* Summary */}
-          <div className="divide-y rounded-lg border border-gray-200">
-            <SummaryRow label="Parishioner" value={user?.full_name ?? "-"} />
-
-            <SummaryRow
-              label="Mass Intention Type"
-              value={
-                booking.groups.length > 0
-                  ? booking.groups.map((g) => g.type).join(", ")
-                  : "-"
-              }
-            />
-
-            <SummaryRow
-              label="Intention Date"
-              value={
-                booking.intention_date?.toLocaleDateString("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                }) ?? "-"
-              }
-            />
-
-            <SummaryRow
-              label="Mass Schedule"
-              value={
-                selectedMass
-                  ? `${new Date(selectedMass.startsAt).toLocaleTimeString(
-                      "en-PH",
-                      {
-                        hour: "numeric",
-                        minute: "2-digit",
-                      },
-                    )} · ${selectedMass.title}`
-                  : "-"
-              }
-            />
-
-            <SummaryRow label="Venue" value={selectedMass?.location ?? "-"} />
-
-            <SummaryRow label="Payment Method" value="GCash" />
-          </div>
-
-          {/* Footer */}
-          <div className="flex items-center justify-between rounded-b-xl bg-[#B22222] px-5 py-4 text-white">
-            <span className="text-2xl font-medium">Amount</span>
-
-            <span className="text-3xl font-semibold">
-              {formatPhpCurrency(totalAmount)}
-            </span>
-          </div>
-        </div>
-      </BookingCard>
-
-      <BookingCard title="Submitted Receipt">
-        <div className="flex h-full min-h-107.5 items-center justify-center rounded-xl border border-red-200">
-          {booking.receipt ? (
-            booking.receipt.type.startsWith("image") ? (
-              <img
-                src={URL.createObjectURL(booking.receipt)}
-                alt="Receipt"
-                className="max-h-full max-w-full rounded-lg object-contain"
-              />
-            ) : (
-              <div className="min-w-0 max-w-full px-4 text-center">
-                <p className="break-all font-medium">{booking.receipt.name}</p>
-
-                <p className="mt-2 text-sm text-gray-500">
-                  PDF uploaded successfully
-                </p>
-              </div>
-            )
-          ) : (
-            <p className="text-lg text-[#B22222]">Photo of Receipt</p>
-          )}
-        </div>
-      </BookingCard>
+    <div className="space-y-6">
+      <ReviewSection
+        title="Mass Schedule"
+        onEdit={() => onEdit(1)}
+        data={{
+          parishioner: user?.full_name,
+          intention_date: booking.intention_date,
+          mass: selectedMass?.title,
+          time: selectedMass
+            ? new Date(selectedMass.startsAt).toLocaleTimeString("en-PH", {
+                hour: "numeric",
+                minute: "2-digit",
+              })
+            : null,
+          venue: selectedMass?.location,
+        }}
+      />
+      <ReviewSection
+        title="Intention Types"
+        onEdit={() => onEdit(2)}
+        data={booking.groups.map((group) => group.type).join(", ")}
+      />
+      <ReviewSection
+        title="Intention Names"
+        onEdit={() => onEdit(3)}
+        data={Object.fromEntries(
+          booking.groups.map((group) => [
+            group.type,
+            group.entries.map((entry, index) => ({
+              entry: index + 1,
+              names: entry.names.filter((name) => name.trim()).join(", "),
+            })),
+          ]),
+        )}
+      />
+      <ReviewSection
+        title="Payment Information"
+        onEdit={() => onEdit(4)}
+        data={{
+          payment_method: "GCash",
+          rate_per_entry:
+            linePrice === null
+              ? "Unavailable / Hindi makuha"
+              : formatPhpCurrency(linePrice),
+          numbered_entries: totalIntentions,
+          total:
+            linePrice === null
+              ? "Unavailable / Hindi makuha"
+              : formatPhpCurrency(totalAmount),
+          reference_number: booking.reference_number,
+          receipt: booking.receipt?.name ?? "Not provided / Hindi ibinigay",
+          remarks: booking.remarks,
+        }}
+      />
       <div className="rounded-3xl border border-[#B22222]/20 bg-red-50 p-6 lg:col-span-2">
         <h3 className="mb-4 text-xl font-bold text-[#B22222]">
           Declaration
@@ -147,21 +111,6 @@ export default function ConfirmationStep({
           </span>
         </BookingLabel>
       </div>
-    </div>
-  );
-}
-
-interface SummaryRowProps {
-  label: string;
-  value: string;
-}
-
-function SummaryRow({ label, value }: SummaryRowProps) {
-  return (
-    <div className="flex items-center justify-between px-4 py-3">
-      <span className="text-sm text-gray-700">{label}</span>
-
-      <span className="text-sm font-medium text-gray-900">{value}</span>
     </div>
   );
 }

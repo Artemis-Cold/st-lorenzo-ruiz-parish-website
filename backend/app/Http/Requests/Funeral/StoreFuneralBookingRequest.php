@@ -2,11 +2,14 @@
 
 namespace App\Http\Requests\Funeral;
 
+use App\Http\Requests\Concerns\HasReadableBookingAttributes;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 class StoreFuneralBookingRequest extends FormRequest
 {
+    use HasReadableBookingAttributes;
+
     public function authorize(): bool
     {
         return true;
@@ -20,6 +23,7 @@ class StoreFuneralBookingRequest extends FormRequest
             'last_name' => ['required', 'string', 'max:100'],
         ];
         $rules = [
+            'schedule_request_id' => ['nullable', 'integer', 'exists:bookings,id'],
             'booking_slot_id' => ['required', 'integer', 'exists:booking_slots,id'],
             'service_package_id' => ['required', 'integer', 'exists:service_packages,id'],
             'selected_addon_ids' => ['nullable', 'array'],

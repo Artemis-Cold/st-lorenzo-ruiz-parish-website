@@ -1,3 +1,4 @@
+import FieldError from "@/features/parishioner/components/booking/FieldError";
 import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import type { Dispatch, SetStateAction } from "react";
 import { UploadCloud, ReceiptText } from "lucide-react";
@@ -218,10 +219,4 @@ ${
       </div>
     </div>
   );
-}
-
-function FieldError({ message }: { message?: string }) {
-  return message ? (
-    <p className="mt-1 text-sm text-red-600">{message}</p>
-  ) : null;
 }

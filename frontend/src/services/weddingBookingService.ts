@@ -5,6 +5,15 @@ import type { WeddingBooking } from "../features/parishioner/types/wedding";
 
 function buildFormData(booking: WeddingBooking): FormData {
   const formData = new FormData();
+  const append = (key: string, value: unknown): void => {
+    if (value === undefined || value === null) return;
+    if (value instanceof File) formData.append(key, value);
+    else if (typeof value === "object")
+      Object.entries(value).forEach(([child, item]) =>
+        append(`${key}[${child}]`, item),
+      );
+    else formData.append(key, String(value));
+  };
 
   formData.append("booking_slot_id", String(booking.booking_slot_id));
   formData.append("service_package_id", String(booking.service_package_id));
@@ -17,6 +26,10 @@ function buildFormData(booking: WeddingBooking): FormData {
   (["groom", "bride"] as const).forEach((role) => {
     const person = booking.applicant[role];
     const prefix = "applicant[" + role + "]";
+    for (const code of ["baptism", "confirmation"] as const) {
+      if (person.church[`${code}_status`] === "no")
+        append(`${prefix}[preparations][${code}]`, person.preparations?.[code]);
+    }
     formData.append(
       prefix + "[church][baptism_status]",
       person.church.baptism_status,
@@ -98,18 +111,20 @@ function buildFormData(booking: WeddingBooking): FormData {
   return formData;
 }
 
-export async function submitWeddingBooking(booking: WeddingBooking) {
+export async function submitWeddingBooking(
+  booking: WeddingBooking,
+  scheduleRequestId: number,
+) {
+  const formData = buildFormData(booking);
+  if (scheduleRequestId)
+    formData.append("schedule_request_id", String(scheduleRequestId));
   try {
-    const response = await api.post(
-      "/bookings/wedding",
-      buildFormData(booking),
-      {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "multipart/form-data",
-        },
+    const response = await api.post("/bookings/wedding", formData, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "multipart/form-data",
       },
-    );
+    });
 
     return response.data;
   } catch (error) {

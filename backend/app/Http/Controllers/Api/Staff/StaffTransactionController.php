@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api\Staff;
 
 use App\Http\Controllers\Controller;
+use App\Models\Booking;
 use App\Models\Payment;
+use App\Services\BookingRequirementService;
 use App\Services\SmsNotificationService;
 use App\Support\Money;
 use Illuminate\Http\JsonResponse;
@@ -20,7 +22,7 @@ class StaffTransactionController extends Controller
         $filters = $request->validate([
             'status' => ['nullable', 'in:pending,awaiting_payment,pending_verification,confirmed,rejected,voided'],
             'method' => ['nullable', 'in:gcash,cash'],
-            'service' => ['nullable', 'in:mass-intention,document-request,baptism,wedding,funeral'],
+            'service' => ['nullable', 'in:mass-intention,document-request,baptism,wedding,funeral,confirmation,first-communion'],
             'search' => ['nullable', 'string', 'max:100'],
             'date' => ['nullable', 'date_format:Y-m-d'],
             'page' => ['nullable', 'integer', 'min:1'],
@@ -30,6 +32,7 @@ class StaffTransactionController extends Controller
         $query = Payment::query()
             ->whereHas('booking.service', fn ($query) => $query->whereIn('code', [
                 'mass-intention', 'document-request', 'baptism', 'wedding', 'funeral',
+                'confirmation', 'first-communion',
             ]));
 
         if (($filters['status'] ?? null) === 'pending') {
@@ -128,6 +131,8 @@ class StaffTransactionController extends Controller
         }
 
         DB::transaction(function () use ($payment, $data, $request) {
+            // Use the same lock order as payment creation and document review.
+            $booking = Booking::query()->lockForUpdate()->findOrFail($payment->booking_id);
             $lockedPayment = Payment::query()->lockForUpdate()->findOrFail($payment->id);
             $allowedStatus = $lockedPayment->method === 'cash'
                 ? 'awaiting_payment'
@@ -143,6 +148,10 @@ class StaffTransactionController extends Controller
                 throw ValidationException::withMessages([
                     'status' => 'Payment verification is unavailable after the related request has moved beyond payment review.',
                 ]);
+            }
+
+            if ($data['status'] === 'confirmed') {
+                app(BookingRequirementService::class)->requirePaymentReady($booking);
             }
 
             $lockedPayment->update([
@@ -198,6 +207,8 @@ class StaffTransactionController extends Controller
             'document-request' => 'Document Request',
             'wedding' => 'Wedding',
             'funeral' => 'Funeral',
+            'confirmation' => 'Confirmation',
+            'first-communion' => 'First Communion',
             default => 'Baptism',
         };
         $receipt = $payment->receiptDocument;

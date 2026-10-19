@@ -8,12 +8,28 @@ const booking = (serviceCode, missingRequirements = [], required = true) => ({
   payment: { required },
 });
 
-for (const service of ["baptism", "wedding", "funeral"]) {
-  test(`${service} hides payment until all requirements are submitted`, () => {
+for (const service of [
+  "baptism",
+  "wedding",
+  "funeral",
+  "confirmation",
+  "first-communion",
+]) {
+  test(`${service} hides payment until digital approval and physical receipt`, () => {
     const detail = booking(service, [{ key: "missing-document" }]);
     assert.equal(canDisplayBookingPayment(detail), false);
     detail.missingRequirements = [];
+    assert.equal(canDisplayBookingPayment(detail), false);
+    detail.requirementReview = {
+      allApproved: true,
+      physicalCopiesReceivedAt: null,
+    };
+    assert.equal(canDisplayBookingPayment(detail), false);
+    detail.requirementReview.physicalCopiesReceivedAt = "2026-10-15T10:00:00Z";
     assert.equal(canDisplayBookingPayment(detail), true);
+    detail.requirementReview.allApproved = false;
+    assert.equal(canDisplayBookingPayment(detail), false);
+    detail.requirementReview.allApproved = true;
     detail.missingRequirements = [{ key: "sponsor-certificate" }];
     assert.equal(canDisplayBookingPayment(detail), false);
   });

@@ -8,22 +8,27 @@ use App\Models\Booking;
 use App\Models\Payment;
 use App\Services\BookingRequirementService;
 use App\Services\BookingReschedulingService;
+use App\Services\BookingScheduleReviewService;
 use App\Services\PaymentService;
 use App\Services\SmsNotificationService;
 use App\Support\Money;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 class ParishionerBookingController extends Controller
 {
-    private const RESCHEDULABLE_SERVICES = ['baptism', 'wedding', 'funeral'];
+    private const RESCHEDULABLE_SERVICES = [
+        'baptism', 'wedding', 'funeral', 'confirmation', 'first-communion',
+    ];
 
     private const PAYMENT_SERVICES = [
-        'baptism', 'wedding', 'funeral', 'mass-intention', 'document-request',
+        'baptism', 'wedding', 'funeral', 'confirmation', 'first-communion',
+        'mass-intention', 'document-request',
     ];
 
     public function show(
@@ -49,17 +54,25 @@ class ParishionerBookingController extends Controller
             'serviceCode' => $booking->service?->code,
             'status' => $booking->status,
             'bookingSlotId' => $booking->booking_slot_id,
+            'scheduleReview' => $booking->scheduleReview(),
             'canReschedule' => in_array($booking->service?->code, self::RESCHEDULABLE_SERVICES, true)
+                && $booking->service?->code !== 'first-communion'
+                && ! $booking->wedding_booking_id
                 && in_array($booking->status, ['pending', 'paid', 'approved'], true),
             'canUploadDocuments' => in_array($booking->service?->code, self::RESCHEDULABLE_SERVICES, true)
+                && $booking->scheduleConfirmed() && ! $booking->awaitingDetails()
                 && in_array($booking->status, ['pending', 'paid'], true),
             'missingRequirements' => $requirements->missing($booking),
+            'requirementReview' => in_array($booking->service->code, self::RESCHEDULABLE_SERVICES, true)
+                ? $requirements->reviewSummary($booking) : null,
             'submittedAt' => $booking->created_at->toIso8601String(),
             'remarks' => $booking->remarks,
             'schedule' => [
                 'date' => $booking->slot?->booking_date?->toDateString()
+                    ?? $booking->appointments->firstWhere('type', 'sacrament')?->scheduled_at?->toDateString()
                     ?? $booking->massIntention?->intention_date?->toDateString(),
                 'startTime' => $booking->slot?->start_time
+                    ?? $booking->appointments->firstWhere('type', 'sacrament')?->scheduled_at?->format('H:i')
                     ?? $booking->massIntention?->mass_starts_at?->format('H:i'),
                 'endTime' => $booking->slot?->end_time,
             ],
@@ -96,89 +109,95 @@ class ParishionerBookingController extends Controller
         BookingRequirementService $requirements,
         SmsNotificationService $sms
     ): JsonResponse {
-        abort_unless($booking->user_id === $request->user()->id, 404);
-        $serviceCode = $booking->service()->value('code');
-        abort_unless(in_array($serviceCode, self::PAYMENT_SERVICES, true), 404);
+        return DB::transaction(function () use ($request, $booking, $requirements, $sms) {
+            $booking = Booking::query()->lockForUpdate()->findOrFail($booking->id);
+            abort_unless($booking->user_id === $request->user()->id, 404);
+            $serviceCode = $booking->service()->value('code');
+            abort_unless(in_array($serviceCode, self::PAYMENT_SERVICES, true), 404);
 
-        $booking->loadMissing(['massIntention', 'documentRequest']);
+            $booking->loadMissing(['massIntention', 'documentRequest']);
+            app(BookingScheduleReviewService::class)->requireUnlocked($booking);
 
-        if (! in_array($booking->status, ['pending', 'paid'], true)) {
-            throw ValidationException::withMessages([
-                'file' => 'Documents can only be added while the booking is pending staff approval.',
+            if (! in_array($booking->status, ['pending', 'paid'], true)) {
+                throw ValidationException::withMessages([
+                    'file' => 'Documents can only be added while the booking is pending staff approval.',
+                ]);
+            }
+
+            $documentType = (string) $request->input('document_type');
+            $fileTypes = match (true) {
+                str_starts_with($documentType, 'couple_photo') => 'jpg,jpeg,png',
+                default => 'jpg,jpeg,png,pdf',
+            };
+
+            $data = $request->validate([
+                'document_type' => ['required', 'string', Rule::in($requirements->allowedTypes($booking))],
+                'file' => ['required', 'file', 'mimes:'.$fileTypes, 'max:5120'],
             ]);
-        }
 
-        $documentType = (string) $request->input('document_type');
-        $fileTypes = match (true) {
-            str_starts_with($documentType, 'couple_photo') => 'jpg,jpeg,png',
-            default => 'jpg,jpeg,png,pdf',
-        };
+            $existingDocument = $booking->documents()
+                ->where('document_type', $data['document_type'])
+                ->first();
 
-        $data = $request->validate([
-            'document_type' => ['required', 'string', Rule::in($requirements->allowedTypes($booking))],
-            'file' => ['required', 'file', 'mimes:'.$fileTypes, 'max:5120'],
-        ]);
+            if ($existingDocument && $existingDocument->status !== 'rejected') {
+                throw ValidationException::withMessages([
+                    'file' => 'This requirement has already been uploaded.',
+                ]);
+            }
 
-        $existingDocument = $booking->documents()
-            ->where('document_type', $data['document_type'])
-            ->first();
+            $file = $data['file'];
+            $newPath = $file->store('booking-documents', 'public');
+            $oldPath = $existingDocument?->file_path;
 
-        if ($existingDocument && $existingDocument->status !== 'rejected') {
-            throw ValidationException::withMessages([
-                'file' => 'This requirement has already been uploaded.',
-            ]);
-        }
+            if ($existingDocument) {
+                $existingDocument->update([
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_path' => $newPath,
+                    'status' => 'pending',
+                    'remarks' => null,
+                ]);
+                $document = $existingDocument->refresh();
+            } else {
+                $document = $booking->documents()->create([
+                    'document_type' => $data['document_type'],
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_path' => $newPath,
+                    'status' => 'pending',
+                ]);
+            }
 
-        $file = $data['file'];
-        $newPath = $file->store('booking-documents', 'public');
-        $oldPath = $existingDocument?->file_path;
+            if ($oldPath && $oldPath !== $newPath) {
+                Storage::disk('public')->delete($oldPath);
+            }
 
-        if ($existingDocument) {
-            $existingDocument->update([
-                'file_name' => $file->getClientOriginalName(),
-                'file_path' => $newPath,
-                'status' => 'pending',
-                'remarks' => null,
-            ]);
-            $document = $existingDocument->refresh();
-        } else {
-            $document = $booking->documents()->create([
-                'document_type' => $data['document_type'],
-                'file_name' => $file->getClientOriginalName(),
-                'file_path' => $newPath,
-                'status' => 'pending',
-            ]);
-        }
+            // A changed document set must be reviewed and its physical copies checked again.
+            $booking->update(['physical_copies_received_at' => null, 'physical_copies_received_by' => null]);
+            $booking->load(['service', 'documents', 'baptizand', 'user']);
+            $missing = $requirements->missing($booking);
 
-        if ($oldPath && $oldPath !== $newPath) {
-            Storage::disk('public')->delete($oldPath);
-        }
+            if ($missing === []) {
+                $serviceName = $booking->service?->name ?? 'service';
+                $sms->queue(
+                    $booking,
+                    'booking_requirements_complete',
+                    "St. Lorenzo Ruiz Parish: We have received all requirements for your {$serviceName} booking (Ref: {$booking->booking_reference}). Your documents are now awaiting parish staff review. Thank you."
+                );
+            }
 
-        $booking->load(['service', 'documents', 'baptizand', 'user']);
-        $missing = $requirements->missing($booking);
-
-        if ($missing === []) {
-            $serviceName = $booking->service?->name ?? 'service';
-            $sms->queue(
-                $booking,
-                'booking_requirements_complete',
-                "St. Lorenzo Ruiz Parish: We have received all requirements for your {$serviceName} booking (Ref: {$booking->booking_reference}). Your documents are now awaiting parish staff review. Thank you."
-            );
-        }
-
-        return response()->json([
-            'message' => 'Requirement submitted successfully.',
-            'data' => [
-                'document' => [
-                    'type' => $document->document_type,
-                    'fileName' => $document->file_name,
-                    'status' => $document->status,
-                    'remarks' => $document->remarks,
-                    'url' => Storage::disk('public')->url($document->file_path),
+            return response()->json([
+                'message' => 'Requirement submitted successfully.',
+                'data' => [
+                    'document' => [
+                        'type' => $document->document_type,
+                        'fileName' => $document->file_name,
+                        'status' => $document->status,
+                        'remarks' => $document->remarks,
+                        'url' => Storage::disk('public')->url($document->file_path),
+                    ],
+                    'missingRequirements' => $missing,
                 ],
-                'missingRequirements' => $missing,
-            ],
-        ], 201);
+            ], 201);
+        });
     }
 
     public function submitPayment(
@@ -270,6 +289,7 @@ class ParishionerBookingController extends Controller
                 'id' => $updated->id,
                 'status' => $updated->status,
                 'bookingSlotId' => $updated->booking_slot_id,
+                'scheduleReview' => $updated->scheduleReview(),
                 'schedule' => [
                     'date' => $updated->slot?->booking_date?->toDateString(),
                     'startTime' => $updated->slot?->start_time,
@@ -281,14 +301,31 @@ class ParishionerBookingController extends Controller
 
     private function sections(Booking $booking): array
     {
-        return match ($booking->service?->code) {
+        $sections = match ($booking->service?->code) {
             'wedding' => $this->weddingSections($booking),
             'funeral' => $this->funeralSections($booking),
             'baptism' => $this->baptismSections($booking),
+            'confirmation', 'first-communion' => $this->formationSacramentSections($booking),
             'mass-intention' => $this->massIntentionSections($booking),
             'document-request' => $this->documentRequestSections($booking),
             default => [],
         };
+        if ($booking->wedding_booking_id) {
+            array_unshift($sections, ['title' => 'Wedding preparation', 'fields' => [
+                ['label' => 'Wedding reference', 'value' => $booking->weddingBooking->booking_reference],
+                ['label' => 'Applicant', 'value' => ucfirst($booking->wedding_applicant_role)],
+                ['label' => 'Schedule', 'value' => 'Parish staff will coordinate with the priest and notify you by SMS. Not automatically on the wedding date.'],
+            ]]);
+        }
+        foreach ($booking->preparations()->with('service')->get() as $preparation) {
+            $sections[] = ['title' => ucfirst($preparation->wedding_applicant_role).' — '.$preparation->service->name, 'fields' => [
+                ['label' => 'Separate booking reference', 'value' => $preparation->booking_reference],
+                ['label' => 'Additional payment', 'value' => 'PHP '.$preparation->total_amount.' (separate from wedding)'],
+                ['label' => 'Requirements and payment', 'value' => 'Open this separate booking under My Profile.'],
+            ]];
+        }
+
+        return $sections;
     }
 
     private function documents(Booking $booking): Collection
@@ -349,7 +386,7 @@ class ParishionerBookingController extends Controller
                     'requirementType' => "wedding_sponsor_individual_{$type}_{$sponsor->id}",
                     'fileName' => $sponsor->requirement_file_name
                         ?: $label.($extension ? ".{$extension}" : ''),
-                    'status' => 'submitted',
+                    'status' => 'pending',
                     'remarks' => null,
                     'url' => Storage::disk('public')->url($path),
                 ];
@@ -371,7 +408,7 @@ class ParishionerBookingController extends Controller
                     'requirementType' => "baptism_godparent_individual_{$type}_{$godParent->id}",
                     'fileName' => $godParent->requirement_file_name
                         ?: $label.($extension ? ".{$extension}" : ''),
-                    'status' => 'submitted',
+                    'status' => 'pending',
                     'remarks' => null,
                     'url' => Storage::disk('public')->url($path),
                 ];
@@ -388,7 +425,8 @@ class ParishionerBookingController extends Controller
     {
         $serviceCode = $booking->service?->code;
         $isSacrament = in_array($serviceCode, self::RESCHEDULABLE_SERVICES, true);
-        $requiresPayment = in_array($serviceCode, self::PAYMENT_SERVICES, true);
+        $requiresPayment = in_array($serviceCode, self::PAYMENT_SERVICES, true)
+            && (float) $booking->total_amount > 0;
         $payment = $booking->payments
             ->whereIn('status', [...Payment::ACTIVE_STATUSES, 'confirmed', 'rejected'])
             ->sortByDesc('id')
@@ -412,6 +450,7 @@ class ParishionerBookingController extends Controller
                 'url' => Storage::disk('public')->url($receipt->file_path),
             ] : null,
             'canChangeMethod' => $requiresPayment
+                && app(BookingRequirementService::class)->paymentReady($booking)
                 && $booking->status === 'pending'
                 && $payment?->status !== 'confirmed',
         ];
@@ -454,7 +493,7 @@ class ParishionerBookingController extends Controller
                 'title' => 'Appointments',
                 'fields' => $booking->appointments->map(fn ($appointment) => [
                     'label' => $appointment->type === 'seminar' ? 'Wedding seminar' : 'Priest interview',
-                    'value' => $appointment->scheduled_at->format('F j, Y g:i A').' — '.$appointment->venue,
+                    'value' => $appointment->scheduled_at->format('F j, Y g:i A'),
                 ])->values(),
             ];
         }
@@ -515,10 +554,48 @@ class ParishionerBookingController extends Controller
 
         if ($booking->appointments->isNotEmpty()) {
             $sections[] = [
-                'title' => 'Seminar schedule',
+                'title' => 'Parish schedules',
                 'fields' => $booking->appointments->map(fn ($appointment) => [
                     'label' => 'Baptism seminar',
-                    'value' => $appointment->scheduled_at->format('F j, Y g:i A').' — '.$appointment->venue,
+                    'value' => $appointment->scheduled_at->format('F j, Y g:i A'),
+                ])->values(),
+            ];
+        }
+
+        return $sections;
+    }
+
+    private function formationSacramentSections(Booking $booking): array
+    {
+        $person = $booking->baptizand;
+        if (! $person) {
+            return [];
+        }
+
+        $sections = [[
+            'title' => $booking->service?->name.' candidate information',
+            'fields' => $this->fields([
+                'Name' => $this->name($person->first_name, $person->middle_initial, $person->last_name, $person->suffix),
+                'Parish origin' => $person->parish_origin,
+                'Baptism date' => $person->baptism_date?->format('F j, Y'),
+                'Church baptized' => $person->baptism_church,
+                'Birth date' => $person->birth_date?->format('F j, Y'),
+                'Birth place' => $person->birth_place,
+                'Age' => $person->age,
+                'Gender' => $person->gender,
+                'Address' => $person->address,
+                'Contact number' => $person->contact_number,
+                'Parents' => $person->parents->map(fn ($parent) => ucfirst($parent->relationship).': '.$this->name($parent->first_name, $parent->middle_initial, $parent->last_name, $parent->suffix))->join(', '),
+                'Sponsors' => $person->godParents->map(fn ($sponsor) => ucfirst($sponsor->role).': '.$this->name($sponsor->first_name, $sponsor->middle_initial, $sponsor->last_name, $sponsor->suffix).' — '.$sponsor->residence)->join(', '),
+            ]),
+        ]];
+
+        if ($booking->appointments->isNotEmpty()) {
+            $sections[] = [
+                'title' => 'Parish schedules',
+                'fields' => $booking->appointments->map(fn ($appointment) => [
+                    'label' => $booking->service?->name.($appointment->type === 'sacrament' ? ' ceremony' : ' seminar'),
+                    'value' => $appointment->scheduled_at->format('F j, Y g:i A'),
                 ])->values(),
             ];
         }

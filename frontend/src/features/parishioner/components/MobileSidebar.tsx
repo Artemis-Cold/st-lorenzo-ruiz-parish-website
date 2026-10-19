@@ -16,6 +16,7 @@ import {
   X,
   FileText,
   Settings,
+  Church,
 } from "lucide-react";
 
 import ParishLogo from "@/components/common/ParishLogo";
@@ -100,6 +101,20 @@ export default function MobileSidebar({ open, onClose }: MobileSidebarProps) {
                   icon={User}
                   label="Baptism"
                   to="/services/baptism"
+                />
+
+                <SidebarItem
+                  collapsed={false}
+                  icon={Church}
+                  label="Confirmation"
+                  to="/services/confirmation"
+                />
+
+                <SidebarItem
+                  collapsed={false}
+                  icon={Church}
+                  label="First Communion"
+                  to="/services/first-communion"
                 />
 
                 <SidebarItem

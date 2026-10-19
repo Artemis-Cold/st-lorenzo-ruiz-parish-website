@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\MassIntention;
 
+use App\Http\Requests\Concerns\HasReadableBookingAttributes;
 use App\Models\Event;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -9,6 +10,8 @@ use Illuminate\Validation\Validator;
 
 class StoreMassIntentionBookingRequest extends FormRequest
 {
+    use HasReadableBookingAttributes;
+
     public function authorize(): bool
     {
         return true;
@@ -31,7 +34,7 @@ class StoreMassIntentionBookingRequest extends FormRequest
             ],
             'groups.*.entries' => ['required', 'array', 'min:1'],
             'groups.*.entries.*.names' => ['required', 'array', 'min:1', 'max:3'],
-            'groups.*.entries.*.names.*' => ['required', 'string', 'max:150'],
+            'groups.*.entries.*.names.*' => ['required', 'string', 'max:150', 'not_regex:/[,;\r\n]/'],
             'payment_method' => ['sometimes', 'in:gcash'],
             'reference_number' => [
                 'required',
@@ -54,6 +57,8 @@ class StoreMassIntentionBookingRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'groups.*.entries.*.names.max' => 'Enter no more than three names per numbered intention.',
+            'groups.*.entries.*.names.*.not_regex' => "Enter one person's full name per field, without comma-separated lists.",
             'reference_number.digits' => 'Enter the 13-digit GCash transaction reference number.',
         ];
     }

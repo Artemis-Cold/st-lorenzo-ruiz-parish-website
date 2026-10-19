@@ -31,6 +31,7 @@ class StaffAvailabilityController extends Controller
             ->with([
                 'service:id,code,name',
                 'bookings' => fn ($query) => $query
+                    ->scheduleHeld()
                     ->whereNotIn(
                         'status',
                         config('booking-slots.released_statuses', [

@@ -48,13 +48,14 @@ class DocumentRequestBookingService
                 'service_id' => $service->id,
                 'service_package_id' => null,
                 'booking_slot_id' => null,
-                'payment_reference' => $data['reference_number'],
+                'payment_reference' => $total > 0 ? $data['reference_number'] : null,
+                'total_amount' => $total,
                 'status' => 'pending',
                 'remarks' => $data['remarks'] ?? null,
             ]);
 
             $documentRequest = $booking->documentRequest()->create([
-                'payment_reference' => $data['reference_number'],
+                'payment_reference' => $total > 0 ? $data['reference_number'] : null,
                 'total_amount' => $total,
             ]);
 
@@ -74,12 +75,17 @@ class DocumentRequestBookingService
                 }
             }
 
-            $this->payments->createAttempt(
-                $booking,
-                'gcash',
-                $data['reference_number'],
-                $data['receipt'],
-            );
+            if ($total > 0) {
+                if (empty($data['reference_number']) || empty($data['receipt'])) {
+                    throw ValidationException::withMessages(['receipt' => 'The current total requires a GCash reference and receipt. Refresh the prices and try again.']);
+                }
+                $this->payments->createAttempt(
+                    $booking,
+                    'gcash',
+                    $data['reference_number'],
+                    $data['receipt'],
+                );
+            }
 
             return $booking->load([
                 'documentRequest.items',

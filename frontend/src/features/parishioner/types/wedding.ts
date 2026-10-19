@@ -21,6 +21,9 @@ export interface PreviousChurchMarriage {
 }
 
 export interface Person extends PersonName {
+  preparations?: Partial<
+    Record<"baptism" | "confirmation", SacramentPreparation>
+  >;
   address: string;
   age: number | null;
   contact_number: string;
@@ -31,6 +34,131 @@ export interface Person extends PersonName {
   mother: PersonName;
 
   previous_church_marriage: PreviousChurchMarriage;
+}
+
+export interface SacramentPreparation {
+  candidate: Record<string, string>;
+  parents: Array<
+    PersonName & { relationship: "father" | "mother"; birth_place: string }
+  >;
+  sponsors: WeddingSponsor[];
+  documents: Array<{ document_type: string; file: File }>;
+}
+
+export function emptyPreparation(
+  person: Person,
+  role: ApplicantType,
+  code: "baptism" | "confirmation",
+): SacramentPreparation {
+  return {
+    candidate: {
+      first_name: person.first_name,
+      middle_initial: person.middle_initial,
+      last_name: person.last_name,
+      birth_date:
+        code === "baptism" || person.church.baptism_status === "no"
+          ? (person.preparations?.[
+              code === "baptism" ? "confirmation" : "baptism"
+            ]?.candidate.birth_date ?? "")
+          : "",
+      birth_place:
+        code === "baptism" || person.church.baptism_status === "no"
+          ? (person.preparations?.[
+              code === "baptism" ? "confirmation" : "baptism"
+            ]?.candidate.birth_place ?? "")
+          : "",
+      gender: role === "bride" ? "Female" : "Male",
+      address: person.address,
+      contact_number: person.contact_number,
+      parish_origin: "",
+      baptism_date: "",
+      baptism_church: person.church.baptized_in,
+    },
+    parents: (["father", "mother"] as const).map((relationship) => ({
+      ...person[relationship],
+      relationship,
+      birth_place:
+        code === "baptism" || person.church.baptism_status === "no"
+          ? (person.preparations?.[
+              code === "baptism" ? "confirmation" : "baptism"
+            ]?.parents.find((parent) => parent.relationship === relationship)
+              ?.birth_place ?? "")
+          : "",
+    })),
+    sponsors: Array.from({ length: code === "baptism" ? 2 : 1 }, () => ({
+      role: "",
+      first_name: "",
+      middle_initial: "",
+      last_name: "",
+      residence: "",
+      requirement_type: "",
+      requirement_file: null,
+    })),
+    documents: [],
+  };
+}
+
+/** Sync changed birth details for this applicant and their parents only. */
+export function updatePreparation(
+  person: Person,
+  code: "baptism" | "confirmation",
+  next: SacramentPreparation,
+): Person {
+  const otherCode = code === "baptism" ? "confirmation" : "baptism";
+  const other = person.preparations?.[otherCode];
+  const changedBirthDetails = Object.fromEntries(
+    (["birth_date", "birth_place"] as const)
+      .filter(
+        (field) =>
+          person.preparations?.[code]?.candidate[field] !==
+          next.candidate[field],
+      )
+      .map((field) => [field, next.candidate[field]]),
+  );
+  const changedParentBirthplaces = new Map(
+    next.parents
+      .filter(
+        (parent) =>
+          person.preparations?.[code]?.parents.find(
+            (previous) => previous.relationship === parent.relationship,
+          )?.birth_place !== parent.birth_place,
+      )
+      .map((parent) => [parent.relationship, parent.birth_place]),
+  );
+  const sync =
+    person.church.baptism_status === "no" &&
+    person.church.confirmation_status === "no" &&
+    other &&
+    (Object.keys(changedBirthDetails).length > 0 ||
+      changedParentBirthplaces.size > 0);
+  return {
+    ...person,
+    preparations: {
+      ...person.preparations,
+      [code]: next,
+      ...(sync
+        ? {
+            [otherCode]: {
+              ...other,
+              candidate: {
+                ...other.candidate,
+                ...changedBirthDetails,
+              },
+              parents: other.parents.map((parent) =>
+                changedParentBirthplaces.has(parent.relationship)
+                  ? {
+                      ...parent,
+                      birth_place: changedParentBirthplaces.get(
+                        parent.relationship,
+                      )!,
+                    }
+                  : parent,
+              ),
+            },
+          }
+        : {}),
+    },
+  };
 }
 
 export interface WeddingDocument {

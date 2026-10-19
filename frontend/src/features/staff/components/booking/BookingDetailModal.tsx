@@ -15,6 +15,8 @@ import BookingStatusBadge from "./BookingStatusBadge";
 import { formatLabel } from "../../utils/formatLabel";
 import {
   requestBookingRequirementResubmission,
+  reviewBookingRequirements,
+  reviewBookingSchedule,
   scheduleBookingAppointment,
   sendBookingPaymentReminder,
   sendBookingRequirementsReminder,
@@ -62,13 +64,29 @@ export default function BookingDetailModal({
   onUpdateStatus,
   onBookingUpdated,
 }: Props) {
+  const parentInterviewApplicants =
+    booking?.type === "Marriage"
+      ? (booking.details.serviceData.applicants ?? []).filter(
+          (applicant) => applicant.age >= 18 && applicant.age <= 24,
+        )
+      : [];
+  const underageApplicants =
+    booking?.type === "Marriage"
+      ? (booking.details.serviceData.applicants ?? []).filter(
+          (applicant) => applicant.age < 18,
+        )
+      : [];
+  const requiresParentInterview = parentInterviewApplicants.length > 0;
   const [appointments, setAppointments] = useState(
     booking?.details.appointments ?? [],
   );
   const [appointment, setAppointment] = useState({
-    type: "seminar" as "seminar" | "priest_interview",
+    type: (booking?.type === "First Communion"
+      ? "sacrament"
+      : requiresParentInterview
+        ? "priest_interview"
+        : "seminar") as "seminar" | "priest_interview" | "sacrament",
     scheduledAt: "",
-    venue: "",
     notes: "",
   });
   const [reminding, setReminding] = useState(false);
@@ -89,11 +107,86 @@ export default function BookingDetailModal({
   const [resubmissionReason, setResubmissionReason] = useState("");
   const [resubmissionError, setResubmissionError] = useState("");
   const [requestingResubmission, setRequestingResubmission] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
+  const [receivingCopies, setReceivingCopies] = useState(false);
+  const [scheduleReason, setScheduleReason] = useState("");
+  const [reviewingSchedule, setReviewingSchedule] = useState(false);
+  const [rejectingSchedule, setRejectingSchedule] = useState(false);
   if (!booking) return null;
 
   const { details } = booking;
   const service = details.serviceData;
   const missingRequirements = details.missingRequirements ?? [];
+  const hasRequiredParentInterview = appointments.some(
+    (item) => item.type === "priest_interview",
+  );
+  const requiresSeminar = ["Confirmation", "First Communion"].includes(
+    booking.type,
+  );
+  const hasRequiredSeminar = appointments.some(
+    (item) => item.type === "seminar",
+  );
+  const canApprove =
+    (!booking.scheduleReview ||
+      (booking.scheduleReview.status === "confirmed" &&
+        booking.scheduleReview.detailsSubmitted)) &&
+    (!details.weddingReference ||
+      appointments.some((item) => item.type === "sacrament")) &&
+    details.requirementReview?.allApproved === true &&
+    underageApplicants.length === 0 &&
+    missingRequirements.length === 0 &&
+    (!requiresParentInterview || hasRequiredParentInterview) &&
+    (!requiresSeminar || hasRequiredSeminar);
+  async function reviewRequirements(
+    action: "approve" | "approve_all" | "receive",
+    key?: string,
+  ) {
+    if (!booking) return;
+    if (
+      action === "approve_all" &&
+      !window.confirm(
+        "Confirm that you have checked every pending file and approve them all? Missing or rejected files will not be approved.",
+      )
+    )
+      return;
+    setReviewing(true);
+    try {
+      const response = await reviewBookingRequirements(booking.id, action, key);
+      onBookingUpdated(response.data);
+      if (action === "receive") setReceivingCopies(false);
+      toast.success(response.message);
+    } catch (error) {
+      toast.error(
+        error instanceof AxiosError
+          ? (error.response?.data?.message ?? "Unable to save document review.")
+          : "Unable to save document review.",
+      );
+    } finally {
+      setReviewing(false);
+    }
+  }
+
+  async function reviewSchedule(decision: "confirmed" | "rejected") {
+    if (!booking || reviewingSchedule) return;
+    setReviewingSchedule(true);
+    try {
+      onBookingUpdated(
+        await reviewBookingSchedule(booking.id, decision, scheduleReason),
+      );
+      setRejectingSchedule(false);
+      setScheduleReason("");
+      toast.success("Schedule reviewed and SMS queued.");
+    } catch (error) {
+      toast.error(
+        error instanceof AxiosError
+          ? (error.response?.data?.message ?? "Unable to review schedule.")
+          : "Unable to review schedule.",
+      );
+    } finally {
+      setReviewingSchedule(false);
+    }
+  }
+
   const canPublishBanns =
     booking.type === "Marriage" &&
     booking.status === "approved" &&
@@ -103,6 +196,17 @@ export default function BookingDetailModal({
     event.preventDefault();
     try {
       const saved = await scheduleBookingAppointment(booking.id, appointment);
+      onBookingUpdated({
+        ...booking,
+        scheduleReview: saved.scheduleReview,
+        details: {
+          ...booking.details,
+          appointments: [
+            ...appointments.filter((item) => item.type !== saved.type),
+            saved,
+          ],
+        },
+      });
       setAppointments((items) => [
         ...items.filter((item) => item.type !== saved.type),
         saved,
@@ -253,6 +357,126 @@ export default function BookingDetailModal({
           </button>
         </div>
 
+        {details.weddingReference && (
+          <div className="mb-4 rounded-xl border bg-[#FAF8F5] p-4 text-sm">
+            {formatLabel(details.weddingApplicantRole ?? "")} preparation for
+            wedding <strong>{details.weddingReference}</strong>. Separate
+            payment; schedule the ceremony below after coordinating with the
+            priest.
+          </div>
+        )}
+
+        {booking.scheduleReview && (
+          <section className="mb-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm">
+            <h3 className="font-semibold">
+              Schedule: {formatLabel(booking.scheduleReview.status)}
+            </h3>
+            <p className="mt-2">
+              {details.schedule.date ?? "Ceremony date to be assigned"}{" "}
+              {details.schedule.startTime &&
+                `· ${details.schedule.startTime}–${details.schedule.endTime}`}
+            </p>
+            {booking.scheduleReview.reason && (
+              <p className="mt-2 text-red-700">
+                Reason: {booking.scheduleReview.reason}
+              </p>
+            )}
+            {booking.scheduleReview.status === "awaiting_review" &&
+              ["pending", "paid"].includes(booking.status) && (
+                <>
+                  <p className="mt-2">
+                    {booking.type === "First Communion"
+                      ? "Assign the First Communion ceremony date in the schedules section below. Saving it confirms the date, unlocks requirements, and sends an SMS."
+                      : "Confirm the date and time to unlock requirements. The parishioner will receive an SMS."}
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-3">
+                    <button
+                      disabled={
+                        reviewingSchedule ||
+                        ((!!details.weddingReference ||
+                          booking.type === "First Communion") &&
+                          !appointments.some(
+                            (item) => item.type === "sacrament",
+                          ))
+                      }
+                      onClick={() => void reviewSchedule("confirmed")}
+                      className="rounded-xl bg-[#B22222] px-4 py-2 font-semibold text-white disabled:opacity-50"
+                    >
+                      Confirm Schedule &amp; Notify
+                    </button>
+                    <button
+                      disabled={reviewingSchedule}
+                      onClick={() => setRejectingSchedule(true)}
+                      className="rounded-xl border border-red-300 px-4 py-2 font-semibold text-red-700"
+                    >
+                      Reject Schedule
+                    </button>
+                  </div>
+                </>
+              )}
+          </section>
+        )}
+        <AlertDialog
+          open={rejectingSchedule}
+          onOpenChange={(open) => {
+            if (!reviewingSchedule) setRejectingSchedule(open);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Reject this schedule?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Enter the reason. It will be sent to the parishioner by SMS and
+                the time will be released.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <label
+              htmlFor="schedule-rejection-reason"
+              className="text-sm font-medium"
+            >
+              Reason for rejection
+            </label>
+            <textarea
+              id="schedule-rejection-reason"
+              value={scheduleReason}
+              onChange={(event) => setScheduleReason(event.target.value)}
+              maxLength={1000}
+              placeholder="Explain why this date and time cannot be confirmed"
+              className="min-h-28 rounded-xl border p-3"
+            />
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={reviewingSchedule}>
+                Back
+              </AlertDialogCancel>
+              <button
+                disabled={reviewingSchedule || !scheduleReason.trim()}
+                onClick={() => void reviewSchedule("rejected")}
+                className="rounded-xl bg-[#B22222] px-4 py-2 text-white disabled:opacity-50"
+              >
+                {reviewingSchedule ? "Sending…" : "Reject & Notify"}
+              </button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+        {!!details.preparations?.length && (
+          <section className="mb-4 space-y-2 rounded-xl border bg-[#FAF8F5] p-4">
+            <h3 className="font-semibold">
+              Baptism & Confirmation — separate bookings
+            </h3>
+            {details.preparations.map((item) => (
+              <p key={item.reference} className="text-sm">
+                {formatLabel(item.role)} · {item.service} · {item.reference} ·{" "}
+                {formatPhpCurrency(Number(item.amount))} ·{" "}
+                {formatLabel(item.status)}
+              </p>
+            ))}
+            <p className="text-xs text-gray-500">
+              Open the linked reference in Booking Management to review
+              requirements, receive physical copies, and assign its ceremony
+              schedule.
+            </p>
+          </section>
+        )}
         <div className="grid gap-4 sm:grid-cols-2">
           <section className="space-y-3 rounded-2xl border border-[#E7E2DA] p-5">
             <h3 className="font-semibold text-[#292524]">Booking summary</h3>
@@ -265,7 +489,12 @@ export default function BookingDetailModal({
             <Detail label="Contact" value={booking.contactNumber} />
             <Detail
               label="Date"
-              value={details.schedule.date ?? booking.date}
+              value={
+                details.schedule.date ??
+                (details.weddingReference
+                  ? "To be assigned by parish staff"
+                  : booking.date)
+              }
             />
             <Detail
               label="Time"
@@ -586,28 +815,90 @@ export default function BookingDetailModal({
           </section>
         )}
 
-        {(booking.type === "Marriage" || booking.type === "Baptism") && (
+        {["Marriage", "Baptism", "Confirmation", "First Communion"].includes(
+          booking.type,
+        ) && (
           <section className="mt-4 min-w-0 space-y-4 rounded-2xl border border-[#E7E2DA] p-4 sm:p-5">
             <div>
               <h3 className="font-semibold text-[#292524]">
-                {booking.type === "Baptism"
-                  ? "Baptism seminar and SMS"
-                  : "Wedding schedules and SMS"}
+                {booking.type === "Marriage"
+                  ? "Wedding schedules and SMS"
+                  : `${booking.type} schedules and SMS`}
               </h3>
               <p className="mt-1 text-xs text-gray-500">
                 Saving a schedule queues an SMS notification for the
                 parishioner.
               </p>
             </div>
+            {booking.type === "Marriage" && underageApplicants.length > 0 && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-900">
+                <p className="font-semibold">Wedding cannot be approved</p>
+                <p className="mt-1 leading-5">
+                  {underageApplicants
+                    .map(
+                      (applicant) =>
+                        `${formatLabel(applicant.role)}: ${applicant.name} (age ${applicant.age})`,
+                    )
+                    .join(" • ")}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-red-700">
+                  Both applicants must be at least 18 years old.
+                </p>
+              </div>
+            )}
+            {booking.type === "Marriage" && requiresParentInterview && (
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-950">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-semibold">
+                    Priest interview with parents required
+                  </p>
+                  <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                    {hasRequiredParentInterview
+                      ? "Schedule saved"
+                      : "Not yet scheduled"}
+                  </span>
+                </div>
+                <p className="mt-1 leading-5">
+                  {parentInterviewApplicants
+                    .map(
+                      (applicant) =>
+                        `${formatLabel(applicant.role)}: ${applicant.name} (age ${applicant.age})`,
+                    )
+                    .join(" • ")}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-amber-800">
+                  The priest determines the interview date. Saving the priest
+                  interview below sends the schedule and parent-attendance
+                  reminder by SMS. Approval remains disabled until the schedule
+                  is saved.
+                </p>
+              </div>
+            )}
+            {requiresSeminar && (
+              <div className="rounded-xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-950">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-semibold">Required seminar</p>
+                  <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-800">
+                    {hasRequiredSeminar
+                      ? "Schedule saved"
+                      : "Not yet scheduled"}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs leading-5 text-blue-800">
+                  Set the seminar date chosen by the parish. Saving it sends the
+                  schedule by SMS and enables approval.
+                </p>
+              </div>
+            )}
             {appointments.map((item) => (
               <Detail
                 key={item.type}
                 label={
-                  booking.type === "Baptism"
-                    ? "Baptism seminar"
+                  booking.type !== "Marriage"
+                    ? `${booking.type} ${item.type === "sacrament" ? "ceremony" : "seminar"}`
                     : formatLabel(item.type)
                 }
-                value={`${new Date(item.scheduledAt).toLocaleString()} — ${item.venue}`}
+                value={new Date(item.scheduledAt).toLocaleString()}
               />
             ))}
             <form
@@ -626,11 +917,32 @@ export default function BookingDetailModal({
                   className="min-w-0 w-full rounded-xl border px-3 py-2"
                 >
                   <option value="seminar">Wedding Seminar</option>
-                  <option value="priest_interview">Priest Interview</option>
+                  <option value="priest_interview">
+                    {requiresParentInterview
+                      ? "Priest Interview with Parents (Required)"
+                      : "Priest Interview"}
+                  </option>
+                </select>
+              ) : details.weddingReference ||
+                booking.type === "First Communion" ? (
+                <select
+                  value={appointment.type}
+                  onChange={(e) =>
+                    setAppointment({
+                      ...appointment,
+                      type: e.target.value as typeof appointment.type,
+                    })
+                  }
+                  className="w-full rounded-xl border px-3 py-2"
+                >
+                  <option value="seminar">{booking.type} Seminar</option>
+                  <option value="sacrament">
+                    {booking.type} Ceremony — Priest-coordinated
+                  </option>
                 </select>
               ) : (
                 <div className="min-w-0 w-full rounded-xl border bg-gray-50 px-3 py-2 text-sm font-medium text-gray-700">
-                  Baptism Seminar
+                  {booking.type} Seminar
                 </div>
               )}
               <input
@@ -644,15 +956,6 @@ export default function BookingDetailModal({
                   })
                 }
                 className="min-w-0 w-full max-w-full rounded-xl border px-3 py-2"
-              />
-              <input
-                required
-                placeholder="Venue"
-                value={appointment.venue}
-                onChange={(e) =>
-                  setAppointment({ ...appointment, venue: e.target.value })
-                }
-                className="min-w-0 w-full rounded-xl border px-3 py-2"
               />
               <input
                 placeholder="Notes (optional)"
@@ -733,7 +1036,9 @@ export default function BookingDetailModal({
         {service.baptizand && (
           <section className="mt-4 space-y-4 rounded-2xl border border-[#E7E2DA] p-5">
             <h3 className="font-semibold text-[#292524]">
-              Baptism information
+              {booking.type === "Baptism"
+                ? "Baptism information"
+                : `${booking.type} candidate information`}
             </h3>
             <div className="grid gap-3 sm:grid-cols-2">
               <Detail label="Baptizand" value={service.baptizand.name} />
@@ -745,6 +1050,22 @@ export default function BookingDetailModal({
               <Detail label="Gender" value={service.baptizand.gender} />
               <Detail label="Address" value={service.baptizand.address} />
               <Detail label="Contact" value={service.baptizand.contactNumber} />
+              {booking.type !== "Baptism" && (
+                <>
+                  <Detail
+                    label="Parish origin"
+                    value={service.baptizand.parishOrigin}
+                  />
+                  <Detail
+                    label="Baptism date"
+                    value={service.baptizand.baptismDate}
+                  />
+                  <Detail
+                    label="Church baptized"
+                    value={service.baptizand.baptismChurch}
+                  />
+                </>
+              )}
             </div>
             {service.baptizand.parents.map((parent) => (
               <Detail
@@ -782,6 +1103,91 @@ export default function BookingDetailModal({
               </p>
             </div>
           </div>
+          <div className="mt-4 rounded-xl border border-gray-200 bg-[#FAF8F5] p-4 text-sm">
+            <p className="font-semibold">
+              {details.requirementReview?.allApproved
+                ? "Digital requirements approved"
+                : "Digital requirements awaiting review or completion"}
+            </p>
+            <p className="mt-1 text-xs text-gray-600">
+              {details.requirementReview?.physicalCopiesReceivedAt
+                ? `Physical copies received: ${new Date(details.requirementReview.physicalCopiesReceivedAt).toLocaleDateString()}`
+                : "Receive physical copies only after all digital requirements are approved. The parishioner will receive an SMS when they are ready to submit them."}
+            </p>
+            {["pending", "paid", "approved"].includes(booking.status) && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {details.documents.some(
+                  (document) => document.status === "pending",
+                ) && (
+                  <button
+                    type="button"
+                    disabled={reviewing}
+                    onClick={() => reviewRequirements("approve_all")}
+                    className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-semibold disabled:opacity-50"
+                  >
+                    Approve all pending files
+                  </button>
+                )}
+                {!details.requirementReview?.physicalCopiesReceivedAt && (
+                  <AlertDialog
+                    open={receivingCopies}
+                    onOpenChange={(open) => {
+                      if (!reviewing) setReceivingCopies(open);
+                    }}
+                  >
+                    <AlertDialogTrigger asChild>
+                      <button
+                        type="button"
+                        disabled={
+                          reviewing || !details.requirementReview?.allApproved
+                        }
+                        className="rounded-lg bg-[#B22222] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
+                      >
+                        Mark physical copies received
+                      </button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="border border-[#E7E2DA] bg-white text-[#292524]">
+                      <AlertDialogHeader>
+                        <span className="mb-2 grid size-11 place-items-center rounded-full bg-[#B22222]/10 text-[#B22222]">
+                          <CheckCircle2 size={22} />
+                        </span>
+                        <AlertDialogTitle>
+                          Confirm physical copies received?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Confirm only after you have received and checked all
+                          required physical copies at the parish office.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <div className="rounded-xl border border-[#E7E2DA] bg-[#FAF8F5] p-3 text-sm">
+                        <p className="font-semibold">{booking.names}</p>
+                        <p className="mt-1 text-xs text-gray-500">
+                          {booking.reference}
+                        </p>
+                      </div>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel disabled={reviewing}>
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          disabled={
+                            reviewing || !details.requirementReview?.allApproved
+                          }
+                          onClick={(event) => {
+                            event.preventDefault();
+                            void reviewRequirements("receive");
+                          }}
+                          className="bg-[#B22222] text-white hover:bg-[#991B1B]"
+                        >
+                          {reviewing ? "Saving…" : "Confirm receipt"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </div>
+            )}
+          </div>
           {details.documents.length ? (
             <div className="mt-4 space-y-3">
               {details.documents.map((document) => (
@@ -798,7 +1204,11 @@ export default function BookingDetailModal({
                         <span
                           className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${document.status === "rejected" ? "bg-red-100 text-red-700" : document.status === "approved" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-800"}`}
                         >
-                          {formatLabel(document.status)}
+                          {document.status === "approved"
+                            ? "Approved online"
+                            : document.status === "rejected"
+                              ? "Needs resubmission"
+                              : "Pending review"}
                         </span>
                       </div>
                       <p className="mt-1 truncate text-xs text-gray-500">
@@ -814,6 +1224,22 @@ export default function BookingDetailModal({
                       >
                         View file <ExternalLink size={13} />
                       </a>
+                      {document.reviewKey &&
+                        document.status === "pending" &&
+                        ["pending", "paid", "approved"].includes(
+                          booking.status,
+                        ) && (
+                          <button
+                            type="button"
+                            disabled={reviewing}
+                            onClick={() =>
+                              reviewRequirements("approve", document.reviewKey!)
+                            }
+                            className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs font-semibold text-green-800 disabled:opacity-50"
+                          >
+                            Approve file
+                          </button>
+                        )}
                       {document.reviewKey &&
                         document.status !== "rejected" &&
                         (booking.status === "pending" ||
@@ -925,30 +1351,34 @@ export default function BookingDetailModal({
           </AlertDialogContent>
         </AlertDialog>
 
-        {missingRequirements.length > 0 && (
-          <section className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-5">
-            <h3 className="font-semibold text-amber-900">
-              Missing requirements
-            </h3>
-            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-800">
-              {missingRequirements.map((requirement) => (
-                <li key={requirement.key}>{requirement.label}</li>
-              ))}
-            </ul>
-            <p className="mt-3 text-xs font-medium text-amber-900">
-              Approval is disabled until all required files are submitted.
-            </p>
-            <button
-              type="button"
-              disabled={reminding}
-              onClick={remind}
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <BellRing size={16} />{" "}
-              {reminding ? "Sending..." : "Send SMS Reminder"}
-            </button>
-          </section>
-        )}
+        {missingRequirements.length > 0 &&
+          (!booking.scheduleReview ||
+            (booking.scheduleReview.status === "confirmed" &&
+              booking.scheduleReview.detailsSubmitted)) && (
+            <section className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+              <h3 className="font-semibold text-amber-900">
+                Missing requirements
+              </h3>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-800">
+                {missingRequirements.map((requirement) => (
+                  <li key={requirement.key}>{requirement.label}</li>
+                ))}
+              </ul>
+              <p className="mt-3 text-xs font-medium text-amber-900">
+                Booking approval requires all digital requirements to be
+                submitted and approved.
+              </p>
+              <button
+                type="button"
+                disabled={reminding}
+                onClick={remind}
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-amber-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <BellRing size={16} />{" "}
+                {reminding ? "Sending..." : "Send SMS Reminder"}
+              </button>
+            </section>
+          )}
 
         {(booking.status === "pending" ||
           booking.status === "paid" ||
@@ -956,14 +1386,19 @@ export default function BookingDetailModal({
           <div className="mt-6 space-y-2.5">
             {(booking.status === "pending" || booking.status === "paid") && (
               <div className="flex gap-2.5">
-                <RejectConfirmationButton
-                  itemLabel="booking"
-                  onConfirm={() => onUpdateStatus(booking.id, "rejected")}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 py-3 font-semibold text-red-600 transition hover:bg-red-50"
-                />
-                {booking.status === "paid" && (
+                {booking.scheduleReview?.status !== "awaiting_review" && (
+                  <RejectConfirmationButton
+                    itemLabel="booking"
+                    onConfirm={() => onUpdateStatus(booking.id, "rejected")}
+                    className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-red-200 py-3 font-semibold text-red-600 transition hover:bg-red-50"
+                  />
+                )}
+                {(booking.status === "paid" ||
+                  (booking.status === "pending" &&
+                    (booking.amount === 0 ||
+                      details.payment.status === "confirmed"))) && (
                   <button
-                    disabled={missingRequirements.length > 0}
+                    disabled={!canApprove}
                     onClick={() => onUpdateStatus(booking.id, "approved")}
                     className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#B22222] py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
                   >
@@ -980,12 +1415,14 @@ export default function BookingDetailModal({
                 <CheckCircle2 size={18} /> Mark as Completed
               </button>
             )}
-            <button
-              onClick={() => onUpdateStatus(booking.id, "cancelled")}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-3 font-semibold text-red-600"
-            >
-              <Ban size={18} /> Cancel Booking
-            </button>
+            {booking.scheduleReview?.status !== "awaiting_review" && (
+              <button
+                onClick={() => onUpdateStatus(booking.id, "cancelled")}
+                className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-200 py-3 font-semibold text-red-600"
+              >
+                <Ban size={18} /> Cancel Booking
+              </button>
+            )}
           </div>
         )}
       </div>

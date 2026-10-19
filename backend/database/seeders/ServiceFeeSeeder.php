@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Service;
 use App\Models\ServiceFee;
+use App\Support\ParishCatalog;
 use Illuminate\Database\Seeder;
 
 class ServiceFeeSeeder extends Seeder
@@ -20,6 +21,10 @@ class ServiceFeeSeeder extends Seeder
             ['service' => 'mass-intention', 'code' => 'intention_line', 'name' => 'Mass Intention Line', 'amount' => 100, 'sort_order' => 1],
             ['service' => 'baptism', 'code' => 'additional_sponsor', 'name' => 'Additional Sponsor per Person', 'amount' => 100, 'sort_order' => 1],
         ];
+
+        foreach (ParishCatalog::DOCUMENTS as $code => [$name, $amount]) {
+            $fees[] = ['service' => 'document-request', 'code' => $code, 'name' => $name, 'amount' => $amount, 'sort_order' => count($fees) + 1];
+        }
 
         foreach ($fees as $fee) {
             ServiceFee::firstOrCreate([

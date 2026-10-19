@@ -12,6 +12,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class SmsNotificationTest extends TestCase
@@ -32,15 +33,69 @@ class SmsNotificationTest extends TestCase
         $this->postJson("/api/staff/bookings/{$booking->id}/appointments", [
             'type' => 'seminar',
             'scheduledAt' => now()->addDay()->toIso8601String(),
-            'venue' => 'Parish Hall',
             'notes' => 'Bring valid IDs.',
-        ])->assertCreated()->assertJsonPath('data.venue', 'Parish Hall');
+        ])->assertCreated()->assertJsonPath('data.venue', '');
 
         $this->assertDatabaseHas('sms_messages', [
             'booking_id' => $booking->id,
             'recipient' => '639171234567',
             'category' => 'seminar',
         ]);
+        $this->assertStringNotContainsString(
+            'Parish Hall',
+            SmsMessage::query()->where('booking_id', $booking->id)->value('message')
+        );
+        Queue::assertPushed(SendSmsMessage::class);
+    }
+
+    public static function parentInterviewAges(): array
+    {
+        return [
+            ['bride', 18, true], ['bride', 24, true], ['bride', 25, false],
+            ['groom', 18, true], ['groom', 24, true], ['groom', 25, false],
+        ];
+    }
+
+    #[DataProvider('parentInterviewAges')]
+    public function test_priest_interview_sms_requires_parents_for_wedding_applicants_aged_18_to_24(string $role, int $age, bool $requiresParents): void
+    {
+        Queue::fake();
+        Sanctum::actingAs(User::factory()->create(['role' => 'staff']));
+        $parishioner = User::factory()->create(['phone' => '09171234567']);
+        $service = Service::create(['code' => 'wedding', 'name' => 'Wedding', 'description' => 'Wedding']);
+        $booking = Booking::create([
+            'booking_reference' => 'WED-SMS-2', 'user_id' => $parishioner->id,
+            'service_id' => $service->id, 'booking_slot_id' => null,
+        ]);
+        $booking->weddingApplicants()->create([
+            'role' => $role,
+            'first_name' => 'Juan',
+            'last_name' => 'Dela Cruz',
+            'address' => 'Taysan, Batangas',
+            'age' => $age,
+            'contact_number' => '09171234567',
+            'baptized_in' => 'St. Lorenzo Ruiz Parish',
+            'confirmed_in' => 'St. Lorenzo Ruiz Parish',
+            'father_first_name' => 'Pedro',
+            'father_last_name' => 'Dela Cruz',
+            'mother_first_name' => 'Maria',
+            'mother_last_name' => 'Dela Cruz',
+            'church_name' => 'St. Lorenzo Ruiz Parish',
+            'priest' => 'Parish Priest',
+            'church_address' => 'Taysan, Batangas',
+        ]);
+
+        $this->postJson("/api/staff/bookings/{$booking->id}/appointments", [
+            'type' => 'priest_interview',
+            'scheduledAt' => now()->addDays(3)->toIso8601String(),
+        ])->assertCreated();
+
+        $message = SmsMessage::query()
+            ->where('booking_id', $booking->id)
+            ->where('category', 'priest_interview')
+            ->value('message');
+
+        $this->assertSame($requiresParents, str_contains($message, 'must attend with the parent/s of the applicant/s aged 18-24'));
         Queue::assertPushed(SendSmsMessage::class);
     }
 
@@ -58,16 +113,15 @@ class SmsNotificationTest extends TestCase
         $this->postJson("/api/staff/bookings/{$booking->id}/appointments", [
             'type' => 'seminar',
             'scheduledAt' => now()->addDays(2)->toIso8601String(),
-            'venue' => 'Parish Formation Hall',
             'notes' => 'Parents and godparents must attend.',
         ])->assertCreated()
             ->assertJsonPath('data.type', 'seminar')
-            ->assertJsonPath('data.venue', 'Parish Formation Hall');
+            ->assertJsonPath('data.venue', '');
 
         $this->assertDatabaseHas('booking_appointments', [
             'booking_id' => $booking->id,
             'type' => 'seminar',
-            'venue' => 'Parish Formation Hall',
+            'venue' => '',
         ]);
         $this->assertDatabaseHas('sms_messages', [
             'booking_id' => $booking->id,
@@ -76,6 +130,10 @@ class SmsNotificationTest extends TestCase
         ]);
         $this->assertStringContainsString(
             'Your baptism seminar',
+            SmsMessage::query()->where('booking_id', $booking->id)->value('message')
+        );
+        $this->assertStringNotContainsString(
+            'Parish Formation Hall',
             SmsMessage::query()->where('booking_id', $booking->id)->value('message')
         );
         Queue::assertPushed(SendSmsMessage::class);

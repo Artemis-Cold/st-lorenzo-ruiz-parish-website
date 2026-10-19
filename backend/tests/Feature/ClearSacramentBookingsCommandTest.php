@@ -77,6 +77,21 @@ class ClearSacramentBookingsCommandTest extends TestCase
         Storage::disk('public')->assertExists('booking-documents/document-request.pdf');
     }
 
+    public function test_cleanup_handles_linked_wedding_preparations_without_removing_accounts_or_slots(): void
+    {
+        $bookings = $this->bookings();
+        $bookings['baptism']->update([
+            'wedding_booking_id' => $bookings['wedding']->id,
+            'wedding_applicant_role' => 'bride',
+        ]);
+        $this->artisan('bookings:clear-sacraments', ['--execute' => true, '--force' => true])->assertSuccessful();
+        $this->assertDatabaseMissing('bookings', ['id' => $bookings['wedding']->id]);
+        $this->assertDatabaseMissing('bookings', ['id' => $bookings['baptism']->id]);
+        $this->assertDatabaseHas('users', ['id' => $bookings['wedding']->user_id]);
+        $this->assertDatabaseHas('booking_slots', ['id' => $bookings['wedding']->booking_slot_id]);
+        $this->assertDatabaseHas('bookings', ['id' => $bookings['document-request']->id]);
+    }
+
     /** @return array<string, Booking> */
     private function bookings(): array
     {

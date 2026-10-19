@@ -27,7 +27,10 @@ export default function PackageSummary({
 
   const sponsorSubtotal =
     additionalSponsorCount * (additionalSponsorPrice ?? 0);
-  const total = Number(selectedPackage.base_price) + sponsorSubtotal;
+  const total =
+    Number(selectedPackage.base_price) +
+    selectedPackage.inclusions.reduce((sum, item) => sum + item.price, 0) +
+    sponsorSubtotal;
 
   return (
     <BookingCard title="Selected Package">

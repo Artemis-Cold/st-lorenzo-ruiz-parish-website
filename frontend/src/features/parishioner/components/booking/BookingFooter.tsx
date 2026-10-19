@@ -1,8 +1,11 @@
+import { BookingTranslation } from "./BookingLabel";
+
 interface Props {
   previous?: () => void;
   next?: () => void;
   previousText?: string;
   nextText?: string;
+  busy?: boolean;
 }
 
 export default function BookingFooter({
@@ -10,25 +13,31 @@ export default function BookingFooter({
   next,
   previousText = "Previous",
   nextText = "Next",
+  busy = false,
 }: Props) {
   return (
     <div className="mt-8 flex flex-col-reverse gap-3 sm:mt-10 sm:flex-row sm:justify-between">
       {previous && (
         <button
           type="button"
+          disabled={busy}
           onClick={previous}
           className="w-full rounded-xl border border-[#B22222] px-5 py-3 font-semibold text-[#B22222] transition hover:bg-[#B22222] hover:text-white sm:w-auto sm:px-8"
         >
           {previousText}
+          <BookingTranslation text={previousText} />
         </button>
       )}
 
       <button
         type="button"
+        disabled={busy || !next}
+        aria-busy={busy}
         onClick={next}
-        className="w-full rounded-xl bg-[#B22222] px-5 py-3 font-semibold text-white transition hover:bg-[#991B1B] sm:ml-auto sm:w-auto sm:px-8"
+        className="w-full rounded-xl bg-[#B22222] px-5 py-3 font-semibold text-white transition hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-60 sm:ml-auto sm:w-auto sm:px-8"
       >
         {nextText}
+        <BookingTranslation text={nextText} />
       </button>
     </div>
   );

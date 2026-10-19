@@ -1,5 +1,4 @@
 import { BookingTranslation } from "@/features/parishioner/components/booking/BookingLabel";
-import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import {
   useEffect,
   useMemo,
@@ -38,6 +37,7 @@ export default function PackagesStep({
 }: PackagesStepProps) {
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -47,6 +47,7 @@ export default function PackagesStep({
         const data = await getServicePackages("baptism");
         if (active) setPackages(data);
       } catch (error) {
+        if (active) setError(true);
         console.error(error);
       } finally {
         if (active) setLoading(false);
@@ -66,10 +67,8 @@ export default function PackagesStep({
     () =>
       isSunday === null
         ? packages
-        : packages.filter((pkg) =>
-            isSunday
-              ? pkg.name.toLowerCase().includes("sunday")
-              : !pkg.name.toLowerCase().includes("sunday"),
+        : packages.filter(
+            (pkg) => !pkg.name.toLowerCase().includes("sunday") || isSunday,
           ),
     [isSunday, packages],
   );
@@ -77,7 +76,7 @@ export default function PackagesStep({
   // If the previously selected package no longer matches the chosen date
   // (e.g. user picked a package, went back, changed the date), clear it.
   useEffect(() => {
-    if (booking.service_package_id === 0) return;
+    if (loading || error || booking.service_package_id === 0) return;
 
     const stillValid = relevantPackages.some(
       (pkg) => pkg.id === booking.service_package_id,
@@ -89,6 +88,8 @@ export default function PackagesStep({
     }
   }, [
     booking.service_package_id,
+    loading,
+    error,
     relevantPackages,
     setBooking,
     setSelectedPackage,
@@ -141,8 +142,13 @@ export default function PackagesStep({
       <div className="space-y-8">
         <div>
           <h3 className="mb-6 text-2xl font-bold">
-            Baptismal Rates
-            <BookingTranslation text="Baptismal Rates" />
+            Choose Your Baptism Package
+            <span
+              lang="tl"
+              className="mt-1 block text-sm font-normal text-gray-500"
+            >
+              Piliin ang inyong pakete para sa Binyag
+            </span>
           </h3>
 
           {selectedDate && (
@@ -157,11 +163,30 @@ export default function PackagesStep({
           )}
 
           <div className="space-y-4">
+            {error && (
+              <p role="alert" className="text-sm text-red-700">
+                Unable to load packages. Please refresh to try again.
+                <span lang="tl" className="block">
+                  Hindi ma-load ang mga pakete. I-refresh ang pahina upang
+                  subukang muli.
+                </span>
+              </p>
+            )}
+            {!error && relevantPackages.length === 0 && (
+              <p className="text-sm text-gray-500">
+                No packages are currently available. Please contact the parish
+                office.
+                <span lang="tl" className="block">
+                  Walang available na pakete. Makipag-ugnayan sa opisina ng
+                  parokya.
+                </span>
+              </p>
+            )}
             {relevantPackages.map((pkg) => (
-              <BookingLabel
+              <label
                 key={pkg.id}
                 className={`
-              flex cursor-pointer items-center justify-between
+              flex cursor-pointer flex-wrap items-center justify-between gap-4
               rounded-xl border p-5 transition
 
               ${
@@ -174,6 +199,7 @@ export default function PackagesStep({
                 <div className="flex items-center gap-4">
                   <input
                     type="radio"
+                    name="baptism-package"
                     checked={booking.service_package_id === pkg.id}
                     onChange={() => selectPackage(pkg)}
                     className="h-5 w-5 accent-[#B22222]"
@@ -183,9 +209,61 @@ export default function PackagesStep({
                 </div>
 
                 <span className="text-2xl font-semibold text-[#B22222]">
-                  {formatPhpCurrency(pkg.base_price)}
+                  {formatPhpCurrency(
+                    pkg.base_price +
+                      pkg.inclusions.reduce((sum, item) => sum + item.price, 0),
+                  )}
                 </span>
-              </BookingLabel>
+                <div className="w-full border-t border-gray-200 pt-4">
+                  <p className="font-semibold text-gray-800">
+                    Package Inclusions{" "}
+                    <span
+                      lang="tl"
+                      className="block text-xs font-normal text-gray-500"
+                    >
+                      Mga kasama sa pakete
+                    </span>
+                  </p>
+                  {pkg.inclusions.length > 0 ? (
+                    <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+                      {pkg.inclusions.map((item) => (
+                        <li
+                          key={item.id}
+                          className="flex gap-2 text-sm text-gray-700"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="font-bold text-[#B22222]"
+                          >
+                            ✓
+                          </span>
+                          <span>
+                            {item.name}
+                            <BookingTranslation text={item.name} />
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-3 text-sm text-gray-500">
+                      Inclusions have not been listed yet. Please confirm with
+                      the parish office.
+                      <span lang="tl" className="block">
+                        Wala pang nakalistang kasama sa pakete. Magtanong sa
+                        opisina ng parokya.
+                      </span>
+                    </p>
+                  )}
+                  <p className="mt-3 text-xs text-gray-500">
+                    Package total includes the listed items. Additional sponsor
+                    fees are separate.
+                    <span lang="tl" className="block">
+                      Kasama sa kabuuang halaga ang mga nakalistang item.
+                      Hiwalay ang bayad sa dagdag na sponsor.
+                    </span>
+                  </p>
+                </div>
+              </label>
             ))}
           </div>
         </div>
@@ -198,6 +276,9 @@ export default function PackagesStep({
 
           <p className="text-center italic text-[#B22222]">
             The package rate includes the <b>first two sponsors</b>.
+            <span lang="tl" className="mt-1 block text-sm">
+              Kasama sa pakete ang unang dalawang ninong o ninang.
+            </span>
           </p>
 
           <p className="text-center italic text-[#B22222]">
@@ -207,6 +288,13 @@ export default function PackagesStep({
                 ? " at the current parish rate."
                 : ` ${formatPhpCurrency(additionalSponsorPrice)} per person.`}
             </b>
+            <span lang="tl" className="mt-1 block text-sm">
+              May hiwalay na bayad bawat dagdag na ninong o ninang:{" "}
+              {additionalSponsorPrice === null
+                ? "ayon sa kasalukuyang halaga ng parokya."
+                : formatPhpCurrency(additionalSponsorPrice)}
+              .
+            </span>
           </p>
 
           <p className="mt-5 text-center italic text-[#B22222]">

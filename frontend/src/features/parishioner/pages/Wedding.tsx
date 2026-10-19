@@ -1,3 +1,9 @@
+import { validationStep } from "../components/booking/validationStep";
+import ScheduleApprovalGate from "../components/booking/ScheduleApprovalGate";
+import { validationLabel } from "@/utils/validationLabels";
+import RequestedSchedule from "../components/booking/RequestedSchedule";
+import ConfirmedSchedule from "../components/booking/ConfirmedSchedule";
+import { useApprovedSchedule } from "../components/booking/approvedSchedule";
 import { useState, useEffect } from "react";
 
 import DashboardLayout from "../components/DashboardLayout";
@@ -11,7 +17,6 @@ import {
 import AlertBanner from "../components/booking/AlertBanner";
 
 import RequirementsStep from "../components/booking/wedding/steps/RequirementsStep";
-import ScheduleStep from "../components/booking/wedding/steps/ScheduleStep";
 import PackagesStep from "../components/booking/wedding/steps/PackagesStep";
 import DetailsStep from "../components/booking/wedding/steps/DetailsStep";
 import ConfirmationStep from "../components/booking/wedding/steps/ConfirmationStep";
@@ -35,7 +40,6 @@ const stepLabels = [
   "Groom",
   "Sponsors",
   "Baptism & Confirmation",
-  "Document Uploads",
   "Confirmation",
 ];
 
@@ -85,8 +89,17 @@ const emptySponsor = (): WeddingSponsor => ({
 });
 
 export default function Wedding() {
+  return (
+    <ScheduleApprovalGate serviceCode="wedding" title="Wedding">
+      <WeddingForm />
+    </ScheduleApprovalGate>
+  );
+}
+
+function WeddingForm() {
+  const approvedSchedule = useApprovedSchedule();
   const [booking, setBooking] = useState<WeddingBooking>({
-    booking_slot_id: 0,
+    booking_slot_id: approvedSchedule?.slot.id ?? 0,
 
     service_package_id: 0,
 
@@ -106,15 +119,18 @@ export default function Wedding() {
 
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedScheduleDate, setSelectedScheduleDate] = useState<Date | null>(
-    null,
+    approvedSchedule ? new Date(`${approvedSchedule.date}T00:00:00`) : null,
   );
-  const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(
+    approvedSchedule?.slot ?? null,
+  );
   const [selectedPackage, setSelectedPackage] = useState<ServicePackage | null>(
     null,
   );
 
   const [stepError, setStepError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [validationAttempt, setValidationAttempt] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [accountRole, setAccountRole] = useState<WeddingAccountRole | null>(
@@ -150,15 +166,24 @@ export default function Wedding() {
 
   const pages = [
     <RequirementsStep key="requirements" />,
-    <ScheduleStep
-      booking={booking}
-      setBooking={setBooking}
-      selectedDate={selectedScheduleDate}
-      setSelectedDate={setSelectedScheduleDate}
-      selectedSlot={selectedSlot}
-      setSelectedSlot={setSelectedSlot}
-      key="schedule"
-    />,
+    approvedSchedule ? (
+      <ConfirmedSchedule key="schedule" />
+    ) : (
+      <RequestedSchedule
+        key="schedule"
+        service={"wedding"}
+        date={selectedScheduleDate}
+        slot={selectedSlot}
+        onDateChange={setSelectedScheduleDate}
+        onSlotChange={(slot) => {
+          setSelectedSlot(slot);
+          setBooking((current) => ({
+            ...current,
+            booking_slot_id: slot?.id ?? 0,
+          }));
+        }}
+      />
+    ),
     <PackagesStep
       booking={booking}
       setBooking={setBooking}
@@ -200,16 +225,15 @@ export default function Wedding() {
       setBooking={setBooking}
       errors={fieldErrors}
     />,
-    <DetailsStep
-      key="documents"
-      booking={booking}
-      setBooking={setBooking}
-      errors={fieldErrors}
-      view="documents"
-    />,
     <ConfirmationStep
+      onEdit={(step) => {
+        setAgreedToDeclaration(false);
+        setFieldErrors({});
+        setStepError(null);
+        setSubmitError(null);
+        setCurrentStep(step);
+      }}
       booking={booking}
-      setBooking={setBooking}
       selectedDate={selectedScheduleDate}
       selectedSlot={selectedSlot}
       selectedPackage={selectedPackage}
@@ -238,7 +262,7 @@ export default function Wedding() {
         value === undefined ||
         (typeof value === "string" && value.trim() === "")
       ) {
-        addError(key, `${label} is required.`);
+        addError(key, `${validationLabel(label)} is required.`);
       }
     };
 
@@ -316,8 +340,15 @@ export default function Wedding() {
         `${personLabel}'s parish address`,
       );
 
-      if (person.age !== null && person.age < 0) {
-        addError(`${prefix}.age`, `${personLabel}'s age cannot be negative.`);
+      if (person.age !== null && person.age < 18) {
+        addError(
+          `${prefix}.age`,
+          `${personLabel} must be at least 18 years old to marry.`,
+        );
+      }
+
+      if (person.age !== null && person.age > 150) {
+        addError(`${prefix}.age`, `${personLabel}'s age must not exceed 150.`);
       }
 
       if (
@@ -406,6 +437,82 @@ export default function Wedding() {
       }
     });
 
+    for (const role of ["bride", "groom"] as const) {
+      for (const code of ["baptism", "confirmation"] as const) {
+        const person = currentBooking.applicant[role];
+        if (person.church[`${code}_status`] !== "no") continue;
+        const preparation = person.preparations?.[code];
+        const prefix = `applicant.${role}.preparations.${code}`;
+        if (!preparation) {
+          addError(prefix, "Complete the sacrament application.");
+          continue;
+        }
+        for (const field of [
+          "first_name",
+          "last_name",
+          "birth_date",
+          "birth_place",
+          "gender",
+          "address",
+          "contact_number",
+          ...(code === "confirmation"
+            ? [
+                "parish_origin",
+                ...(person.church.baptism_status === "no"
+                  ? []
+                  : ["baptism_date", "baptism_church"]),
+              ]
+            : []),
+        ]) {
+          requireField(
+            `${prefix}.candidate.${field}`,
+            preparation.candidate[field],
+            field.replaceAll("_", " "),
+          );
+        }
+        preparation.parents.forEach((parent, index) => {
+          for (const field of [
+            "first_name",
+            "last_name",
+            "birth_place",
+          ] as const)
+            requireField(
+              `${prefix}.parents.${index}.${field}`,
+              parent[field],
+              `${parent.relationship} ${field.replaceAll("_", " ")}`,
+            );
+        });
+        preparation.sponsors.forEach((sponsor, index) => {
+          for (const field of [
+            "role",
+            "first_name",
+            "last_name",
+            "residence",
+            "requirement_type",
+          ] as const)
+            requireField(
+              `${prefix}.sponsors.${index}.${field}`,
+              sponsor[field],
+              `Sponsor ${index + 1} ${field.replaceAll("_", " ")}`,
+            );
+        });
+        for (const file of [
+          ...preparation.documents.map((document) => document.file),
+          ...preparation.sponsors
+            .map((sponsor) => sponsor.requirement_file)
+            .filter((file): file is File => Boolean(file)),
+        ]) {
+          if (
+            file.size > 5 * 1024 * 1024 ||
+            !["application/pdf", "image/jpeg", "image/png"].includes(file.type)
+          )
+            addError(
+              `${prefix}.documents`,
+              "Upload PDF, JPG, or PNG files up to 5 MB each.",
+            );
+        }
+      }
+    }
     return errors;
   };
 
@@ -437,7 +544,7 @@ export default function Wedding() {
       const detailsErrors = Object.fromEntries(
         Object.entries(validateDetailsStep(booking)).filter(
           ([key]) =>
-            !isUploadError(key) &&
+            (!isUploadError(key) || key.endsWith(".requirement_type")) &&
             !key.includes(".church.") &&
             (step === 4
               ? key.startsWith("applicant.bride.")
@@ -459,7 +566,9 @@ export default function Wedding() {
       const sacramentErrors = Object.fromEntries(
         Object.entries(validateDetailsStep(booking)).filter(
           ([key]) =>
-            key.includes(".church.") || /^documents\.(bride|groom)_/.test(key),
+            key.includes(".church.") ||
+            key.includes(".preparations.") ||
+            /^documents\.(bride|groom)_/.test(key),
         ),
       );
       setFieldErrors(sacramentErrors);
@@ -467,22 +576,7 @@ export default function Wedding() {
         return "Please complete the baptism and confirmation information.";
     }
 
-    if (step === 8) {
-      const documentErrors = Object.fromEntries(
-        Object.entries(validateDetailsStep(booking)).filter(([key]) =>
-          isUploadError(key),
-        ),
-      );
-
-      if (Object.keys(documentErrors).length > 0) {
-        setFieldErrors(documentErrors);
-        return "Please review the uploaded documents before continuing.";
-      }
-
-      setFieldErrors({});
-    }
-
-    if (step === 9 && !agreedToDeclaration) {
+    if (step === 8 && !agreedToDeclaration) {
       return "Please agree to the declaration before submitting.";
     }
 
@@ -495,7 +589,7 @@ export default function Wedding() {
     setFieldErrors({});
 
     try {
-      await submitWeddingBooking(booking);
+      await submitWeddingBooking(booking, approvedSchedule?.id ?? 0);
       setSubmitted(true);
     } catch (error: unknown) {
       const submissionError = error as {
@@ -504,6 +598,13 @@ export default function Wedding() {
 
       if (submissionError.validationErrors) {
         setFieldErrors(submissionError.validationErrors);
+        setCurrentStep(
+          validationStep(
+            "wedding",
+            submissionError.validationErrors,
+            currentStep,
+          ),
+        );
         setSubmitError("Please review the highlighted fields and try again.");
       } else {
         setSubmitError(
@@ -516,6 +617,9 @@ export default function Wedding() {
   };
 
   const handleNext = () => {
+    if (submitting) return;
+    setValidationAttempt((attempt) => attempt + 1);
+    setSubmitError(null);
     const error = validateStep(currentStep);
 
     if (error) {
@@ -545,16 +649,23 @@ export default function Wedding() {
         {submitted ? (
           <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-green-800">
             Your wedding booking has been submitted. We'll notify you once it's
-            reviewed. Any missing requirements can be uploaded from My Profile.
+            reviewed. Upload requirements from My Profile after schedule
+            confirmation.
           </div>
         ) : (
           <>
-            {stepError && <AlertBanner message={stepError} />}
-            {submitError && <AlertBanner message={submitError} />}
+            {(stepError || submitError) && (
+              <AlertBanner
+                key={validationAttempt}
+                message={stepError ?? submitError ?? ""}
+                errors={fieldErrors}
+              />
+            )}
 
             {pages[currentStep - 1]}
 
             <BookingFooter
+              busy={submitting}
               previous={
                 currentStep > 1
                   ? () => setCurrentStep((prev) => prev - 1)

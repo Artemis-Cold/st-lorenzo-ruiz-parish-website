@@ -1,10 +1,10 @@
+import ReviewSection from "../../ReviewSection";
+import { useAuth } from "@/contexts/AuthContext";
 import { BookingTranslation } from "@/features/parishioner/components/booking/BookingLabel";
 import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import ConfirmationNotice from "../summary/ConfirmationNotice";
 import ScheduleSummary from "../summary/ScheduleSummary";
 import PackageSummary from "../summary/PackageSummary";
-
-import DetailsStep from "./DetailsStep";
 
 import type { Dispatch, SetStateAction } from "react";
 import type { FuneralBooking } from "../../../../types/funeral";
@@ -13,7 +13,7 @@ import type { ServicePackage } from "../../../../../../services/servicePackageSe
 
 interface ConfirmationStepProps {
   booking: FuneralBooking;
-  setBooking: Dispatch<SetStateAction<FuneralBooking>>;
+  onEdit: (step: number) => void;
   selectedDate: Date | null;
   selectedSlot: BookingSlot | null;
   selectedPackage: ServicePackage | null;
@@ -23,25 +23,66 @@ interface ConfirmationStepProps {
 
 export default function ConfirmationStep({
   booking,
-  setBooking,
+  onEdit,
   selectedDate,
   selectedSlot,
   selectedPackage,
   agree,
   setAgree,
 }: ConfirmationStepProps) {
+  const { user } = useAuth();
   return (
     <div className="space-y-8">
       <ConfirmationNotice />
 
-      <ScheduleSummary
-        selectedDate={selectedDate}
-        selectedSlot={selectedSlot}
+      <ReviewSection title="Schedule" onEdit={() => onEdit(2)}>
+        <ScheduleSummary
+          selectedDate={selectedDate}
+          selectedSlot={selectedSlot}
+        />
+      </ReviewSection>
+
+      <ReviewSection title="Package & Fees" onEdit={() => onEdit(3)}>
+        <PackageSummary selectedPackage={selectedPackage} />
+      </ReviewSection>
+
+      <ReviewSection
+        title="Deceased & Family"
+        onEdit={() => onEdit(4)}
+        data={{
+          first_name: booking.deceased.first_name,
+          middle_initial: booking.deceased.middle_initial,
+          last_name: booking.deceased.last_name,
+          address: booking.deceased.address,
+          birth_date: booking.deceased.birth_date,
+          death_cause: booking.deceased.death_cause,
+          father: booking.deceased.father,
+          mother: booking.deceased.mother,
+          has_spouse: booking.deceased.has_spouse,
+          spouse: booking.deceased.has_spouse
+            ? booking.deceased.spouse
+            : "Not applicable / Hindi naaangkop",
+          children: booking.deceased.children,
+        }}
       />
-
-      <PackageSummary selectedPackage={selectedPackage} />
-
-      <DetailsStep booking={booking} setBooking={setBooking} readOnly />
+      <ReviewSection
+        title="Faith & Character"
+        onEdit={() => onEdit(5)}
+        data={{
+          sacraments: booking.deceased.sacraments,
+          church_life: booking.deceased.church_life,
+          characteristics: booking.deceased.characteristics,
+        }}
+      />
+      <ReviewSection
+        title="Informant"
+        onEdit={() => onEdit(6)}
+        data={{
+          name: user?.full_name,
+          contact_number: user?.phone,
+          ...booking.deceased.informant,
+        }}
+      />
 
       <div className="rounded-3xl border border-[#B22222]/20 bg-red-50 p-6">
         <h3 className="mb-4 text-xl font-bold text-[#B22222]">
@@ -50,10 +91,10 @@ export default function ConfirmationStep({
         </h3>
 
         <p className="mb-6 text-gray-700">
-          I hereby certify that all information and uploaded documents provided
-          in this booking request are true, complete, and accurate. I understand
-          that submitting false, incomplete, or misleading information may
-          result in the rejection or cancellation of my booking request.
+          I hereby certify that all information provided in this booking request
+          are true, complete, and accurate. I understand that submitting false,
+          incomplete, or misleading information may result in the rejection or
+          cancellation of my booking request.
         </p>
 
         <BookingLabel className="flex cursor-pointer items-start gap-3 rounded-xl border border-gray-200 bg-white p-4">

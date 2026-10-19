@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Booking;
 use App\Models\BookingSlot;
 use App\Models\Service;
 use App\Models\ServicePackage;
@@ -10,10 +11,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
+use Tests\Concerns\HasConfirmedSchedule;
 use Tests\TestCase;
 
 class WeddingSponsorBookingTest extends TestCase
 {
+    use HasConfirmedSchedule;
     use RefreshDatabase;
 
     public function test_wedding_stores_three_photos_and_each_sponsors_selected_pdf(): void
@@ -167,6 +170,58 @@ class WeddingSponsorBookingTest extends TestCase
         $this->post('/api/bookings/wedding', $payload)->assertCreated();
     }
 
+    public function test_wedding_rejects_an_applicant_below_18(): void
+    {
+        Storage::fake('public');
+        Sanctum::actingAs(User::factory()->create());
+        [$slot, $package] = $this->weddingSchedule();
+        $payload = $this->payload($slot->id, $package->id);
+        $payload['applicant']['bride']['age'] = 17;
+
+        $response = $this->withHeader('Accept', 'application/json')
+            ->post('/api/bookings/wedding', $payload)
+            ->assertUnprocessable()
+            ->assertInvalid('applicant.bride.age');
+
+        $this->assertSame(
+            'The bride must be at least 18 years old to marry.',
+            $response->json('errors')['applicant.bride.age'][0]
+        );
+    }
+
+    public function test_wedding_accepts_applicants_who_are_18(): void
+    {
+        Storage::fake('public');
+        Sanctum::actingAs(User::factory()->create());
+        [$slot, $package] = $this->weddingSchedule();
+        $payload = $this->payload($slot->id, $package->id);
+        $payload['applicant']['groom']['age'] = 18;
+        $payload['applicant']['bride']['age'] = 18;
+
+        $this->post('/api/bookings/wedding', $payload)->assertCreated();
+    }
+
+    public function test_underage_groom_is_rejected_and_no_answers_require_preparation_forms(): void
+    {
+        Storage::fake('public');
+        Sanctum::actingAs(User::factory()->create());
+        [$slot, $package] = $this->weddingSchedule();
+        $payload = $this->payload($slot->id, $package->id);
+        $payload['applicant']['groom']['age'] = 17;
+        $this->postJson('/api/bookings/wedding', $payload)->assertUnprocessable()->assertInvalid('applicant.groom.age');
+        $payload['applicant']['groom']['age'] = 24;
+        foreach (['bride', 'groom'] as $role) {
+            foreach (['baptism', 'confirmation'] as $sacrament) {
+                $payload['applicant'][$role]['church'][$sacrament.'_status'] = 'no';
+            }
+        }
+        $this->postJson('/api/bookings/wedding', $payload)->assertUnprocessable()->assertInvalid([
+            'applicant.bride.preparations.baptism', 'applicant.bride.preparations.confirmation',
+            'applicant.groom.preparations.baptism', 'applicant.groom.preparations.confirmation',
+        ]);
+        $this->assertDatabaseCount('wedding_applicants', 0);
+    }
+
     public function test_individual_sacraments_support_coordination_and_later_uploads(): void
     {
         Storage::fake('public');
@@ -179,15 +234,43 @@ class WeddingSponsorBookingTest extends TestCase
             $payload['applicant'][$role]['church']['confirmation_status'] = $role === 'bride' ? 'no' : 'yes';
         }
         unset($payload['applicant']['bride']['church']['baptized_in'], $payload['applicant']['bride']['church']['confirmed_in']);
+        $this->post('/api/bookings/wedding', $payload, ['Accept' => 'application/json'])->assertUnprocessable()->assertInvalid('applicant.bride.preparations.baptism');
+        foreach (['baptism' => 2500, 'confirmation' => 575] as $code => $amount) {
+            $service = Service::firstOrCreate(['code' => $code], ['name' => ucfirst($code), 'description' => $code, 'is_active' => true]);
+            ServicePackage::updateOrCreate(['service_id' => $service->id, 'name' => 'Standard'], ['base_price' => $amount, 'is_active' => true]);
+            $payload['applicant']['bride']['preparations'][$code] = [
+                'candidate' => ['first_name' => 'Ana', 'last_name' => 'Cruz', 'birth_date' => '2000-01-01', 'birth_place' => 'Tanza', 'gender' => 'Female', 'address' => 'Tanza', 'contact_number' => '09171234567', 'parish_origin' => 'St. Lorenzo Ruiz'],
+                'parents' => [
+                    ['relationship' => 'father', 'first_name' => 'Juan', 'last_name' => 'Cruz', 'birth_place' => 'Tanza'],
+                    ['relationship' => 'mother', 'first_name' => 'Maria', 'last_name' => 'Cruz', 'birth_place' => 'Tanza'],
+                ],
+                'sponsors' => array_map(fn ($sponsor) => array_diff_key($sponsor, ['requirement_file' => true]), array_slice($payload['sponsors'], 0, $code === 'baptism' ? 2 : 1)),
+            ];
+        }
         $payload['documents'] = array_values(array_filter($payload['documents'], fn ($doc) => ! in_array($doc['document_type'], ['baptismal_certificate', 'confirmation_certificate'])));
         $payload['documents'][] = ['document_type' => 'groom_baptismal_certificate', 'file' => UploadedFile::fake()->image('groom.jpg')];
         $id = $this->post('/api/bookings/wedding', $payload)->assertCreated()->json('data.id');
+        $children = Booking::where('wedding_booking_id', $id)->with('service')->get();
+        $this->assertCount(2, $children);
+        $this->assertSame(3075.0, (float) $children->sum('total_amount'));
+        foreach ($children as $child) {
+            $this->assertNull($child->booking_slot_id);
+            $this->assertSame('bride', $child->wedding_applicant_role);
+            $this->assertDatabaseHas('sms_messages', ['booking_id' => $child->id, 'category' => 'wedding_preparation_pending']);
+        }
+        $staff = User::factory()->create(['role' => 'staff']);
+        Sanctum::actingAs($staff);
+        $baptism = $children->firstWhere('service.code', 'baptism');
+        $this->postJson("/api/staff/bookings/{$baptism->id}/appointments", ['type' => 'sacrament', 'scheduledAt' => now()->addDays(2)->toIso8601String()])->assertCreated();
+        $this->assertDatabaseHas('sms_messages', ['booking_id' => $baptism->id, 'category' => 'baptism_sacrament']);
+        Sanctum::actingAs($user);
         $this->assertDatabaseHas('wedding_applicants', ['booking_id' => $id, 'role' => 'bride', 'baptism_status' => 'no', 'baptized_in' => '']);
-        $missing = $this->getJson("/api/bookings/{$id}")->assertOk()->assertJsonCount(3, 'data.missingRequirements')->json('data.missingRequirements');
-        $this->assertStringContainsString('For parish coordination', collect($missing)->firstWhere('key', 'bride_baptismal_certificate')['label']);
+        $missing = $this->getJson("/api/bookings/{$id}")->assertOk()->assertJsonCount(1, 'data.missingRequirements')->json('data.missingRequirements');
+        $this->assertNotContains('bride_baptismal_certificate', array_column($missing, 'key'));
+        $this->assertNotContains('bride_confirmation_certificate', array_column($missing, 'key'));
         $this->assertContains('groom_confirmation_certificate', array_column($missing, 'key'));
 
-        foreach (['bride_baptismal_certificate', 'bride_confirmation_certificate', 'groom_confirmation_certificate'] as $type) {
+        foreach (['groom_confirmation_certificate'] as $type) {
             $this->post("/api/bookings/{$id}/documents", [
                 'document_type' => $type, 'file' => UploadedFile::fake()->image($type.'.png'),
             ], ['Accept' => 'application/json'])->assertCreated();
@@ -295,6 +378,7 @@ class WeddingSponsorBookingTest extends TestCase
 
         return [
             'booking_slot_id' => $slotId,
+            'schedule_request_id' => $this->confirmedScheduleId($slotId),
             'service_package_id' => $packageId,
             'selected_addon_ids' => [],
             'applicant' => [

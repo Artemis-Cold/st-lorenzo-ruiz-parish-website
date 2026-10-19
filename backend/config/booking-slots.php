@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'services' => ['baptism', 'wedding', 'funeral'],
+    'services' => ['baptism', 'wedding', 'funeral', 'confirmation'],
 
     'start_times' => [
         'monday_to_saturday' => [

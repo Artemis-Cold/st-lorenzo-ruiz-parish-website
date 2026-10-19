@@ -112,10 +112,13 @@ class StaffPricingController extends Controller
     private function pricingData(): array
     {
         $packages = ServicePackage::query()
+            ->where('is_active', true)
             ->whereHas('service', fn ($query) => $query->whereIn('code', [
                 'baptism',
                 'wedding',
                 'funeral',
+                'confirmation',
+                'first-communion',
             ]))
             ->with(['service:id,code,name', 'inclusions', 'addons'])
             ->orderBy('service_id')

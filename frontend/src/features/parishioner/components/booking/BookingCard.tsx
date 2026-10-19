@@ -19,7 +19,7 @@ export default function BookingCard({
       className={`overflow-hidden rounded-2xl bg-white shadow-lg ${className}`}
     >
       <div className="shrink-0 bg-[#B22222] px-5 py-4 sm:px-6">
-        <h2 className="font-serif text-xl font-bold uppercase text-white sm:text-2xl">
+        <h2 className="min-w-0 font-serif text-xl leading-snug font-bold uppercase text-white [overflow-wrap:anywhere] sm:text-2xl">
           {title}
           <BookingTranslation text={title} />
         </h2>

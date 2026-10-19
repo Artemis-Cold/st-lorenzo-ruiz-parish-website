@@ -13,7 +13,9 @@ class StaffDashboardController extends Controller
     {
         $serviceBookings = Booking::query()->whereHas(
             'service',
-            fn ($query) => $query->whereIn('code', ['wedding', 'funeral', 'baptism'])
+            fn ($query) => $query->whereIn('code', [
+                'wedding', 'funeral', 'baptism', 'confirmation', 'first-communion',
+            ])
         );
 
         $pendingDocuments = Booking::query()

@@ -19,6 +19,11 @@ class PaymentService
         return DB::transaction(function () use ($booking, $method, $referenceNumber, $receipt) {
             $lockedBooking = Booking::query()->lockForUpdate()->findOrFail($booking->id);
             $serviceCode = $lockedBooking->service()->value('code');
+            app(BookingRequirementService::class)->requirePaymentReady($lockedBooking);
+            $amount = $this->amountFor($lockedBooking);
+            if ((float) $amount <= 0) {
+                throw ValidationException::withMessages(['payment_method' => 'No payment is required for this booking.']);
+            }
 
             if (in_array($serviceCode, ['mass-intention', 'document-request'], true) && $method !== 'gcash') {
                 throw ValidationException::withMessages([
@@ -65,7 +70,6 @@ class PaymentService
                 ]);
             }
 
-            $amount = $this->amountFor($lockedBooking);
             $payment = $lockedBooking->payments()->create([
                 'method' => $method,
                 'amount' => $amount,

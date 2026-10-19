@@ -122,6 +122,9 @@ export default function BookingDetailModal({
             status: updated.status,
             bookingSlotId: updated.bookingSlotId,
             schedule: updated.schedule,
+            scheduleReview: updated.scheduleReview,
+            canUploadDocuments: false,
+            payment: { ...current.booking.payment, canChangeMethod: false },
           }
         : null,
     }));
@@ -224,11 +227,17 @@ export default function BookingDetailModal({
     requirement: ParishionerBookingDetail["missingRequirements"][number],
     file: File,
   ) => {
-    if (!ALLOWED_FILE_PATTERN.test(file.name)) {
+    const documentType = selectedTypes[requirement.key] ?? requirement.types[0];
+    const photoOnly = documentType.startsWith("couple_photo");
+    if (
+      !(photoOnly ? /\.(jpe?g|png)$/i : ALLOWED_FILE_PATTERN).test(file.name)
+    ) {
       setPendingFiles((current) => withoutKey(current, requirement.key));
       setUploadErrors((current) => ({
         ...current,
-        [requirement.key]: "Select a PDF, JPG, JPEG, or PNG file.",
+        [requirement.key]: photoOnly
+          ? "Select a JPG, JPEG, or PNG photo."
+          : "Select a PDF, JPG, JPEG, or PNG file.",
       }));
       return;
     }
@@ -346,6 +355,37 @@ export default function BookingDetailModal({
 
         {booking && (
           <div className="mt-6 space-y-5">
+            {booking.scheduleReview && (
+              <div className="rounded-xl border border-[#E7E2DA] bg-[#FAF8F5] p-4 text-sm">
+                <p className="font-semibold">
+                  Schedule: {label(booking.scheduleReview.status)}
+                </p>
+                {booking.scheduleReview.reason && (
+                  <p className="mt-2 text-red-700">
+                    Reason: {booking.scheduleReview.reason}
+                  </p>
+                )}
+                <p className="mt-2 text-gray-600">
+                  {booking.scheduleReview.status === "confirmed"
+                    ? "Admin confirmed your schedule. You can submit requirements."
+                    : booking.scheduleReview.status === "rejected"
+                      ? "Choose another date and time using Reschedule, or contact the parish office."
+                      : booking.serviceCode === "first-communion"
+                        ? "The parish will assign your First Communion date and notify you by SMS. Requirements can be uploaded after confirmation."
+                        : "Wait for the confirmation SMS before submitting requirements."}
+                </p>
+                {booking.status === "pending" &&
+                  booking.scheduleReview.status !== "rejected" &&
+                  !booking.scheduleReview.detailsSubmitted && (
+                    <a
+                      className="mt-3 inline-block rounded-xl bg-[#B22222] px-4 py-2 font-semibold text-white"
+                      href={`/services/${booking.serviceCode}?scheduleRequest=${booking.id}`}
+                    >
+                      Complete Booking Details
+                    </a>
+                  )}
+              </div>
+            )}
             <div className="grid gap-3 rounded-2xl bg-[#FAF8F5] p-5 sm:grid-cols-2">
               <div>
                 <p className="text-xs text-gray-500">Status</p>
@@ -683,6 +723,18 @@ export default function BookingDetailModal({
               </section>
             ))}
 
+            {booking.requirementReview && (
+              <section className="rounded-2xl border bg-[#FAF8F5] p-5 text-sm">
+                <h3 className="font-semibold">Physical requirements</h3>
+                <p className="mt-2 text-gray-600">
+                  {booking.requirementReview.physicalCopiesReceivedAt
+                    ? "Your physical copies have been received by the parish office."
+                    : booking.requirementReview.allApproved
+                      ? "Your digital requirements are approved. Please bring all required physical copies to the parish office. Payment unlocks after staff records them as received."
+                      : "Please wait until all digital requirements are approved before bringing physical copies to the parish office. We will notify you by SMS. Payment remains locked until staff receives all required physical copies."}
+                </p>
+              </section>
+            )}
             {booking.documents.length > 0 && (
               <section className="rounded-2xl border p-5">
                 <h3 className="font-semibold">Submitted files</h3>
@@ -699,9 +751,13 @@ export default function BookingDetailModal({
                               {label(document.type)}
                             </p>
                             <span
-                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${document.status === "rejected" ? "bg-red-100 text-red-700" : "bg-amber-100 text-amber-800"}`}
+                              className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${document.status === "rejected" ? "bg-red-100 text-red-700" : document.status === "approved" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-800"}`}
                             >
-                              {label(document.status)}
+                              {document.status === "approved"
+                                ? "Approved online"
+                                : document.status === "rejected"
+                                  ? "Needs resubmission"
+                                  : "Pending review"}
                             </span>
                           </div>
                           <p className="mt-1 break-all text-xs text-gray-500">
@@ -732,164 +788,186 @@ export default function BookingDetailModal({
               </section>
             )}
 
-            {booking.missingRequirements.length > 0 && (
-              <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
-                <div className="flex items-start gap-3">
-                  <FileUp
-                    className="mt-0.5 shrink-0 text-amber-700"
-                    size={21}
-                  />
-                  <div>
-                    <h3 className="font-semibold text-amber-900">
-                      Requirements to follow
-                    </h3>
-                    <p className="mt-1 text-sm leading-5 text-amber-800">
-                      Your booking remains pending until these documents are
-                      submitted. Choosing a file will not upload it immediately;
-                      review the file first, then select Submit requirement.
-                    </p>
+            {booking.missingRequirements.length > 0 &&
+              (!booking.scheduleReview ||
+                (booking.scheduleReview.status === "confirmed" &&
+                  booking.scheduleReview.detailsSubmitted)) && (
+                <section className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+                  <div className="flex items-start gap-3">
+                    <FileUp
+                      className="mt-0.5 shrink-0 text-amber-700"
+                      size={21}
+                    />
+                    <div>
+                      <h3 className="font-semibold text-amber-900">
+                        Requirements to follow
+                      </h3>
+                      <p className="mt-1 text-sm leading-5 text-amber-800">
+                        Your booking remains pending until these documents are
+                        submitted. Choosing a file will not upload it
+                        immediately; review the file first, then select Submit
+                        requirement.
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="mt-4 space-y-3">
-                  {booking.missingRequirements.map((requirement) => {
-                    const pendingFile = pendingFiles[requirement.key];
-                    const isUploading = uploading === requirement.key;
-                    const rejectedDocument = booking.documents.find(
-                      (document) =>
-                        document.status === "rejected" &&
-                        requirement.types.includes(document.requirementType),
-                    );
+                  <div className="mt-4 space-y-3">
+                    {booking.missingRequirements.map((requirement) => {
+                      const pendingFile = pendingFiles[requirement.key];
+                      const photoOnly = (
+                        selectedTypes[requirement.key] ?? requirement.types[0]
+                      ).startsWith("couple_photo");
+                      const isUploading = uploading === requirement.key;
+                      const rejectedDocument = booking.documents.find(
+                        (document) =>
+                          document.status === "rejected" &&
+                          requirement.types.includes(document.requirementType),
+                      );
 
-                    return (
-                      <div
-                        key={requirement.key}
-                        className="rounded-xl border border-amber-200 bg-white p-4"
-                      >
-                        <p className="text-sm font-semibold text-gray-800">
-                          {requirement.label}
-                        </p>
-                        {rejectedDocument?.remarks && (
-                          <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-700">
-                            <span className="font-semibold">
-                              Replacement requested:
-                            </span>{" "}
-                            {rejectedDocument.remarks}
+                      return (
+                        <div
+                          key={requirement.key}
+                          className="rounded-xl border border-amber-200 bg-white p-4"
+                        >
+                          <p className="text-sm font-semibold text-gray-800">
+                            {requirement.label}
                           </p>
-                        )}
-                        {requirement.types.length > 1 && (
-                          <select
-                            value={
-                              selectedTypes[requirement.key] ??
-                              requirement.types[0]
-                            }
-                            onChange={(event) =>
-                              setSelectedTypes((current) => ({
-                                ...current,
-                                [requirement.key]: event.target.value,
-                              }))
-                            }
-                            className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#B22222]"
-                          >
-                            {requirement.types.map((type) => (
-                              <option key={type} value={type}>
-                                {label(type)}
-                              </option>
-                            ))}
-                          </select>
-                        )}
-                        {booking.canUploadDocuments && (
-                          <div className="mt-3 space-y-3">
-                            <label
-                              className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#B22222] px-4 py-2 text-sm font-semibold text-[#B22222] transition hover:bg-red-50 ${uploading ? "pointer-events-none opacity-60" : ""}`}
+                          {rejectedDocument?.remarks && (
+                            <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs leading-5 text-red-700">
+                              <span className="font-semibold">
+                                Replacement requested:
+                              </span>{" "}
+                              {rejectedDocument.remarks}
+                            </p>
+                          )}
+                          {requirement.types.length > 1 && (
+                            <select
+                              value={
+                                selectedTypes[requirement.key] ??
+                                requirement.types[0]
+                              }
+                              onChange={(event) =>
+                                setSelectedTypes((current) => ({
+                                  ...current,
+                                  [requirement.key]: event.target.value,
+                                }))
+                              }
+                              className="mt-3 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-[#B22222]"
                             >
-                              <FileUp size={16} />
-                              {pendingFile
-                                ? "Replace selected file"
-                                : "Choose file"}
-                              <input
-                                type="file"
-                                className="hidden"
-                                accept=".pdf,.jpg,.jpeg,.png"
-                                disabled={uploading !== null}
-                                onChange={(event) => {
-                                  const file = event.target.files?.[0];
-                                  if (file)
-                                    selectRequirementFile(requirement, file);
-                                  event.target.value = "";
-                                }}
-                              />
-                            </label>
+                              {requirement.types.map((type) => (
+                                <option key={type} value={type}>
+                                  {label(type)}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                          {booking.canUploadDocuments && (
+                            <div className="mt-3 space-y-3">
+                              <p className="text-xs text-gray-500">
+                                {photoOnly
+                                  ? "JPG, JPEG, or PNG photos only"
+                                  : "PDF, JPG, JPEG, or PNG"}{" "}
+                                · Maximum 5 MB per file.
+                                <span lang="tl" className="mt-1 block">
+                                  Hanggang 5 MB lamang bawat file.
+                                </span>
+                              </p>
+                              <label
+                                className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#B22222] px-4 py-2 text-sm font-semibold text-[#B22222] transition hover:bg-red-50 ${uploading ? "pointer-events-none opacity-60" : ""}`}
+                              >
+                                <FileUp size={16} />
+                                {pendingFile
+                                  ? "Replace selected file"
+                                  : "Choose file"}
+                                <input
+                                  type="file"
+                                  className="hidden"
+                                  accept={
+                                    photoOnly
+                                      ? ".jpg,.jpeg,.png"
+                                      : ".pdf,.jpg,.jpeg,.png"
+                                  }
+                                  disabled={uploading !== null}
+                                  onChange={(event) => {
+                                    const file = event.target.files?.[0];
+                                    if (file)
+                                      selectRequirementFile(requirement, file);
+                                    event.target.value = "";
+                                  }}
+                                />
+                              </label>
 
-                            {pendingFile && (
-                              <div className="rounded-xl border border-green-200 bg-green-50 p-3">
-                                <div className="flex items-start gap-3">
-                                  <FileText
-                                    className="mt-0.5 shrink-0 text-green-700"
-                                    size={20}
-                                  />
-                                  <div className="min-w-0 flex-1">
-                                    <p className="break-all text-sm font-semibold text-green-900">
-                                      {pendingFile.name}
-                                    </p>
-                                    <p className="mt-0.5 text-xs text-green-700">
-                                      {(pendingFile.size / 1024 / 1024).toFixed(
-                                        2,
-                                      )}{" "}
-                                      MB · Ready for submission
-                                    </p>
+                              {pendingFile && (
+                                <div className="rounded-xl border border-green-200 bg-green-50 p-3">
+                                  <div className="flex items-start gap-3">
+                                    <FileText
+                                      className="mt-0.5 shrink-0 text-green-700"
+                                      size={20}
+                                    />
+                                    <div className="min-w-0 flex-1">
+                                      <p className="break-all text-sm font-semibold text-green-900">
+                                        {pendingFile.name}
+                                      </p>
+                                      <p className="mt-0.5 text-xs text-green-700">
+                                        {(
+                                          pendingFile.size /
+                                          1024 /
+                                          1024
+                                        ).toFixed(2)}{" "}
+                                        MB · Ready for submission
+                                      </p>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      aria-label={`Remove ${pendingFile.name}`}
+                                      disabled={isUploading}
+                                      onClick={() =>
+                                        setPendingFiles((current) =>
+                                          withoutKey(current, requirement.key),
+                                        )
+                                      }
+                                      className="rounded-lg p-1.5 text-green-700 transition hover:bg-green-100 disabled:opacity-50"
+                                    >
+                                      <Trash2 size={16} />
+                                    </button>
                                   </div>
+
                                   <button
                                     type="button"
-                                    aria-label={`Remove ${pendingFile.name}`}
-                                    disabled={isUploading}
+                                    disabled={uploading !== null}
                                     onClick={() =>
-                                      setPendingFiles((current) =>
-                                        withoutKey(current, requirement.key),
-                                      )
+                                      void uploadRequirement(requirement)
                                     }
-                                    className="rounded-lg p-1.5 text-green-700 transition hover:bg-green-100 disabled:opacity-50"
+                                    className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#B22222] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                                   >
-                                    <Trash2 size={16} />
+                                    {isUploading ? (
+                                      <LoaderCircle
+                                        className="animate-spin"
+                                        size={16}
+                                      />
+                                    ) : (
+                                      <FileUp size={16} />
+                                    )}
+                                    {isUploading
+                                      ? "Submitting..."
+                                      : "Submit requirement"}
                                   </button>
                                 </div>
+                              )}
 
-                                <button
-                                  type="button"
-                                  disabled={uploading !== null}
-                                  onClick={() =>
-                                    void uploadRequirement(requirement)
-                                  }
-                                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#B22222] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                                >
-                                  {isUploading ? (
-                                    <LoaderCircle
-                                      className="animate-spin"
-                                      size={16}
-                                    />
-                                  ) : (
-                                    <FileUp size={16} />
-                                  )}
-                                  {isUploading
-                                    ? "Submitting..."
-                                    : "Submit requirement"}
-                                </button>
-                              </div>
-                            )}
-
-                            {uploadErrors[requirement.key] && (
-                              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-                                {uploadErrors[requirement.key]}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
+                              {uploadErrors[requirement.key] && (
+                                <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                                  {uploadErrors[requirement.key]}
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
 
             {booking.remarks && (
               <section className="rounded-2xl border p-5">

@@ -37,12 +37,14 @@ class CashPaymentWorkflowTest extends TestCase
         ]);
         $booking = Booking::create([
             'booking_reference' => 'BAP-CASH-SWITCH',
+            'physical_copies_received_at' => now(),
             'user_id' => $parishioner->id,
             'service_id' => $service->id,
             'service_package_id' => $package->id,
             'status' => 'pending',
         ]);
 
+        $booking->documents()->create(['document_type' => 'birth_certificate', 'file_name' => 'birth.pdf', 'file_path' => 'birth.pdf', 'status' => 'approved']);
         Sanctum::actingAs($parishioner);
         $this->postJson("/api/bookings/{$booking->id}/payment", [
             'payment_method' => 'cash',

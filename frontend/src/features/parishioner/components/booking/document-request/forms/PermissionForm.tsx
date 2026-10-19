@@ -1,3 +1,4 @@
+import FieldError from "@/features/parishioner/components/booking/FieldError";
 import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import type {
   DocumentDetailValue,
@@ -67,10 +68,4 @@ w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-gray-700
       )}
     </div>
   );
-}
-
-function FieldError({ message }: { message?: string }) {
-  return message ? (
-    <p className="mt-1 text-sm text-red-600">{message}</p>
-  ) : null;
 }

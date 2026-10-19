@@ -1,3 +1,4 @@
+import FieldError from "@/features/parishioner/components/booking/FieldError";
 import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import type { Dispatch, SetStateAction } from "react";
 import { UploadCloud, ReceiptText } from "lucide-react";
@@ -62,6 +63,16 @@ ${
     : "border-gray-300 bg-white focus:border-[#B22222] focus:outline-none focus:ring-2 focus:ring-red-100"
 }
 `;
+
+  if (totalAmount === 0)
+    return (
+      <BookingCard title="No payment required / Walang bayad">
+        <p className="text-sm text-gray-600">
+          Your selected documents are free. No GCash reference or receipt is
+          needed. / Libre ang napiling dokumento; hindi kailangan ng resibo.
+        </p>
+      </BookingCard>
+    );
 
   return (
     <div className="space-y-6">
@@ -247,10 +258,4 @@ ${
       </div>
     </div>
   );
-}
-
-function FieldError({ message }: { message?: string }) {
-  return message ? (
-    <p className="mt-1 text-sm text-red-600">{message}</p>
-  ) : null;
 }

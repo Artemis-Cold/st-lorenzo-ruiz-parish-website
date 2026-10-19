@@ -27,6 +27,26 @@ function createDefaultDetails(
   requester: DocumentRequesterProfile,
 ): DocumentDetails {
   switch (type) {
+    case "First Communion Certificate":
+      return {
+        name: requester.fullName,
+        address: requester.address,
+        relationship_to_owner: "Self",
+        communion_date: null,
+      };
+    case "Permission of Marriage Banns":
+    case "Publication of Marriage Banns":
+    case "Death Permit":
+    case "Baptism Permission":
+    case "Confirmation Permission":
+      return {
+        requester_name: requester.fullName,
+        requester_address: requester.address,
+        person_name: "",
+        parish_name: "",
+        event_date: "",
+        event_time: "",
+      };
     case "Baptismal Certificate":
       return {
         name: requester.fullName,

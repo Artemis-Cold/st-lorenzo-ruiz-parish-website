@@ -1,4 +1,6 @@
+import { validationStep } from "../components/booking/validationStep";
 import { useEffect, useMemo, useState } from "react";
+import { validationLabel } from "@/utils/validationLabels";
 
 import DashboardLayout from "../components/DashboardLayout";
 import {
@@ -18,6 +20,7 @@ import type {
 import { submitDocumentRequest } from "@/services/documentRequestBookingService";
 import { GCASH_REFERENCE_ERROR, isValidGcashReference } from "@/utils/gcash";
 import { useAuth } from "@/contexts/AuthContext";
+import { permitDocumentTypes } from "../types/document";
 
 const stepLabels = ["Selection", "Details", "Payment", "Confirmation"];
 
@@ -35,6 +38,7 @@ export default function Document() {
   const [stepError, setStepError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [validationAttempt, setValidationAttempt] = useState(0);
   const [agreed, setAgreed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const requester = useMemo(
@@ -84,6 +88,13 @@ export default function Document() {
       key="payment"
     />,
     <ConfirmationStep
+      onEdit={(step) => {
+        setAgreed(false);
+        setFieldErrors({});
+        setStepError(null);
+        setSubmitError(null);
+        setCurrentStep(step);
+      }}
       booking={booking}
       agree={agreed}
       setAgree={setAgreed}
@@ -101,7 +112,7 @@ export default function Document() {
     ) => {
       if (value === null || value === undefined || value === "") {
         errors["requests." + index + ".details." + field] = [
-          label + " is required.",
+          validationLabel(label) + " is required.",
         ];
       }
     };
@@ -140,6 +151,17 @@ export default function Document() {
     booking.requests.forEach((request, index) => {
       const details = request.details as unknown as Record<string, unknown>;
       switch (request.document_type) {
+        case "First Communion Certificate":
+          require(index, "name", details.name, "Full name");
+          require(index, "address", details.address, "Address");
+          require(index, "relationship_to_owner", details.relationship_to_owner, "Relationship");
+          validatePastDate(
+            index,
+            "communion_date",
+            details.communion_date,
+            "Date of First Communion",
+          );
+          break;
         case "Baptismal Certificate":
           require(index, "name", details.name, "Full name");
           require(index, "address", details.address, "Address");
@@ -184,6 +206,18 @@ export default function Document() {
           require(index, "address", details.address, "Address");
           break;
       }
+      if (permitDocumentTypes.includes(request.document_type)) {
+        for (const field of [
+          "requester_name",
+          "requester_address",
+          "person_name",
+          "parish_name",
+          "event_date",
+          "event_time",
+        ]) {
+          require(index, field, details[field], field.replaceAll("_", " "));
+        }
+      }
     });
 
     return errors;
@@ -195,7 +229,10 @@ export default function Document() {
       errors.requests = ["Select at least one document."];
     } else if (step === 2) {
       errors = validateDetails();
-    } else if (step === 3) {
+    } else if (
+      step === 3 &&
+      booking.requests.some((request) => request.price > 0)
+    ) {
       if (!isValidGcashReference(booking.reference_number)) {
         errors.reference_number = [GCASH_REFERENCE_ERROR];
       }
@@ -217,6 +254,7 @@ export default function Document() {
   const submit = async () => {
     setSubmitting(true);
     setSubmitError(null);
+    setFieldErrors({});
     try {
       await submitDocumentRequest(booking);
       setSubmitted(true);
@@ -224,6 +262,9 @@ export default function Document() {
       const failure = error as { validationErrors?: Record<string, string[]> };
       if (failure.validationErrors) {
         setFieldErrors(failure.validationErrors);
+        setCurrentStep(
+          validationStep("document", failure.validationErrors, currentStep),
+        );
         setSubmitError("Please review the highlighted fields and try again.");
       } else {
         setSubmitError("Something went wrong submitting the document request.");
@@ -234,6 +275,9 @@ export default function Document() {
   };
 
   const next = () => {
+    if (submitting) return;
+    setValidationAttempt((attempt) => attempt + 1);
+    setSubmitError(null);
     const error = validateStep(currentStep);
     if (error) {
       setStepError(error);
@@ -259,10 +303,16 @@ export default function Document() {
           </div>
         ) : (
           <>
-            {stepError && <AlertBanner message={stepError} />}
-            {submitError && <AlertBanner message={submitError} />}
+            {(stepError || submitError) && (
+              <AlertBanner
+                key={validationAttempt}
+                message={stepError ?? submitError ?? ""}
+                errors={fieldErrors}
+              />
+            )}
             {pages[currentStep - 1]}
             <BookingFooter
+              busy={submitting}
               previous={
                 currentStep > 1
                   ? () => setCurrentStep((value) => value - 1)

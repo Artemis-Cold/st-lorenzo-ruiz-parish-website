@@ -153,7 +153,9 @@ export default function RequestDetailModal({
 
         {isActionable && (
           <div className="mt-6 space-y-2.5">
-            {request.status === "paid" && (
+            {(request.status === "paid" ||
+              (request.status === "pending" &&
+                Number(request.amount) === 0)) && (
               <button
                 onClick={() => onUpdateStatus(request.id, "ready_for_pickup")}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-purple-600 py-3 font-semibold text-white transition hover:bg-purple-700"

@@ -5,12 +5,106 @@ namespace App\Services;
 use App\Models\Booking;
 use App\Models\GodParent;
 use App\Models\WeddingSponsor;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class BookingRequirementService
 {
     public function __construct(private SmsNotificationService $sms) {}
+
+    public function reviewSummary(Booking $booking): array
+    {
+        $missing = $this->missing($booking);
+        $documents = $booking->documents->where('document_type', '!=', 'payment_receipt');
+        $legacyPending = $booking->weddingSponsors->whereNotNull('requirement_file_path')->count()
+            + ($booking->baptizand?->godParents->whereNotNull('requirement_file_path')->count() ?? 0);
+
+        return [
+            'allApproved' => $missing === [] && $documents->isNotEmpty()
+                && $documents->every(fn ($document) => $document->status === 'approved') && $legacyPending === 0,
+            'physicalCopiesReceivedAt' => $booking->physical_copies_received_at?->toIso8601String(),
+        ];
+    }
+
+    public function paymentReady(Booking $booking): bool
+    {
+        $booking->loadMissing('service');
+        if (! in_array($booking->service?->code, ['baptism', 'wedding', 'funeral', 'confirmation', 'first-communion'], true)) {
+            return true;
+        }
+
+        return $booking->scheduleConfirmed() && ! $booking->awaitingDetails()
+            && $booking->physical_copies_received_at !== null && $this->reviewSummary($booking)['allApproved'];
+    }
+
+    public function requirePaymentReady(Booking $booking): void
+    {
+        if (! $this->paymentReady($booking)) {
+            throw ValidationException::withMessages([
+                'payment_method' => 'Payment is available only after all digital requirements are approved and parish staff has received all required physical copies.',
+            ]);
+        }
+    }
+
+    public function review(Booking $booking, string $action, ?string $key, int $staffId): void
+    {
+        DB::transaction(function () use ($booking, $action, $key, $staffId) {
+            $booking = Booking::query()->lockForUpdate()->findOrFail($booking->id);
+            app(BookingScheduleReviewService::class)->requireUnlocked($booking);
+            if (! in_array($booking->status, ['pending', 'paid', 'approved'], true)) {
+                throw ValidationException::withMessages(['documents' => 'This booking is no longer available for document review.']);
+            }
+            if ($action === 'receive') {
+                if (! $this->reviewSummary($booking)['allApproved']) {
+                    throw ValidationException::withMessages(['documents' => 'Approve all digital requirements before receiving physical copies.']);
+                }
+                if (! $booking->physical_copies_received_at) {
+                    $booking->update(['physical_copies_received_at' => now(), 'physical_copies_received_by' => $staffId]);
+                }
+
+                return;
+            }
+
+            // Convert older sponsor uploads into reviewable documents without moving their files.
+            $booking->load(['weddingSponsors', 'baptizand.godParents']);
+            $legacy = $booking->weddingSponsors->map(fn ($person) => [$person, 'wedding-sponsor-individual', 'wedding_sponsor_individual'])
+                ->concat(($booking->baptizand?->godParents ?? collect())->map(fn ($person) => [$person, 'baptism-godparent-individual', 'baptism_godparent_individual']));
+            foreach ($legacy as [$person, $prefix, $type]) {
+                if (! $person->requirement_file_path || ($action !== 'approve_all' && $key !== "{$prefix}:{$person->id}")) {
+                    continue;
+                }
+                $document = $booking->documents()->updateOrCreate(
+                    ['document_type' => "{$type}_{$person->requirement_type}_{$person->id}"],
+                    ['file_name' => $person->requirement_file_name ?: basename($person->requirement_file_path),
+                        'file_path' => $person->requirement_file_path, 'status' => 'pending', 'remarks' => null]
+                );
+                $person->update(['requirement_file_path' => null, 'requirement_file_name' => null]);
+                if ($action !== 'approve_all') {
+                    $key = "document:{$document->id}";
+                }
+            }
+            $documents = $booking->documents()->where('document_type', '!=', 'payment_receipt');
+            if ($action !== 'approve_all') {
+                if (! preg_match('/^document:(\d+)$/', $key ?? '', $matches)) {
+                    throw ValidationException::withMessages(['document_key' => 'Select a valid requirement.']);
+                }
+                $document = $documents->whereKey((int) $matches[1])->first();
+                if (! $document || $document->status === 'rejected') {
+                    throw ValidationException::withMessages(['document_key' => 'Select an uploaded requirement awaiting review.']);
+                }
+                $document->update(['status' => 'approved', 'remarks' => null]);
+            } else {
+                $documents->where('status', 'pending')->update(['status' => 'approved', 'remarks' => null]);
+            }
+            $booking->load(['documents', 'weddingSponsors', 'baptizand.godParents']);
+            if ($this->reviewSummary($booking)['allApproved'] && ! $booking->documents_approved_notified_at) {
+                $this->sms->queue($booking->loadMissing('user'), 'booking_documents_approved',
+                    "St. Lorenzo Ruiz Parish: All digital requirements for booking {$booking->booking_reference} are approved. Please submit the required physical copies to the parish office.");
+                $booking->update(['documents_approved_notified_at' => now()]);
+            }
+        });
+    }
 
     public function missing(Booking $booking): array
     {
@@ -41,6 +135,9 @@ class BookingRequirementService
 
     public function notifySubmitted(Booking $booking): void
     {
+        if (! $booking->scheduleConfirmed()) {
+            return; // The schedule-request SMS already explains the pending review.
+        }
         $booking->loadMissing(['user', 'service', 'slot']);
         $slot = $booking->slot;
         if ($booking->status !== 'pending' || ! $slot) {
@@ -48,7 +145,7 @@ class BookingRequirementService
         }
 
         $date = $slot->booking_date->format('F j, Y');
-        $time = \Carbon\CarbonImmutable::parse($slot->start_time, 'Asia/Manila')->format('g:i A');
+        $time = CarbonImmutable::parse($slot->start_time, 'Asia/Manila')->format('g:i A');
         $reservation = $booking->service->code === 'baptism'
             ? "Your place in the selected baptism session on {$date} at {$time} is reserved"
             : "Your selected schedule on {$date} at {$time} is reserved";
@@ -65,6 +162,7 @@ class BookingRequirementService
 
     public function notifyIfIncomplete(Booking $booking): bool
     {
+        app(BookingScheduleReviewService::class)->requireUnlocked($booking);
         $missing = $this->missing($booking);
 
         if ($missing === []) {
@@ -84,9 +182,16 @@ class BookingRequirementService
 
     public function requestResubmission(Booking $booking, string $documentKey, string $reason): array
     {
+        app(BookingScheduleReviewService::class)->requireUnlocked($booking);
         $reason = preg_replace('/\s+/', ' ', trim($reason));
 
         $documentType = DB::transaction(function () use ($booking, $documentKey, $reason) {
+            $booking = Booking::query()->lockForUpdate()->findOrFail($booking->id);
+            app(BookingScheduleReviewService::class)->requireUnlocked($booking);
+            if (! in_array($booking->status, ['pending', 'paid'], true)) {
+                throw ValidationException::withMessages(['documents' => 'This booking is no longer awaiting review.']);
+            }
+            $booking->update(['physical_copies_received_at' => null, 'physical_copies_received_by' => null]);
             if (preg_match('/^document:(\d+)$/', $documentKey, $matches)) {
                 $document = $booking->documents()->whereKey((int) $matches[1])->first();
 
@@ -130,6 +235,7 @@ class BookingRequirementService
             ]);
         });
 
+        $booking->refresh();
         $booking->unsetRelation('documents');
         $booking->unsetRelation('weddingSponsors');
         $booking->unsetRelation('baptizand');
@@ -225,6 +331,7 @@ class BookingRequirementService
                 ['key' => 'biography', 'label' => 'Memorial Biography', 'types' => ['biography']],
             ],
             'baptism' => $this->baptismDefinitions($booking),
+            'confirmation', 'first-communion' => $this->formationSacramentDefinitions($booking),
             default => [],
         };
     }
@@ -246,11 +353,15 @@ class BookingRequirementService
             $definitions = array_values(array_filter($definitions, fn ($item) => ! in_array($item['key'], ['baptismal_certificate', 'confirmation_certificate'], true)));
             foreach ($booking->weddingApplicants as $person) {
                 foreach (['baptism' => 'baptismal_certificate', 'confirmation' => 'confirmation_certificate'] as $sacrament => $certificate) {
+                    // The linked preparation service handles a sacrament not yet received.
+                    // Do not ask the parishioner to re-upload its certificate for the wedding.
+                    if ($person->{$sacrament.'_status'} === 'no') {
+                        continue;
+                    }
                     $type = $person->role.'_'.$certificate;
-                    $coordination = $person->{$sacrament.'_status'} === 'no' ? ' — For parish coordination; upload certificate after '.$sacrament : '';
                     $definitions[] = [
                         'key' => $type,
-                        'label' => ucfirst($person->role).' '.str($certificate)->headline().$coordination,
+                        'label' => ucfirst($person->role).' '.str($certificate)->headline(),
                         'types' => [$type],
                     ];
                 }
@@ -302,6 +413,35 @@ class BookingRequirementService
                 'label' => 'Godparent '.($index + 1)." ({$role}) {$certificate}",
                 'types' => [
                     "baptism_godparent_individual_{$godParent->requirement_type}_{$godParent->id}",
+                ],
+            ];
+        }
+
+        return $definitions;
+    }
+
+    private function formationSacramentDefinitions(Booking $booking): array
+    {
+        $definitions = [
+            ['key' => 'baptismal_certificate', 'label' => 'Baptismal Certificate', 'types' => ['baptismal_certificate']],
+        ];
+
+        if ($booking->service?->code !== 'confirmation') {
+            return $definitions;
+        }
+
+        foreach ($booking->baptizand?->godParents ?? [] as $index => $sponsor) {
+            if (! $sponsor->requirement_type) {
+                continue;
+            }
+
+            $role = $sponsor->role === 'godfather' ? 'Godfather' : 'Godmother';
+            $certificate = str($sponsor->requirement_type)->headline();
+            $definitions[] = [
+                'key' => 'confirmation_sponsor_document_'.$sponsor->id,
+                'label' => 'Sponsor '.($index + 1)." ({$role}) {$certificate}",
+                'types' => [
+                    "confirmation_sponsor_individual_{$sponsor->requirement_type}_{$sponsor->id}",
                 ],
             ];
         }

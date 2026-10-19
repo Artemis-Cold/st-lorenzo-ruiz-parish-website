@@ -23,10 +23,8 @@ class FuneralBookingService
     public function store(array $data, User $user): Booking
     {
         return DB::transaction(function () use ($data, $user) {
-            $slot = $this->availability->lockBookable(
-                $data['booking_slot_id'],
-                'funeral',
-            );
+            $booking = app(BookingScheduleReviewService::class)->lockForSubmission($data, 'funeral');
+            $slot = $booking->slot;
 
             $package = ServicePackage::findOrFail($data['service_package_id']);
             if (! $package->is_active || $package->service_id !== $slot->service_id) {
@@ -48,8 +46,8 @@ class FuneralBookingService
 
             $price = $this->pricing->calculate($package, $addons);
 
-            $booking = Booking::create([
-                'booking_reference' => $this->reference(),
+            $booking->update([
+                'details_submitted_at' => now(),
                 'user_id' => $user->id,
                 'service_id' => $slot->service_id,
                 'service_package_id' => $package->id,

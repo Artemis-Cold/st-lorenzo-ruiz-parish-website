@@ -150,6 +150,7 @@ class SacramentPaymentWorkflowTest extends TestCase
         ]);
         $booking = Booking::create([
             'booking_reference' => 'BAP-PAYMENT-TEST',
+            'physical_copies_received_at' => now(),
             'user_id' => $parishioner->id,
             'service_id' => $service->id,
             'service_package_id' => $package->id,
@@ -157,6 +158,7 @@ class SacramentPaymentWorkflowTest extends TestCase
         ]);
 
         Sanctum::actingAs($staff);
+        $booking->documents()->create(['document_type' => 'birth_certificate', 'file_name' => 'birth.pdf', 'file_path' => 'birth.pdf', 'status' => 'approved']);
         $this->postJson("/api/staff/bookings/{$booking->id}/payment/remind")
             ->assertOk();
         $this->assertDatabaseHas('sms_messages', [

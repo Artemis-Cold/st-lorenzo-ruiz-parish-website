@@ -35,7 +35,13 @@ import StaffDashboardLayout from "../components/dashboard/StaffDashboardLayout";
 type FieldErrors = Record<string, string[]>;
 type Section = "sacraments" | "documents" | "mass";
 
-const serviceOrder = ["baptism", "wedding", "funeral"];
+const serviceOrder = [
+  "baptism",
+  "confirmation",
+  "first-communion",
+  "wedding",
+  "funeral",
+];
 const keyFor = (type: "package" | "inclusion" | "addon" | "fee", id: number) =>
   `${type}-${id}`;
 

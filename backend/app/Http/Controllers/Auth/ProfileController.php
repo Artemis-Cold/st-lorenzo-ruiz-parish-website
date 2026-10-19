@@ -135,6 +135,7 @@ class ProfileController extends Controller
         return [
             'id' => $booking->id,
             'booking_reference' => $booking->booking_reference,
+            'schedule_review' => $booking->scheduleReview(),
             'service' => $booking->service?->name,
             'package' => $booking->package?->name,
             'status' => $booking->status,

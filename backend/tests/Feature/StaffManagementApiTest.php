@@ -91,6 +91,8 @@ class StaffManagementApiTest extends TestCase
             ->assertJsonPath('data.0.details.packageName', 'Wedding Package')
             ->assertJsonPath('data.0.names', $parishioner->full_name);
 
+        $this->postJson("/api/staff/bookings/{$booking->id}/requirements/review", ['action' => 'approve_all'])->assertOk();
+
         $this->patchJson("/api/staff/bookings/{$booking->id}/status", [
             'status' => 'approved',
         ])->assertOk()->assertJsonPath('data.status', 'approved');
@@ -306,6 +308,38 @@ class StaffManagementApiTest extends TestCase
         $this->patchJson("/api/staff/bookings/{$booking->id}/status", [
             'status' => 'approved',
         ])->assertUnprocessable()->assertJsonValidationErrors('status');
+    }
+
+    public function test_staff_cannot_approve_a_wedding_with_an_underage_applicant(): void
+    {
+        Sanctum::actingAs(User::factory()->create(['role' => 'staff']));
+        $booking = $this->booking(User::factory()->create(), 'wedding');
+        $booking->weddingApplicants()->create([
+            'role' => 'bride',
+            'first_name' => 'Maria',
+            'last_name' => 'Santos',
+            'address' => 'Taysan, Batangas',
+            'age' => 17,
+            'contact_number' => '09171234567',
+            'baptized_in' => 'St. Lorenzo Ruiz Parish',
+            'confirmed_in' => 'St. Lorenzo Ruiz Parish',
+            'father_first_name' => 'Pedro',
+            'father_last_name' => 'Santos',
+            'mother_first_name' => 'Ana',
+            'mother_last_name' => 'Santos',
+            'church_name' => 'St. Lorenzo Ruiz Parish',
+            'priest' => 'Parish Priest',
+            'church_address' => 'Taysan, Batangas',
+        ]);
+
+        $this->patchJson("/api/staff/bookings/{$booking->id}/status", [
+            'status' => 'approved',
+        ])->assertUnprocessable()->assertJsonValidationErrors('applicants');
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $booking->id,
+            'status' => 'pending',
+        ]);
     }
 
     public function test_staff_booking_list_supports_server_side_filters_and_pagination(): void

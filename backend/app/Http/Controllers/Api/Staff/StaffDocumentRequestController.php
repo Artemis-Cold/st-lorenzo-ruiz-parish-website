@@ -92,14 +92,15 @@ class StaffDocumentRequestController extends Controller
         ]);
         $booking = $documentRequest->booking;
 
-        if ($request->validated('status') === 'ready_for_pickup' && $booking->status !== 'paid') {
+        $free = (float) $documentRequest->total_amount === 0.0;
+        if ($request->validated('status') === 'ready_for_pickup' && $booking->status !== 'paid' && ! ($free && $booking->status === 'pending')) {
             throw ValidationException::withMessages([
                 'status' => 'A document request must have a confirmed payment before it can be set to Ready for Pickup.',
             ]);
         }
 
         $this->changeStatus($booking, $request->validated('status'), [
-            'pending' => ['rejected', 'cancelled'],
+            'pending' => $free ? ['ready_for_pickup', 'rejected', 'cancelled'] : ['rejected', 'cancelled'],
             'paid' => ['ready_for_pickup', 'rejected', 'cancelled'],
             'ready_for_pickup' => ['completed', 'cancelled'],
         ]);

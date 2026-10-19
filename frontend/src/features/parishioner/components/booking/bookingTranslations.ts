@@ -1,4 +1,28 @@
 export const bookingTranslations: Record<string, string> = {
+  "Package & Fees": "Pakete at mga bayarin",
+  "Baptizand & Parents": "Bibinyagan at mga magulang",
+  "Intention Types": "Mga uri ng intensyon",
+  "Intention Names": "Mga pangalan sa intensyon",
+  "Document Selection": "Mga napiling dokumento",
+  "Service Fee": "Bayad sa serbisyo",
+  "Rate Per Entry": "Halaga bawat bilang",
+  "Numbered Entries": "Bilang ng mga intensyon",
+  "Baptism Status": "Nabinyagan na ba",
+  "Confirmation Status": "Nakumpilan na ba",
+  "Has Spouse": "May asawa",
+  "Parish of Origin": "Pinanggalingang parokya",
+  Suffix: "Hulapi ng pangalan",
+  "Record owner's name": "Pangalan ng tumanggap ng Unang Komunyon",
+  "Relationship to record owner": "Kaugnayan sa may-ari ng rekord",
+  "Date of First Communion": "Petsa ng Unang Komunyon",
+  "Requester name": "Pangalan ng nagrerequest",
+  "Requester address": "Tirahan ng nagrerequest",
+  "Couple's names": "Pangalan ng ikakasal",
+  "Deceased's name": "Pangalan ng yumao",
+  "Candidate's name": "Pangalan ng tatanggap ng sakramento",
+  "Parish where the service will be held": "Parokyang pagdarausan",
+  Date: "Petsa",
+  Time: "Oras",
   "Baptism & Confirmation": "Binyag at Kumpil",
   "First Name": "Pangalan",
   "Last Name": "Apelyido",
@@ -118,9 +142,38 @@ export const bookingTranslations: Record<string, string> = {
   Declaration: "Pagpapatunay",
   Note: "Paalala",
   Schedule: "Petsa at oras",
+  Package: "Pakete ng serbisyo",
+  "Applicant Details": "Mga detalye ng tatanggap ng sakramento",
+  Review: "Pagsusuri",
+  "Review Booking": "Suriin ang booking",
+  "Requested Schedule": "Hiniling na iskedyul",
+  "Confirmed Schedule": "Nakumpirmang iskedyul",
+  "Available Time Slots": "Mga available na oras",
+  "Father Information": "Impormasyon ng ama",
+  "Mother Information": "Impormasyon ng ina",
+  "Confirmation Candidate": "Kukumpilan",
+  "First Communion Candidate": "Tatanggap ng Unang Komunyon",
+  "Confirmation Package": "Pakete para sa Kumpil",
+  "First Communion Package": "Pakete para sa Unang Komunyon",
+  "Baptism Requirements": "Mga kailangan para sa Binyag",
+  "Wedding Requirements": "Mga kailangan para sa Kasal",
+  "Funeral Requirements": "Mga kailangan para sa Misa sa Patay",
+  "Confirmation Requirements": "Mga kailangan para sa Kumpil",
+  "First Communion Requirements": "Mga kailangan para sa Unang Komunyon",
+  Back: "Bumalik",
+  Previous: "Nakaraan",
+  Next: "Susunod",
+  "Submit Booking": "Isumite ang booking",
+  "Submit Request": "Isumite ang kahilingan",
+  "Submitting...": "Isinusumite...",
   "Wedding Options": "Mga pagpipilian para sa kasal",
   Packages: "Mga pakete ng serbisyo",
   "Baptismal Rates": "Mga bayarin sa binyag",
+  "Baptism Bib": "Bib para sa Binyag",
+  "Candle for 1 pair sponsor":
+    "Kandila para sa isang pares ng ninong at ninang",
+  Ritu: "Ritu (ritwal ng Binyag)",
+  "White Towel": "Puting tuwalya",
   "Optional Add-ons": "Mga opsyonal na dagdag na serbisyo",
   "Included Wedding Services": "Mga kasamang serbisyo sa kasal",
   Bride: "Babaeng ikakasal",
@@ -149,6 +202,10 @@ export function translateBookingLabel(text: string): string | undefined {
   const clean = text.replace(/\*/g, "").replace(/\s+/g, " ").trim();
   const exact = bookingTranslations[clean];
   if (exact) return exact;
+  if (clean.startsWith("Continue to ")) {
+    const step = translateBookingLabel(clean.slice("Continue to ".length));
+    return step ? `Magpatuloy sa: ${step}` : undefined;
+  }
   if (/^Child #?\d+$/.test(clean)) return clean.replace(/^Child #?/, "Anak ");
   if (/^3R Couple Photo \d+$/.test(clean))
     return clean.replace("3R Couple Photo", "3R na larawan ng magkasintahan");

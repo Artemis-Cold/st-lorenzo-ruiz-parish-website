@@ -12,7 +12,9 @@ use Illuminate\Support\Facades\Storage;
 
 class ClearSacramentBookings extends Command
 {
-    private const SERVICE_CODES = ['baptism', 'wedding', 'funeral'];
+    private const SERVICE_CODES = [
+        'baptism', 'wedding', 'funeral', 'confirmation', 'first-communion',
+    ];
 
     protected $signature = 'bookings:clear-sacraments
         {--execute : Permanently delete the matching database records}
@@ -71,7 +73,17 @@ class ClearSacramentBookings extends Command
             return self::SUCCESS;
         }
 
-        $deleted = DB::transaction(fn () => $bookingQuery->delete());
+        $deleted = DB::transaction(function () use ($bookingIds) {
+            // Linked wedding preparation bookings restrict deletion of their parent.
+            // Unlink only relationships wholly inside this cleanup's previewed set.
+            if (Schema::hasColumn('bookings', 'wedding_booking_id')) {
+                Booking::whereIn('id', $bookingIds)
+                    ->whereIn('wedding_booking_id', $bookingIds)
+                    ->update(['wedding_booking_id' => null]);
+            }
+
+            return Booking::whereIn('id', $bookingIds)->delete();
+        });
         $deletedFiles = 0;
 
         if ($this->option('delete-files') && $files->isNotEmpty()) {

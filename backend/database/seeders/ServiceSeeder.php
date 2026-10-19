@@ -29,6 +29,18 @@ class ServiceSeeder extends Seeder
             ],
 
             [
+                'code' => 'confirmation',
+                'name' => 'Confirmation',
+                'description' => 'Sacrament of Confirmation',
+            ],
+
+            [
+                'code' => 'first-communion',
+                'name' => 'First Communion',
+                'description' => 'Sacrament of First Holy Communion',
+            ],
+
+            [
                 'code' => 'mass-intention',
                 'name' => 'Mass Intention',
                 'description' => 'Mass Offering',

@@ -23,7 +23,8 @@ class WeddingBookingService
     public function store(array $data): Booking
     {
         return DB::transaction(function () use ($data) {
-            $slot = $this->validateSlot($data['booking_slot_id']);
+            $booking = app(BookingScheduleReviewService::class)->lockForSubmission($data, 'wedding');
+            $slot = $booking->slot;
             $package = $this->validatePackage(
                 $data['service_package_id'],
                 $slot
@@ -34,8 +35,8 @@ class WeddingBookingService
             );
             $price = $this->pricing->calculate($package, $addons);
 
-            $booking = Booking::create([
-                'booking_reference' => $this->generateReference(),
+            $booking->update([
+                'details_submitted_at' => now(),
                 'user_id' => auth()->id(),
                 'service_id' => $slot->service_id,
                 'service_package_id' => $package->id,
@@ -58,6 +59,14 @@ class WeddingBookingService
 
             $booking->selectedAddons()->sync($addons->modelKeys());
             $this->uploadDocuments($booking, $data['documents'] ?? []);
+
+            foreach (['bride', 'groom'] as $role) {
+                foreach (['baptism', 'confirmation'] as $code) {
+                    if (($data['applicant'][$role]['church'][$code.'_status'] ?? null) === 'no') {
+                        app(WeddingPreparationService::class)->create($booking, $role, $code, $data['applicant'][$role]['preparations'][$code]);
+                    }
+                }
+            }
 
             $booking->load([
                 'weddingApplicants',
@@ -171,7 +180,7 @@ class WeddingBookingService
                 'middle_initial' => $sponsor['middle_initial'] ?? null,
                 'last_name' => $sponsor['last_name'],
                 'residence' => $sponsor['residence'],
-                'requirement_type' => $sponsor['requirement_type'],
+                'requirement_type' => $sponsor['requirement_type'] ?? null,
                 'requirement_file_name' => $requirement?->getClientOriginalName(),
                 'requirement_file_path' => $requirement?->store(
                     'wedding-sponsor-documents',

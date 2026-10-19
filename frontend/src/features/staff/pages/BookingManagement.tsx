@@ -40,6 +40,8 @@ const bookingTypes: Array<{
   { label: "Marriage", value: "wedding" },
   { label: "Funeral", value: "funeral" },
   { label: "Baptism", value: "baptism" },
+  { label: "Confirmation", value: "confirmation" },
+  { label: "First Communion", value: "first-communion" },
 ];
 
 const statusOptions: Array<{ label: string; value: BookingStatus | "" }> = [
@@ -528,6 +530,12 @@ export default function BookingManagement() {
                       </td>
                       <td className="px-5 py-4">
                         <BookingStatusBadge status={item.status} />
+                        {item.scheduleReview && (
+                          <p className="mt-1 text-xs text-gray-600">
+                            Schedule:{" "}
+                            {item.scheduleReview.status.replaceAll("_", " ")}
+                          </p>
+                        )}
                       </td>
                       <td className="sticky right-0 z-10 border-l border-[#EFEAE3] bg-white px-5 py-4 text-right shadow-[-8px_0_14px_-14px_rgba(41,37,36,0.65)] transition-colors group-hover:bg-[#FCFAF7] sm:px-6">
                         <button

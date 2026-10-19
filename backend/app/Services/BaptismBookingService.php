@@ -24,7 +24,8 @@ class BaptismBookingService
     {
         return DB::transaction(function () use ($data) {
 
-            $slot = $this->validateSlot($data['booking_slot_id']);
+            $booking = app(BookingScheduleReviewService::class)->lockForSubmission($data, 'baptism');
+            $slot = $booking->slot;
 
             $package = ServicePackage::query()
                 ->with('inclusions')
@@ -48,7 +49,7 @@ class BaptismBookingService
 
             $price = $this->pricing->calculate($package, collect(), $fees);
 
-            $booking = $this->createBooking($slot, $data, $package, $price);
+            $booking = $this->createBooking($booking, $slot, $data, $package, $price);
 
             $baptizand = $this->createBaptizand($booking, $data['baptizand']);
 
@@ -80,13 +81,14 @@ class BaptismBookingService
     }
 
     private function createBooking(
+        Booking $booking,
         BookingSlot $slot,
         array $data,
         ServicePackage $package,
         array $price,
     ): Booking {
-        return Booking::create([
-            'booking_reference' => $this->generateReference(),
+        $booking->update([
+            'details_submitted_at' => now(),
 
             'user_id' => auth()->id(),
 
@@ -104,6 +106,8 @@ class BaptismBookingService
 
             'remarks' => $data['remarks'] ?? null,
         ]);
+
+        return $booking;
     }
 
     private function generateReference(): string
@@ -152,7 +156,7 @@ class BaptismBookingService
                 'last_name' => $godParent['last_name'],
                 'suffix' => $godParent['suffix'] ?? null,
                 'residence' => $godParent['residence'],
-                'requirement_type' => $godParent['requirement_type'],
+                'requirement_type' => $godParent['requirement_type'] ?? null,
                 'requirement_file_name' => $requirement?->getClientOriginalName(),
                 'requirement_file_path' => $requirement?->store(
                     'godparent-documents',

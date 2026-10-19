@@ -116,6 +116,7 @@ class BookingSlotAvailabilityService
     public function activeBookingsFor(BookingSlot $slot, ?int $exceptBookingId = null, bool $lock = false): Collection
     {
         return Booking::query()
+            ->scheduleHeld()
             ->with('service:id,code,name')
             ->whereNotIn('status', config('booking-slots.released_statuses', ['cancelled', 'rejected']))
             ->whereHas('slot', fn ($query) => $query

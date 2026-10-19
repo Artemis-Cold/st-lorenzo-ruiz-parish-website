@@ -1,7 +1,8 @@
 import api from "@/api/axios";
 
 export interface PublicBookedService {
-  serviceCode: "baptism" | "wedding" | "funeral";
+  serviceCode:
+    "baptism" | "wedding" | "funeral" | "confirmation" | "first-communion";
   serviceName: string;
   displayName: string;
   startTime: string;

@@ -3,6 +3,12 @@ export type DocumentType =
   | "Confirmation Certificate"
   | "Death Certificate"
   | "Marriage Certificate"
+  | "First Communion Certificate"
+  | "Permission of Marriage Banns"
+  | "Publication of Marriage Banns"
+  | "Death Permit"
+  | "Baptism Permission"
+  | "Confirmation Permission"
   | "Request of Permission";
 
 export type DocumentOwnerRelationship =
@@ -56,6 +62,7 @@ export interface PermissionRequestDetails {
 }
 
 export type DocumentDetails =
+  | Record<string, string | Date | null>
   | BaptismalCertificateDetails
   | ConfirmationCertificateDetails
   | DeathCertificateDetails
@@ -63,6 +70,13 @@ export type DocumentDetails =
   | PermissionRequestDetails;
 
 export type DocumentDetailValue = string | Date | null;
+export const permitDocumentTypes: DocumentType[] = [
+  "Permission of Marriage Banns",
+  "Publication of Marriage Banns",
+  "Death Permit",
+  "Baptism Permission",
+  "Confirmation Permission",
+];
 
 export interface DocumentRequest {
   id: number;

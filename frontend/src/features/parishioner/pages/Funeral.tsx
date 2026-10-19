@@ -1,3 +1,9 @@
+import { validationStep } from "../components/booking/validationStep";
+import ScheduleApprovalGate from "../components/booking/ScheduleApprovalGate";
+import { validationLabel } from "@/utils/validationLabels";
+import RequestedSchedule from "../components/booking/RequestedSchedule";
+import ConfirmedSchedule from "../components/booking/ConfirmedSchedule";
+import { useApprovedSchedule } from "../components/booking/approvedSchedule";
 import { useEffect, useState } from "react";
 
 import DashboardLayout from "../components/DashboardLayout";
@@ -8,7 +14,6 @@ import {
 } from "../components/booking";
 import AlertBanner from "../components/booking/AlertBanner";
 import RequirementsStep from "../components/booking/funeral/steps/RequirementsStep";
-import ScheduleStep from "../components/booking/funeral/steps/ScheduleStep";
 import PackagesStep from "../components/booking/funeral/steps/PackagesStep";
 import DetailsStep from "../components/booking/funeral/steps/DetailsStep";
 import ConfirmationStep from "../components/booking/funeral/steps/ConfirmationStep";
@@ -24,7 +29,6 @@ const stepLabels = [
   "Deceased & Family",
   "Faith & Character",
   "Informant",
-  "Document Uploads",
   "Confirmation",
 ];
 
@@ -35,8 +39,18 @@ const emptyName = () => ({
 });
 
 export default function Funeral() {
+  return (
+    <ScheduleApprovalGate serviceCode="funeral" title="Funeral">
+      <FuneralForm />
+    </ScheduleApprovalGate>
+  );
+}
+
+function FuneralForm() {
+  const approvedSchedule = useApprovedSchedule();
+
   const [booking, setBooking] = useState<FuneralBooking>({
-    booking_slot_id: 0,
+    booking_slot_id: approvedSchedule?.slot.id ?? 0,
     service_package_id: 0,
     selected_addon_ids: [],
     deceased: {
@@ -69,8 +83,12 @@ export default function Funeral() {
   });
 
   const [currentStep, setCurrentStep] = useState(1);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(
+    approvedSchedule ? new Date(`${approvedSchedule.date}T00:00:00`) : null,
+  );
+  const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(
+    approvedSchedule?.slot ?? null,
+  );
   const [selectedPackage, setSelectedPackage] = useState<ServicePackage | null>(
     null,
   );
@@ -78,6 +96,7 @@ export default function Funeral() {
   const [stepError, setStepError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [validationAttempt, setValidationAttempt] = useState(0);
   const [agreed, setAgreed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -87,15 +106,24 @@ export default function Funeral() {
 
   const pages = [
     <RequirementsStep key="requirements" />,
-    <ScheduleStep
-      key="schedule"
-      booking={booking}
-      setBooking={setBooking}
-      selectedDate={selectedDate}
-      setSelectedDate={setSelectedDate}
-      selectedSlot={selectedSlot}
-      setSelectedSlot={setSelectedSlot}
-    />,
+    approvedSchedule ? (
+      <ConfirmedSchedule key="schedule" />
+    ) : (
+      <RequestedSchedule
+        key="schedule"
+        service={"funeral"}
+        date={selectedDate}
+        slot={selectedSlot}
+        onDateChange={setSelectedDate}
+        onSlotChange={(slot) => {
+          setSelectedSlot(slot);
+          setBooking((current) => ({
+            ...current,
+            booking_slot_id: slot?.id ?? 0,
+          }));
+        }}
+      />
+    ),
     <PackagesStep
       key="packages"
       booking={booking}
@@ -127,17 +155,16 @@ export default function Funeral() {
       view="information"
       section="informant"
     />,
-    <DetailsStep
-      key="documents"
-      booking={booking}
-      setBooking={setBooking}
-      errors={fieldErrors}
-      view="documents"
-    />,
     <ConfirmationStep
+      onEdit={(step) => {
+        setAgreed(false);
+        setFieldErrors({});
+        setStepError(null);
+        setSubmitError(null);
+        setCurrentStep(step);
+      }}
       key="confirmation"
       booking={booking}
-      setBooking={setBooking}
       selectedDate={selectedDate}
       selectedSlot={selectedSlot}
       selectedPackage={selectedPackage}
@@ -150,7 +177,7 @@ export default function Funeral() {
     const errors: Record<string, string[]> = {};
     const required = (key: string, value: unknown, label: string) => {
       if (value === null || value === undefined || value === "") {
-        errors[key] = [label + " is required."];
+        errors[key] = [validationLabel(label) + " is required."];
       }
     };
     const deceased = booking.deceased;
@@ -252,18 +279,7 @@ export default function Funeral() {
         return "Please complete all required fields before continuing.";
       }
     }
-    if (step === 7) {
-      const errors = Object.fromEntries(
-        Object.entries(validateDetails()).filter(([key]) =>
-          key.startsWith("documents."),
-        ),
-      );
-      setFieldErrors(errors);
-      if (Object.keys(errors).length > 0) {
-        return "Please review the uploaded documents before continuing.";
-      }
-    }
-    if (step === 8 && !agreed) {
+    if (step === 7 && !agreed) {
       return "Please agree to the declaration before submitting.";
     }
     return null;
@@ -272,13 +288,17 @@ export default function Funeral() {
   const submit = async () => {
     setSubmitting(true);
     setSubmitError(null);
+    setFieldErrors({});
     try {
-      await submitFuneralBooking(booking);
+      await submitFuneralBooking(booking, approvedSchedule?.id ?? 0);
       setSubmitted(true);
     } catch (error: unknown) {
       const failure = error as { validationErrors?: Record<string, string[]> };
       if (failure.validationErrors) {
         setFieldErrors(failure.validationErrors);
+        setCurrentStep(
+          validationStep("funeral", failure.validationErrors, currentStep),
+        );
         setSubmitError("Please review the highlighted fields and try again.");
       } else {
         setSubmitError("Something went wrong submitting your booking.");
@@ -289,6 +309,9 @@ export default function Funeral() {
   };
 
   const next = () => {
+    if (submitting) return;
+    setValidationAttempt((attempt) => attempt + 1);
+    setSubmitError(null);
     const error = validateStep(currentStep);
     if (error) {
       setStepError(error);
@@ -310,14 +333,21 @@ export default function Funeral() {
         {submitted ? (
           <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-green-800">
             Your funeral booking has been submitted. We'll notify you once it is
-            reviewed. Any missing requirements can be uploaded from My Profile.
+            reviewed. Upload requirements from My Profile after schedule
+            confirmation.
           </div>
         ) : (
           <>
-            {stepError && <AlertBanner message={stepError} />}
-            {submitError && <AlertBanner message={submitError} />}
+            {(stepError || submitError) && (
+              <AlertBanner
+                key={validationAttempt}
+                message={stepError ?? submitError ?? ""}
+                errors={fieldErrors}
+              />
+            )}
             {pages[currentStep - 1]}
             <BookingFooter
+              busy={submitting}
               previous={
                 currentStep > 1
                   ? () => setCurrentStep((value) => value - 1)

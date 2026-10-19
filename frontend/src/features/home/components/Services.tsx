@@ -44,6 +44,32 @@ const services = [
   },
   {
     icon: Church,
+    title: "Confirmation (Kumpil)",
+    description:
+      "Register for Confirmation, submit the Baptismal Certificate, list sponsors, and receive the required seminar schedule by SMS.",
+    color: "bg-amber-100 text-amber-700",
+    path: "/services/confirmation",
+    requirements: [
+      "Baptismal Certificate for confirmation purposes",
+      "Attendance at the parish seminar",
+      "At least one sponsor (ninong or ninang) and address",
+      "Each sponsor's church Marriage Contract or Confirmation Certificate",
+    ],
+  },
+  {
+    icon: Church,
+    title: "First Communion",
+    description:
+      "Register for First Holy Communion, upload the Baptismal Certificate, and receive the parish seminar schedule by SMS.",
+    color: "bg-emerald-100 text-emerald-700",
+    path: "/services/first-communion",
+    requirements: [
+      "Baptismal Certificate for sacramental purposes",
+      "Attendance at the parish seminar",
+    ],
+  },
+  {
+    icon: Church,
     title: "Funeral Services",
     description:
       "Coordinate funeral masses and burial services while communicating efficiently with the parish office.",

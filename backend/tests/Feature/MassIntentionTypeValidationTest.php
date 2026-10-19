@@ -50,6 +50,13 @@ class MassIntentionTypeValidationTest extends TestCase
         $payload['groups'][0]['type'] = 'Petition';
 
         $this->assertTrue(Validator::make($payload, $request->rules())->passes());
+
+        $payload['groups'][0]['entries'][0]['names'] = ['Juan Dela Cruz', 'Maria Santos', 'Ana Reyes'];
+        $this->assertTrue(Validator::make($payload, $request->rules())->passes());
+        $payload['groups'][0]['entries'][0]['names'][] = 'Pedro Cruz';
+        $this->assertTrue(Validator::make($payload, $request->rules())->errors()->has('groups.0.entries.0.names'));
+        $payload['groups'][0]['entries'][0]['names'] = ['Juan, Maria, Ana, Pedro'];
+        $this->assertTrue(Validator::make($payload, $request->rules())->errors()->has('groups.0.entries.0.names.0'));
     }
 
     public function test_new_mass_intention_is_pending_while_its_receipt_awaits_verification(): void

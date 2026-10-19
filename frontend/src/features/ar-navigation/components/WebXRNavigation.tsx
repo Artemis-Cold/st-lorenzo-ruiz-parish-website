@@ -24,7 +24,7 @@ export default function WebXRNavigation({
     busy = useRef(false);
   const [running, setRunning] = useState(false),
     [starting, setStarting] = useState(false);
-  const [status, setStatus] = useState<XRGuideState>("finding-floor");
+  const [status, setStatus] = useState<XRGuideState>("initializing");
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     mounted.current = true;
@@ -40,6 +40,7 @@ export default function WebXRNavigation({
     busy.current = true;
     guide.current = null;
     setStarting(true);
+    setStatus("initializing");
     setError(null);
     try {
       // Must be invoked directly from the user's tap, before any awaited work.
@@ -65,7 +66,7 @@ export default function WebXRNavigation({
           sessionRef.current = null;
           if (mounted.current) {
             setRunning(false);
-            setStatus("finding-floor");
+            setStatus("initializing");
           }
         },
       );
@@ -129,22 +130,38 @@ export default function WebXRNavigation({
                     : "Follow the line. Scan the destination QR to confirm arrival."
                   : status === "tracking-lost"
                     ? "Tracking interrupted. Return to the scanned QR and realign."
-                    : "Stand at the QR’s starting point, face its scanning direction, and tilt toward the floor."}
+                    : status === "tracking-paused"
+                      ? "Hold steady—recovering tracking."
+                      : status === "initializing"
+                        ? "Starting motion tracking. Stay at the wall QR and gently tilt the phone toward the floor."
+                        : status === "ready"
+                          ? "Floor found. Face the QR’s scanning direction and align."
+                          : "Wall QR scanned. Stay in place and tilt down toward the floor without turning sideways. Move the phone gently to find the surface."}
               </p>
               <button
                 className="nav-primary"
-                disabled={status !== "ready" && status !== "aligned"}
+                disabled={
+                  status !== "ready" &&
+                  status !== "aligned" &&
+                  status !== "tracking-lost"
+                }
                 onClick={() =>
-                  status === "aligned"
+                  status === "aligned" || status === "tracking-lost"
                     ? guide.current?.reset()
                     : guide.current?.align()
                 }
               >
                 {status === "aligned"
                   ? "Realign at QR"
-                  : status === "ready"
-                    ? "Align route here"
-                    : "Finding floor…"}
+                  : status === "tracking-lost"
+                    ? "I’m back at the QR"
+                    : status === "tracking-paused"
+                      ? "Recovering tracking…"
+                      : status === "initializing"
+                        ? "Starting tracking…"
+                        : status === "ready"
+                          ? "Align route here"
+                          : "Finding floor…"}
               </button>
             </>
           )}

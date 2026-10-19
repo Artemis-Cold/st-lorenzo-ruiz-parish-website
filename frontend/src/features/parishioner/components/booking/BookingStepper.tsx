@@ -17,8 +17,14 @@ export default function BookingStepper({ currentStep, steps }: Props) {
           <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">
               Step {currentStep} of {steps.length}
+              <span
+                lang="tl"
+                className="mt-1 block font-normal normal-case tracking-normal"
+              >
+                Hakbang {currentStep} sa {steps.length}
+              </span>
             </p>
-            <p className="mt-1 truncate font-semibold text-[#B22222]">
+            <p className="mt-1 font-semibold text-[#B22222]">
               {activeLabel}
               <BookingTranslation text={activeLabel} />
             </p>

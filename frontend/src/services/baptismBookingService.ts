@@ -66,8 +66,13 @@ function buildFormData(booking: BaptismBooking): FormData {
   return formData;
 }
 
-export async function submitBooking(booking: BaptismBooking) {
+export async function submitBooking(
+  booking: BaptismBooking,
+  scheduleRequestId: number,
+) {
   const formData = buildFormData(booking);
+  if (scheduleRequestId)
+    formData.append("schedule_request_id", String(scheduleRequestId));
 
   try {
     const res = await api.post("/bookings/baptism", formData, {

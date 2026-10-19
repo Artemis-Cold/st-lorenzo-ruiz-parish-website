@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\Api\AnnouncementController;
 use App\Http\Controllers\Api\BaptismBookingController;
+use App\Http\Controllers\Api\BookingScheduleRequestController;
 use App\Http\Controllers\Api\BookingSlotController;
 use App\Http\Controllers\Api\DocumentRequestBookingController;
 use App\Http\Controllers\Api\EventController;
+use App\Http\Controllers\Api\FormationSacramentBookingController;
 use App\Http\Controllers\Api\FuneralBookingController;
 use App\Http\Controllers\Api\MarriageBannController;
 use App\Http\Controllers\Api\MassIntentionBookingController;
@@ -58,6 +60,8 @@ Route::prefix('auth')->group(function () {
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('phone.verified')->group(function () {
+        Route::get('/schedule-requests', [BookingScheduleRequestController::class, 'index']);
+        Route::post('/schedule-requests', [BookingScheduleRequestController::class, 'store']);
         Route::post(
             '/bookings/baptism',
             [BaptismBookingController::class, 'store']
@@ -72,6 +76,11 @@ Route::middleware('auth:sanctum')->group(function () {
             '/bookings/funeral',
             [FuneralBookingController::class, 'store']
         );
+
+        Route::post(
+            '/bookings/formation-sacrament/{serviceCode}',
+            [FormationSacramentBookingController::class, 'store']
+        )->whereIn('serviceCode', ['confirmation', 'first-communion']);
 
         Route::post(
             '/bookings/mass-intention',
@@ -128,8 +137,10 @@ Route::middleware(['auth:sanctum', 'staff'])
         Route::patch('/availability/{bookingSlot}', [StaffAvailabilityController::class, 'update']);
         Route::delete('/availability/{bookingSlot}', [StaffAvailabilityController::class, 'destroy']);
         Route::patch('/bookings/{booking}/status', [StaffBookingController::class, 'updateStatus']);
+        Route::patch('/bookings/{booking}/schedule-review', [StaffBookingController::class, 'reviewSchedule']);
         Route::post('/bookings/{booking}/requirements/remind', [StaffBookingController::class, 'remindRequirements']);
         Route::post('/bookings/{booking}/requirements/resubmit', [StaffBookingController::class, 'requestRequirementResubmission']);
+        Route::post('/bookings/{booking}/requirements/review', [StaffBookingController::class, 'reviewRequirements']);
         Route::post('/bookings/{booking}/payment/remind', [StaffBookingController::class, 'remindPayment']);
         Route::post('/bookings/{booking}/marriage-banns', [MarriageBannController::class, 'store']);
         Route::delete('/bookings/{booking}/marriage-banns', [MarriageBannController::class, 'destroy']);

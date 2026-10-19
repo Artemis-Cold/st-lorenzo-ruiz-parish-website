@@ -2,10 +2,15 @@
 
 namespace App\Http\Requests\Wedding;
 
+use App\Http\Requests\Baptism\StoreBaptismBookingRequest;
+use App\Http\Requests\Concerns\HasReadableBookingAttributes;
+use App\Http\Requests\FormationSacrament\StoreFormationSacramentBookingRequest;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreWeddingBookingRequest extends FormRequest
 {
+    use HasReadableBookingAttributes;
+
     public function authorize(): bool
     {
         return true;
@@ -14,6 +19,7 @@ class StoreWeddingBookingRequest extends FormRequest
     public function rules(): array
     {
         $rules = [
+            'schedule_request_id' => ['nullable', 'integer', 'exists:bookings,id'],
             'booking_slot_id' => ['required', 'integer', 'exists:booking_slots,id'],
             'service_package_id' => ['required', 'integer', 'exists:service_packages,id'],
             'selected_addon_ids' => ['nullable', 'array'],
@@ -62,7 +68,7 @@ class StoreWeddingBookingRequest extends FormRequest
             $rules["$prefix.middle_initial"] = ['nullable', 'string', 'max:1'];
             $rules["$prefix.last_name"] = ['required', 'string', 'max:100'];
             $rules["$prefix.address"] = ['required', 'string'];
-            $rules["$prefix.age"] = ['required', 'integer', 'min:0', 'max:150'];
+            $rules["$prefix.age"] = ['required', 'integer', 'min:18', 'max:150'];
             $rules["$prefix.contact_number"] = ['required', 'string', 'regex:/^09\d{9}$/'];
             $rules["$prefix.church"] = ['required', 'array'];
             foreach (['baptism' => 'baptized_in', 'confirmation' => 'confirmed_in'] as $sacrament => $parishField) {
@@ -89,8 +95,50 @@ class StoreWeddingBookingRequest extends FormRequest
             $rules["$prefix.previous_church_marriage.church_name"] = ['required', 'string', 'max:255'];
             $rules["$prefix.previous_church_marriage.priest"] = ['required', 'string', 'max:255'];
             $rules["$prefix.previous_church_marriage.church_address"] = ['required', 'string'];
+
+            foreach (['baptism', 'confirmation'] as $code) {
+                $base = "$prefix.preparations.$code";
+                if ($this->input("$prefix.church.{$code}_status") !== 'no') {
+                    $rules[$base] = ['exclude'];
+
+                    continue;
+                }
+                $rules[$base] = ['required', 'array'];
+                // Reuse the standalone sacrament's field and upload validation.
+                if ($code === 'baptism') {
+                    $source = (new StoreBaptismBookingRequest)->rules();
+                } else {
+                    $request = new StoreFormationSacramentBookingRequest;
+                    $request->merge(['service_code' => 'confirmation']);
+                    $source = $request->rules();
+                }
+                foreach ($source as $key => $constraints) {
+                    if (in_array($key, ['schedule_request_id', 'service_code', 'booking_slot_id', 'service_package_id', 'remarks'], true)) {
+                        continue;
+                    }
+                    $key = str_replace(['baptizand', 'god_parents', 'sponsors.*.address'], ['candidate', 'sponsors', 'sponsors.*.residence'], $key);
+                    $rules["$base.$key"] = array_map(fn ($rule) => is_string($rule) ? str_replace('after_or_equal:candidate.birth_date', "after_or_equal:$base.candidate.birth_date", $rule) : $rule, $constraints);
+                }
+                // Both sacraments may be requested together: baptism evidence follows after baptism.
+                if ($code === 'confirmation' && $this->input("$prefix.church.baptism_status") === 'no') {
+                    $rules["$base.candidate.baptism_date"] = ['nullable', 'date', 'before_or_equal:today'];
+                    $rules["$base.candidate.baptism_church"] = ['nullable', 'string', 'max:255'];
+                    $rules["$base.documents"] = ['nullable', 'array', 'max:1'];
+                    $rules["$base.documents.*.document_type"] = ['required_with:'.$base.'.documents', 'in:baptismal_certificate'];
+                }
+                $rules["$base.documents"] = ['prohibited'];
+                $rules["$base.sponsors.*.requirement_file"] = ['prohibited'];
+            }
         }
 
         return $rules;
+    }
+
+    public function messages(): array
+    {
+        return [
+            'applicant.groom.age.min' => 'The groom must be at least 18 years old to marry.',
+            'applicant.bride.age.min' => 'The bride must be at least 18 years old to marry.',
+        ];
     }
 }

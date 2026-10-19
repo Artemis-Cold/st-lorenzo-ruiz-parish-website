@@ -1,3 +1,4 @@
+import { validationStep } from "../components/booking/validationStep";
 import { useEffect, useState } from "react";
 
 import DashboardLayout from "../components/DashboardLayout";
@@ -41,6 +42,7 @@ export default function Mass() {
   const [stepError, setStepError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [validationAttempt, setValidationAttempt] = useState(0);
   const [agreed, setAgreed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [linePrice, setLinePrice] = useState<number | null>(null);
@@ -96,6 +98,13 @@ export default function Mass() {
       key="payment"
     />,
     <ConfirmationStep
+      onEdit={(step) => {
+        setAgreed(false);
+        setFieldErrors({});
+        setStepError(null);
+        setSubmitError(null);
+        setCurrentStep(step);
+      }}
       booking={booking}
       agree={agreed}
       setAgree={setAgreed}
@@ -134,6 +143,14 @@ export default function Mass() {
     if (step === 3) {
       booking.groups.forEach((group, groupIndex) => {
         group.entries.forEach((entry, entryIndex) => {
+          entry.names.forEach((name, nameIndex) => {
+            if (/[,;\r\n]/.test(name))
+              errors[
+                `groups.${groupIndex}.entries.${entryIndex}.names.${nameIndex}`
+              ] = [
+                "Enter one person's full name per field, without comma-separated lists.",
+              ];
+          });
           if (
             entry.names.length === 0 ||
             entry.names.every((name) => name.trim() === "")
@@ -174,6 +191,7 @@ export default function Mass() {
   const submit = async () => {
     setSubmitting(true);
     setSubmitError(null);
+    setFieldErrors({});
     try {
       await submitMassIntention(booking);
       setSubmitted(true);
@@ -181,6 +199,9 @@ export default function Mass() {
       const failure = error as { validationErrors?: Record<string, string[]> };
       if (failure.validationErrors) {
         setFieldErrors(failure.validationErrors);
+        setCurrentStep(
+          validationStep("mass", failure.validationErrors, currentStep),
+        );
         setSubmitError("Please review the highlighted fields and try again.");
       } else {
         setSubmitError("Something went wrong submitting the Mass Intention.");
@@ -191,6 +212,9 @@ export default function Mass() {
   };
 
   const next = () => {
+    if (submitting) return;
+    setValidationAttempt((attempt) => attempt + 1);
+    setSubmitError(null);
     const error = validateStep(currentStep);
     if (error) {
       setStepError(error);
@@ -216,10 +240,16 @@ export default function Mass() {
           </div>
         ) : (
           <>
-            {stepError && <AlertBanner message={stepError} />}
-            {submitError && <AlertBanner message={submitError} />}
+            {(stepError || submitError) && (
+              <AlertBanner
+                key={validationAttempt}
+                message={stepError ?? submitError ?? ""}
+                errors={fieldErrors}
+              />
+            )}
             {pages[currentStep - 1]}
             <BookingFooter
+              busy={submitting}
               previous={
                 currentStep > 1
                   ? () => setCurrentStep((value) => value - 1)

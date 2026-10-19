@@ -14,6 +14,9 @@ const statusLabels: Record<ProfileBooking["status"], string> = {
   completed: "Completed",
 };
 
+const updateKey = (booking: ProfileBooking) =>
+  `${booking.status}:${booking.schedule_review?.status ?? ""}:${booking.schedule_review?.reviewedAt ?? ""}:${booking.schedule_review?.requestedAt ?? ""}`;
+
 export default function BookingUpdatesNotification({
   bookings,
   userId,
@@ -29,14 +32,16 @@ export default function BookingUpdatesNotification({
     } catch {
       // Notifications still work when browser storage is unavailable.
     }
-    return bookings.filter((booking) => seen[booking.id] !== booking.status);
+    return bookings.filter(
+      (booking) => seen[booking.id] !== updateKey(booking),
+    );
   });
   const [dismissed, setDismissed] = useState(false);
 
   function dismiss() {
     try {
       const seen = JSON.parse(sessionStorage.getItem(storageKey) ?? "{}") ?? {};
-      for (const booking of updates) seen[booking.id] = booking.status;
+      for (const booking of updates) seen[booking.id] = updateKey(booking);
       sessionStorage.setItem(storageKey, JSON.stringify(seen));
     } catch {
       // Dismiss locally even if browser storage is unavailable.
@@ -72,7 +77,16 @@ export default function BookingUpdatesNotification({
             <p className="font-semibold text-gray-900">{booking.service}</p>
             <p className="text-xs text-gray-500">{booking.booking_reference}</p>
             <p className="mt-1 text-[#B22222]">
-              {statusLabels[booking.status]}
+              {booking.schedule_review &&
+              ["pending", "paid"].includes(booking.status)
+                ? booking.schedule_review.status === "awaiting_review"
+                  ? "Awaiting schedule confirmation"
+                  : booking.schedule_review.status === "rejected"
+                    ? "Schedule rejected — view the reason in My Profile"
+                    : !booking.schedule_review.detailsSubmitted
+                      ? "Schedule confirmed — submit your requirements"
+                      : statusLabels[booking.status]
+                : statusLabels[booking.status]}
             </p>
           </li>
         ))}

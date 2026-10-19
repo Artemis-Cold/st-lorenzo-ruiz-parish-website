@@ -15,6 +15,7 @@ import {
   Cross,
   FileText,
   Settings,
+  Church,
 } from "lucide-react";
 
 import ParishLogo from "@/components/common/ParishLogo";
@@ -75,6 +76,16 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               label: "Baptism",
               to: "/services/baptism",
               icon: Baby,
+            },
+            {
+              label: "Confirmation",
+              to: "/services/confirmation",
+              icon: Church,
+            },
+            {
+              label: "First Communion",
+              to: "/services/first-communion",
+              icon: Church,
             },
             {
               label: "Wedding",

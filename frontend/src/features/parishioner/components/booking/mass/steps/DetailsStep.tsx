@@ -1,3 +1,4 @@
+import FieldError from "@/features/parishioner/components/booking/FieldError";
 import type { Dispatch, SetStateAction } from "react";
 import BookingLabel from "../../BookingLabel";
 
@@ -32,7 +33,12 @@ ${
 }
 `;
 
-  const updateEntry = (type: IntentionType, entryId: number, value: string) => {
+  const updateEntry = (
+    type: IntentionType,
+    entryId: number,
+    nameIndex: number,
+    value: string,
+  ) => {
     setBooking((prev) => ({
       ...prev,
       groups: prev.groups.map((group) =>
@@ -45,9 +51,11 @@ ${
                   ? entry
                   : {
                       ...entry,
-                      // Preserve spaces and a trailing comma while the user is
-                      // typing. Values are normalized before submission.
-                      names: value.split(",").slice(0, 3),
+                      names: Array.from({ length: 3 }, (_, index) =>
+                        index === nameIndex
+                          ? value
+                          : (entry.names[index] ?? ""),
+                      ),
                     },
               ),
             },
@@ -101,34 +109,49 @@ ${
                 </span>
 
                 <div className="flex-1">
-                  <BookingLabel
-                    htmlFor={`intention-${group.type}-${entry.id}`}
-                    className="mb-2 block text-sm font-medium"
-                  >
-                    Names
-                  </BookingLabel>
-                  <input
-                    id={`intention-${group.type}-${entry.id}`}
-                    type="text"
-                    readOnly={readOnly}
-                    className={
-                      inputClass +
-                      (getError(
-                        "groups." +
-                          booking.groups.indexOf(group) +
-                          ".entries." +
-                          index +
-                          ".names",
-                      )
-                        ? " border-red-400"
-                        : "")
-                    }
-                    placeholder="Enter Name/s"
-                    value={entry.names.join(",")}
-                    onChange={(e) =>
-                      updateEntry(group.type, entry.id, e.target.value)
-                    }
-                  />
+                  {[0, 1, 2].map((nameIndex) => (
+                    <div key={nameIndex} className="mb-3">
+                      <BookingLabel
+                        htmlFor={`intention-${group.type}-${entry.id}-${nameIndex}`}
+                        className="mb-2 block text-sm font-medium"
+                      >
+                        Name {nameIndex + 1} / Pangalan {nameIndex + 1}
+                      </BookingLabel>
+                      <input
+                        id={`intention-${group.type}-${entry.id}-${nameIndex}`}
+                        type="text"
+                        maxLength={150}
+                        readOnly={readOnly}
+                        className={
+                          inputClass +
+                          (getError(
+                            "groups." +
+                              booking.groups.indexOf(group) +
+                              ".entries." +
+                              index +
+                              ".names",
+                          )
+                            ? " border-red-400"
+                            : "")
+                        }
+                        placeholder="One person's full name / Buong pangalan"
+                        value={entry.names[nameIndex] ?? ""}
+                        onChange={(e) =>
+                          updateEntry(
+                            group.type,
+                            entry.id,
+                            nameIndex,
+                            e.target.value,
+                          )
+                        }
+                      />
+                      <FieldError
+                        message={getError(
+                          `groups.${booking.groups.indexOf(group)}.entries.${index}.names.${nameIndex}`,
+                        )}
+                      />
+                    </div>
+                  ))}
                   <FieldError
                     message={getError(
                       "groups." +
@@ -163,11 +186,12 @@ ${
             )}
 
             <p className="text-xs italic text-gray-500">
-              Maximum of <strong>3 names</strong> per line. Separate names using
-              commas.
+              Maximum of <strong>3 people</strong> per numbered entry. Enter one
+              person's full name per field. Add another intention for more
+              names.
               <span lang="tl" className="mt-1 block">
-                Hanggang tatlong pangalan bawat linya. Paghiwalayin ang mga
-                pangalan gamit ang kuwit.
+                Hanggang tatlong tao bawat bilang. Isang buong pangalan bawat
+                field. Magdagdag ng intensyon para sa iba pang pangalan.
               </span>
             </p>
           </div>
@@ -175,10 +199,4 @@ ${
       ))}
     </div>
   );
-}
-
-function FieldError({ message }: { message?: string }) {
-  return message ? (
-    <p className="mt-1 text-sm text-red-600">{message}</p>
-  ) : null;
 }

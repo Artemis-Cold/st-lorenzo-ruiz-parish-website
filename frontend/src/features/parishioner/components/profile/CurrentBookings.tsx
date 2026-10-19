@@ -75,6 +75,17 @@ export default function CurrentBookings({
                   {statusLabel(booking.status, booking.service)}
                 </span>
               </div>
+              {booking.schedule_review && (
+                <p className="mt-2 text-sm text-[#B22222]">
+                  {booking.schedule_review.status === "awaiting_review"
+                    ? "Awaiting schedule confirmation"
+                    : booking.schedule_review.status === "rejected"
+                      ? "Schedule rejected — view the reason"
+                      : !booking.schedule_review.detailsSubmitted
+                        ? "Schedule confirmed — complete your requirements"
+                        : "Schedule confirmed"}
+                </p>
+              )}
               <p className="mt-3 text-right text-xs font-semibold text-[#B22222]">
                 View booking information
               </p>

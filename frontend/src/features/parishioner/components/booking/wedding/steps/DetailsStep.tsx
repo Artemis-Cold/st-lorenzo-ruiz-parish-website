@@ -1,3 +1,4 @@
+import FieldError from "@/features/parishioner/components/booking/FieldError";
 import { BookingTranslation } from "@/features/parishioner/components/booking/BookingLabel";
 import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import { BookingCard } from "../..";
@@ -23,12 +24,6 @@ interface DetailsStepProps {
   section?: "bride" | "groom" | "sponsors";
   accountRole?: WeddingAccountRole | null;
   onAccountRoleChange?: (role: WeddingAccountRole) => void;
-}
-
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null;
-
-  return <p className="field-error mt-1 text-sm text-red-600">{message}</p>;
 }
 
 export default function DetailsStep({
@@ -392,8 +387,8 @@ ${
           />
           {!readOnly && (
             <p className="mt-2 text-xs leading-5 text-amber-800">
-              PDF, JPG, or PNG, up to 5 MB. The file may be submitted later from
-              My Profile while the booking is pending.
+              Upload this certificate in My Profile after admin confirms your
+              schedule.
             </p>
           )}
         </div>
@@ -567,6 +562,8 @@ ${
 
                   <input
                     type="number"
+                    min={18}
+                    max={150}
                     value={booking.applicant.groom.age ?? ""}
                     onChange={(e) =>
                       updateApplicant(
@@ -580,6 +577,15 @@ ${
                     className={inputClass}
                   />
                   <FieldError message={getError("applicant.groom.age")} />
+                  {booking.applicant.groom.age !== null &&
+                    booking.applicant.groom.age >= 18 &&
+                    booking.applicant.groom.age <= 24 && (
+                      <p className="mt-2 text-xs leading-5 text-amber-700">
+                        Applicants aged 18–24 must attend an interview with the
+                        parish priest together with their parents. Parish staff
+                        will send the schedule by SMS.
+                      </p>
+                    )}
                 </div>
 
                 <div className="col-span-12 md:col-span-9">
@@ -954,6 +960,8 @@ ${
 
                   <input
                     type="number"
+                    min={18}
+                    max={150}
                     value={booking.applicant.bride.age ?? ""}
                     onChange={(e) =>
                       updateApplicant(
@@ -967,6 +975,15 @@ ${
                     className={inputClass}
                   />
                   <FieldError message={getError("applicant.bride.age")} />
+                  {booking.applicant.bride.age !== null &&
+                    booking.applicant.bride.age >= 18 &&
+                    booking.applicant.bride.age <= 24 && (
+                      <p className="mt-2 text-xs leading-5 text-amber-700">
+                        Applicants aged 18–24 must attend an interview with the
+                        parish priest together with their parents. Parish staff
+                        will send the schedule by SMS.
+                      </p>
+                    )}
                 </div>
 
                 <div className="col-span-12 md:col-span-9">
@@ -1527,7 +1544,7 @@ ${
                           </div>
                         </div>
 
-                        {view === "all" && (
+                        {(view === "all" || view === "information") && (
                           <div className="mt-5">
                             {renderSponsorRequirement(sponsor, sponsorIndex)}
                           </div>

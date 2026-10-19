@@ -18,11 +18,11 @@ class ProductionSeederTest extends TestCase
         $this->seed(ProductionSeeder::class);
         $this->seed(ProductionSeeder::class);
 
-        $this->assertDatabaseCount('services', 5);
-        $this->assertDatabaseCount('service_packages', 5);
-        $this->assertDatabaseCount('package_inclusions', 6);
+        $this->assertDatabaseCount('services', 7);
+        $this->assertDatabaseCount('service_packages', 6);
+        $this->assertDatabaseCount('package_inclusions', 10);
         $this->assertDatabaseCount('package_addons', 5);
-        $this->assertDatabaseCount('service_fees', 7);
+        $this->assertDatabaseCount('service_fees', 13);
         $this->assertDatabaseCount('users', 1);
 
         $this->assertDatabaseHas('service_packages', [

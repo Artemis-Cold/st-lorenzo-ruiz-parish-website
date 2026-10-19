@@ -2,11 +2,14 @@
 
 namespace App\Http\Requests\Baptism;
 
+use App\Http\Requests\Concerns\HasReadableBookingAttributes;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreBaptismBookingRequest extends FormRequest
 {
+    use HasReadableBookingAttributes;
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -23,6 +26,7 @@ class StoreBaptismBookingRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'schedule_request_id' => ['nullable', 'integer', 'exists:bookings,id'],
 
             'booking_slot_id' => [
                 'required',

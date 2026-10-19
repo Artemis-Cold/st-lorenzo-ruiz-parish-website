@@ -9,7 +9,9 @@ use Illuminate\Validation\ValidationException;
 
 class BookingReschedulingService
 {
-    private const ELIGIBLE_SERVICES = ['baptism', 'wedding', 'funeral'];
+    private const ELIGIBLE_SERVICES = [
+        'baptism', 'wedding', 'funeral', 'confirmation', 'first-communion',
+    ];
 
     private const ELIGIBLE_STATUSES = ['pending', 'paid', 'approved'];
 
@@ -31,10 +33,13 @@ class BookingReschedulingService
             if ($lockedBooking->user_id !== $userId) {
                 throw (new ModelNotFoundException)->setModel(Booking::class);
             }
+            if ($lockedBooking->wedding_booking_id || $lockedBooking->service?->code === 'first-communion') {
+                throw ValidationException::withMessages(['booking_slot_id' => 'Please contact parish staff to change this priest-coordinated sacrament schedule.']);
+            }
 
             if (! in_array($lockedBooking->service?->code, self::ELIGIBLE_SERVICES, true)) {
                 throw ValidationException::withMessages([
-                    'booking_slot_id' => 'Only Baptism, Wedding, and Funeral bookings can be rescheduled.',
+                    'booking_slot_id' => 'Only parish service bookings with schedules can be rescheduled.',
                 ]);
             }
 
@@ -64,12 +69,21 @@ class BookingReschedulingService
 
             $lockedBooking->update([
                 'booking_slot_id' => $slot->id,
+                'schedule_status' => 'awaiting_review',
+                'schedule_reason' => null,
+                'schedule_requested_at' => now(),
+                'schedule_reviewed_at' => null,
+                'schedule_reviewed_by' => null,
+                'details_submitted_at' => $lockedBooking->schedule_status === null ? $lockedBooking->created_at : $lockedBooking->details_submitted_at,
                 'status' => 'pending',
                 'processed_by' => null,
                 'processed_at' => null,
             ]);
 
-            return $lockedBooking->fresh(['service', 'slot']);
+            $lockedBooking = $lockedBooking->fresh(['service', 'slot']);
+            app(BookingScheduleReviewService::class)->notifyRequested($lockedBooking);
+
+            return $lockedBooking;
         });
     }
 }

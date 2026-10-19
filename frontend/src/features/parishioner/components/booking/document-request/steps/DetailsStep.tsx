@@ -5,6 +5,7 @@ import ConfirmationForm from "../forms/ConfirmationForm";
 import DeathForm from "../forms/DeathForm";
 import MarriageForm from "../forms/MarriageBansForm";
 import PermissionForm from "../forms/PermissionForm";
+import NewDocumentForm from "../forms/NewDocumentForm";
 
 import type {
   DocumentRequestBooking,
@@ -118,7 +119,13 @@ export default function DetailsStep({
         );
 
       default:
-        return null;
+        return (
+          <NewDocumentForm
+            {...sharedProps}
+            type={request.document_type}
+            details={request.details}
+          />
+        );
     }
   };
 

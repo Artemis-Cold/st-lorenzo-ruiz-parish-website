@@ -17,6 +17,9 @@ class BookingSlotController extends Controller
 
     public function index(Request $request)
     {
+        if ($request->service === 'first-communion') {
+            return response()->json([]);
+        }
         $request->validate([
             'service' => ['required', 'string'],
             'date' => ['nullable', 'required_without:month', 'date_format:Y-m-d'],
@@ -117,6 +120,7 @@ class BookingSlotController extends Controller
     private function activeBookingsBetween(Carbon $start, Carbon $end): Collection
     {
         return Booking::query()
+            ->scheduleHeld()
             ->with(['service:id,code,name', 'slot:id,booking_date,start_time'])
             ->whereNotIn('status', config('booking-slots.released_statuses', ['cancelled', 'rejected']))
             ->whereHas('slot', fn ($query) => $query

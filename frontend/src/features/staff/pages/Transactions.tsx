@@ -53,6 +53,8 @@ const serviceOptions: Array<{ label: string; value: TransactionService | "" }> =
     { label: "Baptism", value: "baptism" },
     { label: "Wedding", value: "wedding" },
     { label: "Funeral", value: "funeral" },
+    { label: "Confirmation", value: "confirmation" },
+    { label: "First Communion", value: "first-communion" },
   ];
 
 const emptyMeta: StaffTransactionPage["meta"] = {

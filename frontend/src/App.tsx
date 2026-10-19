@@ -17,6 +17,7 @@ import Dashboard from "./features/parishioner/pages/Dashboard";
 import Wedding from "./features/parishioner/pages/Wedding";
 import Funeral from "./features/parishioner/pages/Funeral";
 import Baptism from "./features/parishioner/pages/Baptism";
+import FormationSacrament from "./features/parishioner/pages/FormationSacrament";
 import Mass from "./features/parishioner/pages/Mass";
 import Document from "./features/parishioner/pages/Document";
 import Profile from "./features/parishioner/pages/Profile";
@@ -68,6 +69,24 @@ function App() {
             <Route path="/services/wedding" element={<Wedding />} />
             <Route path="/services/funeral" element={<Funeral />} />
             <Route path="/services/baptism" element={<Baptism />} />
+            <Route
+              path="/services/confirmation"
+              element={
+                <FormationSacrament
+                  key="confirmation"
+                  serviceCode="confirmation"
+                />
+              }
+            />
+            <Route
+              path="/services/first-communion"
+              element={
+                <FormationSacrament
+                  key="first-communion"
+                  serviceCode="first-communion"
+                />
+              }
+            />
             <Route path="/services/mass-intention" element={<Mass />} />
             <Route path="/services/document-request" element={<Document />} />
           </Route>

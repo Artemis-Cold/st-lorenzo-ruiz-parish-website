@@ -10,13 +10,8 @@ export interface BaptismPackage {
 export const baptismPackages: BaptismPackage[] = [
   {
     id: 1,
-    name: "Monday to Saturday",
+    name: "Baptism Package",
     price: 2500,
-  },
-  {
-    id: 2,
-    name: "Sunday",
-    price: 800,
   },
 ];
 

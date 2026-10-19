@@ -1,3 +1,9 @@
+import { validationStep } from "../components/booking/validationStep";
+import ScheduleApprovalGate from "../components/booking/ScheduleApprovalGate";
+import { validationLabel } from "@/utils/validationLabels";
+import RequestedSchedule from "../components/booking/RequestedSchedule";
+import ConfirmedSchedule from "../components/booking/ConfirmedSchedule";
+import { useApprovedSchedule } from "../components/booking/approvedSchedule";
 import { useState, useEffect } from "react";
 
 import DashboardLayout from "../components/DashboardLayout";
@@ -9,7 +15,6 @@ import {
 } from "../components/booking";
 
 import RequirementsStep from "../components/booking/baptism/steps/RequirementsStep";
-import ScheduleStep from "../components/booking/baptism/steps/ScheduleStep";
 import PackagesStep from "../components/booking/baptism/steps/PackagesStep";
 import DetailsStep from "../components/booking/baptism/steps/DetailsStep";
 import ConfirmationStep from "../components/booking/baptism/steps/ConfirmationStep";
@@ -27,7 +32,6 @@ const stepLabels = [
   "Packages",
   "Baptizand",
   "Godparents",
-  "Document Uploads",
   "Confirmation",
 ];
 
@@ -42,8 +46,17 @@ const emptyGodParent = (): GodParent => ({
 });
 
 export default function Baptism() {
+  return (
+    <ScheduleApprovalGate serviceCode="baptism" title="Baptism">
+      <BaptismForm />
+    </ScheduleApprovalGate>
+  );
+}
+
+function BaptismForm() {
+  const approvedSchedule = useApprovedSchedule();
   const [booking, setBooking] = useState<BaptismBooking>({
-    booking_slot_id: 0,
+    booking_slot_id: approvedSchedule?.slot.id ?? 0,
     service_package_id: 0,
 
     baptizand: {
@@ -88,13 +101,16 @@ export default function Baptism() {
   const [currentStep, setCurrentStep] = useState(1);
   const [stepError, setStepError] = useState<string | null>(null);
   const [selectedScheduleDate, setSelectedScheduleDate] = useState<Date | null>(
-    null,
+    approvedSchedule ? new Date(`${approvedSchedule.date}T00:00:00`) : null,
   );
   const [selectedPackage, setSelectedPackage] = useState<ServicePackage | null>(
     null,
   );
-  const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<BookingSlot | null>(
+    approvedSchedule?.slot ?? null,
+  );
   const [submitting, setSubmitting] = useState(false);
+  const [validationAttempt, setValidationAttempt] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
   const [additionalSponsorPrice, setAdditionalSponsorPrice] = useState<
@@ -141,15 +157,24 @@ export default function Baptism() {
 
   const pages = [
     <RequirementsStep key="requirements" />,
-    <ScheduleStep
-      booking={booking}
-      setBooking={setBooking}
-      selectedDate={selectedScheduleDate}
-      setSelectedDate={setSelectedScheduleDate}
-      selectedSlot={selectedSlot}
-      setSelectedSlot={setSelectedSlot}
-      key="schedule"
-    />,
+    approvedSchedule ? (
+      <ConfirmedSchedule key="schedule" />
+    ) : (
+      <RequestedSchedule
+        key="schedule"
+        service={"baptism"}
+        date={selectedScheduleDate}
+        slot={selectedSlot}
+        onDateChange={setSelectedScheduleDate}
+        onSlotChange={(slot) => {
+          setSelectedSlot(slot);
+          setBooking((current) => ({
+            ...current,
+            booking_slot_id: slot?.id ?? 0,
+          }));
+        }}
+      />
+    ),
     <PackagesStep
       booking={booking}
       setBooking={setBooking}
@@ -175,16 +200,15 @@ export default function Baptism() {
       view="information"
       section="sponsors"
     />,
-    <DetailsStep
-      key="documents"
-      booking={booking}
-      setBooking={setBooking}
-      errors={fieldErrors}
-      view="documents"
-    />,
     <ConfirmationStep
+      onEdit={(step) => {
+        setAgreedToDeclaration(false);
+        setFieldErrors({});
+        setStepError(null);
+        setSubmitError(null);
+        setCurrentStep(step);
+      }}
       booking={booking}
-      setBooking={setBooking}
       selectedDate={selectedScheduleDate}
       selectedSlot={selectedSlot}
       selectedPackage={selectedPackage}
@@ -210,7 +234,7 @@ export default function Baptism() {
       label = "This field",
     ) => {
       if (value === null || value === undefined || value === "") {
-        addError(key, `${label} is required.`);
+        addError(key, `${validationLabel(label)} is required.`);
       }
     };
 
@@ -359,7 +383,7 @@ export default function Baptism() {
       const detailsErrors = Object.fromEntries(
         Object.entries(validateDetailsStep(booking)).filter(
           ([key]) =>
-            !isUploadError(key) &&
+            (!isUploadError(key) || key.endsWith(".requirement_type")) &&
             (step === 5
               ? key.startsWith("god_parents")
               : !key.startsWith("god_parents")),
@@ -384,22 +408,7 @@ export default function Baptism() {
       setFieldErrors({});
     }
 
-    if (step === 6) {
-      const documentErrors = Object.fromEntries(
-        Object.entries(validateDetailsStep(booking)).filter(([key]) =>
-          isUploadError(key),
-        ),
-      );
-
-      if (Object.keys(documentErrors).length > 0) {
-        setFieldErrors(documentErrors);
-        return "Please review the uploaded documents before continuing.";
-      }
-
-      setFieldErrors({});
-    }
-
-    if (step === 7 && !agreedToDeclaration) {
+    if (step === 6 && !agreedToDeclaration) {
       return "Please agree to the declaration before submitting.";
     }
 
@@ -412,7 +421,7 @@ export default function Baptism() {
     setFieldErrors({});
 
     try {
-      await submitBooking(booking);
+      await submitBooking(booking, approvedSchedule?.id ?? 0);
       setSubmitted(true);
     } catch (error: unknown) {
       const failure = error as {
@@ -421,6 +430,9 @@ export default function Baptism() {
 
       if (failure.validationErrors) {
         setFieldErrors(failure.validationErrors);
+        setCurrentStep(
+          validationStep("baptism", failure.validationErrors, currentStep),
+        );
         setSubmitError("Please review the highlighted fields and try again.");
       } else {
         setSubmitError(
@@ -433,6 +445,9 @@ export default function Baptism() {
   };
 
   const handleNext = () => {
+    if (submitting) return;
+    setValidationAttempt((attempt) => attempt + 1);
+    setSubmitError(null);
     const error = validateStep(currentStep);
 
     if (error) {
@@ -462,16 +477,23 @@ export default function Baptism() {
         {submitted ? (
           <div className="rounded-xl border border-green-200 bg-green-50 p-6 text-green-800">
             Your baptism booking has been submitted. We'll notify you once it's
-            reviewed. Any missing requirements can be uploaded from My Profile.
+            reviewed. Upload requirements from My Profile after schedule
+            confirmation.
           </div>
         ) : (
           <>
-            {stepError && <AlertBanner message={stepError} />}
-            {submitError && <AlertBanner message={submitError} />}
+            {(stepError || submitError) && (
+              <AlertBanner
+                key={validationAttempt}
+                message={stepError ?? submitError ?? ""}
+                errors={fieldErrors}
+              />
+            )}
 
             {pages[currentStep - 1]}
 
             <BookingFooter
+              busy={submitting}
               previous={
                 currentStep > 1
                   ? () => setCurrentStep((prev) => prev - 1)

@@ -21,7 +21,7 @@ const faqs = [
   ],
   [
     "When will I receive an SMS?",
-    "SMS notifications are sent for document status updates, baptism or wedding seminar schedules, and priest interviews. Make sure the mobile number in your profile is current.",
+    "SMS notifications are sent for document status updates, sacrament seminar schedules, and priest interviews. Make sure the mobile number in your profile is current.",
   ],
   [
     "How do I know when a requested document is ready?",

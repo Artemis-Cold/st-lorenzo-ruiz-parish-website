@@ -33,18 +33,20 @@ function buildFormData(booking: FuneralBooking): FormData {
   return formData;
 }
 
-export async function submitFuneralBooking(booking: FuneralBooking) {
+export async function submitFuneralBooking(
+  booking: FuneralBooking,
+  scheduleRequestId: number,
+) {
+  const formData = buildFormData(booking);
+  if (scheduleRequestId)
+    formData.append("schedule_request_id", String(scheduleRequestId));
   try {
-    const response = await api.post(
-      "/bookings/funeral",
-      buildFormData(booking),
-      {
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "multipart/form-data",
-        },
+    const response = await api.post("/bookings/funeral", formData, {
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "multipart/form-data",
       },
-    );
+    });
 
     return response.data;
   } catch (error) {

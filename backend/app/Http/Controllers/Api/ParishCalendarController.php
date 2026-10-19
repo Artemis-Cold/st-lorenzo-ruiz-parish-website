@@ -21,6 +21,7 @@ class ParishCalendarController extends Controller
         $end = $month->endOfMonth();
 
         $bookings = Booking::query()
+            ->scheduleHeld()
             ->select(['id', 'service_id', 'booking_slot_id', 'status'])
             ->with([
                 'service:id,code,name',

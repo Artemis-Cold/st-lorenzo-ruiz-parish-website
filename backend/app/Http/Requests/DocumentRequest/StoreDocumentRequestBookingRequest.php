@@ -2,12 +2,17 @@
 
 namespace App\Http\Requests\DocumentRequest;
 
+use App\Http\Requests\Concerns\HasReadableBookingAttributes;
+use App\Models\ServiceFee;
+use App\Support\ParishCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Arr;
 use Illuminate\Validation\Validator;
 
 class StoreDocumentRequestBookingRequest extends FormRequest
 {
+    use HasReadableBookingAttributes;
+
     private const TYPES = [
         'Baptismal Certificate',
         'Confirmation Certificate',
@@ -46,12 +51,12 @@ class StoreDocumentRequestBookingRequest extends FormRequest
             'requests' => ['required', 'array', 'min:1', 'max:50'],
             'requests.*.document_type' => [
                 'required',
-                'in:'.implode(',', self::TYPES),
+                'in:'.implode(',', array_merge(self::TYPES, array_column(ParishCatalog::DOCUMENTS, 0))),
             ],
             'requests.*.details' => ['required', 'array'],
             'payment_method' => ['sometimes', 'in:gcash'],
             'reference_number' => [
-                'required',
+                $this->requiresPayment() ? 'required' : 'exclude',
                 'digits:13',
                 'unique:payments,reference_number',
                 'unique:bookings,payment_reference',
@@ -59,7 +64,7 @@ class StoreDocumentRequestBookingRequest extends FormRequest
                 'unique:document_request_bookings,payment_reference',
             ],
             'receipt' => [
-                'required',
+                $this->requiresPayment() ? 'required' : 'exclude',
                 'file',
                 'mimes:jpg,jpeg,png,pdf',
                 'max:5120',
@@ -72,6 +77,12 @@ class StoreDocumentRequestBookingRequest extends FormRequest
             $common = ['required', 'string', 'max:255'];
 
             switch ($request['document_type'] ?? null) {
+                case 'First Communion Certificate':
+                    $rules["$prefix.name"] = $common;
+                    $rules["$prefix.address"] = $common;
+                    $rules["$prefix.relationship_to_owner"] = ['required', 'in:'.implode(',', self::OWNER_RELATIONSHIPS)];
+                    $rules["$prefix.communion_date"] = ['required', 'date', 'before_or_equal:today'];
+                    break;
                 case 'Baptismal Certificate':
                     $rules["$prefix.name"] = $common;
                     $rules["$prefix.address"] = ['required', 'string'];
@@ -125,6 +136,13 @@ class StoreDocumentRequestBookingRequest extends FormRequest
                     $rules["$prefix.address"] = ['nullable', 'string'];
                     break;
             }
+            if (in_array($request['document_type'] ?? null, ParishCatalog::PERMITS, true)) {
+                foreach (['requester_name', 'requester_address', 'person_name', 'parish_name'] as $field) {
+                    $rules["$prefix.$field"] = $common;
+                }
+                $rules["$prefix.event_date"] = ['required', 'date', 'after_or_equal:today'];
+                $rules["$prefix.event_time"] = ['required', 'date_format:H:i'];
+            }
         }
 
         return $rules;
@@ -135,6 +153,14 @@ class StoreDocumentRequestBookingRequest extends FormRequest
         return [
             'reference_number.digits' => 'Enter the 13-digit GCash transaction reference number.',
         ];
+    }
+
+    private function requiresPayment(): bool
+    {
+        $types = collect($this->input('requests', []))->pluck('document_type')->all();
+
+        return ServiceFee::whereHas('service', fn ($q) => $q->where('code', 'document-request'))
+            ->where('is_active', true)->whereIn('name', $types)->where('amount', '>', 0)->exists();
     }
 
     protected function prepareForValidation(): void

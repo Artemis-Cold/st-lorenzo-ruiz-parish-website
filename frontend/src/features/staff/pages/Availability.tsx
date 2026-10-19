@@ -227,7 +227,7 @@ export default function Availability() {
               </div>
               <p className="border-t border-blue-200 pt-3 text-blue-800">
                 Existing schedules are kept unchanged. Every newly opened time
-                starts free for Baptism, Wedding, and Funeral; its first booking
+                starts free for all scheduled parish services; its first booking
                 determines the service lock.
               </p>
             </div>

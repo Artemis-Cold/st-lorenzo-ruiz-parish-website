@@ -1,3 +1,4 @@
+import FieldError from "@/features/parishioner/components/booking/FieldError";
 import { BookingTranslation } from "@/features/parishioner/components/booking/BookingLabel";
 import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import { BookingCard } from "../..";
@@ -17,12 +18,6 @@ interface DetailsStepProps {
   errors?: Record<string, string[]>;
   view?: "all" | "information" | "documents";
   section?: "personal" | "sacramental" | "informant";
-}
-
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null;
-
-  return <p className="field-error mt-1 text-sm text-red-600">{message}</p>;
 }
 
 export default function DetailsStep({

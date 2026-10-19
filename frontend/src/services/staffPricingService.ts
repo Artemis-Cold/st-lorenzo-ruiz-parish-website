@@ -8,7 +8,8 @@ export interface StaffPriceItem {
 
 export interface StaffPricingPackage {
   id: number;
-  serviceCode: "baptism" | "wedding" | "funeral";
+  serviceCode:
+    "baptism" | "wedding" | "funeral" | "confirmation" | "first-communion";
   serviceName: string;
   name: string;
   basePrice: number;

@@ -150,6 +150,8 @@ export const verifyPhoneNumber = async (
 };
 
 export interface ProfileBooking {
+  schedule_review?:
+    import("@/services/scheduleReviewService").ScheduleReview | null;
   id: number;
   booking_reference: string;
   service: string;

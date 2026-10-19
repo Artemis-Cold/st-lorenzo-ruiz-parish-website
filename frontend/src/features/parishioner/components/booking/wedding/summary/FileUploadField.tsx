@@ -1,6 +1,7 @@
 import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import { FileText, Upload, X } from "lucide-react";
-import { useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
+import { BookingUploadsLockedContext } from "../../approvedSchedule";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -23,6 +24,8 @@ export default function FileUploadField({
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [sizeError, setSizeError] = useState<string | null>(null);
+  const uploadsLocked = useContext(BookingUploadsLockedContext);
+  if (uploadsLocked) return null;
   const acceptedFormats = accept === ".pdf" ? "PDF only" : "PDF, JPG, PNG";
 
   const openPicker = () => {

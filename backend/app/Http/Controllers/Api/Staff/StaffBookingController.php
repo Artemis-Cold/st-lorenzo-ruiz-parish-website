@@ -8,11 +8,13 @@ use App\Http\Requests\Staff\UpdateBookingStatusRequest;
 use App\Models\Booking;
 use App\Models\Payment;
 use App\Services\BookingRequirementService;
+use App\Services\BookingScheduleReviewService;
 use App\Services\SmsNotificationService;
 use App\Support\Money;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -25,7 +27,7 @@ class StaffBookingController extends Controller
     public function index(Request $request): JsonResponse
     {
         $filters = $request->validate([
-            'service' => ['nullable', 'in:wedding,funeral,baptism'],
+            'service' => ['nullable', 'in:wedding,funeral,baptism,confirmation,first-communion'],
             'status' => ['nullable', 'in:pending,paid,approved,rejected,cancelled,completed'],
             'search' => ['nullable', 'string', 'max:100'],
             'date' => ['nullable', 'date_format:Y-m-d'],
@@ -35,7 +37,7 @@ class StaffBookingController extends Controller
 
         $query = Booking::query()
             ->whereHas('service', fn ($query) => $query->whereIn('code', [
-                'wedding', 'funeral', 'baptism',
+                'wedding', 'funeral', 'baptism', 'confirmation', 'first-communion',
             ]));
 
         if (! empty($filters['service'])) {
@@ -117,58 +119,122 @@ class StaffBookingController extends Controller
         UpdateBookingStatusRequest $request,
         Booking $booking
     ): JsonResponse {
-        abort_unless(
-            in_array($booking->service()->value('code'), ['wedding', 'funeral', 'baptism'], true),
-            404
-        );
-
-        if ($request->validated('status') === 'approved') {
-            if (! in_array($booking->status, ['pending', 'paid'], true)) {
-                throw ValidationException::withMessages([
-                    'status' => "A {$booking->status} booking cannot be changed to approved.",
-                ]);
+        return DB::transaction(function () use ($request, $booking) {
+            $booking = Booking::query()->lockForUpdate()->findOrFail($booking->id);
+            $serviceCode = $booking->service()->value('code');
+            abort_unless(in_array($serviceCode, ['wedding', 'funeral', 'baptism', 'confirmation', 'first-communion'], true), 404);
+            if (in_array($request->validated('status'), ['rejected', 'cancelled'], true) && $booking->schedule_status === 'awaiting_review') {
+                throw ValidationException::withMessages(['status' => 'Use Reject Schedule and provide a reason to notify the parishioner.']);
             }
 
-            if ($this->requirements->missing($booking) !== []) {
-                throw ValidationException::withMessages([
-                    'documents' => 'This booking cannot be approved until all required documents are submitted.',
-                ]);
+            if ($request->validated('status') === 'approved') {
+                app(BookingScheduleReviewService::class)->requireUnlocked($booking);
+                if (! in_array($booking->status, ['pending', 'paid'], true)) {
+                    throw ValidationException::withMessages([
+                        'status' => "A {$booking->status} booking cannot be changed to approved.",
+                    ]);
+                }
+
+                if ($serviceCode === 'wedding' && $booking->weddingApplicants()->where('age', '<', 18)->exists()) {
+                    throw ValidationException::withMessages([
+                        'applicants' => 'This wedding cannot be approved because both applicants must be at least 18 years old.',
+                    ]);
+                }
+
+                if ($this->requirements->missing($booking) !== []) {
+                    throw ValidationException::withMessages([
+                        'documents' => 'This booking cannot be approved until all required documents are submitted.',
+                    ]);
+                }
+
+                if (! $this->requirements->reviewSummary($booking)['allApproved']) {
+                    throw ValidationException::withMessages(['documents' => 'Approve all digital requirements before approving this booking.']);
+                }
+
+                $hasConfirmedPayment = $booking->payments()
+                    ->where('status', 'confirmed')
+                    ->exists();
+
+                if ((float) $booking->total_amount > 0 && ! $hasConfirmedPayment) {
+                    throw ValidationException::withMessages([
+                        'payment' => 'This booking cannot be approved until its payment is confirmed.',
+                    ]);
+                }
+
+                $requiresParentInterview = $serviceCode === 'wedding'
+                    && $booking->weddingApplicants()->whereBetween('age', [18, 24])->exists();
+
+                if ($requiresParentInterview && ! $booking->appointments()->where('type', 'priest_interview')->exists()) {
+                    throw ValidationException::withMessages([
+                        'appointments' => 'Schedule the required priest interview with the couple and their parents before approving this wedding.',
+                    ]);
+                }
+
+                if (in_array($serviceCode, ['confirmation', 'first-communion'], true)
+                    && ! $booking->appointments()->where('type', 'seminar')->exists()) {
+                    throw ValidationException::withMessages([
+                        'appointments' => 'Schedule the required seminar before approving this booking.',
+                    ]);
+                }
+                if ($booking->wedding_booking_id && ! $booking->appointments()->where('type', 'sacrament')->exists()) {
+                    throw ValidationException::withMessages(['appointments' => 'Assign the priest-coordinated ceremony schedule before approving this wedding preparation.']);
+                }
             }
 
-            $hasConfirmedPayment = $booking->payments()
-                ->where('status', 'confirmed')
-                ->exists();
+            $this->changeStatus($booking, $request->validated('status'), [
+                'pending' => ['approved', 'rejected', 'cancelled'],
+                'paid' => ['approved', 'rejected', 'cancelled'],
+                'approved' => ['completed', 'cancelled'],
+            ]);
 
-            if (! $hasConfirmedPayment) {
-                throw ValidationException::withMessages([
-                    'payment' => 'This booking cannot be approved until its payment is confirmed.',
-                ]);
-            }
-        }
+            $booking->load([
+                'user', 'service', 'package.inclusions', 'selectedAddons', 'slot',
+                'documents', 'weddingApplicants', 'weddingSponsors', 'baptizand.parents',
+                'baptizand.godParents',
+                'funeralDeceased.children',
+                'appointments',
+                'marriageBann',
+                'payments.receiptDocument',
+            ]);
 
-        $this->changeStatus($booking, $request->validated('status'), [
-            'pending' => ['approved', 'rejected', 'cancelled'],
-            'paid' => ['approved', 'rejected', 'cancelled'],
-            'approved' => ['completed', 'cancelled'],
+            return response()->json(['data' => $this->serialize($booking)]);
+        });
+    }
+
+    public function reviewSchedule(Request $request, Booking $booking, BookingScheduleReviewService $service): JsonResponse
+    {
+        $data = $request->validate([
+            'decision' => ['required', 'in:confirmed,rejected'],
+            'reason' => ['required_if:decision,rejected', 'nullable', 'string', 'max:1000'],
         ]);
+        abort_unless(in_array($booking->service()->value('code'), $service::SERVICES, true), 404);
+        $booking = $service->review($booking, $data['decision'], $data['reason'] ?? null, $request->user()->id);
 
-        $booking->load([
+        return response()->json(['data' => $this->serialize($booking), 'message' => 'Schedule reviewed and SMS queued.']);
+    }
+
+    public function reviewRequirements(Request $request, Booking $booking): JsonResponse
+    {
+        abort_unless(in_array($booking->service()->value('code'), ['wedding', 'funeral', 'baptism', 'confirmation', 'first-communion'], true), 404);
+        $data = $request->validate([
+            'action' => ['required', 'in:approve,approve_all,receive'],
+            'document_key' => ['required_if:action,approve', 'nullable', 'string', 'max:100'],
+        ]);
+        $this->requirements->review($booking, $data['action'], $data['document_key'] ?? null, $request->user()->id);
+        $booking->refresh()->load([
             'user', 'service', 'package.inclusions', 'selectedAddons', 'slot',
             'documents', 'weddingApplicants', 'weddingSponsors', 'baptizand.parents',
-            'baptizand.godParents',
-            'funeralDeceased.children',
-            'appointments',
-            'marriageBann',
-            'payments.receiptDocument',
+            'baptizand.godParents', 'funeralDeceased.children', 'appointments',
+            'marriageBann', 'payments.receiptDocument',
         ]);
 
-        return response()->json(['data' => $this->serialize($booking)]);
+        return response()->json(['message' => $data['action'] === 'receive' ? 'Physical copies recorded as received.' : 'Document review saved.', 'data' => $this->serialize($booking)]);
     }
 
     public function remindRequirements(Booking $booking): JsonResponse
     {
         abort_unless(
-            in_array($booking->service()->value('code'), ['wedding', 'funeral', 'baptism'], true),
+            in_array($booking->service()->value('code'), ['wedding', 'funeral', 'baptism', 'confirmation', 'first-communion'], true),
             404
         );
 
@@ -188,7 +254,7 @@ class StaffBookingController extends Controller
         Booking $booking
     ): JsonResponse {
         abort_unless(
-            in_array($booking->service()->value('code'), ['wedding', 'funeral', 'baptism'], true),
+            in_array($booking->service()->value('code'), ['wedding', 'funeral', 'baptism', 'confirmation', 'first-communion'], true),
             404
         );
 
@@ -224,8 +290,9 @@ class StaffBookingController extends Controller
         Booking $booking,
         SmsNotificationService $sms
     ): JsonResponse {
+        $this->requirements->requirePaymentReady($booking);
         abort_unless(
-            in_array($booking->service()->value('code'), ['wedding', 'funeral', 'baptism'], true),
+            in_array($booking->service()->value('code'), ['wedding', 'funeral', 'baptism', 'confirmation', 'first-communion'], true),
             404
         );
 
@@ -268,6 +335,8 @@ class StaffBookingController extends Controller
         $type = match ($booking->service->code) {
             'wedding' => 'Marriage',
             'funeral' => 'Funeral',
+            'confirmation' => 'Confirmation',
+            'first-communion' => 'First Communion',
             default => 'Baptism',
         };
 
@@ -302,7 +371,14 @@ class StaffBookingController extends Controller
             'type' => $type,
             'amount' => Money::decimal($booking->total_amount),
             'status' => $booking->status,
+            'scheduleReview' => $booking->scheduleReview(),
             'details' => [
+                'weddingReference' => $booking->wedding_booking_id ? $booking->weddingBooking->booking_reference : null,
+                'weddingApplicantRole' => $booking->wedding_applicant_role,
+                'preparations' => $booking->preparations()->with('service')->get()->map(fn ($item) => [
+                    'reference' => $item->booking_reference, 'service' => $item->service->name,
+                    'role' => $item->wedding_applicant_role, 'amount' => Money::decimal($item->total_amount), 'status' => $item->status,
+                ])->values(),
                 'submittedBy' => $booking->user->full_name,
                 'packageName' => $pricing['package']['name'] ?? $booking->package?->name,
                 'baseAmount' => Money::decimal($pricing['package']['basePrice'] ?? $booking->package?->base_price ?? 0),
@@ -326,8 +402,8 @@ class StaffBookingController extends Controller
                     'subtotal' => Money::decimal($fee['subtotal'] ?? 0),
                 ])->values(),
                 'schedule' => [
-                    'date' => $booking->slot?->booking_date?->format('F j, Y'),
-                    'startTime' => $booking->slot?->start_time,
+                    'date' => $booking->slot?->booking_date?->format('F j, Y') ?? $booking->appointments->firstWhere('type', 'sacrament')?->scheduled_at?->format('F j, Y'),
+                    'startTime' => $booking->slot?->start_time ?? $booking->appointments->firstWhere('type', 'sacrament')?->scheduled_at?->format('H:i'),
                     'endTime' => $booking->slot?->end_time,
                 ],
                 'remarks' => $booking->remarks,
@@ -339,6 +415,7 @@ class StaffBookingController extends Controller
                 ] : null,
                 'documents' => $this->documents($booking),
                 'missingRequirements' => $this->requirements->missing($booking),
+                'requirementReview' => $this->requirements->reviewSummary($booking),
                 'serviceData' => $this->serviceData($booking),
                 'appointments' => $booking->appointments->map(fn ($appointment) => [
                     'id' => $appointment->id,
@@ -368,7 +445,9 @@ class StaffBookingController extends Controller
                 'fileName' => $receipt->file_name,
                 'url' => Storage::disk('public')->url($receipt->file_path),
             ] : null,
-            'canRemind' => $booking->status === 'pending'
+            'canRemind' => (float) $booking->total_amount > 0
+                && $this->requirements->paymentReady($booking)
+                && $booking->status === 'pending'
                 && ! in_array($payment?->status, ['confirmed', 'pending_verification'], true),
         ];
     }
@@ -432,7 +511,7 @@ class StaffBookingController extends Controller
                     'requirementType' => "wedding_sponsor_individual_{$type}_{$sponsor->id}",
                     'fileName' => $sponsor->requirement_file_name
                         ?: $label.($extension ? ".{$extension}" : ''),
-                    'status' => 'submitted',
+                    'status' => 'pending',
                     'remarks' => null,
                     'url' => Storage::disk('public')->url($path),
                     'reviewKey' => "wedding-sponsor-individual:{$sponsor->id}",
@@ -455,7 +534,7 @@ class StaffBookingController extends Controller
                     'requirementType' => "baptism_godparent_individual_{$type}_{$godParent->id}",
                     'fileName' => $godParent->requirement_file_name
                         ?: $label.($extension ? ".{$extension}" : ''),
-                    'status' => 'submitted',
+                    'status' => 'pending',
                     'remarks' => null,
                     'url' => Storage::disk('public')->url($path),
                     'reviewKey' => "baptism-godparent-individual:{$godParent->id}",
@@ -538,6 +617,9 @@ class StaffBookingController extends Controller
             'gender' => $person->gender,
             'address' => $person->address,
             'contactNumber' => $person->contact_number,
+            'parishOrigin' => $person->parish_origin,
+            'baptismDate' => $person->baptism_date?->format('F j, Y'),
+            'baptismChurch' => $person->baptism_church,
             'parents' => $person->parents->map(fn ($parent) => [
                 'relationship' => ucfirst($parent->relationship),
                 'name' => $this->personName($parent->first_name, $parent->middle_initial, $parent->last_name, $parent->suffix),

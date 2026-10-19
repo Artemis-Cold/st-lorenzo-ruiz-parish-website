@@ -28,10 +28,26 @@ class Booking extends Model
         'processed_by',
         'processed_at',
         'remarks',
+        'wedding_booking_id',
+        'wedding_applicant_role',
+        'documents_approved_notified_at',
+        'physical_copies_received_at',
+        'physical_copies_received_by',
+        'schedule_status',
+        'schedule_reason',
+        'schedule_requested_at',
+        'schedule_reviewed_at',
+        'schedule_reviewed_by',
+        'details_submitted_at',
     ];
 
     protected $casts = [
         'processed_at' => 'datetime',
+        'schedule_requested_at' => 'datetime',
+        'schedule_reviewed_at' => 'datetime',
+        'details_submitted_at' => 'datetime',
+        'documents_approved_notified_at' => 'datetime',
+        'physical_copies_received_at' => 'datetime',
         'total_amount' => 'decimal:2',
         'pricing_snapshot' => 'array',
     ];
@@ -47,6 +63,32 @@ class Booking extends Model
             + $this->selectedAddons->sum('price'));
     }
 
+    public function scheduleConfirmed(): bool
+    {
+        return $this->schedule_status === null || $this->schedule_status === 'confirmed';
+    }
+
+    public function awaitingDetails(): bool
+    {
+        return $this->schedule_status !== null && $this->details_submitted_at === null;
+    }
+
+    public function scheduleReview(): ?array
+    {
+        return $this->schedule_status === null ? null : [
+            'status' => $this->schedule_status,
+            'reason' => $this->schedule_reason,
+            'requestedAt' => $this->schedule_requested_at?->toIso8601String(),
+            'reviewedAt' => $this->schedule_reviewed_at?->toIso8601String(),
+            'detailsSubmitted' => ! $this->awaitingDetails(),
+        ];
+    }
+
+    public function scopeScheduleHeld($query)
+    {
+        return $query->where(fn ($q) => $q->whereNull('schedule_status')->orWhere('schedule_status', '!=', 'rejected'));
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Relationships
@@ -56,6 +98,16 @@ class Booking extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function weddingBooking(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'wedding_booking_id');
+    }
+
+    public function preparations(): HasMany
+    {
+        return $this->hasMany(self::class, 'wedding_booking_id');
     }
 
     public function service(): BelongsTo

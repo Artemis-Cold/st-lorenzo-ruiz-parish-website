@@ -27,10 +27,14 @@ class Baptizand extends Model
         'address',
 
         'contact_number',
+        'parish_origin',
+        'baptism_date',
+        'baptism_church',
     ];
 
     protected $casts = [
         'birth_date' => 'date',
+        'baptism_date' => 'date',
     ];
 
     public function booking(): BelongsTo

@@ -12,10 +12,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
+use Tests\Concerns\HasConfirmedSchedule;
 use Tests\TestCase;
 
 class FuneralBookingTest extends TestCase
 {
+    use HasConfirmedSchedule;
     use RefreshDatabase;
 
     public function test_incomplete_funeral_accepts_requirements_to_follow_and_blocks_approval_until_uploaded(): void
@@ -36,6 +38,7 @@ class FuneralBookingTest extends TestCase
         ]);
 
         $response = $this->post('/api/bookings/funeral', [
+            'schedule_request_id' => $this->confirmedScheduleId($slot->id),
             'booking_slot_id' => $slot->id,
             'service_package_id' => $package->id,
             'deceased' => [
@@ -170,6 +173,10 @@ class FuneralBookingTest extends TestCase
             'remarks' => null,
         ]);
 
+        Sanctum::actingAs($staff);
+        $this->postJson("/api/staff/bookings/{$bookingId}/requirements/review", ['action' => 'approve_all'])->assertOk();
+        $this->postJson("/api/staff/bookings/{$bookingId}/requirements/review", ['action' => 'receive'])->assertOk();
+        Sanctum::actingAs($parishioner);
         $this->post("/api/bookings/{$bookingId}/payment", [
             'reference_number' => '6000000000001',
             'receipt' => UploadedFile::fake()->image('gcash-receipt.jpg'),
@@ -185,6 +192,8 @@ class FuneralBookingTest extends TestCase
         $this->patchJson("/api/staff/transactions/{$receiptId}/status", [
             'status' => 'confirmed',
         ])->assertOk()->assertJsonPath('data.status', 'confirmed');
+
+        $this->postJson("/api/staff/bookings/{$bookingId}/requirements/review", ['action' => 'approve_all'])->assertOk();
 
         $this->patchJson("/api/staff/bookings/{$bookingId}/status", ['status' => 'approved'])
             ->assertOk()

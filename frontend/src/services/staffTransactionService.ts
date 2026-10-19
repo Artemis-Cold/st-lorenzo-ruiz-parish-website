@@ -9,14 +9,26 @@ export type TransactionStatus =
 export type TransactionFilterStatus = TransactionStatus | "pending";
 export type TransactionMethod = "gcash" | "cash";
 export type TransactionService =
-  "mass-intention" | "document-request" | "baptism" | "wedding" | "funeral";
+  | "mass-intention"
+  | "document-request"
+  | "baptism"
+  | "wedding"
+  | "funeral"
+  | "confirmation"
+  | "first-communion";
 export interface StaffTransaction {
   id: number;
   date: string;
   name: string;
   contactNumber: string;
   type:
-    "Mass Intention" | "Document Request" | "Baptism" | "Wedding" | "Funeral";
+    | "Mass Intention"
+    | "Document Request"
+    | "Baptism"
+    | "Wedding"
+    | "Funeral"
+    | "Confirmation"
+    | "First Communion";
   bookingReference: string;
   method: TransactionMethod;
   reference: string | null;

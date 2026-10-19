@@ -1,3 +1,4 @@
+import FieldError from "@/features/parishioner/components/booking/FieldError";
 import { BookingTranslation } from "@/features/parishioner/components/booking/BookingLabel";
 import BookingLabel from "@/features/parishioner/components/booking/BookingLabel";
 import { BookingCard } from "../..";
@@ -19,12 +20,6 @@ interface DetailsStepProps {
   errors?: Record<string, string[]>;
   view?: "all" | "information" | "documents";
   section?: "baptizand" | "sponsors";
-}
-
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null;
-
-  return <p className="mt-1 text-sm text-red-600">{message}</p>;
 }
 
 export default function DetailsStep({
@@ -222,8 +217,8 @@ ${
           />
           {!readOnly && (
             <p className="mt-2 text-xs leading-5 text-amber-800">
-              PDF, JPG, or PNG, up to 5 MB. The file may be submitted later from
-              My Profile while the booking is pending.
+              Upload this certificate in My Profile after admin confirms your
+              schedule.
             </p>
           )}
         </div>
@@ -863,7 +858,7 @@ ${
                           </div>
                         </div>
 
-                        {view === "all" && (
+                        {(view === "all" || view === "information") && (
                           <div className="mt-5">
                             {renderGodParentRequirement(
                               godParent,

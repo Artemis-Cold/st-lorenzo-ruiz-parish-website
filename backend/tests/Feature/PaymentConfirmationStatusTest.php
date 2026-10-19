@@ -7,6 +7,7 @@ use App\Models\BookingDocument;
 use App\Models\Service;
 use App\Models\SmsMessage;
 use App\Models\User;
+use App\Services\BookingRequirementService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -169,6 +170,16 @@ class PaymentConfirmationStatusTest extends TestCase
                     'details' => ['name' => 'Juan Dela Cruz'],
                     'price' => 100,
                 ]);
+            }
+
+            if (in_array($code, ['wedding', 'baptism', 'funeral'], true)) {
+                foreach (app(BookingRequirementService::class)->missing($booking) as $requirement) {
+                    $booking->documents()->create([
+                        'document_type' => $requirement['types'][0], 'file_name' => 'requirement.pdf',
+                        'file_path' => 'requirement.pdf', 'status' => 'approved',
+                    ]);
+                }
+                $booking->update(['physical_copies_received_at' => now()]);
             }
 
             $receipt = BookingDocument::create([

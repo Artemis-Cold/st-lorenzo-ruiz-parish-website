@@ -10,7 +10,8 @@ import type {
 } from "@/features/staff/types/request";
 
 export interface StaffBookingFilters {
-  service?: "wedding" | "funeral" | "baptism";
+  service?:
+    "wedding" | "funeral" | "baptism" | "confirmation" | "first-communion";
   status?: BookingStatus;
   search?: string;
   date?: string;
@@ -126,6 +127,18 @@ export async function updateStaffBookingStatus(
   return normalizeBookingMoney(response.data.data);
 }
 
+export async function reviewBookingSchedule(
+  id: number,
+  decision: "confirmed" | "rejected",
+  reason?: string,
+): Promise<Booking> {
+  const response = await api.patch<ItemResponse<Booking>>(
+    `/staff/bookings/${id}/schedule-review`,
+    { decision, reason },
+  );
+  return normalizeBookingMoney(response.data.data);
+}
+
 export async function sendBookingRequirementsReminder(
   id: number,
 ): Promise<string> {
@@ -148,6 +161,18 @@ export async function requestBookingRequirementResubmission(
     ...response.data,
     data: normalizeBookingMoney(response.data.data),
   };
+}
+
+export async function reviewBookingRequirements(
+  id: number,
+  action: "approve" | "approve_all" | "receive",
+  documentKey?: string,
+): Promise<{ message: string; data: Booking }> {
+  const response = await api.post<{ message: string; data: Booking }>(
+    `/staff/bookings/${id}/requirements/review`,
+    { action, document_key: documentKey },
+  );
+  return { ...response.data, data: normalizeBookingMoney(response.data.data) };
 }
 
 export async function sendBookingPaymentReminder(id: number): Promise<string> {
@@ -287,14 +312,15 @@ export async function updateDocumentRequestStatus(
 export async function scheduleBookingAppointment(
   bookingId: number,
   data: {
-    type: "seminar" | "priest_interview";
+    type: "seminar" | "priest_interview" | "sacrament";
     scheduledAt: string;
-    venue: string;
     notes: string;
   },
 ) {
   const response = await api.post<{
-    data: Booking["details"]["appointments"][number];
+    data: Booking["details"]["appointments"][number] & {
+      scheduleReview?: Booking["scheduleReview"];
+    };
   }>(`/staff/bookings/${bookingId}/appointments`, data);
   return response.data.data;
 }

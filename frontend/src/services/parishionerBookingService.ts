@@ -1,4 +1,5 @@
 import api from "@/api/axios";
+import type { ScheduleReview } from "./scheduleReviewService";
 import type { ProfileBooking } from "@/api/auth";
 
 export interface ParishionerBookingDetail {
@@ -8,9 +9,14 @@ export interface ParishionerBookingDetail {
   serviceCode: string;
   status: ProfileBooking["status"];
   bookingSlotId: number | null;
+  scheduleReview?: ScheduleReview | null;
   canReschedule: boolean;
   canUploadDocuments: boolean;
   missingRequirements: MissingRequirement[];
+  requirementReview?: {
+    allApproved: boolean;
+    physicalCopiesReceivedAt: string | null;
+  } | null;
   submittedAt: string;
   remarks: string | null;
   schedule: {
@@ -124,6 +130,7 @@ export async function uploadParishionerBookingDocument(
 }
 
 export interface RescheduledBooking {
+  scheduleReview: ScheduleReview;
   id: number;
   status: ProfileBooking["status"];
   bookingSlotId: number;

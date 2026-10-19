@@ -1,9 +1,12 @@
 export type BookingStatus =
   "pending" | "paid" | "approved" | "rejected" | "cancelled" | "completed";
 
-export type BookingType = "Marriage" | "Funeral" | "Baptism";
+export type BookingType =
+  "Marriage" | "Funeral" | "Baptism" | "Confirmation" | "First Communion";
 
 export interface Booking {
+  scheduleReview?:
+    import("@/services/scheduleReviewService").ScheduleReview | null;
   id: number;
   date: string; // mm-dd-yyyy for display
   names: string;
@@ -13,6 +16,15 @@ export interface Booking {
   status: BookingStatus;
   reference: string;
   details: {
+    weddingReference?: string | null;
+    weddingApplicantRole?: string | null;
+    preparations?: Array<{
+      reference: string;
+      service: string;
+      role: string;
+      amount: string;
+      status: string;
+    }>;
     submittedBy: string;
     packageName: string | null;
     baseAmount: number;
@@ -63,6 +75,10 @@ export interface Booking {
       label: string;
       types: string[];
     }>;
+    requirementReview?: {
+      allApproved: boolean;
+      physicalCopiesReceivedAt: string | null;
+    };
     serviceData: {
       applicants?: Array<{
         role: string;
@@ -114,6 +130,9 @@ export interface Booking {
         gender: string;
         address: string;
         contactNumber: string;
+        parishOrigin?: string | null;
+        baptismDate?: string | null;
+        baptismChurch?: string | null;
         parents: Array<{
           relationship: string;
           name: string;
@@ -129,7 +148,7 @@ export interface Booking {
     };
     appointments: Array<{
       id: number;
-      type: "seminar" | "priest_interview";
+      type: "seminar" | "priest_interview" | "sacrament";
       scheduledAt: string;
       venue: string;
       notes: string | null;

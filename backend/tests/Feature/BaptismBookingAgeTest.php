@@ -10,15 +10,18 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
+use PHPUnit\Framework\Attributes\TestWith;
+use Tests\Concerns\HasConfirmedSchedule;
 use Tests\TestCase;
 
 class BaptismBookingAgeTest extends TestCase
 {
+    use HasConfirmedSchedule;
     use RefreshDatabase;
 
-    #[\PHPUnit\Framework\Attributes\TestWith(['pdf', 'application/pdf'])]
-    #[\PHPUnit\Framework\Attributes\TestWith(['jpg', 'image/jpeg'])]
-    #[\PHPUnit\Framework\Attributes\TestWith(['png', 'image/png'])]
+    #[TestWith(['pdf', 'application/pdf'])]
+    #[TestWith(['jpg', 'image/jpeg'])]
+    #[TestWith(['png', 'image/png'])]
     public function test_baptizand_age_is_calculated_from_birth_date(string $extension, string $mime): void
     {
         Storage::fake('public');
@@ -45,6 +48,7 @@ class BaptismBookingAgeTest extends TestCase
         ]);
 
         $response = $this->post('/api/bookings/baptism', [
+            'schedule_request_id' => $this->confirmedScheduleId($slot->id),
             'booking_slot_id' => $slot->id,
             'service_package_id' => $package->id,
             'baptizand' => [

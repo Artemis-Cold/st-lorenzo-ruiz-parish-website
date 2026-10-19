@@ -33,6 +33,8 @@ const serviceStyles: Record<PublicBookedService["serviceCode"], string> = {
   baptism: "bg-sky-50 text-sky-700 ring-sky-200",
   wedding: "bg-rose-50 text-rose-700 ring-rose-200",
   funeral: "bg-violet-50 text-violet-700 ring-violet-200",
+  confirmation: "bg-amber-50 text-amber-700 ring-amber-200",
+  "first-communion": "bg-emerald-50 text-emerald-700 ring-emerald-200",
 };
 
 function ActivityTooltip({
