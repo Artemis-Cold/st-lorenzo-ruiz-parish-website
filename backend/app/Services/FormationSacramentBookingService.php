@@ -21,6 +21,12 @@ class FormationSacramentBookingService
 
     public function store(array $data): Booking
     {
+        if (($data['service_code'] ?? null) !== 'confirmation') {
+            throw ValidationException::withMessages([
+                'service_code' => 'This service is no longer available for booking.',
+            ]);
+        }
+
         return DB::transaction(function () use ($data) {
             $serviceCode = $data['service_code'];
             $service = Service::where('code', $serviceCode)->firstOrFail();

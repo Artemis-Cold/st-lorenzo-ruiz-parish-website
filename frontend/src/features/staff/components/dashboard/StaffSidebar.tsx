@@ -13,6 +13,7 @@ import { NavLink } from "react-router-dom";
 import ParishLogo from "@/components/common/ParishLogo";
 import { useAuth } from "@/contexts/AuthContext";
 import StaffLogoutButton from "./StaffLogoutButton";
+import { canStaffPage } from "../../permissions";
 
 const navItems = [
   {
@@ -112,23 +113,25 @@ export default function StaffSidebar({ onNavigate }: StaffSidebarProps) {
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {navItems.map(({ label, to, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            onClick={onNavigate}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition ${
-                isActive
-                  ? "bg-white text-[#B22222] shadow-sm"
-                  : "text-white/85 hover:bg-white/10 hover:text-white"
-              }`
-            }
-          >
-            <Icon size={18} strokeWidth={2} />
-            <span className="truncate">{label}</span>
-          </NavLink>
-        ))}
+        {navItems
+          .filter((item) => canStaffPage(user, item.to))
+          .map(({ label, to, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              onClick={onNavigate}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition ${
+                  isActive
+                    ? "bg-white text-[#B22222] shadow-sm"
+                    : "text-white/85 hover:bg-white/10 hover:text-white"
+                }`
+              }
+            >
+              <Icon size={18} strokeWidth={2} />
+              <span className="truncate">{label}</span>
+            </NavLink>
+          ))}
         <StaffLogoutButton onLogout={onNavigate} />
       </nav>
 

@@ -21,7 +21,7 @@ class StaffPricingTest extends TestCase
     public function test_staff_can_update_pricing_without_changing_an_existing_booking_snapshot(): void
     {
         $this->seed(ProductionSeeder::class);
-        $staff = User::where('role', 'staff')->firstOrFail();
+        $staff = User::where('username', 'parishadmin')->firstOrFail();
         $parishioner = User::factory()->create();
         Sanctum::actingAs($staff);
 
@@ -58,11 +58,11 @@ class StaffPricingTest extends TestCase
     public function test_pricing_endpoints_return_current_values_and_reject_invalid_updates(): void
     {
         $this->seed(ProductionSeeder::class);
-        Sanctum::actingAs(User::where('role', 'staff')->firstOrFail());
+        Sanctum::actingAs(User::where('username', 'parishadmin')->firstOrFail());
 
         $this->getJson('/api/staff/settings/pricing')
             ->assertOk()
-            ->assertJsonCount(6, 'data.packages')
+            ->assertJsonCount(5, 'data.packages')
             ->assertJsonCount(13, 'data.fees');
 
         $this->getJson('/api/services/document-request/fees')
@@ -80,7 +80,7 @@ class StaffPricingTest extends TestCase
     public function test_wedding_has_no_separate_editable_base_price(): void
     {
         $this->seed(ProductionSeeder::class);
-        Sanctum::actingAs(User::where('role', 'staff')->firstOrFail());
+        Sanctum::actingAs(User::where('username', 'parishadmin')->firstOrFail());
 
         $wedding = ServicePackage::query()
             ->whereHas('service', fn ($query) => $query->where('code', 'wedding'))

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Support\StaffPermissions;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
@@ -49,6 +50,8 @@ class UserResource extends JsonResource
                 : null,
 
             'role' => $this->role,
+            'permissions' => $this->role === 'admin' ? array_keys(StaffPermissions::LABELS) : ($this->role === 'staff' ? ($this->staff_permissions ?? []) : []),
+            'is_active' => (bool) $this->is_active,
 
             'phone_verified' => ! is_null($this->phone_verified_at),
 

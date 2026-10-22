@@ -38,6 +38,7 @@ class ServiceSeeder extends Seeder
                 'code' => 'first-communion',
                 'name' => 'First Communion',
                 'description' => 'Sacrament of First Holy Communion',
+                'is_active' => false,
             ],
 
             [

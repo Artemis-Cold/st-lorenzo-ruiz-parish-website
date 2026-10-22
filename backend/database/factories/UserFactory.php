@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\User;
+use App\Support\StaffPermissions;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 
@@ -41,6 +42,9 @@ class UserFactory extends Factory
             'province' => fake()->state(),
             'zip_code' => fake()->postcode(),
             'role' => 'parishioner',
+            // Existing workflow tests model fully authorized staff; restricted-access
+            // tests override this explicitly. Production accounts default to no access.
+            'staff_permissions' => array_keys(StaffPermissions::LABELS),
             'is_active' => true,
             'phone_verified_at' => now(),
         ];

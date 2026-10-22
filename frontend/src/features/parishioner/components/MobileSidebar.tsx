@@ -112,13 +112,6 @@ export default function MobileSidebar({ open, onClose }: MobileSidebarProps) {
 
                 <SidebarItem
                   collapsed={false}
-                  icon={Church}
-                  label="First Communion"
-                  to="/services/first-communion"
-                />
-
-                <SidebarItem
-                  collapsed={false}
                   icon={HeartHandshake}
                   label="Wedding"
                   to="/services/wedding"

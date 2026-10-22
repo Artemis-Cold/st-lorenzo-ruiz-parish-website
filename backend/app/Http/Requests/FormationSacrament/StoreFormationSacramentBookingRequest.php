@@ -26,7 +26,7 @@ class StoreFormationSacramentBookingRequest extends FormRequest
 
         return [
             'schedule_request_id' => $confirmation ? ['nullable', 'integer', 'exists:bookings,id'] : ['prohibited'],
-            'service_code' => ['required', Rule::in(['confirmation', 'first-communion'])],
+            'service_code' => ['required', Rule::in(['confirmation'])],
             'booking_slot_id' => $confirmation ? ['required', 'integer', 'exists:booking_slots,id'] : ['prohibited'],
             'service_package_id' => $confirmation ? ['required', 'integer', 'exists:service_packages,id'] : ['prohibited'],
             'remarks' => ['nullable', 'string', 'max:2000'],

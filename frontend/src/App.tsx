@@ -35,6 +35,7 @@ import BookingManagement from "./features/staff/pages/BookingManagement";
 import Requests from "./features/staff/pages/Request";
 import Transactions from "./features/staff/pages/Transactions";
 import StaffSettings from "./features/staff/pages/Settings";
+import StaffAccounts from "./features/staff/pages/StaffAccounts";
 import StaffAvailability from "./features/staff/pages/Availability";
 import StaffPricingSettings from "./features/staff/pages/PricingSettings";
 import NavigationMarkers from "./features/staff/pages/NavigationMarkers";
@@ -78,15 +79,6 @@ function App() {
                 />
               }
             />
-            <Route
-              path="/services/first-communion"
-              element={
-                <FormationSacrament
-                  key="first-communion"
-                  serviceCode="first-communion"
-                />
-              }
-            />
             <Route path="/services/mass-intention" element={<Mass />} />
             <Route path="/services/document-request" element={<Document />} />
           </Route>
@@ -116,6 +108,7 @@ function App() {
           <Route path="/staff/requests" element={<Requests />} />
           <Route path="/staff/transactions" element={<Transactions />} />
           <Route path="/staff/settings" element={<StaffSettings />} />
+          <Route path="/staff/settings/accounts" element={<StaffAccounts />} />
           <Route
             path="/staff/settings/pricing"
             element={<StaffPricingSettings />}

@@ -58,18 +58,6 @@ const services = [
   },
   {
     icon: Church,
-    title: "First Communion",
-    description:
-      "Register for First Holy Communion, upload the Baptismal Certificate, and receive the parish seminar schedule by SMS.",
-    color: "bg-emerald-100 text-emerald-700",
-    path: "/services/first-communion",
-    requirements: [
-      "Baptismal Certificate for sacramental purposes",
-      "Attendance at the parish seminar",
-    ],
-  },
-  {
-    icon: Church,
     title: "Funeral Services",
     description:
       "Coordinate funeral masses and burial services while communicating efficiently with the parish office.",

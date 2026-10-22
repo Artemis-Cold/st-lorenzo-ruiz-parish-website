@@ -80,7 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post(
             '/bookings/formation-sacrament/{serviceCode}',
             [FormationSacramentBookingController::class, 'store']
-        )->whereIn('serviceCode', ['confirmation', 'first-communion']);
+        )->whereIn('serviceCode', ['confirmation']);
 
         Route::post(
             '/bookings/mass-intention',
@@ -127,6 +127,10 @@ Route::middleware(['auth:sanctum', 'staff'])
         Route::patch('/settings/profile', [StaffSettingsController::class, 'updateProfile']);
         Route::patch('/settings/password', [StaffSettingsController::class, 'updatePassword']);
         Route::post('/settings/staff', [StaffSettingsController::class, 'createStaff']);
+        Route::get('/settings/staff', [StaffSettingsController::class, 'accounts']);
+        Route::patch('/settings/staff/{staff}/access', [StaffSettingsController::class, 'updateAccess']);
+        Route::get('/settings/permissions', [StaffSettingsController::class, 'permissions']);
+        Route::get('/settings/audit', [StaffSettingsController::class, 'audit']);
         Route::get('/settings/pricing', [StaffPricingController::class, 'index']);
         Route::put('/settings/pricing', [StaffPricingController::class, 'update']);
         Route::get('/transactions', [StaffTransactionController::class, 'index']);

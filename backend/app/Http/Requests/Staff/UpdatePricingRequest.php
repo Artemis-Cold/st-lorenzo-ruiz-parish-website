@@ -8,7 +8,7 @@ class UpdatePricingRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->role === 'staff';
+        return $this->user()?->hasStaffPermission('pricing.manage') ?? false;
     }
 
     public function rules(): array

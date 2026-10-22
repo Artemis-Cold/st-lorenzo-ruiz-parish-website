@@ -1,3 +1,4 @@
+import { canStaff } from "../permissions";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { AxiosError } from "axios";
 import PasswordRequirements from "@/features/auth/components/PasswordRequirements";
@@ -18,7 +19,6 @@ import { toast } from "sonner";
 
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  createStaffAccount,
   updateStaffPassword,
   updateStaffProfile,
 } from "@/services/staffSettingsService";
@@ -113,9 +113,9 @@ function SettingsModal({
 export default function Settings() {
   const navigate = useNavigate();
   const { user, refreshUser } = useAuth();
-  const [activeModal, setActiveModal] = useState<
-    "profile" | "password" | "staff" | null
-  >(null);
+  const [activeModal, setActiveModal] = useState<"profile" | "password" | null>(
+    null,
+  );
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState({
     username: user?.username ?? "",
@@ -130,19 +130,8 @@ export default function Settings() {
     password: "",
     password_confirmation: "",
   });
-  const emptyStaff = {
-    username: "",
-    first_name: "",
-    middle_initial: "",
-    last_name: "",
-    phone: "",
-    password: "",
-    password_confirmation: "",
-  };
-  const [newStaff, setNewStaff] = useState(emptyStaff);
   const [profileErrors, setProfileErrors] = useState<FieldErrors>({});
   const [passwordErrors, setPasswordErrors] = useState<FieldErrors>({});
-  const [staffErrors, setStaffErrors] = useState<FieldErrors>({});
 
   const saveProfile = async (event: FormEvent) => {
     event.preventDefault();
@@ -190,28 +179,9 @@ export default function Settings() {
     }
   };
 
-  const addStaff = async (event: FormEvent) => {
-    event.preventDefault();
-    setSaving(true);
-    setStaffErrors({});
-    try {
-      await createStaffAccount(newStaff);
-      setNewStaff(emptyStaff);
-      toast.success("Parish staff account created.");
-      setActiveModal(null);
-    } catch (error) {
-      const errors = validationErrors(error);
-      if (errors) setStaffErrors(errors);
-      else toast.error("Unable to create the staff account. Please try again.");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const openModal = (modal: "profile" | "password" | "staff") => {
+  const openModal = (modal: "profile" | "password") => {
     setProfileErrors({});
     setPasswordErrors({});
-    setStaffErrors({});
     setActiveModal(modal);
   };
 
@@ -300,68 +270,79 @@ export default function Settings() {
               />
             </button>
 
-            <button
-              type="button"
-              onClick={() => openModal("staff")}
-              className="group flex w-full items-center gap-4 px-6 py-5 text-left transition hover:bg-[#FAF8F5] sm:px-8"
-            >
-              <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700">
-                <UserPlus size={22} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold text-[#292524]">Add Parish Staff</p>
-                <p className="mt-1 text-sm text-gray-500">
-                  Create credentials for another authorized staff member.
-                </p>
-              </div>
-              <ChevronRight
-                size={20}
-                className="shrink-0 text-gray-300 transition group-hover:translate-x-1 group-hover:text-[#B22222]"
-              />
-            </button>
+            {user?.role === "admin" && (
+              <button
+                type="button"
+                onClick={() => navigate("/staff/settings/accounts")}
+                className="group flex w-full items-center gap-4 px-6 py-5 text-left transition hover:bg-[#FAF8F5] sm:px-8"
+              >
+                <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-blue-50 text-blue-700">
+                  <UserPlus size={22} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-[#292524]">
+                    Staff Accounts &amp; Permissions
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Add parish staff and manage their account access in one
+                    place.
+                  </p>
+                </div>
+                <ChevronRight
+                  size={20}
+                  className="shrink-0 text-gray-300 transition group-hover:translate-x-1 group-hover:text-[#B22222]"
+                />
+              </button>
+            )}
 
-            <button
-              type="button"
-              onClick={() => navigate("/staff/settings/pricing")}
-              className="group flex w-full items-center gap-4 px-6 py-5 text-left transition hover:bg-[#FAF8F5] sm:px-8"
-            >
-              <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
-                <Banknote size={22} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold text-[#292524]">Service Pricing</p>
-                <p className="mt-1 text-sm text-gray-500">
-                  Manage package, add-on, document, and Mass intention rates.
-                </p>
-              </div>
-              <ChevronRight
-                size={20}
-                className="shrink-0 text-gray-300 transition group-hover:translate-x-1 group-hover:text-[#B22222]"
-              />
-            </button>
+            {canStaff(user, "pricing.manage") && (
+              <button
+                type="button"
+                onClick={() => navigate("/staff/settings/pricing")}
+                className="group flex w-full items-center gap-4 px-6 py-5 text-left transition hover:bg-[#FAF8F5] sm:px-8"
+              >
+                <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-emerald-50 text-emerald-700">
+                  <Banknote size={22} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-[#292524]">
+                    Service Pricing
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Manage package, add-on, document, and Mass intention rates.
+                  </p>
+                </div>
+                <ChevronRight
+                  size={20}
+                  className="shrink-0 text-gray-300 transition group-hover:translate-x-1 group-hover:text-[#B22222]"
+                />
+              </button>
+            )}
 
-            <button
-              type="button"
-              onClick={() => navigate("/staff/settings/navigation-markers")}
-              className="group flex w-full items-center gap-4 px-6 py-5 text-left transition hover:bg-[#FAF8F5] sm:px-8"
-            >
-              <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-violet-50 text-violet-700">
-                <ScanLine size={22} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="font-semibold text-[#292524]">
-                  Navigation Markers
-                </p>
-                <p className="mt-1 text-sm text-gray-500">
-                  Open, review, and print the markers used for indoor
-                  navigation.
-                </p>
-              </div>
-              <ChevronRight
-                size={20}
-                className="shrink-0 text-gray-300 transition group-hover:translate-x-1 group-hover:text-[#B22222]"
-              />
-            </button>
+            {canStaff(user, "markers.view") && (
+              <button
+                type="button"
+                onClick={() => navigate("/staff/settings/navigation-markers")}
+                className="group flex w-full items-center gap-4 px-6 py-5 text-left transition hover:bg-[#FAF8F5] sm:px-8"
+              >
+                <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-violet-50 text-violet-700">
+                  <ScanLine size={22} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-[#292524]">
+                    Navigation Markers
+                  </p>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Open, review, and print the markers used for indoor
+                    navigation.
+                  </p>
+                </div>
+                <ChevronRight
+                  size={20}
+                  className="shrink-0 text-gray-300 transition group-hover:translate-x-1 group-hover:text-[#B22222]"
+                />
+              </button>
+            )}
           </div>
         </section>
       </div>
@@ -478,62 +459,6 @@ export default function Settings() {
                 className="rounded-xl bg-[#B22222] px-5 py-3 font-semibold text-white hover:bg-[#991B1B] disabled:opacity-50"
               >
                 {saving ? "Updating..." : "Update Password"}
-              </button>
-            </div>
-          </form>
-        </SettingsModal>
-      )}
-
-      {activeModal === "staff" && (
-        <SettingsModal
-          title="Add Parish Staff"
-          description="Create a new account for an authorized parish staff member."
-          onClose={closeModal}
-          wide
-        >
-          <form onSubmit={addStaff} noValidate className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2">
-              {Object.entries(newStaff).map(([key, value]) => (
-                <label
-                  key={key}
-                  className="block text-sm font-medium capitalize"
-                >
-                  {key.replaceAll("_", " ")}
-                  <input
-                    type={key.includes("password") ? "password" : "text"}
-                    value={value}
-                    placeholder={`Enter ${key.replaceAll("_", " ")}`}
-                    maxLength={key === "middle_initial" ? 1 : undefined}
-                    onChange={(event) =>
-                      setNewStaff((current) => ({
-                        ...current,
-                        [key]:
-                          key === "middle_initial"
-                            ? event.target.value.toUpperCase()
-                            : event.target.value,
-                      }))
-                    }
-                    className={`${inputClass(Boolean(staffErrors[key]))} mt-2`}
-                  />
-                  <ErrorText errors={staffErrors} name={key} />
-                </label>
-              ))}
-            </div>
-            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={closeModal}
-                disabled={saving}
-                className="rounded-xl border border-gray-300 px-5 py-3 font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-xl bg-[#B22222] px-5 py-3 font-semibold text-white hover:bg-[#991B1B] disabled:opacity-50"
-              >
-                {saving ? "Creating..." : "Create Staff Account"}
               </button>
             </div>
           </form>

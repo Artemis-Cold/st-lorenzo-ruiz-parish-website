@@ -25,6 +25,7 @@ export async function updateStaffPassword(data: {
 }
 
 export async function createStaffAccount(data: {
+  permissions: string[];
   username: string;
   password: string;
   password_confirmation: string;

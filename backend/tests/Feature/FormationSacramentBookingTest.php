@@ -9,10 +9,13 @@ use App\Models\Service;
 use App\Models\ServicePackage;
 use App\Models\SmsMessage;
 use App\Models\User;
+use App\Services\FormationSacramentBookingService;
+use Database\Seeders\ServiceSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\Sanctum;
 use Tests\Concerns\HasConfirmedSchedule;
 use Tests\TestCase;
@@ -86,52 +89,25 @@ class FormationSacramentBookingTest extends TestCase
         ])->assertOk()->assertJsonPath('data.status', 'approved');
     }
 
-    public function test_parishioner_can_submit_first_communion_without_sponsors(): void
+    public function test_first_communion_registration_is_retired(): void
     {
-        Storage::fake('public');
         Queue::fake();
+        $this->seed(ServiceSeeder::class);
         Sanctum::actingAs(User::factory()->create(['phone_verified_at' => now()]));
-        [$slot, $package] = $this->schedule('first-communion');
 
-        $payload = $this->payload(
-            $slot->id,
-            $package->id,
-            false,
-        );
-        unset($payload['booking_slot_id'], $payload['schedule_request_id'], $payload['documents'], $payload['service_package_id']);
-        $this->postJson('/api/bookings/formation-sacrament/first-communion', [...$payload, 'service_package_id' => $package->id])->assertUnprocessable()->assertJsonValidationErrors('service_package_id');
-        $this->postJson('/api/schedule-requests', ['service' => 'first-communion', 'booking_slot_id' => $slot->id])->assertUnprocessable();
-        $this->post('/api/bookings/formation-sacrament/first-communion', [...$payload, 'documents' => [['document_type' => 'baptismal_certificate', 'file' => UploadedFile::fake()->create('test.pdf', 10, 'application/pdf')]]], ['Accept' => 'application/json'])->assertUnprocessable()->assertJsonValidationErrors('documents');
-        $bookingId = $this->post('/api/bookings/formation-sacrament/first-communion', $payload, ['Accept' => 'application/json'])
-            ->assertCreated()
-            ->assertJsonPath('data.service.code', 'first-communion')
-            ->json('data.id');
+        $this->postJson('/api/bookings/formation-sacrament/first-communion', [])
+            ->assertNotFound();
+        $this->getJson('/api/services/first-communion/packages')->assertGone();
+        $this->assertDatabaseHas('services', ['code' => 'first-communion', 'is_active' => false]);
+        $this->assertDatabaseCount('bookings', 0);
+        Queue::assertNothingPushed();
+    }
 
-        $this->assertDatabaseHas('bookings', ['id' => $bookingId, 'booking_slot_id' => null, 'schedule_status' => 'awaiting_review']);
-        $this->assertDatabaseHas('bookings', ['id' => $bookingId, 'service_package_id' => null, 'total_amount' => 0]);
-        $this->getJson("/api/bookings/{$bookingId}")->assertOk()->assertJsonPath('data.canUploadDocuments', false)->assertJsonPath('data.canReschedule', false);
-        $this->post("/api/bookings/{$bookingId}/documents", ['document_type' => 'baptismal_certificate', 'file' => UploadedFile::fake()->create('test.pdf', 10, 'application/pdf')], ['Accept' => 'application/json'])->assertUnprocessable()->assertJsonValidationErrors('schedule');
-        $this->assertStringContainsString('parish will assign', SmsMessage::where('booking_id', $bookingId)->where('category', 'booking_pending')->value('message'));
-        Sanctum::actingAs(User::factory()->create(['role' => 'staff']));
-
-        $this->patchJson("/api/staff/bookings/{$bookingId}/schedule-review", ['decision' => 'confirmed'])->assertUnprocessable();
-        $this->postJson("/api/staff/bookings/{$bookingId}/appointments", [
-            'type' => 'sacrament', 'scheduledAt' => now()->addWeek()->toIso8601String(),
-        ])->assertCreated()->assertJsonPath('data.scheduleReview.status', 'confirmed');
-        $this->assertStringContainsString('may now submit requirements', SmsMessage::where('booking_id', $bookingId)->where('category', 'first-communion_sacrament')->value('message'));
-        Sanctum::actingAs(Booking::findOrFail($bookingId)->user);
-        $this->getJson("/api/bookings/{$bookingId}")->assertOk()
-            ->assertJsonPath('data.canUploadDocuments', true)
-            ->assertJsonPath('data.schedule.date', now()->addWeek()->toDateString());
-        Sanctum::actingAs(User::factory()->create(['role' => 'staff']));
-        $this->postJson("/api/staff/bookings/{$bookingId}/appointments", [
-            'type' => 'seminar',
-            'scheduledAt' => now()->addDays(3)->toIso8601String(),
-        ])->assertCreated()->assertJsonPath('data.venue', '');
-
-        $this->assertDatabaseHas('booking_appointments', [
-            'booking_id' => $bookingId,
-            'venue' => '',
+    public function test_internal_booking_service_rejects_retired_service(): void
+    {
+        $this->expectException(ValidationException::class);
+        app(FormationSacramentBookingService::class)->store([
+            'service_code' => 'first-communion',
         ]);
     }
 

@@ -88,6 +88,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (user?.role !== "staff" && user?.role !== "admin") return;
+    let active = true;
+    const reloadAccess = () => {
+      if (document.visibilityState !== "visible") return;
+      void me()
+        .then((response) => {
+          if (active) setUser(response.user);
+        })
+        .catch(() => {});
+    };
+    const interval = window.setInterval(reloadAccess, 30000);
+    window.addEventListener("focus", reloadAccess);
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", reloadAccess);
+    };
+  }, [user?.id, user?.role]);
+
   const login = async (credentials: LoginCredentials): Promise<User> => {
     const response = await loginApi(credentials);
 

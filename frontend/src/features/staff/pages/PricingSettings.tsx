@@ -38,7 +38,6 @@ type Section = "sacraments" | "documents" | "mass";
 const serviceOrder = [
   "baptism",
   "confirmation",
-  "first-communion",
   "wedding",
   "funeral",
 ];

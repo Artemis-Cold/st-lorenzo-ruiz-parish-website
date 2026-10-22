@@ -30,7 +30,7 @@ class ServicePackageSeeder extends Seeder
                 [
                     'base_price' => $package['base_price'],
                     'recommended' => $package['recommended'],
-                    'is_active' => true,
+                    'is_active' => $package['service'] !== 'first-communion',
                 ],
             );
             if ($package['service'] === 'baptism') {

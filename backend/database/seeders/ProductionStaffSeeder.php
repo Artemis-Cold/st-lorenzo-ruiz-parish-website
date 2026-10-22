@@ -19,7 +19,7 @@ class ProductionStaffSeeder extends Seeder
                 'last_name' => 'Admin',
                 'suffix' => null,
                 'phone' => '09170000003',
-                'role' => 'staff',
+                'role' => 'admin',
                 'is_active' => true,
                 'profile_completed' => false,
             ],

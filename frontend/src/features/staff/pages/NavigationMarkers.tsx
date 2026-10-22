@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { ScanLine } from "lucide-react";
+import SettingsPageHeader from "../components/SettingsPageHeader";
 import QRCode from "qrcode";
 import { activeMap } from "@/features/ar-navigation/maps/activeMap";
 import { qrPayload } from "@/features/ar-navigation/services/qrNavigation";
@@ -45,10 +46,11 @@ export default function NavigationMarkers() {
   return (
     <StaffDashboardLayout>
       <div className="space-y-6">
-        <Link to="/staff/settings" className="text-[#B22222]">
-          ← Back to Settings
-        </Link>
-        <h1 className="font-serif text-3xl font-bold">Navigation QR Codes</h1>
+        <SettingsPageHeader
+          icon={ScanLine}
+          title="Navigation Markers"
+          description="Review and print the QR codes used to guide parishioners around the parish."
+        />
         <p>
           Replace the old image markers with these QR codes. Mark a standing
           point at each public-side checkpoint. The user must face the QR in the

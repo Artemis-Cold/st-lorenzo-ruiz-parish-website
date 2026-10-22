@@ -35,7 +35,7 @@ class ProductionSeederTest extends TestCase
             'username' => 'parishadmin',
             'first_name' => 'Parish',
             'last_name' => 'Admin',
-            'role' => 'staff',
+            'role' => 'admin',
             'is_active' => true,
         ]);
 

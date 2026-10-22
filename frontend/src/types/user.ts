@@ -29,6 +29,8 @@ export interface User {
   profile_photo_url: string | null;
 
   role: "parishioner" | "staff" | "admin";
+  permissions?: string[];
+  is_active?: boolean;
 
   phone_verified: boolean;
 

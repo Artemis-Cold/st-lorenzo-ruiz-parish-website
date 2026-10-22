@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { canStaff } from "../../permissions";
 import {
   ArrowUpRight,
   Banknote,
@@ -51,6 +53,8 @@ export default function TransactionReviewModal({
   onConfirm,
   onReject,
 }: Props) {
+  const { user } = useAuth();
+  const canConfirm = canStaff(user, "transactions.confirm");
   const [officialReceiptNumber, setOfficialReceiptNumber] = useState(
     transaction?.officialReceiptNumber ?? "",
   );
@@ -227,7 +231,7 @@ export default function TransactionReviewModal({
               </dl>
             </section>
 
-            {transaction.status === "awaiting_payment" && (
+            {canConfirm && transaction.status === "awaiting_payment" && (
               <CashConfirmationForm
                 amountReceived={amountReceived}
                 officialReceiptNumber={officialReceiptNumber}
@@ -253,7 +257,7 @@ export default function TransactionReviewModal({
               />
             )}
 
-            {transaction.status === "pending_verification" && (
+            {canConfirm && transaction.status === "pending_verification" && (
               <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
                 <p className="text-xs leading-5 text-amber-900">
                   Confirm only when the receipt amount and GCash reference match

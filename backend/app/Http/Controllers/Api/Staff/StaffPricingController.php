@@ -118,7 +118,6 @@ class StaffPricingController extends Controller
                 'wedding',
                 'funeral',
                 'confirmation',
-                'first-communion',
             ]))
             ->with(['service:id,code,name', 'inclusions', 'addons'])
             ->orderBy('service_id')

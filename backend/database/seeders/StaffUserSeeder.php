@@ -31,7 +31,7 @@ class StaffUserSeeder extends Seeder
                 'province' => 'Batangas',
                 'zip_code' => '4228',
                 'profile_photo' => null,
-                'role' => 'staff',
+                'role' => 'admin',
                 'is_active' => true,
                 'phone_verified_at' => now(),
                 'profile_completed' => true,

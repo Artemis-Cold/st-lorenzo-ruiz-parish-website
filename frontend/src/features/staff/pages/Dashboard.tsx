@@ -20,7 +20,6 @@ import StatsOverview, {
 } from "../components/dashboard/StatsOverview";
 import WelcomeBanner from "../components/dashboard/WelcomeBanner";
 import StaffParishCalendar from "../components/dashboard/StaffParishCalendar";
-import QuickActionsCard from "../components/dashboard/QuickActionsCard";
 
 export default function Dashboard() {
   const [dashboard, setDashboard] = useState<StaffDashboardData | null>(null);
@@ -75,8 +74,6 @@ export default function Dashboard() {
       <div className="space-y-5 sm:space-y-6">
         <WelcomeBanner />
         <StatsOverview stats={stats} loading={loading} />
-
-        <QuickActionsCard />
 
         <section aria-label="Parish overview" className="min-w-0">
           <div className="mb-3 flex items-end justify-between gap-4 px-1">

@@ -9,6 +9,8 @@ class ServicePackageController extends Controller
 {
     public function index(string $code)
     {
+        abort_if($code === 'first-communion', 410, 'First Communion registration is no longer offered.');
+
         $service = Service::where('code', $code)->firstOrFail();
 
         return response()->json(

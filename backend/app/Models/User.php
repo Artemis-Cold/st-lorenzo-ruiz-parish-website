@@ -59,6 +59,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'profile_completed' => 'boolean',
+            'staff_permissions' => 'array',
         ];
     }
 
@@ -90,6 +91,11 @@ class User extends Authenticatable
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
+    }
+
+    public function hasStaffPermission(string $permission): bool
+    {
+        return $this->is_active && ($this->role === 'admin' || ($this->role === 'staff' && in_array($permission, $this->staff_permissions ?? [], true)));
     }
 
     public function approvedBookings(): HasMany

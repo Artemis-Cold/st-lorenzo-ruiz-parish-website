@@ -83,11 +83,6 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
               icon: Church,
             },
             {
-              label: "First Communion",
-              to: "/services/first-communion",
-              icon: Church,
-            },
-            {
               label: "Wedding",
               to: "/services/wedding",
               icon: HeartHandshake,

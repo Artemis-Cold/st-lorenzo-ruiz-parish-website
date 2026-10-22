@@ -38,11 +38,12 @@ class StaffSettingsApiTest extends TestCase
         $this->assertTrue(Hash::check('New-password1', $staff->fresh()->password));
     }
 
-    public function test_staff_can_create_another_staff_account(): void
+    public function test_main_admin_can_create_another_staff_account(): void
     {
-        Sanctum::actingAs(User::factory()->create(['role' => 'staff']));
+        Sanctum::actingAs(User::factory()->create(['role' => 'admin']));
 
         $this->postJson('/api/staff/settings/staff', [
+            'permissions' => ['transactions.view'],
             'username' => 'newstaff',
             'first_name' => 'Maria',
             'middle_initial' => 'B',
