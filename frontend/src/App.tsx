@@ -7,7 +7,6 @@ import GuestRoute from "./components/GuestRoute";
 import StaffProtectedRoute from "./components/StaffProtectedRoute";
 import PhoneVerifiedRoute from "./components/PhoneVerifiedRoute";
 import Home from "./features/home/pages/Home";
-
 import Login from "./features/auth/pages/Login";
 import SignUp from "./features/auth/pages/SignUp";
 import StaffLogin from "./features/auth/pages/StaffLogin";
