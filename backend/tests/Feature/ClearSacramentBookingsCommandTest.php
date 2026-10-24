@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Booking;
 use App\Models\BookingDocument;
 use App\Models\BookingSlot;
+use App\Models\DocumentRequestBooking;
+use App\Models\MassIntention;
 use App\Models\Service;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -90,6 +92,66 @@ class ClearSacramentBookingsCommandTest extends TestCase
         $this->assertDatabaseHas('users', ['id' => $bookings['wedding']->user_id]);
         $this->assertDatabaseHas('booking_slots', ['id' => $bookings['wedding']->booking_slot_id]);
         $this->assertDatabaseHas('bookings', ['id' => $bookings['document-request']->id]);
+    }
+
+    public function test_all_bookings_preview_keeps_records_and_uploads(): void
+    {
+        Storage::fake('public');
+        $bookings = $this->bookings();
+        Storage::disk('public')->put('booking-documents/receipt.jpg', 'receipt');
+        $this->document($bookings['document-request'], 'booking-documents/receipt.jpg');
+
+        $this->artisan('bookings:clear-sacraments', ['--all-bookings' => true, '--delete-files' => true])
+            ->expectsOutputToContain('Dry run only')->assertSuccessful();
+        $this->assertDatabaseCount('bookings', 5);
+        Storage::disk('public')->assertExists('booking-documents/receipt.jpg');
+    }
+
+    public function test_all_bookings_cleanup_preserves_accounts_slots_and_unrelated_uploads(): void
+    {
+        Storage::fake('public');
+        $bookings = $this->bookings();
+        foreach ($bookings as $code => $booking) {
+            $path = "booking-documents/{$code}.pdf";
+            Storage::disk('public')->put($path, 'requirement or receipt');
+            $this->document($booking, $path);
+        }
+        Storage::disk('public')->put('announcements/banner.jpg', 'keep');
+        Storage::disk('public')->put('profile-photos/avatar.jpg', 'keep');
+        DocumentRequestBooking::create(['booking_id' => $bookings['document-request']->id, 'total_amount' => 100]);
+        $serviceCount = Service::count();
+        $mass = MassIntention::create([
+            'booking_id' => $bookings['mass-intention']->id,
+            'intention_date' => today()->addWeek(),
+            'payment_reference' => 'CLEAR-MASS', 'total_amount' => 100,
+        ]);
+        $mass->entries()->create(['intention_type' => 'thanksgiving', 'names' => ['Test Person'], 'amount' => 100]);
+
+        $this->artisan('bookings:clear-sacraments', [
+            '--all-bookings' => true, '--execute' => true, '--force' => true, '--delete-files' => true,
+        ])->assertSuccessful();
+
+        $this->assertDatabaseCount('bookings', 0);
+        $this->assertDatabaseCount('document_request_bookings', 0);
+        $this->assertDatabaseCount('mass_intentions', 0);
+        $this->assertDatabaseCount('mass_intention_entries', 0);
+        $this->assertDatabaseCount('booking_documents', 0);
+        $this->assertDatabaseCount('users', 1);
+        $this->assertDatabaseCount('booking_slots', 5);
+        $this->assertDatabaseCount('services', $serviceCount);
+        foreach (array_keys($bookings) as $code) {
+            Storage::disk('public')->assertMissing("booking-documents/{$code}.pdf");
+        }
+        Storage::disk('public')->assertExists('announcements/banner.jpg');
+        Storage::disk('public')->assertExists('profile-photos/avatar.jpg');
+    }
+
+    public function test_production_cleanup_requires_force(): void
+    {
+        $this->bookings();
+        $this->app->instance('env', 'production');
+        $this->artisan('bookings:clear-sacraments', ['--all-bookings' => true, '--execute' => true])->assertFailed();
+        $this->assertDatabaseCount('bookings', 5);
     }
 
     /** @return array<string, Booking> */

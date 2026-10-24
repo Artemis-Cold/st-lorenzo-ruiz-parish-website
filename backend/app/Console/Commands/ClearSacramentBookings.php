@@ -17,26 +17,29 @@ class ClearSacramentBookings extends Command
     ];
 
     protected $signature = 'bookings:clear-sacraments
+        {--all-bookings : Include document requests, Mass intentions, and every other booking type}
         {--execute : Permanently delete the matching database records}
         {--delete-files : Also delete associated uploads from the public disk}
         {--force : Skip confirmation and authorize execution in production}';
 
-    protected $description = 'Safely clear Baptism, Wedding, and Funeral bookings without affecting other booking types';
+    protected $description = 'Preview or clear sacrament bookings; optionally include all booking types and their uploads';
 
     public function handle(): int
     {
+        $all = (bool) $this->option('all-bookings');
         $services = Service::query()
-            ->whereIn('code', self::SERVICE_CODES)
+            ->when(! $all, fn ($query) => $query->whereIn('code', self::SERVICE_CODES))
             ->get(['id', 'code', 'name'])
             ->keyBy('code');
 
-        $bookingQuery = Booking::query()->whereIn('service_id', $services->pluck('id'));
+        $bookingQuery = Booking::query()->when(! $all, fn ($query) => $query->whereIn('service_id', $services->pluck('id')));
         $bookingIds = (clone $bookingQuery)->pluck('id');
         $files = $this->associatedFiles($bookingIds);
 
         $this->newLine();
-        $this->components->info('Sacrament booking cleanup preview');
-        $this->table(['Service', 'Bookings'], collect(self::SERVICE_CODES)->map(fn (string $code) => [
+        $this->components->info($all ? 'ALL booking types cleanup preview' : 'Sacrament booking cleanup preview');
+        $this->line('Environment: '.app()->environment().' | Database: '.DB::connection()->getDatabaseName());
+        $this->table(['Service', 'Bookings'], ($all ? $services->keys() : collect(self::SERVICE_CODES))->map(fn (string $code) => [
             $services->get($code)?->name ?? ucfirst($code),
             $services->has($code)
                 ? Booking::query()->where('service_id', $services[$code]->id)->count()
@@ -53,7 +56,7 @@ class ClearSacramentBookings extends Command
         }
 
         if ($bookingIds->isEmpty()) {
-            $this->components->info('There are no Baptism, Wedding, or Funeral bookings to clear.');
+            $this->components->info('There are no matching bookings to clear.');
 
             return self::SUCCESS;
         }
@@ -65,7 +68,7 @@ class ClearSacramentBookings extends Command
         }
 
         if (! $this->option('force') && ! $this->confirm(
-            "Permanently delete {$bookingIds->count()} sacrament bookings from the database?",
+            "Permanently delete {$bookingIds->count()} selected bookings and their linked records from the database?",
             false,
         )) {
             $this->components->warn('Cleanup cancelled. Nothing was deleted.');
@@ -95,7 +98,7 @@ class ClearSacramentBookings extends Command
         }
 
         $this->newLine();
-        $this->components->info("Deleted {$deleted} Baptism, Wedding, and Funeral bookings.");
+        $this->components->info("Deleted {$deleted} selected bookings and their linked records.");
 
         if ($this->option('delete-files')) {
             $this->line("Deleted stored files: <fg=green>{$deletedFiles}</>");
