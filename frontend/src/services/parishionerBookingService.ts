@@ -51,6 +51,7 @@ export interface ParishionerBookingDetail {
       | "rejected";
     receipt: { fileName: string; url: string } | null;
     canChangeMethod: boolean;
+    canSubmitPayment: boolean;
   };
   sections: Array<{
     title: string;
@@ -65,6 +66,17 @@ export interface ParishionerBookingDetail {
     remarks: string | null;
     url: string;
   }>;
+}
+
+export async function selectParishionerPaymentMethod(
+  bookingId: number,
+  paymentMethod: "cash" | "gcash",
+) {
+  const response = await api.patch<{ message: string }>(
+    `/bookings/${bookingId}/payment-method`,
+    { payment_method: paymentMethod },
+  );
+  return response.data;
 }
 
 export async function submitParishionerBookingPayment(

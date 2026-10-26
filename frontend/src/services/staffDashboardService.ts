@@ -5,12 +5,19 @@ import type { ActivityItem } from "@/features/staff/components/dashboard/RecentA
 export interface StaffDashboardData {
   stats: {
     bookingsToday: number;
+    scheduledToday: number;
     pendingBookings: number;
     pendingDocumentRequests: number;
     massIntentions: number;
   };
   announcements: AnnouncementItem[];
   recentActivity: ActivityItem[];
+  newBookings: Array<{
+    id: number;
+    reference: string;
+    service: string;
+    createdAt: string;
+  }>;
 }
 
 export async function getStaffDashboard(): Promise<StaffDashboardData> {

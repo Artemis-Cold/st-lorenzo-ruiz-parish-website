@@ -15,23 +15,19 @@ for (const service of [
   "confirmation",
   "first-communion",
 ]) {
-  test(`${service} hides payment until digital approval and physical receipt`, () => {
+  test(`${service} shows payment after schedule confirmation without documents`, () => {
     const detail = booking(service, [{ key: "missing-document" }]);
+    detail.scheduleReview = { status: "awaiting_review" };
     assert.equal(canDisplayBookingPayment(detail), false);
-    detail.missingRequirements = [];
+    detail.scheduleReview.status = "rejected";
     assert.equal(canDisplayBookingPayment(detail), false);
+    detail.scheduleReview.status = "confirmed";
+    assert.equal(canDisplayBookingPayment(detail), true);
     detail.requirementReview = {
-      allApproved: true,
+      allApproved: false,
       physicalCopiesReceivedAt: null,
     };
-    assert.equal(canDisplayBookingPayment(detail), false);
-    detail.requirementReview.physicalCopiesReceivedAt = "2026-10-15T10:00:00Z";
     assert.equal(canDisplayBookingPayment(detail), true);
-    detail.requirementReview.allApproved = false;
-    assert.equal(canDisplayBookingPayment(detail), false);
-    detail.requirementReview.allApproved = true;
-    detail.missingRequirements = [{ key: "sponsor-certificate" }];
-    assert.equal(canDisplayBookingPayment(detail), false);
   });
 }
 

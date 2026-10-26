@@ -114,6 +114,8 @@ export const bookingTranslations: Record<string, string> = {
   "Marriage License": "Lisensya sa pagpapakasal",
   "Birth Certificate": "Sertipiko ng kapanganakan",
   "Death Certificate": "Sertipiko ng pagkamatay",
+  "Funeral Certificate": "Sertipiko ng libing",
+  "Confirmation Permit": "Pahintulot sa kumpil",
   Biography: "Talambuhay",
   "Memorial Biography": "Talambuhay ng yumao",
   "Certificate of No Marriage (CENOMAR)":
@@ -172,7 +174,7 @@ export const bookingTranslations: Record<string, string> = {
   "Baptism Bib": "Bib para sa Binyag",
   "Candle for 1 pair sponsor":
     "Kandila para sa isang pares ng ninong at ninang",
-  Ritu: "Ritu (ritwal ng Binyag)",
+  Ritu: "Rite of Baptism (Ritu ng Binyag)",
   "White Towel": "Puting tuwalya",
   "Optional Add-ons": "Mga opsyonal na dagdag na serbisyo",
   "Included Wedding Services": "Mga kasamang serbisyo sa kasal",

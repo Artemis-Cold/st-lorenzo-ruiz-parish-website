@@ -19,6 +19,7 @@ class BaptizandParent extends Model
         'suffix',
 
         'birth_place',
+        'contact_number',
     ];
 
     public function baptizand(): BelongsTo

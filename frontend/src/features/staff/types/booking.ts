@@ -134,6 +134,7 @@ export interface Booking {
         baptismDate?: string | null;
         baptismChurch?: string | null;
         parents: Array<{
+          contactNumber?: string | null;
           relationship: string;
           name: string;
           birthPlace: string;

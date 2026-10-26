@@ -501,11 +501,10 @@ function FormationSacramentForm({ serviceCode }: Props) {
             staff ang iskedyul ng seminar sa SMS.
           </li>
           <li>
-            Bring physical documents only after digital approval. Payment, if
-            applicable, opens after staff receive all required physical copies.
-            / Dalhin ang mga dokumento matapos maaprubahan online. Maaari lamang
-            magbayad kapag natanggap na ang lahat ng kinakailangang pisikal na
-            kopya.
+            Bring physical documents only after digital approval. You can select
+            a payment method once your schedule is confirmed. / Dalhin ang mga
+            dokumento matapos maaprubahan online. Maaari nang pumili ng paraan
+            ng pagbabayad kapag nakumpirma na ang inyong iskedyul.
           </li>
         </ul>
       </div>

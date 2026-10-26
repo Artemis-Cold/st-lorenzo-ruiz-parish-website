@@ -90,7 +90,7 @@ class ProfileController extends Controller
     {
         $bookingQuery = $request->user()
             ->bookings()
-            ->with(['service', 'package', 'slot', 'massIntention']);
+            ->with(['service', 'package', 'slot', 'massIntention', 'appointments']);
 
         $currentBookings = (clone $bookingQuery)
             ->whereIn('status', ['pending', 'paid', 'approved', 'ready_for_pickup'])
@@ -140,9 +140,11 @@ class ProfileController extends Controller
             'package' => $booking->package?->name,
             'status' => $booking->status,
             'booking_date' => $booking->slot?->booking_date?->toDateString()
-                ?? $booking->massIntention?->intention_date?->toDateString(),
+                ?? $booking->massIntention?->intention_date?->toDateString()
+                ?? $booking->appointments->where('type', 'sacrament')->sortByDesc('id')->first()?->scheduled_at?->timezone('Asia/Manila')->toDateString(),
             'start_time' => $booking->slot?->start_time
-                ?? $booking->massIntention?->mass_starts_at?->format('H:i'),
+                ?? $booking->massIntention?->mass_starts_at?->format('H:i')
+                ?? $booking->appointments->where('type', 'sacrament')->sortByDesc('id')->first()?->scheduled_at?->timezone('Asia/Manila')->format('H:i'),
             'end_time' => $booking->slot?->end_time,
             'created_at' => $booking->created_at,
         ];

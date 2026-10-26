@@ -1049,7 +1049,14 @@ export default function BookingDetailModal({
               />
               <Detail label="Gender" value={service.baptizand.gender} />
               <Detail label="Address" value={service.baptizand.address} />
-              <Detail label="Contact" value={service.baptizand.contactNumber} />
+              <Detail
+                label={
+                  booking.type === "Baptism"
+                    ? "Mother's contact number"
+                    : "Contact"
+                }
+                value={service.baptizand.contactNumber}
+              />
               {booking.type !== "Baptism" && (
                 <>
                   <Detail
@@ -1071,7 +1078,7 @@ export default function BookingDetailModal({
               <Detail
                 key={parent.relationship}
                 label={parent.relationship}
-                value={`${parent.name} — ${parent.birthPlace}`}
+                value={`${parent.name} — ${parent.birthPlace}${parent.contactNumber ? ` — Contact: ${parent.contactNumber}` : ""}`}
               />
             ))}
             {service.baptizand.godParents.map((person, index) => (

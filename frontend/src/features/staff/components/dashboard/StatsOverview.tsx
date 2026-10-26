@@ -1,4 +1,4 @@
-import { CalendarRange, FileText, ClipboardList } from "lucide-react";
+import { CalendarRange, FileText } from "lucide-react";
 
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -10,7 +10,7 @@ export interface StatItem {
 }
 
 const defaultStats: StatItem[] = [
-  { label: "Bookings Today", value: 0, icon: CalendarRange, color: "#2F7D5E" },
+  { label: "Submitted Today", value: 0, icon: CalendarRange, color: "#2F7D5E" },
   { label: "Pending Requests", value: 0, icon: FileText, color: "#2F7D5E" },
   {
     label: "Pending Bookings",
@@ -18,7 +18,7 @@ const defaultStats: StatItem[] = [
     icon: CalendarRange,
     color: "#2563A8",
   },
-  { label: "Mass Intentions", value: 0, icon: ClipboardList, color: "#C9A227" },
+  { label: "Scheduled Today", value: 0, icon: CalendarRange, color: "#C9A227" },
 ];
 
 interface Props {

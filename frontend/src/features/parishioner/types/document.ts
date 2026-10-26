@@ -1,14 +1,14 @@
 export type DocumentType =
   | "Baptismal Certificate"
   | "Confirmation Certificate"
-  | "Death Certificate"
+  | "Funeral Certificate"
   | "Marriage Certificate"
   | "First Communion Certificate"
   | "Permission of Marriage Banns"
   | "Publication of Marriage Banns"
   | "Death Permit"
-  | "Baptism Permission"
-  | "Confirmation Permission"
+  | "Baptism Permit"
+  | "Confirmation Permit"
   | "Request of Permission";
 
 export type DocumentOwnerRelationship =
@@ -74,8 +74,8 @@ export const permitDocumentTypes: DocumentType[] = [
   "Permission of Marriage Banns",
   "Publication of Marriage Banns",
   "Death Permit",
-  "Baptism Permission",
-  "Confirmation Permission",
+  "Baptism Permit",
+  "Confirmation Permit",
 ];
 
 export interface DocumentRequest {

@@ -200,6 +200,29 @@ class ParishionerBookingController extends Controller
         });
     }
 
+    public function selectPaymentMethod(Request $request, Booking $booking): JsonResponse
+    {
+        abort_unless($booking->user_id === $request->user()->id, 404);
+        abort_unless(in_array($booking->service()->value('code'), self::RESCHEDULABLE_SERVICES, true), 404);
+        $data = $request->validate([
+            'payment_method' => ['required', Rule::in(['cash', 'gcash'])],
+            'receipt' => ['prohibited'], 'reference_number' => ['prohibited'],
+        ]);
+        DB::transaction(function () use ($booking, $data) {
+            $locked = Booking::query()->lockForUpdate()->findOrFail($booking->id);
+            if ($locked->status !== 'pending' || (float) $locked->total_amount <= 0
+                || ! app(BookingRequirementService::class)->paymentSelectionReady($locked)) {
+                throw ValidationException::withMessages(['payment_method' => 'You can choose a payment method after your schedule is confirmed.']);
+            }
+            if ($locked->payments()->whereIn('status', [...Payment::ACTIVE_STATUSES, 'confirmed'])->exists()) {
+                throw ValidationException::withMessages(['payment_method' => 'A payment is already being processed. Please contact the parish office to change it.']);
+            }
+            $locked->update(['preferred_payment_method' => $data['payment_method']]);
+        });
+
+        return response()->json(['message' => 'Payment preference saved. No payment has been submitted.']);
+    }
+
     public function submitPayment(
         Request $request,
         Booking $booking,
@@ -440,7 +463,10 @@ class ParishionerBookingController extends Controller
 
         return [
             'required' => $requiresPayment,
-            'method' => $payment?->method,
+            'method' => $payment && $payment->status !== 'rejected' ? $payment->method : ($booking->preferred_payment_method ?? $payment?->method),
+            'canSubmitPayment' => $requiresPayment && $booking->status === 'pending'
+                && app(BookingRequirementService::class)->paymentReady($booking)
+                && $payment?->status !== 'confirmed',
             'referenceNumber' => $payment?->reference_number,
             'officialReceiptNumber' => $payment?->official_receipt_number,
             'amount' => $amount,
@@ -450,7 +476,8 @@ class ParishionerBookingController extends Controller
                 'url' => Storage::disk('public')->url($receipt->file_path),
             ] : null,
             'canChangeMethod' => $requiresPayment
-                && app(BookingRequirementService::class)->paymentReady($booking)
+                && app(BookingRequirementService::class)->paymentSelectionReady($booking)
+                && (app(BookingRequirementService::class)->paymentReady($booking) || ! in_array($payment?->status, Payment::ACTIVE_STATUSES, true))
                 && $booking->status === 'pending'
                 && $payment?->status !== 'confirmed',
         ];
@@ -543,7 +570,8 @@ class ParishionerBookingController extends Controller
                 'Age' => $person->age,
                 'Gender' => $person->gender,
                 'Address' => $person->address,
-                'Contact number' => $person->contact_number,
+                "Mother's contact number" => $person->contact_number,
+                "Father's contact number" => $person->parents->firstWhere('relationship', 'father')?->contact_number,
                 'Parents' => $person->parents->map(fn ($parent) => ucfirst($parent->relationship).': '.$this->name($parent->first_name, $parent->middle_initial, $parent->last_name, $parent->suffix))->join(', '),
                 'Godparents' => $person->godParents->map(fn ($godParent) => collect([
                     ucfirst($godParent->role).': '.$this->name($godParent->first_name, $godParent->middle_initial, $godParent->last_name, $godParent->suffix),

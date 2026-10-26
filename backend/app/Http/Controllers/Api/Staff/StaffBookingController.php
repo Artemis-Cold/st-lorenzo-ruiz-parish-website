@@ -437,7 +437,7 @@ class StaffBookingController extends Controller
         $receipt = $payment?->receiptDocument;
 
         return [
-            'method' => $payment?->method,
+            'method' => $payment && $payment->status !== 'rejected' ? $payment->method : ($booking->preferred_payment_method ?? $payment?->method),
             'referenceNumber' => $payment?->reference_number,
             'officialReceiptNumber' => $payment?->official_receipt_number,
             'status' => $payment?->status ?? 'not_submitted',
@@ -624,6 +624,7 @@ class StaffBookingController extends Controller
                 'relationship' => ucfirst($parent->relationship),
                 'name' => $this->personName($parent->first_name, $parent->middle_initial, $parent->last_name, $parent->suffix),
                 'birthPlace' => $parent->birth_place,
+                'contactNumber' => $parent->contact_number,
             ])->values(),
             'godParents' => $person->godParents->map(fn ($godParent) => [
                 'role' => ucfirst($godParent->role),

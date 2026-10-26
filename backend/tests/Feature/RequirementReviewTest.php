@@ -154,7 +154,7 @@ class RequirementReviewTest extends TestCase
         $this->assertDatabaseHas('booking_documents', ['booking_id' => $booking->id, 'file_path' => 'sponsor.png', 'status' => 'approved']);
     }
 
-    public function test_payment_requires_physical_receipt_for_every_sacrament_and_both_methods(): void
+    public function test_payment_selection_requires_schedule_but_confirmation_still_requires_physical_copies(): void
     {
         Storage::fake('public');
         config(['services.sms.driver' => 'database']);
@@ -163,6 +163,7 @@ class RequirementReviewTest extends TestCase
             foreach (['cash', 'gcash'] as $method) {
                 $booking = $this->booking($code);
                 $booking->update(['total_amount' => 100]);
+                $booking->update(['schedule_status' => 'awaiting_review', 'details_submitted_at' => now()]);
                 $payload = ['payment_method' => $method];
                 if ($method === 'gcash') {
                     $payload += ['reference_number' => '800000000000'.$index, 'receipt' => UploadedFile::fake()->image('receipt.jpg')];
@@ -170,16 +171,23 @@ class RequirementReviewTest extends TestCase
                 $url = "/api/bookings/{$booking->id}/payment";
                 Sanctum::actingAs($booking->user);
                 $this->post($url, $payload, ['Accept' => 'application/json'])->assertUnprocessable()->assertJsonValidationErrors('payment_method');
+                $this->patchJson("/api/bookings/{$booking->id}/payment-method", ['payment_method' => $method])->assertUnprocessable();
+                $booking->update(['schedule_status' => 'confirmed']);
+                $this->getJson("/api/bookings/{$booking->id}")->assertOk()->assertJsonPath('data.payment.canChangeMethod', true)->assertJsonPath('data.payment.canSubmitPayment', false);
+                $this->patchJson("/api/bookings/{$booking->id}/payment-method", ['payment_method' => $method])->assertOk();
+                $this->assertSame($method, $booking->fresh()->preferred_payment_method);
+                $this->assertSame('pending', $booking->fresh()->status);
+                $this->assertSame(0, $booking->payments()->count());
+                $this->post($url, $payload, ['Accept' => 'application/json'])->assertUnprocessable();
                 Sanctum::actingAs($staff);
                 $this->postJson("/api/staff/bookings/{$booking->id}/requirements/review", ['action' => 'approve_all'])->assertOk();
                 Sanctum::actingAs($booking->user);
-                $this->getJson("/api/bookings/{$booking->id}")->assertOk()->assertJsonPath('data.payment.canChangeMethod', false);
                 $this->post($url, $payload, ['Accept' => 'application/json'])->assertUnprocessable();
                 $this->assertSame(0, $booking->payments()->count());
                 Sanctum::actingAs($staff);
                 $this->postJson("/api/staff/bookings/{$booking->id}/requirements/review", ['action' => 'receive'])->assertOk();
                 Sanctum::actingAs($booking->user);
-                $this->getJson("/api/bookings/{$booking->id}")->assertOk()->assertJsonPath('data.payment.canChangeMethod', true);
+                $this->getJson("/api/bookings/{$booking->id}")->assertOk()->assertJsonPath('data.payment.canSubmitPayment', true);
                 $this->post($url, $payload, ['Accept' => 'application/json'])->assertCreated();
                 $payment = $booking->payments()->sole();
                 Sanctum::actingAs($staff);
@@ -191,5 +199,21 @@ class RequirementReviewTest extends TestCase
                 $this->patchJson("/api/staff/transactions/{$payment->id}/status", $confirmation)->assertOk();
             }
         }
+    }
+
+    public function test_payment_preference_cannot_accept_receipts_or_modify_another_users_booking(): void
+    {
+        $booking = $this->booking();
+        $booking->update(['total_amount' => 100, 'schedule_status' => 'confirmed', 'details_submitted_at' => now()]);
+        $url = "/api/bookings/{$booking->id}/payment-method";
+        Sanctum::actingAs(User::factory()->create());
+        $this->patchJson($url, ['payment_method' => 'gcash'])->assertNotFound();
+        Sanctum::actingAs($booking->user);
+        $this->patchJson($url, ['payment_method' => 'gcash', 'reference_number' => '1234567890123'])->assertUnprocessable()->assertInvalid('reference_number');
+        $this->patchJson($url, ['payment_method' => 'gcash'])->assertOk();
+        $this->patchJson($url, ['payment_method' => 'cash'])->assertOk();
+        $this->getJson("/api/bookings/{$booking->id}")->assertOk()->assertJsonPath('data.payment.method', 'cash')->assertJsonPath('data.payment.status', 'not_submitted')->assertJsonPath('data.payment.canSubmitPayment', false);
+        $this->assertSame(0, $booking->payments()->count());
+        $this->assertNull($booking->fresh()->payment_reference);
     }
 }

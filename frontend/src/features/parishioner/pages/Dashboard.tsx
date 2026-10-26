@@ -16,6 +16,9 @@ import {
 export default function Dashboard() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<ProfileBooking[]>([]);
+  const [calendarBookings, setCalendarBookings] = useState<ProfileBooking[]>(
+    [],
+  );
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,6 +27,10 @@ export default function Dashboard() {
     Promise.all([getProfile(), getPublicAnnouncements()])
       .then(([profile, publicAnnouncements]) => {
         setBookings(profile.current_bookings);
+        setCalendarBookings([
+          ...profile.current_bookings,
+          ...profile.recent_bookings,
+        ]);
         setAnnouncements(publicAnnouncements);
       })
       .catch(() => setError("Unable to load your dashboard information."))
@@ -59,7 +66,23 @@ export default function Dashboard() {
           {loading ? (
             <Skeleton className="h-96 rounded-3xl bg-white shadow-lg" />
           ) : (
-            <CalendarCard bookings={bookings} />
+            <CalendarCard
+              bookings={calendarBookings}
+              onBookingUpdated={async () => {
+                try {
+                  const profile = await getProfile();
+                  setBookings(profile.current_bookings);
+                  setCalendarBookings([
+                    ...profile.current_bookings,
+                    ...profile.recent_bookings,
+                  ]);
+                } catch {
+                  setError(
+                    "Your booking was updated, but the calendar could not refresh. Please reload the page.",
+                  );
+                }
+              }}
+            />
           )}
         </div>
       </div>

@@ -52,7 +52,15 @@ class MassIntentionTypeValidationTest extends TestCase
         $this->assertTrue(Validator::make($payload, $request->rules())->passes());
 
         $payload['groups'][0]['entries'][0]['names'] = ['Juan Dela Cruz', 'Maria Santos', 'Ana Reyes'];
-        $this->assertTrue(Validator::make($payload, $request->rules())->passes());
+        foreach (['Thanksgiving', 'Birthday', 'Anniversary', 'Petition', 'Soul'] as $type) {
+            $payload['groups'][0]['type'] = $type;
+            $request->replace($payload);
+            $validator = Validator::make($payload, $request->rules());
+            foreach ($request->after() as $callback) {
+                $validator->after($callback);
+            }
+            $this->assertSame($type !== 'Soul', $validator->errors()->has('groups.0.entries.0.names'));
+        }
         $payload['groups'][0]['entries'][0]['names'][] = 'Pedro Cruz';
         $this->assertTrue(Validator::make($payload, $request->rules())->errors()->has('groups.0.entries.0.names'));
         $payload['groups'][0]['entries'][0]['names'] = ['Juan, Maria, Ana, Pedro'];

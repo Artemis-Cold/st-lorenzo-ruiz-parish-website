@@ -63,11 +63,11 @@ class StaffPricingTest extends TestCase
         $this->getJson('/api/staff/settings/pricing')
             ->assertOk()
             ->assertJsonCount(5, 'data.packages')
-            ->assertJsonCount(13, 'data.fees');
+            ->assertJsonCount(10, 'data.fees');
 
         $this->getJson('/api/services/document-request/fees')
             ->assertOk()
-            ->assertJsonCount(11, 'data');
+            ->assertJsonCount(8, 'data');
 
         $payload = $this->payload();
         $payload['packages'][0]['basePrice'] = -1;

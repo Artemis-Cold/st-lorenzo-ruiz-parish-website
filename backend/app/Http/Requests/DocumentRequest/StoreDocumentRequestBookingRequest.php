@@ -16,9 +16,8 @@ class StoreDocumentRequestBookingRequest extends FormRequest
     private const TYPES = [
         'Baptismal Certificate',
         'Confirmation Certificate',
-        'Death Certificate',
+        'Funeral Certificate',
         'Marriage Certificate',
-        'Request of Permission',
     ];
 
     private const OWNER_RELATIONSHIPS = [
@@ -109,7 +108,7 @@ class StoreDocumentRequestBookingRequest extends FormRequest
                         'before_or_equal:today',
                     ];
                     break;
-                case 'Death Certificate':
+                case 'Funeral Certificate':
                     $rules["$prefix.name"] = $common;
                     $rules["$prefix.address"] = ['required', 'string'];
                     $rules["$prefix.relationship_to_owner"] = [

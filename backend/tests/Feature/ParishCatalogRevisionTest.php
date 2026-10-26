@@ -20,6 +20,21 @@ class ParishCatalogRevisionTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_retired_document_requests_are_blocked_and_new_names_are_available(): void
+    {
+        $this->catalog();
+        foreach (['Request of Permission', 'Permission of Marriage Banns', 'Publication of Marriage Banns', 'Death Certificate', 'Baptism Permission', 'Confirmation Permission'] as $type) {
+            $this->postJson('/api/bookings/document-request', ['requests' => [['document_type' => $type, 'details' => $this->permit()]]])
+                ->assertUnprocessable()->assertInvalid('requests.0.document_type');
+        }
+        $names = $this->getJson('/api/services/document-request/fees')->assertOk()->json('data.*.name');
+        $this->assertContains('Funeral Certificate', $names);
+        $this->assertContains('Baptism Permit', $names);
+        $this->assertContains('Confirmation Permit', $names);
+        $this->assertNotContains('Request of Permission', $names);
+        $this->assertNotContains('Publication of Marriage Banns', $names);
+    }
+
     private function catalog(): void
     {
         $this->seed([ServiceSeeder::class, ServicePackageSeeder::class, ServiceFeeSeeder::class]);
@@ -72,7 +87,7 @@ class ParishCatalogRevisionTest extends TestCase
     public function test_new_paid_documents_use_server_prices_and_validate_permit_fields(): void
     {
         $this->catalog();
-        foreach (['Permission of Marriage Banns' => 100, 'Publication of Marriage Banns' => 500, 'Baptism Permission' => 100, 'Confirmation Permission' => 100, 'First Communion Certificate' => 100] as $type => $price) {
+        foreach (['Baptism Permit' => 100, 'Confirmation Permit' => 100, 'First Communion Certificate' => 100] as $type => $price) {
             $details = $type === 'First Communion Certificate' ? ['name' => 'Ana Cruz', 'address' => 'Tanza', 'communion_date' => '2020-01-01', 'relationship_to_owner' => 'Self'] : $this->permit();
             $payload = ['requests' => [['document_type' => $type, 'price' => 0, 'details' => $details]]];
             $this->postJson('/api/bookings/document-request', $payload)->assertUnprocessable()->assertInvalid(['reference_number', 'receipt']);
@@ -89,14 +104,14 @@ class ParishCatalogRevisionTest extends TestCase
         $this->catalog();
         $payload = ['requests' => [
             ['document_type' => 'Death Permit', 'details' => $this->permit()],
-            ['document_type' => 'Publication of Marriage Banns', 'details' => $this->permit()],
+            ['document_type' => 'Confirmation Permit', 'details' => $this->permit()],
         ]];
         $this->postJson('/api/bookings/document-request', $payload)->assertUnprocessable()->assertInvalid(['reference_number', 'receipt']);
         $payload += ['reference_number' => '8888888888888', 'receipt' => UploadedFile::fake()->image('receipt.jpg')];
         $id = $this->post('/api/bookings/document-request', $payload, ['Accept' => 'application/json'])->assertCreated()->json('data.id');
         $booking = Booking::findOrFail($id);
-        $this->assertSame(500.0, (float) $booking->documentRequest->total_amount);
-        $this->assertSame(500.0, (float) $booking->payments()->sole()->amount);
+        $this->assertSame(100.0, (float) $booking->documentRequest->total_amount);
+        $this->assertSame(100.0, (float) $booking->payments()->sole()->amount);
         Sanctum::actingAs(User::factory()->create(['role' => 'staff']));
         $this->patchJson('/api/staff/document-requests/'.$booking->documentRequest->id.'/status', ['status' => 'ready_for_pickup'])->assertUnprocessable();
     }

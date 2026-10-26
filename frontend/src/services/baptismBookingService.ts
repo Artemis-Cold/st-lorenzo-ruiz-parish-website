@@ -27,6 +27,8 @@ function buildFormData(booking: BaptismBooking): FormData {
   // Parents
   booking.parents.forEach((parent, i) => {
     formData.append(`parents[${i}][relationship]`, parent.relationship);
+    if (parent.contact_number)
+      formData.append(`parents[${i}][contact_number]`, parent.contact_number);
     formData.append(`parents[${i}][first_name]`, parent.first_name);
     formData.append(
       `parents[${i}][middle_initial]`,

@@ -400,6 +400,8 @@ class StaffManagementApiTest extends TestCase
         $this->getJson('/api/staff/dashboard')
             ->assertOk()
             ->assertJsonPath('data.stats.bookingsToday', 1)
+            ->assertJsonPath('data.stats.scheduledToday', 0)
+            ->assertJsonCount(1, 'data.newBookings')
             ->assertJsonPath('data.stats.pendingBookings', 1)
             ->assertJsonPath('data.stats.pendingDocumentRequests', 1)
             ->assertJsonPath('data.stats.massIntentions', 1)

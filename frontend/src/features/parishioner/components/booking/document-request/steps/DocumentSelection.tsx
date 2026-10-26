@@ -37,8 +37,8 @@ function createDefaultDetails(
     case "Permission of Marriage Banns":
     case "Publication of Marriage Banns":
     case "Death Permit":
-    case "Baptism Permission":
-    case "Confirmation Permission":
+    case "Baptism Permit":
+    case "Confirmation Permit":
       return {
         requester_name: requester.fullName,
         requester_address: requester.address,
@@ -63,7 +63,7 @@ function createDefaultDetails(
         relationship_to_owner: "Self",
       };
 
-    case "Death Certificate":
+    case "Funeral Certificate":
       return {
         name: "",
         address: requester.address,

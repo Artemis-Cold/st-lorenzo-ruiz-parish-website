@@ -74,7 +74,7 @@ class BookingScheduleReviewService
             ]);
             $next = ($booking->wedding_booking_id || $booking->service->code === 'first-communion') ? 'Contact the parish office to arrange another schedule.' : 'Open My Profile to choose another date and time.';
             $message = $decision === 'confirmed'
-                ? "Your {$booking->service->name} schedule on {$this->when($booking)} is confirmed. You may now submit requirements through My Profile."
+                ? "Your {$booking->service->name} schedule on {$this->when($booking)} is confirmed. You may now submit requirements and select a payment method through My Profile > Bookings."
                 : "Your requested {$booking->service->name} schedule on {$this->when($booking)} was rejected. Reason: {$reason}. {$next}";
             $this->sms->queue($booking, 'schedule_'.$decision, "St. Lorenzo Ruiz Parish (Ref: {$booking->booking_reference}): {$message}");
 

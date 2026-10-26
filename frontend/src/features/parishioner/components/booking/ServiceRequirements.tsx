@@ -253,7 +253,7 @@ export default function ServiceRequirements({
             only after digital approval.{" "}
             {service === "first-communion"
               ? "First Communion is free; required documents and physical copies must still be submitted."
-              : "Payment becomes available only after staff receives all required physical copies."}{" "}
+              : "You can select a payment method once the parish confirms your schedule."}{" "}
             Schedule confirmation is not final booking approval.
           </p>
           <p
@@ -269,7 +269,7 @@ export default function ServiceRequirements({
             na dokumento.{" "}
             {service === "first-communion"
               ? "Walang bayad ang Unang Komunyon, ngunit kailangan pa rin ang mga dokumento at pisikal na kopya."
-              : "Maaari lamang magbayad kapag natanggap na ng staff ang lahat ng kinakailangang pisikal na kopya."}{" "}
+              : "Maaari nang pumili ng paraan ng pagbabayad kapag nakumpirma na ng parokya ang inyong iskedyul."}{" "}
             Ang kumpirmasyon ng iskedyul ay hindi pa pinal na pag-apruba ng
             booking.
           </p>

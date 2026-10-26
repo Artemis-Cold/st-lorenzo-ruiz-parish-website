@@ -143,6 +143,16 @@ export default function Mass() {
     if (step === 3) {
       booking.groups.forEach((group, groupIndex) => {
         group.entries.forEach((entry, entryIndex) => {
+          if (
+            entry.names.filter((name) => name.trim()).length >
+            (group.type === "Soul" ? 3 : 1)
+          ) {
+            errors[`groups.${groupIndex}.entries.${entryIndex}.names`] = [
+              group.type === "Soul"
+                ? "Enter up to three names per numbered entry."
+                : "Enter only one name per numbered entry.",
+            ];
+          }
           entry.names.forEach((name, nameIndex) => {
             if (/[,;\r\n]/.test(name))
               errors[

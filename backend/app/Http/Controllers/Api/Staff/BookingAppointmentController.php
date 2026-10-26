@@ -76,6 +76,9 @@ class BookingAppointmentController extends Controller
                     'details_submitted_at' => $booking->details_submitted_at ?? $booking->created_at,
                 ]);
                 $parentAttendanceNotice = ' Your ceremony schedule is confirmed. You may now submit requirements through My Profile.';
+                if ((float) $booking->total_amount > 0) {
+                    $parentAttendanceNotice .= ' You may also select a payment method under My Profile > Bookings.';
+                }
             }
 
             if ($serviceCode === 'wedding' && $appointment->type === 'priest_interview') {

@@ -170,6 +170,34 @@ export default function PackagesStep({
             <h3 className="mb-5 text-center text-xl font-bold text-[#B22222]">
               Add-ons
             </h3>
+            <div className="mb-4 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setBooking((previous) => ({
+                    ...previous,
+                    selected_addon_ids: selectedPackage.addons.map(
+                      (addon) => addon.id,
+                    ),
+                  }))
+                }
+                className="rounded-xl bg-[#B22222] px-4 py-2 text-sm font-semibold text-white"
+              >
+                Select All / Piliin lahat
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  setBooking((previous) => ({
+                    ...previous,
+                    selected_addon_ids: [],
+                  }))
+                }
+                className="rounded-xl border border-gray-300 px-4 py-2 text-sm font-medium"
+              >
+                Clear All / Alisin lahat
+              </button>
+            </div>
 
             <div className="space-y-3">
               {selectedPackage.addons.map((item) => (

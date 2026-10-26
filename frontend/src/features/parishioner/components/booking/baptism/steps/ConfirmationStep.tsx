@@ -53,7 +53,15 @@ export default function ConfirmationStep({
       <ReviewSection
         title="Baptizand & Parents"
         onEdit={() => onEdit(4)}
-        data={{ baptizand: booking.baptizand, parents: booking.parents }}
+        data={{
+          baptizand: Object.fromEntries(
+            Object.entries(booking.baptizand).map(([key, value]) => [
+              key === "contact_number" ? "mother_contact_number" : key,
+              value,
+            ]),
+          ),
+          parents: booking.parents,
+        }}
       />
       <ReviewSection
         title="Godparents"

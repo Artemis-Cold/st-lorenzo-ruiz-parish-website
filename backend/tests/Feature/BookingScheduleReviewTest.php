@@ -162,6 +162,7 @@ class BookingScheduleReviewTest extends TestCase
         $parentId = $this->requestSlot($slot);
         $service = Service::where('code', 'confirmation')->firstOrFail();
         $child = Booking::create(['booking_reference' => 'LINKED-1', 'user_id' => $this->owner->id, 'service_id' => $service->id,
+            'total_amount' => 575,
             'wedding_booking_id' => $parentId, 'wedding_applicant_role' => 'bride', 'status' => 'pending',
             'schedule_status' => 'awaiting_review', 'details_submitted_at' => now()]);
         $this->getJson("/api/bookings/{$child->id}")->assertOk()->assertJsonPath('data.canUploadDocuments', false);
@@ -169,6 +170,7 @@ class BookingScheduleReviewTest extends TestCase
         $this->postJson("/api/staff/bookings/{$child->id}/appointments", ['type' => 'sacrament', 'scheduledAt' => now()->addDays(3)->toIso8601String()])
             ->assertCreated()->assertJsonPath('data.scheduleReview.status', 'confirmed');
         $this->assertStringContainsString('You may now submit requirements', SmsMessage::where('booking_id', $child->id)->sole()->message);
+        $this->assertStringContainsString('select a payment method', SmsMessage::where('booking_id', $child->id)->sole()->message);
         Sanctum::actingAs($this->owner);
         $this->getJson("/api/bookings/{$child->id}")->assertOk()->assertJsonPath('data.canUploadDocuments', true);
     }

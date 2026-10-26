@@ -146,8 +146,8 @@ export default function PreparationForm({
       </p>
       {code === "baptism" && (
         <p className="text-xs text-gray-600">
-          Includes Baptism Bib, Candle for 1 pair sponsor, Ritu, and White
-          Towel.{" "}
+          Includes Baptism Bib, Candle for 1 pair sponsor, Rite of Baptism (Ritu
+          ng Binyag), and White Towel.{" "}
           {value.sponsors.length > 2 && (
             <>
               Additional sponsors:{" "}

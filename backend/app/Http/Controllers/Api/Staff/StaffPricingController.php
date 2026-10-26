@@ -10,6 +10,7 @@ use App\Models\PricingChangeLog;
 use App\Models\ServiceFee;
 use App\Models\ServicePackage;
 use App\Support\Money;
+use App\Support\ParishCatalog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -144,6 +145,8 @@ class StaffPricingController extends Controller
             ->values();
 
         $fees = ServiceFee::query()
+            ->where('is_active', true)
+            ->whereNotIn('code', ParishCatalog::RETIRED_DOCUMENT_CODES)
             ->with('service:id,code,name')
             ->orderBy('service_id')
             ->orderBy('sort_order')

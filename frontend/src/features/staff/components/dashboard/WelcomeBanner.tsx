@@ -9,7 +9,7 @@ export default function WelcomeBanner() {
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-[#B22222] px-6 py-6 text-white shadow-lg sm:px-8 sm:py-7">
+    <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-[#B22222] to-[#741515] px-6 py-6 text-white shadow-lg sm:px-8 sm:py-7">
       <div
         aria-hidden
         className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/6"
@@ -21,7 +21,7 @@ export default function WelcomeBanner() {
 
       <div className="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/60">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#F5D76E]">
             {greeting}
           </p>
           <h1 className="mt-1.5 font-serif text-2xl font-bold leading-tight sm:text-3xl">

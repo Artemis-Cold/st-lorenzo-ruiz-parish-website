@@ -52,7 +52,7 @@ export default function NewDocumentForm({
             ? "Couple's names / Pangalan ng ikakasal"
             : type === "Death Permit"
               ? "Deceased's name / Pangalan ng yumao"
-              : type === "Baptism Permission"
+              : type === "Baptism Permit"
                 ? "Candidate's name / Pangalan ng bibinyagan"
                 : "Candidate's name / Pangalan ng kukumpilan",
           "text",

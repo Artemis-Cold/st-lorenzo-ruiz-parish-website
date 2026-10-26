@@ -93,7 +93,7 @@ export default function DetailsStep({
           />
         );
 
-      case "Death Certificate":
+      case "Funeral Certificate":
         return (
           <DeathForm
             {...sharedProps}

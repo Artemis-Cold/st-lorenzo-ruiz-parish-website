@@ -70,6 +70,7 @@ export interface Deceased extends PersonName {
 }
 
 export interface Parent extends PersonName {
+  contact_number?: string;
   relationship: "father" | "mother";
   birth_place: string;
 }

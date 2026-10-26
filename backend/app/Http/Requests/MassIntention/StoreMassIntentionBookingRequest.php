@@ -74,6 +74,16 @@ class StoreMassIntentionBookingRequest extends FormRequest
     public function after(): array
     {
         return [function (Validator $validator): void {
+            foreach ((array) $this->input('groups', []) as $groupIndex => $group) {
+                if (! is_array($group) || ($group['type'] ?? '') === 'Soul') {
+                    continue;
+                }
+                foreach ((array) ($group['entries'] ?? []) as $entryIndex => $entry) {
+                    if (is_array($entry) && is_array($entry['names'] ?? null) && count($entry['names']) > 1) {
+                        $validator->errors()->add("groups.{$groupIndex}.entries.{$entryIndex}.names", 'Only one name is allowed per numbered entry. Up to three names are allowed for Soul intentions only.');
+                    }
+                }
+            }
             if ($validator->errors()->hasAny(['intention_date', 'mass_event_id'])) {
                 return;
             }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Service;
 use App\Support\Money;
+use App\Support\ParishCatalog;
 use Illuminate\Http\JsonResponse;
 
 class ServiceFeeController extends Controller
@@ -18,6 +19,7 @@ class ServiceFeeController extends Controller
 
         return response()->json([
             'data' => $service->fees()
+                ->when($code === 'document-request', fn ($query) => $query->whereNotIn('code', ParishCatalog::RETIRED_DOCUMENT_CODES))
                 ->where('is_active', true)
                 ->orderBy('sort_order')
                 ->orderBy('name')

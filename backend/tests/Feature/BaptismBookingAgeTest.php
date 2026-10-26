@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Requests\Baptism\StoreBaptismBookingRequest;
 use App\Models\BookingSlot;
 use App\Models\Service;
 use App\Models\ServicePackage;
@@ -9,6 +10,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 use Laravel\Sanctum\Sanctum;
 use PHPUnit\Framework\Attributes\TestWith;
 use Tests\Concerns\HasConfirmedSchedule;
@@ -18,6 +20,34 @@ class BaptismBookingAgeTest extends TestCase
 {
     use HasConfirmedSchedule;
     use RefreshDatabase;
+
+    public function test_father_contact_number_is_required_and_validated(): void
+    {
+        $rules = (new StoreBaptismBookingRequest)->rules();
+        $rules = array_intersect_key($rules, array_flip(['parents.*.relationship', 'parents.*.contact_number']));
+        $data = ['parents' => [['relationship' => 'father'], ['relationship' => 'mother']]];
+        $this->assertTrue(Validator::make($data, $rules)->errors()->has('parents.0.contact_number'));
+        $data['parents'][0]['contact_number'] = '123';
+        $this->assertTrue(Validator::make($data, $rules)->fails());
+        $data['parents'][0]['contact_number'] = '09171234567';
+        $this->assertTrue(Validator::make($data, $rules)->passes());
+    }
+
+    public function test_mothers_number_uses_original_contact_field_and_fathers_number_stays_separate(): void
+    {
+        $rules = (new StoreBaptismBookingRequest)->rules();
+        $rules = array_intersect_key($rules, array_flip(['baptizand.contact_number', 'parents.*.relationship', 'parents.*.contact_number']));
+        $data = ['baptizand' => ['contact_number' => '09181234567'], 'parents' => [
+            ['relationship' => 'father', 'contact_number' => '09171234567'],
+            ['relationship' => 'mother'],
+        ]];
+        $this->assertTrue(Validator::make($data, $rules)->passes());
+        unset($data['baptizand']['contact_number']);
+        $this->assertTrue(Validator::make($data, $rules)->errors()->has('baptizand.contact_number'));
+        $data['baptizand']['contact_number'] = '09181234567';
+        unset($data['parents'][0]['contact_number']);
+        $this->assertTrue(Validator::make($data, $rules)->errors()->has('parents.0.contact_number'));
+    }
 
     #[TestWith(['pdf', 'application/pdf'])]
     #[TestWith(['jpg', 'image/jpeg'])]
@@ -64,6 +94,7 @@ class BaptismBookingAgeTest extends TestCase
             'parents' => [
                 [
                     'relationship' => 'father',
+                    'contact_number' => '09171234567',
                     'first_name' => 'Juan',
                     'middle_initial' => '',
                     'last_name' => 'Doe',
@@ -115,6 +146,7 @@ class BaptismBookingAgeTest extends TestCase
         ]);
 
         $response->assertCreated();
+        $this->assertDatabaseHas('baptizand_parents', ['relationship' => 'father', 'contact_number' => '09171234567']);
         $bookingId = $response->json('data.id');
         $this->assertDatabaseHas('baptizands', [
             'first_name' => 'John',

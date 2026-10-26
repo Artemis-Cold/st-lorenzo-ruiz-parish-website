@@ -34,15 +34,25 @@ class BookingRequirementService
             return true;
         }
 
-        return $booking->scheduleConfirmed() && ! $booking->awaitingDetails()
+        return $this->paymentSelectionReady($booking)
             && $booking->physical_copies_received_at !== null && $this->reviewSummary($booking)['allApproved'];
+    }
+
+    public function paymentSelectionReady(Booking $booking): bool
+    {
+        $booking->loadMissing('service');
+        if (! in_array($booking->service?->code, ['baptism', 'wedding', 'funeral', 'confirmation', 'first-communion'], true)) {
+            return true;
+        }
+
+        return $booking->scheduleConfirmed() && ! $booking->awaitingDetails();
     }
 
     public function requirePaymentReady(Booking $booking): void
     {
         if (! $this->paymentReady($booking)) {
             throw ValidationException::withMessages([
-                'payment_method' => 'Payment is available only after all digital requirements are approved and parish staff has received all required physical copies.',
+                'payment_method' => 'Payment is available after your digital requirements are approved and the parish receives all required physical copies. Until then, you may only save your preferred payment method.',
             ]);
         }
     }

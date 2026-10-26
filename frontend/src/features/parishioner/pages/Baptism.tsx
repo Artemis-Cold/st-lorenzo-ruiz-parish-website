@@ -277,7 +277,7 @@ function BaptismForm() {
     requireField(
       "baptizand.contact_number",
       booking.baptizand.contact_number,
-      "Contact number",
+      "Mother's contact number",
     );
 
     validateIf(
@@ -299,6 +299,19 @@ function BaptismForm() {
 
     // Parents
     booking.parents.forEach((parent, i) => {
+      if (parent.relationship === "father") {
+        requireField(
+          `parents.${i}.contact_number`,
+          parent.contact_number,
+          "Father's contact number",
+        );
+        validateIf(
+          `parents.${i}.contact_number`,
+          parent.contact_number,
+          !/^09\d{9}$/.test(parent.contact_number ?? ""),
+          "Enter a valid 11-digit mobile number (e.g. 09171234567).",
+        );
+      }
       requireField(`parents.${i}.first_name`, parent.first_name, "First name");
       requireField(`parents.${i}.last_name`, parent.last_name, "Last name");
       requireField(

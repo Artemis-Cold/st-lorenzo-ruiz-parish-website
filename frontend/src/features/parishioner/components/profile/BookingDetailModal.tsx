@@ -23,6 +23,7 @@ import {
 import {
   getParishionerBooking,
   submitParishionerBookingPayment,
+  selectParishionerPaymentMethod,
   uploadParishionerBookingDocument,
   type ParishionerBookingDetail,
   type RescheduledBooking,
@@ -72,6 +73,8 @@ export default function BookingDetailModal({
   }>({ bookingId: 0, booking: null, error: "" });
   const [rescheduling, setRescheduling] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
+  const [batchUploading, setBatchUploading] = useState(false);
+  const [batchMessage, setBatchMessage] = useState("");
   const [pendingFiles, setPendingFiles] = useState<Record<string, File>>({});
   const [uploadErrors, setUploadErrors] = useState<Record<string, string>>({});
   const [selectedTypes, setSelectedTypes] = useState<Record<string, string>>(
@@ -132,6 +135,8 @@ export default function BookingDetailModal({
   };
 
   const closeDetail = () => {
+    if (uploading || batchUploading) return;
+    setBatchMessage("");
     setRescheduling(false);
     setPendingFiles({});
     setUploadErrors({});
@@ -169,7 +174,7 @@ export default function BookingDetailModal({
   const submitPayment = async () => {
     if (!showPayment || !booking?.payment.canChangeMethod) return;
     const errors: Record<string, string> = {};
-    if (paymentMethod === "gcash") {
+    if (booking.payment.canSubmitPayment && paymentMethod === "gcash") {
       if (!isValidGcashReference(paymentReference))
         errors.reference_number = GCASH_REFERENCE_ERROR;
       if (!paymentReceipt)
@@ -183,12 +188,14 @@ export default function BookingDetailModal({
 
     setSubmittingPayment(true);
     try {
-      const response = await submitParishionerBookingPayment(
-        bookingId,
-        paymentMethod,
-        paymentReference.trim(),
-        paymentReceipt,
-      );
+      const response = !booking.payment.canSubmitPayment
+        ? await selectParishionerPaymentMethod(bookingId, paymentMethod)
+        : await submitParishionerBookingPayment(
+            bookingId,
+            paymentMethod,
+            paymentReference.trim(),
+            paymentReceipt,
+          );
       const refreshed = await getParishionerBooking(bookingId);
       setResult({ bookingId, booking: refreshed, error: "" });
       setPaymentReference(refreshed.payment.referenceNumber ?? "");
@@ -258,6 +265,7 @@ export default function BookingDetailModal({
   const uploadRequirement = async (
     requirement: ParishionerBookingDetail["missingRequirements"][number],
   ) => {
+    if (uploading || batchUploading || !booking?.canUploadDocuments) return;
     const file = pendingFiles[requirement.key];
     if (!file) {
       const message = "Choose a file before submitting this requirement.";
@@ -299,6 +307,57 @@ export default function BookingDetailModal({
       setUploading(null);
     }
   };
+
+  async function submitAllRequirements() {
+    if (bookingId === null) return;
+    if (!booking?.canUploadDocuments || uploading || batchUploading) return;
+    const selected = booking.missingRequirements.filter(
+      (requirement) => pendingFiles[requirement.key],
+    );
+    if (!selected.length) return;
+    setBatchUploading(true);
+    setUploading("batch");
+    setBatchMessage("");
+    let succeeded = 0;
+    try {
+      for (const requirement of selected) {
+        try {
+          await uploadParishionerBookingDocument(
+            bookingId,
+            selectedTypes[requirement.key] ?? requirement.types[0],
+            pendingFiles[requirement.key],
+          );
+          succeeded++;
+          setPendingFiles((current) => withoutKey(current, requirement.key));
+          setSelectedTypes((current) => withoutKey(current, requirement.key));
+          setUploadErrors((current) => withoutKey(current, requirement.key));
+        } catch (error) {
+          setUploadErrors((current) => ({
+            ...current,
+            [requirement.key]: requestMessage(
+              error,
+              "This file wasn't submitted. Please try again.",
+            ),
+          }));
+        }
+      }
+      setBatchMessage(
+        `${succeeded} of ${selected.length} files submitted.${succeeded < selected.length ? " Unsubmitted files remain selected. Check the messages below and retry." : " Your requirements are ready for parish review."}`,
+      );
+      try {
+        const refreshedBooking = await getParishionerBooking(bookingId);
+        setResult({ bookingId, booking: refreshedBooking, error: "" });
+        void onRescheduled?.();
+      } catch {
+        toast.error(
+          "Uploads finished, but the booking could not refresh. Reopen it to view the latest status.",
+        );
+      }
+    } finally {
+      setUploading(null);
+      setBatchUploading(false);
+    }
+  }
 
   return (
     <div
@@ -520,9 +579,10 @@ export default function BookingDetailModal({
                       ? label(booking.payment.method)
                       : "Not selected"}
                   </p>
-                  {booking.payment.method === "gcash" && (
-                    <p className="mt-1 text-gray-500">GCash: 09945697318</p>
-                  )}
+                  {booking.payment.canSubmitPayment &&
+                    booking.payment.method === "gcash" && (
+                      <p className="mt-1 text-gray-500">GCash: 09945697318</p>
+                    )}
                   <p className="mt-2 text-xs font-medium text-gray-500">
                     Payment status:{" "}
                     <span className="text-[#B22222]">
@@ -604,73 +664,82 @@ export default function BookingDetailModal({
                         {paymentErrors.payment_method}
                       </p>
                     )}
-                    {paymentMethod === "gcash" && (
-                      <>
-                        <div>
-                          <label className="mb-1.5 block text-sm font-medium text-[#292524]">
-                            GCash reference number{" "}
-                            <span className="text-red-600">*</span>
-                          </label>
-                          <input
-                            inputMode="numeric"
-                            pattern="[0-9]{13}"
-                            maxLength={GCASH_REFERENCE_LENGTH}
-                            value={paymentReference}
-                            onChange={(event) => {
-                              setPaymentReference(
-                                normalizeGcashReference(event.target.value),
-                              );
-                              setPaymentErrors((current) =>
-                                withoutKey(current, "reference_number"),
-                              );
-                            }}
-                            placeholder="Enter the 13-digit reference"
-                            className={`w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-[#B22222] ${paymentErrors.reference_number ? "border-red-400" : "border-gray-300"}`}
-                          />
-                          <p className="mt-1 text-xs text-gray-500">
-                            Enter the Transaction Reference ID shown on your
-                            GCash receipt.
-                          </p>
-                          {paymentErrors.reference_number && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {paymentErrors.reference_number}
-                            </p>
-                          )}
-                        </div>
-
-                        <div>
-                          <label className="inline-flex max-w-full cursor-pointer items-center gap-2 rounded-xl border border-[#B22222] px-4 py-2.5 text-sm font-semibold text-[#B22222] transition hover:bg-red-50">
-                            <FileUp size={16} />{" "}
-                            {paymentReceipt
-                              ? "Replace receipt"
-                              : "Choose receipt"}
-                            <input
-                              type="file"
-                              className="hidden"
-                              accept=".pdf,.jpg,.jpeg,.png"
-                              disabled={submittingPayment}
-                              onChange={(event) => {
-                                const file = event.target.files?.[0];
-                                if (file) selectPaymentReceipt(file);
-                                event.target.value = "";
-                              }}
-                            />
-                          </label>
-                          {paymentReceipt && (
-                            <p className="mt-2 break-all text-sm font-medium text-green-700">
-                              {paymentReceipt.name} ·{" "}
-                              {(paymentReceipt.size / 1024 / 1024).toFixed(2)}{" "}
-                              MB
-                            </p>
-                          )}
-                          {paymentErrors.receipt && (
-                            <p className="mt-1 text-sm text-red-600">
-                              {paymentErrors.receipt}
-                            </p>
-                          )}
-                        </div>
-                      </>
+                    {!booking.payment.canSubmitPayment && (
+                      <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
+                        Choose your preferred payment method only. No payment is
+                        being collected. Payment submission opens after your
+                        digital requirements are approved and the parish
+                        receives the required physical copies.
+                      </p>
                     )}
+                    {booking.payment.canSubmitPayment &&
+                      paymentMethod === "gcash" && (
+                        <>
+                          <div>
+                            <label className="mb-1.5 block text-sm font-medium text-[#292524]">
+                              GCash reference number{" "}
+                              <span className="text-red-600">*</span>
+                            </label>
+                            <input
+                              inputMode="numeric"
+                              pattern="[0-9]{13}"
+                              maxLength={GCASH_REFERENCE_LENGTH}
+                              value={paymentReference}
+                              onChange={(event) => {
+                                setPaymentReference(
+                                  normalizeGcashReference(event.target.value),
+                                );
+                                setPaymentErrors((current) =>
+                                  withoutKey(current, "reference_number"),
+                                );
+                              }}
+                              placeholder="Enter the 13-digit reference"
+                              className={`w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-[#B22222] ${paymentErrors.reference_number ? "border-red-400" : "border-gray-300"}`}
+                            />
+                            <p className="mt-1 text-xs text-gray-500">
+                              Enter the Transaction Reference ID shown on your
+                              GCash receipt.
+                            </p>
+                            {paymentErrors.reference_number && (
+                              <p className="mt-1 text-sm text-red-600">
+                                {paymentErrors.reference_number}
+                              </p>
+                            )}
+                          </div>
+
+                          <div>
+                            <label className="inline-flex max-w-full cursor-pointer items-center gap-2 rounded-xl border border-[#B22222] px-4 py-2.5 text-sm font-semibold text-[#B22222] transition hover:bg-red-50">
+                              <FileUp size={16} />{" "}
+                              {paymentReceipt
+                                ? "Replace receipt"
+                                : "Choose receipt"}
+                              <input
+                                type="file"
+                                className="hidden"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                disabled={submittingPayment}
+                                onChange={(event) => {
+                                  const file = event.target.files?.[0];
+                                  if (file) selectPaymentReceipt(file);
+                                  event.target.value = "";
+                                }}
+                              />
+                            </label>
+                            {paymentReceipt && (
+                              <p className="mt-2 break-all text-sm font-medium text-green-700">
+                                {paymentReceipt.name} ·{" "}
+                                {(paymentReceipt.size / 1024 / 1024).toFixed(2)}{" "}
+                                MB
+                              </p>
+                            )}
+                            {paymentErrors.receipt && (
+                              <p className="mt-1 text-sm text-red-600">
+                                {paymentErrors.receipt}
+                              </p>
+                            )}
+                          </div>
+                        </>
+                      )}
 
                     <button
                       type="button"
@@ -689,10 +758,12 @@ export default function BookingDetailModal({
                         <CreditCard size={17} />
                       )}
                       {submittingPayment
-                        ? "Submitting payment..."
-                        : paymentMethod === "cash"
-                          ? "Select cash payment"
-                          : "Submit GCash payment"}
+                        ? "Saving…"
+                        : !booking.payment.canSubmitPayment
+                          ? "Save payment preference"
+                          : paymentMethod === "cash"
+                            ? "Select cash payment"
+                            : "Submit GCash payment"}
                     </button>
                     {(booking.payment.status === "awaiting_payment" ||
                       booking.payment.status === "pending_verification") &&
@@ -730,8 +801,8 @@ export default function BookingDetailModal({
                   {booking.requirementReview.physicalCopiesReceivedAt
                     ? "Your physical copies have been received by the parish office."
                     : booking.requirementReview.allApproved
-                      ? "Your digital requirements are approved. Please bring all required physical copies to the parish office. Payment unlocks after staff records them as received."
-                      : "Please wait until all digital requirements are approved before bringing physical copies to the parish office. We will notify you by SMS. Payment remains locked until staff receives all required physical copies."}
+                      ? "Your digital requirements are approved. Please bring all required physical copies to the parish office. You can select a payment method once your schedule is confirmed."
+                      : "Please wait until all digital requirements are approved before bringing physical copies to the parish office. We will notify you by SMS. You can select a payment method once your schedule is confirmed."}
                 </p>
               </section>
             )}
@@ -788,6 +859,14 @@ export default function BookingDetailModal({
               </section>
             )}
 
+            {batchMessage && (
+              <p
+                role="status"
+                className="rounded-xl border border-[#E7E2DA] bg-[#FAF8F5] p-4 text-sm"
+              >
+                {batchMessage}
+              </p>
+            )}
             {booking.missingRequirements.length > 0 &&
               (!booking.scheduleReview ||
                 (booking.scheduleReview.status === "confirmed" &&
@@ -806,18 +885,36 @@ export default function BookingDetailModal({
                         Your booking remains pending until these documents are
                         submitted. Choosing a file will not upload it
                         immediately; review the file first, then select Submit
-                        requirement.
+                        requirement or Submit All Selected Files.
                       </p>
                     </div>
                   </div>
 
+                  {booking.canUploadDocuments && (
+                    <button
+                      type="button"
+                      disabled={
+                        !!uploading ||
+                        !booking.missingRequirements.some(
+                          (item) => pendingFiles[item.key],
+                        )
+                      }
+                      onClick={() => void submitAllRequirements()}
+                      className="mt-4 rounded-xl bg-[#B22222] px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                    >
+                      {batchUploading
+                        ? "Submitting files…"
+                        : "Submit All Selected Files / Isumite lahat ng napili"}
+                    </button>
+                  )}
                   <div className="mt-4 space-y-3">
                     {booking.missingRequirements.map((requirement) => {
                       const pendingFile = pendingFiles[requirement.key];
                       const photoOnly = (
                         selectedTypes[requirement.key] ?? requirement.types[0]
                       ).startsWith("couple_photo");
-                      const isUploading = uploading === requirement.key;
+                      const isUploading =
+                        batchUploading || uploading === requirement.key;
                       const rejectedDocument = booking.documents.find(
                         (document) =>
                           document.status === "rejected" &&

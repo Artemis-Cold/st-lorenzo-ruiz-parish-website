@@ -5,13 +5,19 @@ import type { ProfileBooking } from "@/api/auth";
 import { getPublicEvents, type ParishEvent } from "@/services/eventService";
 import { eventsByDate } from "@/utils/eventCalendar";
 import CalendarEventTooltip from "@/components/events/CalendarEventTooltip";
+import BookingDetailModal from "../profile/BookingDetailModal";
+import ParishModal from "@/components/ParishModal";
 
 export default function CalendarCard({
   bookings,
+  onBookingUpdated,
 }: {
   bookings: ProfileBooking[];
+  onBookingUpdated?: () => Promise<void>;
 }) {
   const [displayedMonth, setDisplayedMonth] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<number | null>(null);
   const year = displayedMonth.getFullYear();
   const month = displayedMonth.getMonth();
   const firstDay = new Date(year, month, 1).getDay();
@@ -111,6 +117,8 @@ export default function CalendarCard({
             <button
               type="button"
               key={day}
+              onClick={() => setSelectedDate(dateKey(day))}
+              aria-pressed={selectedDate === dateKey(day)}
               aria-label={`${new Date(year, month, day).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}${dayEvents.length ? `, ${dayEvents.length} parish event${dayEvents.length === 1 ? "" : "s"}` : ""}`}
               className={`group relative flex aspect-square items-center justify-center rounded-lg transition hover:ring-1 hover:ring-[#B22222]/30 ${
                 dayBookings
@@ -147,6 +155,61 @@ export default function CalendarCard({
           );
         })}
       </div>
+      {selectedDate && selectedBooking === null && (
+        <ParishModal
+          title={new Date(`${selectedDate}T12:00:00`).toLocaleDateString(
+            "en-US",
+            { month: "long", day: "numeric", year: "numeric" },
+          )}
+          description="Your bookings and parish events. Select a booking to view its details."
+          onClose={() => setSelectedDate(null)}
+        >
+          <div className="space-y-3">
+            {(bookingsByDate[selectedDate] ?? []).map((booking) => (
+              <button
+                type="button"
+                key={booking.id}
+                onClick={() => setSelectedBooking(booking.id)}
+                className="block w-full rounded-xl border border-[#E7E2DA] bg-[#FAF8F5] p-3 text-left text-sm hover:border-[#B22222]"
+              >
+                <span className="block font-semibold">
+                  {booking.service} ·{" "}
+                  {booking.start_time?.slice(0, 5) ?? "Time to be assigned"}
+                </span>
+                <span className="mt-1 block text-xs text-gray-600">
+                  {booking.booking_reference} ·{" "}
+                  {booking.status.replaceAll("_", " ")}
+                  {booking.schedule_review
+                    ? ` · Schedule: ${booking.schedule_review.status.replaceAll("_", " ")}`
+                    : ""}
+                </span>
+              </button>
+            ))}
+            {(calendarEvents[selectedDate] ?? []).map((event) => (
+              <p
+                key={event.id}
+                className="rounded-xl bg-violet-50 p-3 text-sm text-violet-800"
+              >
+                {event.title}
+              </p>
+            ))}
+            {!bookingsByDate[selectedDate]?.length &&
+              !calendarEvents[selectedDate]?.length && (
+                <p className="text-sm text-gray-500">
+                  No bookings or parish events on this date.
+                </p>
+              )}
+          </div>
+        </ParishModal>
+      )}
+      {selectedBooking !== null && (
+        <BookingDetailModal
+          key={selectedBooking}
+          bookingId={selectedBooking}
+          onClose={() => setSelectedBooking(null)}
+          onRescheduled={onBookingUpdated}
+        />
+      )}
       <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] text-gray-500 xl:mt-4 xl:text-xs">
         <span className="h-2 w-2 rounded-full bg-[#B22222]" /> Your scheduled
         booking

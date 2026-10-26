@@ -4,6 +4,7 @@ export interface PersonName {
   last_name: string;
 }
 export interface Parent extends PersonName {
+  contact_number?: string;
   relationship: "father" | "mother";
   birth_place: string;
 }

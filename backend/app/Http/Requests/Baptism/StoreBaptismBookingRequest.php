@@ -112,6 +112,7 @@ class StoreBaptismBookingRequest extends FormRequest
 
             'parents.*.relationship' => [
                 'required',
+                'distinct',
                 'in:father,mother',
             ],
 
@@ -119,6 +120,7 @@ class StoreBaptismBookingRequest extends FormRequest
                 'required',
                 'string',
             ],
+            'parents.*.contact_number' => ['required_if:parents.*.relationship,father', 'nullable', 'regex:/^09\d{9}$/'],
 
             'parents.*.middle_initial' => [
                 'nullable',

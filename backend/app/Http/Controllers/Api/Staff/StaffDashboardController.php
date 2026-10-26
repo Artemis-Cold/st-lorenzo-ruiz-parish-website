@@ -61,12 +61,24 @@ class StaffDashboardController extends Controller
         return response()->json(['data' => [
             'stats' => [
                 'bookingsToday' => (clone $serviceBookings)->whereDate('created_at', today())->count(),
+                'scheduledToday' => (clone $serviceBookings)->scheduleHeld()
+                    ->whereNotIn('status', ['cancelled', 'rejected'])
+                    ->where(fn ($query) => $query
+                        ->whereHas('slot', fn ($slot) => $slot->whereDate('booking_date', today()))
+                        ->orWhereHas('appointments', fn ($appointment) => $appointment->where('type', 'sacrament')->whereDate('scheduled_at', today())))
+                    ->count(),
                 'pendingBookings' => (clone $serviceBookings)->whereIn('status', ['pending', 'paid'])->count(),
                 'pendingDocumentRequests' => $pendingDocuments,
                 'massIntentions' => $massIntentions,
             ],
             'announcements' => $announcements,
             'recentActivity' => $activity,
+            'newBookings' => (clone $serviceBookings)->whereDate('created_at', today())->latest()->limit(20)->get()->map(fn (Booking $booking) => [
+                'id' => $booking->id,
+                'reference' => $booking->booking_reference,
+                'service' => $booking->service->name,
+                'createdAt' => $booking->created_at->toIso8601String(),
+            ])->values(),
         ]]);
     }
 }

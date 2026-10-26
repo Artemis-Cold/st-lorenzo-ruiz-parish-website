@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AxiosError } from "axios";
 import {
   CalendarClock,
@@ -70,6 +71,8 @@ const requestMessage = (error: unknown, fallback: string) => {
 };
 
 export default function BookingManagement() {
+  const [searchParams] = useSearchParams();
+  const notificationReference = searchParams.get("reference");
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [meta, setMeta] = useState<StaffBookingPage["meta"]>(emptyMeta);
   const [loading, setLoading] = useState(true);
@@ -82,6 +85,24 @@ export default function BookingManagement() {
   const [page, setPage] = useState(1);
   const [reloadKey, setReloadKey] = useState(0);
   const [selected, setSelected] = useState<Booking | null>(null);
+  useEffect(() => {
+    if (!notificationReference) return;
+    const controller = new AbortController();
+    getStaffBookings({ search: notificationReference }, controller.signal)
+      .then((response) => {
+        if (controller.signal.aborted) return;
+        const match = response.data.find(
+          (item) => item.reference === notificationReference,
+        );
+        if (match) setSelected(match);
+        else toast.error("This booking is no longer available.");
+      })
+      .catch(() => {
+        if (!controller.signal.aborted)
+          toast.error("Unable to open this booking. Please try again.");
+      });
+    return () => controller.abort();
+  }, [notificationReference]);
 
   useEffect(() => {
     const timer = window.setTimeout(

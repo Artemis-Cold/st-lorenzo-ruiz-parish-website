@@ -15,9 +15,8 @@ class ServiceFeeSeeder extends Seeder
         $fees = [
             ['service' => 'document-request', 'code' => 'baptismal_certificate', 'name' => 'Baptismal Certificate', 'amount' => 100, 'sort_order' => 1],
             ['service' => 'document-request', 'code' => 'confirmation_certificate', 'name' => 'Confirmation Certificate', 'amount' => 100, 'sort_order' => 2],
-            ['service' => 'document-request', 'code' => 'death_certificate', 'name' => 'Death Certificate', 'amount' => 100, 'sort_order' => 3],
+            ['service' => 'document-request', 'code' => 'death_certificate', 'name' => 'Funeral Certificate', 'amount' => 100, 'sort_order' => 3],
             ['service' => 'document-request', 'code' => 'marriage_certificate', 'name' => 'Marriage Certificate', 'amount' => 100, 'sort_order' => 4],
-            ['service' => 'document-request', 'code' => 'request_of_permission', 'name' => 'Request of Permission', 'amount' => 100, 'sort_order' => 5],
             ['service' => 'mass-intention', 'code' => 'intention_line', 'name' => 'Mass Intention Line', 'amount' => 100, 'sort_order' => 1],
             ['service' => 'baptism', 'code' => 'additional_sponsor', 'name' => 'Additional Sponsor per Person', 'amount' => 100, 'sort_order' => 1],
         ];

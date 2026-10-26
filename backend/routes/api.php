@@ -95,6 +95,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/bookings/{booking}/documents', [ParishionerBookingController::class, 'uploadDocument']);
         Route::post('/bookings/{booking}/payment', [ParishionerBookingController::class, 'submitPayment']);
         Route::patch('/bookings/{booking}/reschedule', [ParishionerBookingController::class, 'reschedule']);
+        Route::patch('/bookings/{booking}/payment-method', [ParishionerBookingController::class, 'selectPaymentMethod']);
     });
 
     Route::get('/bookings/{booking}', [ParishionerBookingController::class, 'show']);

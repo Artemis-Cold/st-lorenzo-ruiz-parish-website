@@ -527,6 +527,43 @@ ${
                       />
                     </div>
 
+                    <div className="col-span-12 md:col-span-6">
+                      <BookingLabel
+                        htmlFor="father-contact-number"
+                        className="mb-2 block text-sm font-medium"
+                      >
+                        Father's Contact Number{" "}
+                        <span className="text-red-600">*</span>
+                      </BookingLabel>
+                      <p lang="tl" className="mb-2 text-xs text-gray-500">
+                        Numero ng telepono ng ama
+                      </p>
+                      <input
+                        id="father-contact-number"
+                        type="tel"
+                        inputMode="numeric"
+                        maxLength={11}
+                        placeholder="09XXXXXXXXX"
+                        readOnly={readOnly}
+                        value={father?.contact_number ?? ""}
+                        onChange={(event) =>
+                          updateParent(
+                            "father",
+                            "contact_number",
+                            event.target.value.replace(/\D/g, ""),
+                          )
+                        }
+                        className={inputClass(
+                          !!getError(`parents.${fatherIndex}.contact_number`),
+                        )}
+                      />
+                      <FieldError
+                        message={getError(
+                          `parents.${fatherIndex}.contact_number`,
+                        )}
+                      />
+                    </div>
+
                     <div className="col-span-12 rounded-xl border border-amber-300 bg-amber-50 p-4">
                       <p className="text-sm text-amber-800">
                         <strong>Reminder:</strong> Please enter the mother's
@@ -634,8 +671,12 @@ ${
 
                     <div className="col-span-12 md:col-span-6">
                       <BookingLabel className="mb-2 block text-sm font-medium">
-                        Contact Number <span className="text-red-600">*</span>
+                        Mother's Contact Number{" "}
+                        <span className="text-red-600">*</span>
                       </BookingLabel>
+                      <p lang="tl" className="mb-2 text-xs text-gray-500">
+                        Numero ng telepono ng ina
+                      </p>
 
                       <input
                         type="tel"

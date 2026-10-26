@@ -184,7 +184,7 @@ export default function Document() {
             "Date of confirmation",
           );
           break;
-        case "Death Certificate":
+        case "Funeral Certificate":
           require(index, "name", details.name, "Full name");
           require(index, "address", details.address, "Address");
           require(index, "relationship_to_owner", details.relationship_to_owner, "Relationship to deceased");

@@ -51,10 +51,12 @@ ${
                   ? entry
                   : {
                       ...entry,
-                      names: Array.from({ length: 3 }, (_, index) =>
-                        index === nameIndex
-                          ? value
-                          : (entry.names[index] ?? ""),
+                      names: Array.from(
+                        { length: type === "Soul" ? 3 : 1 },
+                        (_, index) =>
+                          index === nameIndex
+                            ? value
+                            : (entry.names[index] ?? ""),
                       ),
                     },
               ),
@@ -109,49 +111,51 @@ ${
                 </span>
 
                 <div className="flex-1">
-                  {[0, 1, 2].map((nameIndex) => (
-                    <div key={nameIndex} className="mb-3">
-                      <BookingLabel
-                        htmlFor={`intention-${group.type}-${entry.id}-${nameIndex}`}
-                        className="mb-2 block text-sm font-medium"
-                      >
-                        Name {nameIndex + 1} / Pangalan {nameIndex + 1}
-                      </BookingLabel>
-                      <input
-                        id={`intention-${group.type}-${entry.id}-${nameIndex}`}
-                        type="text"
-                        maxLength={150}
-                        readOnly={readOnly}
-                        className={
-                          inputClass +
-                          (getError(
-                            "groups." +
-                              booking.groups.indexOf(group) +
-                              ".entries." +
-                              index +
-                              ".names",
-                          )
-                            ? " border-red-400"
-                            : "")
-                        }
-                        placeholder="One person's full name / Buong pangalan"
-                        value={entry.names[nameIndex] ?? ""}
-                        onChange={(e) =>
-                          updateEntry(
-                            group.type,
-                            entry.id,
-                            nameIndex,
-                            e.target.value,
-                          )
-                        }
-                      />
-                      <FieldError
-                        message={getError(
-                          `groups.${booking.groups.indexOf(group)}.entries.${index}.names.${nameIndex}`,
-                        )}
-                      />
-                    </div>
-                  ))}
+                  {(group.type === "Soul" ? [0, 1, 2] : [0]).map(
+                    (nameIndex) => (
+                      <div key={nameIndex} className="mb-3">
+                        <BookingLabel
+                          htmlFor={`intention-${group.type}-${entry.id}-${nameIndex}`}
+                          className="mb-2 block text-sm font-medium"
+                        >
+                          Name {nameIndex + 1} / Pangalan {nameIndex + 1}
+                        </BookingLabel>
+                        <input
+                          id={`intention-${group.type}-${entry.id}-${nameIndex}`}
+                          type="text"
+                          maxLength={150}
+                          readOnly={readOnly}
+                          className={
+                            inputClass +
+                            (getError(
+                              "groups." +
+                                booking.groups.indexOf(group) +
+                                ".entries." +
+                                index +
+                                ".names",
+                            )
+                              ? " border-red-400"
+                              : "")
+                          }
+                          placeholder="One person's full name / Buong pangalan"
+                          value={entry.names[nameIndex] ?? ""}
+                          onChange={(e) =>
+                            updateEntry(
+                              group.type,
+                              entry.id,
+                              nameIndex,
+                              e.target.value,
+                            )
+                          }
+                        />
+                        <FieldError
+                          message={getError(
+                            `groups.${booking.groups.indexOf(group)}.entries.${index}.names.${nameIndex}`,
+                          )}
+                        />
+                      </div>
+                    ),
+                  )}
                   <FieldError
                     message={getError(
                       "groups." +
@@ -186,12 +190,16 @@ ${
             )}
 
             <p className="text-xs italic text-gray-500">
-              Maximum of <strong>3 people</strong> per numbered entry. Enter one
-              person's full name per field. Add another intention for more
-              names.
+              Maximum of{" "}
+              <strong>{group.type === "Soul" ? "3 people" : "1 person"}</strong>{" "}
+              per numbered entry. Enter one person's full name per field. Add
+              another intention for more names.
               <span lang="tl" className="mt-1 block">
-                Hanggang tatlong tao bawat bilang. Isang buong pangalan bawat
-                field. Magdagdag ng intensyon para sa iba pang pangalan.
+                {group.type === "Soul"
+                  ? "Hanggang tatlong tao bawat bilang."
+                  : "Isang tao lamang bawat bilang."}{" "}
+                Isang buong pangalan bawat field. Magdagdag ng intensyon para sa
+                iba pang pangalan.
               </span>
             </p>
           </div>

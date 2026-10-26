@@ -34,7 +34,7 @@ class DocumentRequestMultipleCopiesTest extends TestCase
         ServiceFee::create([
             'service_id' => $service->id,
             'code' => 'death_certificate',
-            'name' => 'Death Certificate',
+            'name' => 'Funeral Certificate',
             'amount' => 80,
         ]);
 
@@ -59,7 +59,7 @@ class DocumentRequestMultipleCopiesTest extends TestCase
                     ],
                 ],
                 [
-                    'document_type' => 'Death Certificate',
+                    'document_type' => 'Funeral Certificate',
                     'details' => [
                         'name' => 'Pedro Dela Cruz',
                         'address' => 'Dagatan, Taysan, Batangas',
@@ -89,7 +89,7 @@ class DocumentRequestMultipleCopiesTest extends TestCase
     {
         Sanctum::actingAs(User::factory()->create());
         $requests = collect(range(1, 11))->map(fn (int $number) => [
-            'document_type' => 'Death Certificate',
+            'document_type' => 'Funeral Certificate',
             'details' => [
                 'name' => "Parishioner {$number}",
                 'address' => 'Dagatan, Taysan, Batangas',
@@ -170,7 +170,6 @@ class DocumentRequestMultipleCopiesTest extends TestCase
             'description' => 'Parish documents',
         ]);
         foreach ([
-            ['permission', 'Request of Permission', 100],
             ['marriage_certificate', 'Marriage Certificate', 150],
         ] as [$code, $name, $amount]) {
             ServiceFee::create([
@@ -183,13 +182,6 @@ class DocumentRequestMultipleCopiesTest extends TestCase
 
         $this->post('/api/bookings/document-request', [
             'requests' => [
-                [
-                    'document_type' => 'Request of Permission',
-                    'details' => [
-                        'full_name' => 'Another Person',
-                        'address' => 'Another Address',
-                    ],
-                ],
                 [
                     'document_type' => 'Marriage Certificate',
                     'details' => [
@@ -208,14 +200,6 @@ class DocumentRequestMultipleCopiesTest extends TestCase
         $items = DocumentRequestItem::query()->get()->keyBy('document_type');
         $expectedAddress = '12, Mabini Street, Dagatan, Taysan, Batangas, 4228';
 
-        $this->assertSame(
-            'Juan Q. Dela Cruz',
-            $items['Request of Permission']->details['full_name'],
-        );
-        $this->assertSame(
-            $expectedAddress,
-            $items['Request of Permission']->details['address'],
-        );
         $this->assertSame(
             'Juan Q. Dela Cruz',
             $items['Marriage Certificate']->details['groom_name'],
