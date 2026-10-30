@@ -2,6 +2,7 @@ export type ApplicantType = "groom" | "bride";
 export type WeddingAccountRole = ApplicantType | "representative";
 
 export interface PersonName {
+  suffix?: string;
   first_name: string;
   middle_initial: string;
   last_name: string;
@@ -55,6 +56,7 @@ export function emptyPreparation(
       first_name: person.first_name,
       middle_initial: person.middle_initial,
       last_name: person.last_name,
+      suffix: person.suffix ?? "",
       birth_date:
         code === "baptism" || person.church.baptism_status === "no"
           ? (person.preparations?.[

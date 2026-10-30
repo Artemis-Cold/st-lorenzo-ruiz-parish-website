@@ -1,5 +1,6 @@
 export type ApplicantType = "groom" | "bride";
 export interface PersonName {
+  suffix?: string;
   first_name: string;
   middle_initial: string;
   last_name: string;

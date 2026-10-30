@@ -27,6 +27,7 @@ class FuneralBookingTest extends TestCase
             'first_name' => 'John',
             'middle_initial' => 'D',
             'last_name' => 'Doe',
+            'suffix' => 'Jr.',
             'phone' => '09171234567',
         ]);
         Sanctum::actingAs($parishioner);
@@ -43,12 +44,13 @@ class FuneralBookingTest extends TestCase
             'service_package_id' => $package->id,
             'deceased' => [
                 'first_name' => 'Juan', 'middle_initial' => '', 'last_name' => 'Dela Cruz',
+                'suffix' => 'III',
                 'address' => 'Dagatan, Taysan', 'death_cause' => 'Natural causes',
                 'birth_date' => today()->subYears(80)->toDateString(), 'has_spouse' => false,
                 'father' => ['first_name' => 'Pedro', 'middle_initial' => '', 'last_name' => 'Dela Cruz'],
                 'mother' => ['first_name' => 'Ana', 'middle_initial' => '', 'last_name' => 'Santos'],
                 'spouse' => ['first_name' => '', 'middle_initial' => '', 'last_name' => ''],
-                'children' => [],
+                'children' => [['first_name' => 'Juan', 'middle_initial' => '', 'last_name' => 'Dela Cruz', 'suffix' => 'IV']],
                 'sacraments' => ['baptized' => true, 'confirmed' => true, 'church_married' => false, 'anointed_of_the_sick' => true],
                 'church_life' => ['attends_mass' => 'regular', 'confesses' => 'sometimes'],
                 'characteristics' => 'A devoted parishioner.',
@@ -64,6 +66,8 @@ class FuneralBookingTest extends TestCase
         $this->assertDatabaseHas('bookings', ['id' => $bookingId, 'status' => 'pending']);
         $this->assertDatabaseHas('funeral_deceased', [
             'first_name' => 'Juan', 'age' => 80,
+            'suffix' => 'III',
+            'informant_suffix' => 'Jr.',
             'spouse_first_name' => null, 'spouse_last_name' => null,
             'informant_first_name' => 'John',
             'informant_middle_initial' => 'D',
@@ -79,6 +83,7 @@ class FuneralBookingTest extends TestCase
                 ->toDateString()
         );
         $this->assertDatabaseCount('booking_documents', 0);
+        $this->assertDatabaseHas('funeral_children', ['first_name' => 'Juan', 'suffix' => 'IV']);
         $this->assertDatabaseHas('sms_messages', [
             'booking_id' => $bookingId,
             'category' => 'booking_pending',

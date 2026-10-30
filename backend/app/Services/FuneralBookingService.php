@@ -63,6 +63,7 @@ class FuneralBookingService
                 'first_name' => $person['first_name'],
                 'middle_initial' => $person['middle_initial'] ?? null,
                 'last_name' => $person['last_name'],
+                'suffix' => $person['suffix'] ?? null,
                 'address' => $person['address'],
                 'death_cause' => $person['death_cause'],
                 'age' => CarbonImmutable::parse($person['birth_date'])->age,
@@ -75,6 +76,7 @@ class FuneralBookingService
                 'informant_first_name' => $user->first_name,
                 'informant_middle_initial' => $user->middle_initial,
                 'informant_last_name' => $user->last_name,
+                'informant_suffix' => $user->suffix,
                 'informant_relationship' => $person['informant']['relationship'],
                 'informant_contact_number' => $user->phone,
                 'information_date' => today()->toDateString(),
@@ -115,12 +117,12 @@ class FuneralBookingService
     {
         $columns = [];
         foreach (['father', 'mother'] as $relative) {
-            foreach (['first_name', 'middle_initial', 'last_name'] as $field) {
+            foreach (['first_name', 'middle_initial', 'last_name', 'suffix'] as $field) {
                 $columns[$relative.'_'.$field] = $person[$relative][$field] ?? null;
             }
         }
 
-        foreach (['first_name', 'middle_initial', 'last_name'] as $field) {
+        foreach (['first_name', 'middle_initial', 'last_name', 'suffix'] as $field) {
             $columns['spouse_'.$field] = ($person['has_spouse'] ?? false)
                 ? ($person['spouse'][$field] ?? null)
                 : null;

@@ -21,6 +21,7 @@ class StoreFuneralBookingRequest extends FormRequest
             'first_name' => ['required', 'string', 'max:100'],
             'middle_initial' => ['nullable', 'string', 'max:1'],
             'last_name' => ['required', 'string', 'max:100'],
+            'suffix' => ['nullable', 'string', 'max:20'],
         ];
         $rules = [
             'schedule_request_id' => ['nullable', 'integer', 'exists:bookings,id'],
@@ -66,6 +67,7 @@ class StoreFuneralBookingRequest extends FormRequest
         $rules['deceased.spouse.first_name'] = ['nullable', Rule::requiredIf(fn () => $this->boolean('deceased.has_spouse')), 'string', 'max:100'];
         $rules['deceased.spouse.middle_initial'] = ['nullable', 'string', 'max:1'];
         $rules['deceased.spouse.last_name'] = ['nullable', Rule::requiredIf(fn () => $this->boolean('deceased.has_spouse')), 'string', 'max:100'];
+        $rules['deceased.spouse.suffix'] = ['nullable', 'string', 'max:20'];
 
         return $rules;
     }

@@ -106,6 +106,7 @@ ${
       first_name: user.first_name,
       middle_initial: user.middle_initial ?? "",
       last_name: user.last_name,
+      suffix: user.suffix ?? "",
       address,
       age: profileAge(),
       contact_number: user.phone,
@@ -295,6 +296,7 @@ ${
         ? `${sponsor.middle_initial.replace(/\.$/, "")}.`
         : "",
       sponsor.last_name,
+      sponsor.suffix,
     ]
       .filter(Boolean)
       .join(" ");
@@ -478,7 +480,7 @@ ${
               </h3>
 
               <div className="grid grid-cols-12 gap-4">
-                <div className="col-span-12 md:col-span-5">
+                <div className="col-span-12 md:col-span-4">
                   <BookingLabel className="mb-2 block text-sm font-medium">
                     Last Name <span className="text-red-600">*</span>
                   </BookingLabel>
@@ -496,7 +498,7 @@ ${
                   <FieldError message={getError("applicant.groom.last_name")} />
                 </div>
 
-                <div className="col-span-12 md:col-span-5">
+                <div className="col-span-12 md:col-span-4">
                   <BookingLabel className="mb-2 block text-sm font-medium">
                     First Name <span className="text-red-600">*</span>
                   </BookingLabel>
@@ -535,6 +537,24 @@ ${
                   <FieldError
                     message={getError("applicant.groom.middle_initial")}
                   />
+                </div>
+                <div className="col-span-12 md:col-span-2">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
+                    Suffix (optional)
+                  </BookingLabel>
+
+                  <input
+                    type="text"
+                    maxLength={20}
+                    value={booking.applicant.groom.suffix ?? ""}
+                    onChange={(e) =>
+                      updateApplicant("groom", "suffix", e.target.value)
+                    }
+                    placeholder="Jr., Sr., III"
+                    readOnly={readOnly}
+                    className={inputClass}
+                  />
+                  <FieldError message={getError("applicant.groom.suffix")} />
                 </div>
 
                 <div className="col-span-12">
@@ -617,7 +637,7 @@ ${
               </h3>
 
               <div className="grid grid-cols-12 gap-4">
-                <div className="col-span-12 md:col-span-5">
+                <div className="col-span-12 md:col-span-4">
                   <BookingLabel className="mb-2 block text-sm font-medium">
                     Father's Last Name <span className="text-red-600">*</span>
                   </BookingLabel>
@@ -641,7 +661,7 @@ ${
                   />
                 </div>
 
-                <div className="col-span-12 md:col-span-5">
+                <div className="col-span-12 md:col-span-4">
                   <BookingLabel className="mb-2 block text-sm font-medium">
                     Father's First Name <span className="text-red-600">*</span>
                   </BookingLabel>
@@ -689,6 +709,26 @@ ${
                     message={getError("applicant.groom.father.middle_initial")}
                   />
                 </div>
+                <div className="col-span-12 md:col-span-2">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
+                    Father's Suffix (optional)
+                  </BookingLabel>
+
+                  <input
+                    type="text"
+                    maxLength={20}
+                    placeholder="Jr., Sr., III"
+                    readOnly={readOnly}
+                    className={inputClass}
+                    value={booking.applicant.groom.father.suffix ?? ""}
+                    onChange={(e) =>
+                      updateApplicantFather("groom", "suffix", e.target.value)
+                    }
+                  />
+                  <FieldError
+                    message={getError("applicant.groom.father.suffix")}
+                  />
+                </div>
 
                 <div className="col-span-12 rounded-xl border border-amber-300 bg-amber-50 p-4">
                   <p className="text-sm text-amber-800">
@@ -697,7 +737,7 @@ ${
                   </p>
                 </div>
 
-                <div className="col-span-12 md:col-span-5">
+                <div className="col-span-12 md:col-span-4">
                   <BookingLabel className="mb-2 block text-sm font-medium">
                     Mother's Last Name <span className="text-red-600">*</span>
                   </BookingLabel>
@@ -721,7 +761,7 @@ ${
                   />
                 </div>
 
-                <div className="col-span-12 md:col-span-5">
+                <div className="col-span-12 md:col-span-4">
                   <BookingLabel className="mb-2 block text-sm font-medium">
                     Mother's First Name <span className="text-red-600">*</span>
                   </BookingLabel>
@@ -767,6 +807,26 @@ ${
                   />
                   <FieldError
                     message={getError("applicant.groom.mother.middle_initial")}
+                  />
+                </div>
+                <div className="col-span-12 md:col-span-2">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
+                    Mother's Suffix (optional)
+                  </BookingLabel>
+
+                  <input
+                    type="text"
+                    maxLength={20}
+                    placeholder="Jr., Sr., III"
+                    readOnly={readOnly}
+                    className={inputClass}
+                    value={booking.applicant.groom.mother.suffix ?? ""}
+                    onChange={(e) =>
+                      updateApplicantMother("groom", "suffix", e.target.value)
+                    }
+                  />
+                  <FieldError
+                    message={getError("applicant.groom.mother.suffix")}
                   />
                 </div>
               </div>
@@ -879,7 +939,7 @@ ${
               </h3>
 
               <div className="grid grid-cols-12 gap-4">
-                <div className="col-span-12 md:col-span-5">
+                <div className="col-span-12 md:col-span-4">
                   <BookingLabel className="mb-2 block text-sm font-medium">
                     Last Name <span className="text-red-600">*</span>
                   </BookingLabel>
@@ -897,7 +957,7 @@ ${
                   <FieldError message={getError("applicant.bride.last_name")} />
                 </div>
 
-                <div className="col-span-12 md:col-span-5">
+                <div className="col-span-12 md:col-span-4">
                   <BookingLabel className="mb-2 block text-sm font-medium">
                     First Name <span className="text-red-600">*</span>
                   </BookingLabel>
@@ -930,6 +990,23 @@ ${
                       updateApplicant("bride", "middle_initial", e.target.value)
                     }
                     placeholder="M"
+                    readOnly={readOnly}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="col-span-12 md:col-span-2">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
+                    Suffix (optional)
+                  </BookingLabel>
+
+                  <input
+                    type="text"
+                    maxLength={20}
+                    value={booking.applicant.bride.suffix ?? ""}
+                    onChange={(e) =>
+                      updateApplicant("bride", "suffix", e.target.value)
+                    }
+                    placeholder="Jr., Sr., III"
                     readOnly={readOnly}
                     className={inputClass}
                   />
@@ -1015,7 +1092,7 @@ ${
               </h3>
 
               <div className="grid grid-cols-12 gap-4">
-                <div className="col-span-12 md:col-span-5">
+                <div className="col-span-12 md:col-span-4">
                   <BookingLabel className="mb-2 block text-sm font-medium">
                     Father's Last Name <span className="text-red-600">*</span>
                   </BookingLabel>
@@ -1039,7 +1116,7 @@ ${
                   />
                 </div>
 
-                <div className="col-span-12 md:col-span-5">
+                <div className="col-span-12 md:col-span-4">
                   <BookingLabel className="mb-2 block text-sm font-medium">
                     Father's First Name <span className="text-red-600">*</span>
                   </BookingLabel>
@@ -1084,6 +1161,23 @@ ${
                     }
                   />
                 </div>
+                <div className="col-span-12 md:col-span-2">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
+                    Father's Suffix (optional)
+                  </BookingLabel>
+
+                  <input
+                    type="text"
+                    maxLength={20}
+                    placeholder="Jr., Sr., III"
+                    readOnly={readOnly}
+                    className={inputClass}
+                    value={booking.applicant.bride.father.suffix ?? ""}
+                    onChange={(e) =>
+                      updateApplicantFather("bride", "suffix", e.target.value)
+                    }
+                  />
+                </div>
 
                 <div className="col-span-12 rounded-xl border border-amber-300 bg-amber-50 p-4">
                   <p className="text-sm text-amber-800">
@@ -1092,7 +1186,7 @@ ${
                   </p>
                 </div>
 
-                <div className="col-span-12 md:col-span-5">
+                <div className="col-span-12 md:col-span-4">
                   <BookingLabel className="mb-2 block text-sm font-medium">
                     Mother's Last Name <span className="text-red-600">*</span>
                   </BookingLabel>
@@ -1116,7 +1210,7 @@ ${
                   />
                 </div>
 
-                <div className="col-span-12 md:col-span-5">
+                <div className="col-span-12 md:col-span-4">
                   <BookingLabel className="mb-2 block text-sm font-medium">
                     Mother's First Name <span className="text-red-600">*</span>
                   </BookingLabel>
@@ -1158,6 +1252,23 @@ ${
                         "middle_initial",
                         e.target.value,
                       )
+                    }
+                  />
+                </div>
+                <div className="col-span-12 md:col-span-2">
+                  <BookingLabel className="mb-2 block text-sm font-medium">
+                    Mother's Suffix (optional)
+                  </BookingLabel>
+
+                  <input
+                    type="text"
+                    maxLength={20}
+                    placeholder="Jr., Sr., III"
+                    readOnly={readOnly}
+                    className={inputClass}
+                    value={booking.applicant.bride.mother.suffix ?? ""}
+                    onChange={(e) =>
+                      updateApplicantMother("bride", "suffix", e.target.value)
                     }
                   />
                 </div>
@@ -1449,7 +1560,7 @@ ${
                             />
                           </div>
 
-                          <div className="col-span-12 sm:col-span-5">
+                          <div className="col-span-12 sm:col-span-4">
                             <BookingLabel className="mb-1.5 block text-sm font-medium">
                               Last Name <span className="text-red-600">*</span>
                             </BookingLabel>
@@ -1472,7 +1583,7 @@ ${
                               )}
                             />
                           </div>
-                          <div className="col-span-12 sm:col-span-5">
+                          <div className="col-span-12 sm:col-span-4">
                             <BookingLabel className="mb-1.5 block text-sm font-medium">
                               First Name <span className="text-red-600">*</span>
                             </BookingLabel>
@@ -1516,6 +1627,30 @@ ${
                             <FieldError
                               message={getError(
                                 `sponsors.${sponsorIndex}.middle_initial`,
+                              )}
+                            />
+                          </div>
+                          <div className="col-span-12 sm:col-span-2">
+                            <BookingLabel className="mb-1.5 block text-sm font-medium">
+                              Suffix (optional)
+                            </BookingLabel>
+                            <input
+                              maxLength={20}
+                              value={sponsor.suffix ?? ""}
+                              onChange={(event) =>
+                                updateSponsor(
+                                  sponsorIndex,
+                                  "suffix",
+                                  event.target.value,
+                                )
+                              }
+                              readOnly={readOnly}
+                              placeholder="Jr., Sr., III"
+                              className={inputClass}
+                            />
+                            <FieldError
+                              message={getError(
+                                `sponsors.${sponsorIndex}.suffix`,
                               )}
                             />
                           </div>

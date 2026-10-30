@@ -1,4 +1,5 @@
 export interface PersonName {
+  suffix?: string;
   first_name: string;
   middle_initial: string;
   last_name: string;

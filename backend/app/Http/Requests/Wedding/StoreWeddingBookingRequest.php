@@ -39,6 +39,7 @@ class StoreWeddingBookingRequest extends FormRequest
             'sponsors.*.first_name' => ['required', 'string', 'max:100'],
             'sponsors.*.middle_initial' => ['nullable', 'string', 'max:1'],
             'sponsors.*.last_name' => ['required', 'string', 'max:100'],
+            'sponsors.*.suffix' => ['nullable', 'string', 'max:20'],
             'sponsors.*.residence' => ['required', 'string'],
             'sponsors.*.requirement_type' => [
                 'required',
@@ -67,6 +68,7 @@ class StoreWeddingBookingRequest extends FormRequest
             $rules["$prefix.first_name"] = ['required', 'string', 'max:100'];
             $rules["$prefix.middle_initial"] = ['nullable', 'string', 'max:1'];
             $rules["$prefix.last_name"] = ['required', 'string', 'max:100'];
+            $rules["$prefix.suffix"] = ['nullable', 'string', 'max:20'];
             $rules["$prefix.address"] = ['required', 'string'];
             $rules["$prefix.age"] = ['required', 'integer', 'min:18', 'max:150'];
             $rules["$prefix.contact_number"] = ['required', 'string', 'regex:/^09\d{9}$/'];
@@ -89,6 +91,7 @@ class StoreWeddingBookingRequest extends FormRequest
                 $rules["$prefix.$parent.first_name"] = ['required', 'string', 'max:100'];
                 $rules["$prefix.$parent.middle_initial"] = ['nullable', 'string', 'max:1'];
                 $rules["$prefix.$parent.last_name"] = ['required', 'string', 'max:100'];
+                $rules["$prefix.$parent.suffix"] = ['nullable', 'string', 'max:20'];
             }
 
             $rules["$prefix.previous_church_marriage"] = ['required', 'array'];

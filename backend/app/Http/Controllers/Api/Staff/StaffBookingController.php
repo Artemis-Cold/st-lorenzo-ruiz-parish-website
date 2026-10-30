@@ -342,15 +342,17 @@ class StaffBookingController extends Controller
 
         $names = match ($booking->service->code) {
             'wedding' => $booking->weddingApplicants
-                ->map(fn ($person) => trim("{$person->first_name} {$person->last_name}"))
+                ->map(fn ($person) => trim("{$person->first_name} {$person->last_name} {$person->suffix}"))
                 ->join(' & '),
             'funeral' => trim(implode(' ', array_filter([
                 $booking->funeralDeceased?->first_name,
                 $booking->funeralDeceased?->last_name,
+                $booking->funeralDeceased?->suffix,
             ]))),
             default => trim(implode(' ', array_filter([
                 $booking->baptizand?->first_name,
                 $booking->baptizand?->last_name,
+                $booking->baptizand?->suffix,
             ]))),
         };
 
@@ -554,14 +556,14 @@ class StaffBookingController extends Controller
             return [
                 'applicants' => $booking->weddingApplicants->map(fn ($person) => [
                     'role' => ucfirst($person->role),
-                    'name' => $this->personName($person->first_name, $person->middle_initial, $person->last_name),
+                    'name' => $this->personName($person->first_name, $person->middle_initial, $person->last_name, $person->suffix),
                     'age' => $person->age,
                     'address' => $person->address,
                     'contactNumber' => $person->contact_number,
                     'baptizedIn' => $person->baptism_status === 'no' ? 'No — For parish coordination' : $person->baptized_in,
                     'confirmedIn' => $person->confirmation_status === 'no' ? 'No — For parish coordination' : $person->confirmed_in,
-                    'fatherName' => $this->personName($person->father_first_name, $person->father_middle_initial, $person->father_last_name),
-                    'motherName' => $this->personName($person->mother_first_name, $person->mother_middle_initial, $person->mother_last_name),
+                    'fatherName' => $this->personName($person->father_first_name, $person->father_middle_initial, $person->father_last_name, $person->father_suffix),
+                    'motherName' => $this->personName($person->mother_first_name, $person->mother_middle_initial, $person->mother_last_name, $person->mother_suffix),
                     'previousMarriage' => [
                         'churchName' => $person->church_name,
                         'priest' => $person->priest,
@@ -570,7 +572,7 @@ class StaffBookingController extends Controller
                 ])->values(),
                 'sponsors' => $booking->weddingSponsors->map(fn ($sponsor) => [
                     'role' => $sponsor->role,
-                    'name' => $this->personName($sponsor->first_name, $sponsor->middle_initial, $sponsor->last_name),
+                    'name' => $this->personName($sponsor->first_name, $sponsor->middle_initial, $sponsor->last_name, $sponsor->suffix),
                     'residence' => $sponsor->residence,
                     'requirementType' => $sponsor->requirement_type,
                 ])->values(),
@@ -581,17 +583,17 @@ class StaffBookingController extends Controller
             $person = $booking->funeralDeceased;
 
             return ['deceased' => $person ? [
-                'name' => $this->personName($person->first_name, $person->middle_initial, $person->last_name),
+                'name' => $this->personName($person->first_name, $person->middle_initial, $person->last_name, $person->suffix),
                 'age' => $person->age,
                 'birthDate' => $person->birth_date?->format('F j, Y'),
                 'address' => $person->address,
                 'deathCause' => $person->death_cause,
-                'informantName' => $this->personName($person->informant_first_name, $person->informant_middle_initial, $person->informant_last_name),
+                'informantName' => $this->personName($person->informant_first_name, $person->informant_middle_initial, $person->informant_last_name, $person->informant_suffix),
                 'informantRelationship' => $person->informant_relationship,
                 'informantContactNumber' => $person->informant_contact_number,
-                'fatherName' => $this->personName($person->father_first_name, $person->father_middle_initial, $person->father_last_name),
-                'motherName' => $this->personName($person->mother_first_name, $person->mother_middle_initial, $person->mother_last_name),
-                'spouseName' => $this->personName($person->spouse_first_name, $person->spouse_middle_initial, $person->spouse_last_name),
+                'fatherName' => $this->personName($person->father_first_name, $person->father_middle_initial, $person->father_last_name, $person->father_suffix),
+                'motherName' => $this->personName($person->mother_first_name, $person->mother_middle_initial, $person->mother_last_name, $person->mother_suffix),
+                'spouseName' => $this->personName($person->spouse_first_name, $person->spouse_middle_initial, $person->spouse_last_name, $person->spouse_suffix),
                 'characteristics' => $person->characteristics,
                 'churchLife' => [
                     'attendsMass' => $person->attends_mass,
@@ -603,7 +605,7 @@ class StaffBookingController extends Controller
                     'churchMarried' => $person->church_married,
                     'anointedOfTheSick' => $person->anointed_of_the_sick,
                 ],
-                'children' => $person->children->map(fn ($child) => $this->personName($child->first_name, $child->middle_initial, $child->last_name))->values(),
+                'children' => $person->children->map(fn ($child) => $this->personName($child->first_name, $child->middle_initial, $child->last_name, $child->suffix))->values(),
             ] : null];
         }
 

@@ -82,6 +82,7 @@ export default function BookingDetailModal({
   );
   const [paymentReference, setPaymentReference] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("gcash");
+  const [editingPaymentMethod, setEditingPaymentMethod] = useState(false);
   const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
   const [paymentErrors, setPaymentErrors] = useState<Record<string, string>>(
     {},
@@ -96,6 +97,7 @@ export default function BookingDetailModal({
     getParishionerBooking(bookingId)
       .then((booking) => {
         setResult({ bookingId, booking, error: "" });
+        setEditingPaymentMethod(false);
         setPaymentReference(booking.payment.referenceNumber ?? "");
         setPaymentMethod(
           ["mass-intention", "document-request"].includes(booking.serviceCode)
@@ -198,6 +200,7 @@ export default function BookingDetailModal({
           );
       const refreshed = await getParishionerBooking(bookingId);
       setResult({ bookingId, booking: refreshed, error: "" });
+      setEditingPaymentMethod(false);
       setPaymentReference(refreshed.payment.referenceNumber ?? "");
       setPaymentMethod(refreshed.payment.method ?? "gcash");
       setPaymentReceipt(null);
@@ -642,23 +645,41 @@ export default function BookingDetailModal({
 
                 {booking.payment.canChangeMethod && (
                   <div className="mt-4 space-y-4 border-t border-[#E7E2DA] pt-4">
-                    <PaymentMethodChoice
-                      value={paymentMethod}
-                      disabled={submittingPayment}
-                      allowCash={
-                        !["mass-intention", "document-request"].includes(
-                          booking.serviceCode,
-                        )
-                      }
-                      onChange={(method) => {
-                        setPaymentMethod(method);
-                        setPaymentErrors({});
-                        if (method === "cash") {
-                          setPaymentReference("");
-                          setPaymentReceipt(null);
+                    {booking.payment.method && !editingPaymentMethod ? (
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-sm font-medium text-[#292524]">
+                          Preferred payment:{" "}
+                          {booking.payment.method === "cash"
+                            ? "Cash at Parish Office"
+                            : "GCash"}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setEditingPaymentMethod(true)}
+                          className="text-sm font-semibold text-[#B22222] hover:underline"
+                        >
+                          Change
+                        </button>
+                      </div>
+                    ) : (
+                      <PaymentMethodChoice
+                        value={paymentMethod}
+                        disabled={submittingPayment}
+                        allowCash={
+                          !["mass-intention", "document-request"].includes(
+                            booking.serviceCode,
+                          )
                         }
-                      }}
-                    />
+                        onChange={(method) => {
+                          setPaymentMethod(method);
+                          setPaymentErrors({});
+                          if (method === "cash") {
+                            setPaymentReference("");
+                            setPaymentReceipt(null);
+                          }
+                        }}
+                      />
+                    )}
                     {paymentErrors.payment_method && (
                       <p className="text-sm text-red-600">
                         {paymentErrors.payment_method}
@@ -666,13 +687,19 @@ export default function BookingDetailModal({
                     )}
                     {!booking.payment.canSubmitPayment && (
                       <p className="rounded-xl bg-amber-50 p-3 text-sm text-amber-900">
-                        Choose your preferred payment method only. No payment is
-                        being collected. Payment submission opens after your
-                        digital requirements are approved and the parish
-                        receives the required physical copies.
+                        {booking.payment.method
+                          ? "Your payment preference is saved. "
+                          : "Choose your preferred payment method. "}
+                        Payment opens after your digital requirements are
+                        approved and the parish receives the required physical
+                        copies.
                       </p>
                     )}
                     {booking.payment.canSubmitPayment &&
+                      !(
+                        booking.payment.status === "pending_verification" &&
+                        booking.payment.method === paymentMethod
+                      ) &&
                       paymentMethod === "gcash" && (
                         <>
                           <div>
@@ -741,32 +768,60 @@ export default function BookingDetailModal({
                         </>
                       )}
 
-                    <button
-                      type="button"
-                      disabled={
-                        submittingPayment ||
-                        ((booking.payment.status === "awaiting_payment" ||
-                          booking.payment.status === "pending_verification") &&
-                          booking.payment.method === paymentMethod)
-                      }
-                      onClick={() => void submitPayment()}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#B22222] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                    >
-                      {submittingPayment ? (
-                        <LoaderCircle className="animate-spin" size={17} />
-                      ) : (
-                        <CreditCard size={17} />
-                      )}
-                      {submittingPayment
-                        ? "Saving…"
-                        : !booking.payment.canSubmitPayment
-                          ? "Save payment preference"
-                          : paymentMethod === "cash"
-                            ? "Select cash payment"
-                            : "Submit GCash payment"}
-                    </button>
-                    {(booking.payment.status === "awaiting_payment" ||
-                      booking.payment.status === "pending_verification") &&
+                    {(!booking.payment.method ||
+                      editingPaymentMethod ||
+                      (booking.payment.canSubmitPayment &&
+                        paymentMethod === "gcash" &&
+                        booking.payment.status !== "pending_verification")) && (
+                      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
+                        {editingPaymentMethod && booking.payment.method && (
+                          <button
+                            type="button"
+                            disabled={submittingPayment}
+                            onClick={() => {
+                              setPaymentMethod(booking.payment.method!);
+                              setEditingPaymentMethod(false);
+                              setPaymentErrors({});
+                              setPaymentReceipt(null);
+                              setPaymentReference(
+                                booking.payment.referenceNumber ?? "",
+                              );
+                            }}
+                            className="inline-flex w-full items-center justify-center rounded-xl border border-[#E7E2DA] px-5 py-3 text-sm font-semibold text-gray-600 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                          >
+                            Cancel change
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          disabled={
+                            submittingPayment ||
+                            ((booking.payment.status === "awaiting_payment" ||
+                              booking.payment.status ===
+                                "pending_verification") &&
+                              booking.payment.method === paymentMethod)
+                          }
+                          onClick={() => void submitPayment()}
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#B22222] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#991B1B] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                        >
+                          {submittingPayment ? (
+                            <LoaderCircle className="animate-spin" size={17} />
+                          ) : (
+                            <CreditCard size={17} />
+                          )}
+                          {submittingPayment
+                            ? "Saving…"
+                            : !booking.payment.canSubmitPayment
+                              ? "Save payment preference"
+                              : paymentMethod === "cash"
+                                ? "Select cash payment"
+                                : "Submit GCash payment"}
+                        </button>
+                      </div>
+                    )}
+                    {editingPaymentMethod &&
+                      (booking.payment.status === "awaiting_payment" ||
+                        booking.payment.status === "pending_verification") &&
                       booking.payment.method === paymentMethod && (
                         <p className="text-xs text-gray-500">
                           Select the other method if you want to change your

@@ -10,6 +10,20 @@ use Illuminate\Validation\ValidationException;
 
 class PaymentService
 {
+    public function activateCashPreference(Booking $booking): void
+    {
+        DB::transaction(function () use ($booking) {
+            $locked = Booking::query()->lockForUpdate()->findOrFail($booking->id);
+            if ($locked->status !== 'pending' || $locked->preferred_payment_method !== 'cash'
+                || (float) $this->amountFor($locked) <= 0
+                || ! app(BookingRequirementService::class)->paymentReady($locked)
+                || $locked->payments()->whereIn('status', [...Payment::ACTIVE_STATUSES, 'confirmed'])->exists()) {
+                return;
+            }
+            $this->createAttempt($locked, 'cash');
+        });
+    }
+
     public function createAttempt(
         Booking $booking,
         string $method,
@@ -79,6 +93,7 @@ class PaymentService
             ]);
 
             $lockedBooking->update([
+                'preferred_payment_method' => $method,
                 'payment_reference' => $method === 'gcash' ? $referenceNumber : null,
             ]);
             $lockedBooking->massIntention?->update([

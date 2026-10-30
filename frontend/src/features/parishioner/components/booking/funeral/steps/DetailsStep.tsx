@@ -261,7 +261,7 @@ ${
                   </h3>
 
                   <div className="grid grid-cols-12 gap-4">
-                    <div className="col-span-12 md:col-span-5">
+                    <div className="col-span-12 md:col-span-4">
                       <BookingLabel className="mb-2 block text-sm font-medium">
                         Last Name <span className="text-red-600">*</span>
                       </BookingLabel>
@@ -279,7 +279,7 @@ ${
                       <FieldError message={getError("deceased.last_name")} />
                     </div>
 
-                    <div className="col-span-12 md:col-span-5">
+                    <div className="col-span-12 md:col-span-4">
                       <BookingLabel className="mb-2 block text-sm font-medium">
                         First Name <span className="text-red-600">*</span>
                       </BookingLabel>
@@ -316,6 +316,24 @@ ${
                       <FieldError
                         message={getError("deceased.middle_initial")}
                       />
+                    </div>
+                    <div className="col-span-12 md:col-span-2">
+                      <BookingLabel className="mb-2 block text-sm font-medium">
+                        Suffix (optional)
+                      </BookingLabel>
+
+                      <input
+                        type="text"
+                        maxLength={20}
+                        value={booking.deceased.suffix ?? ""}
+                        onChange={(e) =>
+                          updateDeceased("suffix", e.target.value)
+                        }
+                        placeholder="Jr., Sr., III"
+                        readOnly={readOnly}
+                        className={inputClass}
+                      />
+                      <FieldError message={getError("deceased.suffix")} />
                     </div>
 
                     <div className="col-span-12">
@@ -389,7 +407,7 @@ ${
                   </h3>
 
                   <div className="grid grid-cols-12 gap-4">
-                    <div className="col-span-12 md:col-span-5">
+                    <div className="col-span-12 md:col-span-4">
                       <BookingLabel className="mb-2 block text-sm font-medium">
                         Father's Last Name{" "}
                         <span className="text-red-600">*</span>
@@ -410,7 +428,7 @@ ${
                       />
                     </div>
 
-                    <div className="col-span-12 md:col-span-5">
+                    <div className="col-span-12 md:col-span-4">
                       <BookingLabel className="mb-2 block text-sm font-medium">
                         Father's First Name{" "}
                         <span className="text-red-600">*</span>
@@ -451,6 +469,26 @@ ${
                         message={getError("deceased.father.middle_initial")}
                       />
                     </div>
+                    <div className="col-span-12 md:col-span-2">
+                      <BookingLabel className="mb-2 block text-sm font-medium">
+                        Father's Suffix (optional)
+                      </BookingLabel>
+
+                      <input
+                        type="text"
+                        maxLength={20}
+                        placeholder="Jr., Sr., III"
+                        readOnly={readOnly}
+                        className={inputClass}
+                        value={booking.deceased.father.suffix ?? ""}
+                        onChange={(e) =>
+                          updateDeceasedFather("suffix", e.target.value)
+                        }
+                      />
+                      <FieldError
+                        message={getError("deceased.father.suffix")}
+                      />
+                    </div>
 
                     <div className="col-span-12 rounded-xl border border-amber-300 bg-amber-50 p-4">
                       <p className="text-sm text-amber-800">
@@ -459,7 +497,7 @@ ${
                       </p>
                     </div>
 
-                    <div className="col-span-12 md:col-span-5">
+                    <div className="col-span-12 md:col-span-4">
                       <BookingLabel className="mb-2 block text-sm font-medium">
                         Mother's Last Name{" "}
                         <span className="text-red-600">*</span>
@@ -480,7 +518,7 @@ ${
                       />
                     </div>
 
-                    <div className="col-span-12 md:col-span-5">
+                    <div className="col-span-12 md:col-span-4">
                       <BookingLabel className="mb-2 block text-sm font-medium">
                         Mother's First Name{" "}
                         <span className="text-red-600">*</span>
@@ -521,6 +559,26 @@ ${
                         message={getError("deceased.mother.middle_initial")}
                       />
                     </div>
+                    <div className="col-span-12 md:col-span-2">
+                      <BookingLabel className="mb-2 block text-sm font-medium">
+                        Mother's Suffix (optional)
+                      </BookingLabel>
+
+                      <input
+                        type="text"
+                        maxLength={20}
+                        placeholder="Jr., Sr., III"
+                        readOnly={readOnly}
+                        className={inputClass}
+                        value={booking.deceased.mother.suffix ?? ""}
+                        onChange={(e) =>
+                          updateDeceasedMother("suffix", e.target.value)
+                        }
+                      />
+                      <FieldError
+                        message={getError("deceased.mother.suffix")}
+                      />
+                    </div>
 
                     <div className="col-span-12 rounded-xl border border-gray-200 bg-gray-50 p-4">
                       <BookingLabel className="flex items-center gap-3 text-sm font-medium">
@@ -555,7 +613,7 @@ ${
 
                     {booking.deceased.has_spouse && (
                       <>
-                        <div className="col-span-12 md:col-span-5">
+                        <div className="col-span-12 md:col-span-4">
                           <BookingLabel className="mb-2 block text-sm font-medium">
                             Spouse's Last Name{" "}
                             <span className="text-red-600">*</span>
@@ -576,7 +634,7 @@ ${
                           />
                         </div>
 
-                        <div className="col-span-12 md:col-span-5">
+                        <div className="col-span-12 md:col-span-4">
                           <BookingLabel className="mb-2 block text-sm font-medium">
                             Spouse's First Name{" "}
                             <span className="text-red-600">*</span>
@@ -617,6 +675,26 @@ ${
                             message={getError("deceased.spouse.middle_initial")}
                           />
                         </div>
+                        <div className="col-span-12 md:col-span-2">
+                          <BookingLabel className="mb-2 block text-sm font-medium">
+                            Spouse's Suffix (optional)
+                          </BookingLabel>
+
+                          <input
+                            type="text"
+                            maxLength={20}
+                            placeholder="Jr., Sr., III"
+                            readOnly={readOnly}
+                            className={inputClass}
+                            value={booking.deceased.spouse.suffix ?? ""}
+                            onChange={(e) =>
+                              updateSpouse("suffix", e.target.value)
+                            }
+                          />
+                          <FieldError
+                            message={getError("deceased.spouse.suffix")}
+                          />
+                        </div>
                       </>
                     )}
                   </div>
@@ -649,7 +727,7 @@ ${
                         </div>
 
                         <div className="grid grid-cols-12 gap-4">
-                          <div className="col-span-12 md:col-span-5">
+                          <div className="col-span-12 md:col-span-4">
                             <BookingLabel className="mb-2 block text-sm font-medium">
                               Last Name
                             </BookingLabel>
@@ -671,7 +749,7 @@ ${
                             />
                           </div>
 
-                          <div className="col-span-12 md:col-span-5">
+                          <div className="col-span-12 md:col-span-4">
                             <BookingLabel className="mb-2 block text-sm font-medium">
                               First Name
                             </BookingLabel>
@@ -718,6 +796,28 @@ ${
                                 "deceased.children." +
                                   index +
                                   ".middle_initial",
+                              )}
+                            />
+                          </div>
+                          <div className="col-span-12 md:col-span-2">
+                            <BookingLabel className="mb-2 block text-sm font-medium">
+                              Suffix (optional)
+                            </BookingLabel>
+
+                            <input
+                              type="text"
+                              maxLength={20}
+                              value={child.suffix ?? ""}
+                              onChange={(e) =>
+                                updateChild(index, "suffix", e.target.value)
+                              }
+                              readOnly={readOnly}
+                              className={inputClass}
+                              placeholder="Jr., Sr., III"
+                            />
+                            <FieldError
+                              message={getError(
+                                "deceased.children." + index + ".suffix",
                               )}
                             />
                           </div>

@@ -27,11 +27,22 @@ class WeddingSponsorBookingTest extends TestCase
 
         [$slot, $package] = $this->weddingSchedule();
         $payload = $this->payload($slot->id, $package->id);
+        $payload['applicant']['groom']['suffix'] = 'Jr.';
+        $payload['applicant']['groom']['father']['suffix'] = 'Sr.';
+        $payload['applicant']['bride']['suffix'] = 'II';
+        $payload['sponsors'][0]['suffix'] = 'III';
 
         $response = $this->post('/api/bookings/wedding', $payload)
             ->assertCreated();
 
         $bookingId = $response->json('data.id');
+        $this->assertDatabaseHas('wedding_applicants', [
+            'booking_id' => $bookingId, 'role' => 'groom',
+            'suffix' => 'Jr.', 'father_suffix' => 'Sr.',
+        ]);
+        $this->assertDatabaseHas('wedding_applicants', [
+            'booking_id' => $bookingId, 'role' => 'bride', 'suffix' => 'II',
+        ]);
 
         $this->assertDatabaseCount('wedding_sponsors', 4);
         $this->assertDatabaseHas('wedding_sponsors', [
@@ -40,6 +51,7 @@ class WeddingSponsorBookingTest extends TestCase
             'role' => 'godfather',
             'first_name' => 'Pedro',
             'last_name' => 'Santos',
+            'suffix' => 'III',
             'requirement_type' => 'marriage_contract',
             'requirement_file_name' => 'pedro-marriage.pdf',
         ]);

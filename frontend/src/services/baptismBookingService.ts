@@ -15,6 +15,7 @@ function buildFormData(booking: BaptismBooking): FormData {
   formData.append("baptizand[first_name]", b.first_name);
   formData.append("baptizand[middle_initial]", b.middle_initial ?? "");
   formData.append("baptizand[last_name]", b.last_name);
+  formData.append("baptizand[suffix]", b.suffix ?? "");
   formData.append(
     "baptizand[birth_date]",
     b.birth_date ? b.birth_date.toISOString().split("T")[0] : "",
@@ -35,6 +36,7 @@ function buildFormData(booking: BaptismBooking): FormData {
       parent.middle_initial ?? "",
     );
     formData.append(`parents[${i}][last_name]`, parent.last_name);
+    formData.append(`parents[${i}][suffix]`, parent.suffix ?? "");
     formData.append(`parents[${i}][birth_place]`, parent.birth_place);
   });
 
@@ -48,6 +50,7 @@ function buildFormData(booking: BaptismBooking): FormData {
       godParent.middle_initial ?? "",
     );
     formData.append(`${prefix}[last_name]`, godParent.last_name);
+    formData.append(`${prefix}[suffix]`, godParent.suffix ?? "");
     formData.append(`${prefix}[residence]`, godParent.residence);
     formData.append(`${prefix}[requirement_type]`, godParent.requirement_type);
 

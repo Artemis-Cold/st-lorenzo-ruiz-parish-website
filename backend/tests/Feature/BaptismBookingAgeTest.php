@@ -83,6 +83,7 @@ class BaptismBookingAgeTest extends TestCase
             'service_package_id' => $package->id,
             'baptizand' => [
                 'first_name' => 'John',
+                'suffix' => 'Jr.',
                 'middle_initial' => '',
                 'last_name' => 'Doe',
                 'birth_date' => today()->subYears(8)->toDateString(),
@@ -96,6 +97,7 @@ class BaptismBookingAgeTest extends TestCase
                     'relationship' => 'father',
                     'contact_number' => '09171234567',
                     'first_name' => 'Juan',
+                    'suffix' => 'Sr.',
                     'middle_initial' => '',
                     'last_name' => 'Doe',
                     'birth_place' => 'Taysan, Batangas',
@@ -112,6 +114,7 @@ class BaptismBookingAgeTest extends TestCase
                 [
                     'role' => 'godfather',
                     'first_name' => 'Pedro',
+                    'suffix' => 'III',
                     'middle_initial' => '',
                     'last_name' => 'Santos',
                     'residence' => 'Batangas',
@@ -146,6 +149,9 @@ class BaptismBookingAgeTest extends TestCase
         ]);
 
         $response->assertCreated();
+        $this->assertDatabaseHas('baptizands', ['first_name' => 'John', 'suffix' => 'Jr.']);
+        $this->assertDatabaseHas('baptizand_parents', ['relationship' => 'father', 'suffix' => 'Sr.']);
+        $this->assertDatabaseHas('god_parents', ['first_name' => 'Pedro', 'suffix' => 'III']);
         $this->assertDatabaseHas('baptizand_parents', ['relationship' => 'father', 'contact_number' => '09171234567']);
         $bookingId = $response->json('data.id');
         $this->assertDatabaseHas('baptizands', [

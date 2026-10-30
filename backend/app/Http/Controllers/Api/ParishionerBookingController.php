@@ -218,6 +218,7 @@ class ParishionerBookingController extends Controller
                 throw ValidationException::withMessages(['payment_method' => 'A payment is already being processed. Please contact the parish office to change it.']);
             }
             $locked->update(['preferred_payment_method' => $data['payment_method']]);
+            app(PaymentService::class)->activateCashPreference($locked);
         });
 
         return response()->json(['message' => 'Payment preference saved. No payment has been submitted.']);
@@ -488,14 +489,14 @@ class ParishionerBookingController extends Controller
         $sections = $booking->weddingApplicants->map(fn ($person) => [
             'title' => ucfirst($person->role).' information',
             'fields' => $this->fields([
-                'Name' => $this->name($person->first_name, $person->middle_initial, $person->last_name),
+                'Name' => $this->name($person->first_name, $person->middle_initial, $person->last_name, $person->suffix),
                 'Age' => $person->age,
                 'Contact number' => $person->contact_number,
                 'Address' => $person->address,
                 'Baptized in' => $person->baptism_status === 'no' ? 'No — For parish coordination' : $person->baptized_in,
                 'Confirmed in' => $person->confirmation_status === 'no' ? 'No — For parish coordination' : $person->confirmed_in,
-                "Father's name" => $this->name($person->father_first_name, $person->father_middle_initial, $person->father_last_name),
-                "Mother's name" => $this->name($person->mother_first_name, $person->mother_middle_initial, $person->mother_last_name),
+                "Father's name" => $this->name($person->father_first_name, $person->father_middle_initial, $person->father_last_name, $person->father_suffix),
+                "Mother's name" => $this->name($person->mother_first_name, $person->mother_middle_initial, $person->mother_last_name, $person->mother_suffix),
             ]),
         ])->values()->all();
 
@@ -505,7 +506,7 @@ class ParishionerBookingController extends Controller
                 'fields' => [[
                     'label' => $sponsor->role === 'godfather' ? 'Godfather (Ninong)' : 'Godmother (Ninang)',
                     'value' => collect([
-                        $this->name($sponsor->first_name, $sponsor->middle_initial, $sponsor->last_name),
+                        $this->name($sponsor->first_name, $sponsor->middle_initial, $sponsor->last_name, $sponsor->suffix),
                         $sponsor->residence,
                         $sponsor->requirement_type
                             ? str($sponsor->requirement_type)->headline().' selected'
@@ -538,16 +539,16 @@ class ParishionerBookingController extends Controller
         return [[
             'title' => 'Deceased information',
             'fields' => $this->fields([
-                'Name' => $this->name($person->first_name, $person->middle_initial, $person->last_name),
+                'Name' => $this->name($person->first_name, $person->middle_initial, $person->last_name, $person->suffix),
                 'Age' => $person->age,
                 'Birth date' => $person->birth_date?->format('F j, Y'),
                 'Address' => $person->address,
                 'Cause of death' => $person->death_cause,
-                "Father's name" => $this->name($person->father_first_name, $person->father_middle_initial, $person->father_last_name),
-                "Mother's name" => $this->name($person->mother_first_name, $person->mother_middle_initial, $person->mother_last_name),
-                "Spouse's name" => $this->name($person->spouse_first_name, $person->spouse_middle_initial, $person->spouse_last_name),
-                'Children' => $person->children->map(fn ($child) => $this->name($child->first_name, $child->middle_initial, $child->last_name))->filter()->join(', '),
-                'Informant' => $this->name($person->informant_first_name, $person->informant_middle_initial, $person->informant_last_name),
+                "Father's name" => $this->name($person->father_first_name, $person->father_middle_initial, $person->father_last_name, $person->father_suffix),
+                "Mother's name" => $this->name($person->mother_first_name, $person->mother_middle_initial, $person->mother_last_name, $person->mother_suffix),
+                "Spouse's name" => $this->name($person->spouse_first_name, $person->spouse_middle_initial, $person->spouse_last_name, $person->spouse_suffix),
+                'Children' => $person->children->map(fn ($child) => $this->name($child->first_name, $child->middle_initial, $child->last_name, $child->suffix))->filter()->join(', '),
+                'Informant' => $this->name($person->informant_first_name, $person->informant_middle_initial, $person->informant_last_name, $person->informant_suffix),
                 'Informant relationship' => $person->informant_relationship,
                 'Informant contact' => $person->informant_contact_number,
             ]),

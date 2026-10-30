@@ -78,17 +78,17 @@ export default function PreparationForm({
   const field = (
     key: string,
     label: string,
-    current: string,
+    current: string | undefined,
     update: (value: string) => void,
     type = "text",
   ) => (
     <div
       key={key}
       className={
-        key.endsWith("middle_initial")
+        key.endsWith("middle_initial") || key.endsWith("suffix")
           ? "col-span-12 md:col-span-2"
           : key.endsWith("first_name") || key.endsWith("last_name")
-            ? "col-span-12 md:col-span-5"
+            ? "col-span-12 md:col-span-4"
             : "col-span-12 md:col-span-6"
       }
     >
@@ -97,14 +97,20 @@ export default function PreparationForm({
         className="mb-2 block text-sm font-medium"
       >
         {fieldLabels[key.split(".").at(-1) ?? ""] ?? label}
-        {!key.endsWith("middle_initial") && (
+        {!key.endsWith("middle_initial") && !key.endsWith("suffix") && (
           <span className="text-red-600"> *</span>
         )}
       </BookingLabel>
       <input
         id={`${formId}-${key}`}
         type={type}
-        maxLength={key.endsWith("middle_initial") ? 1 : undefined}
+        maxLength={
+          key.endsWith("middle_initial")
+            ? 1
+            : key.endsWith("suffix")
+              ? 20
+              : undefined
+        }
         placeholder={
           type === "date"
             ? undefined
@@ -171,6 +177,7 @@ export default function PreparationForm({
           ["first_name", "First name / Pangalan"],
           ["middle_initial", "Middle initial / Gitnang inisyal (optional)"],
           ["last_name", "Last name / Apelyido"],
+          ["suffix", "Suffix (optional) / Karugtong ng pangalan"],
           ["birth_date", "Birth date / Petsa ng kapanganakan", "date"],
           ["birth_place", "Birth place / Lugar ng kapanganakan"],
           ["address", "Address / Tirahan"],
@@ -237,6 +244,7 @@ export default function PreparationForm({
               ["first_name", "First name / Pangalan"],
               ["middle_initial", "Middle initial (optional)"],
               ["last_name", "Last name / Apelyido"],
+              ["suffix", "Suffix (optional) / Karugtong ng pangalan"],
               ["birth_place", "Birth place / Lugar ng kapanganakan"],
             ].map(([key, label]) =>
               field(
@@ -286,6 +294,7 @@ export default function PreparationForm({
               ["first_name", "First name / Pangalan"],
               ["middle_initial", "Middle initial (optional)"],
               ["last_name", "Last name / Apelyido"],
+              ["suffix", "Suffix (optional) / Karugtong ng pangalan"],
               ["residence", "Address / Tirahan"],
             ].map(([key, label]) =>
               field(

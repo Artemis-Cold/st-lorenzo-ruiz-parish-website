@@ -72,6 +72,7 @@ class BookingRequirementService
                 if (! $booking->physical_copies_received_at) {
                     $booking->update(['physical_copies_received_at' => now(), 'physical_copies_received_by' => $staffId]);
                 }
+                app(PaymentService::class)->activateCashPreference($booking);
 
                 return;
             }

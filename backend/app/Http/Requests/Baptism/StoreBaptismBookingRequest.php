@@ -26,6 +26,9 @@ class StoreBaptismBookingRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'baptizand.suffix' => ['nullable', 'string', 'max:20'],
+            'parents.*.suffix' => ['nullable', 'string', 'max:20'],
+            'god_parents.*.suffix' => ['nullable', 'string', 'max:20'],
             'schedule_request_id' => ['nullable', 'integer', 'exists:bookings,id'],
 
             'booking_slot_id' => [

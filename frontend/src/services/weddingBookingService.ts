@@ -42,6 +42,7 @@ function buildFormData(booking: WeddingBooking): FormData {
     formData.append(prefix + "[first_name]", person.first_name);
     formData.append(prefix + "[middle_initial]", person.middle_initial);
     formData.append(prefix + "[last_name]", person.last_name);
+    formData.append(prefix + "[suffix]", person.suffix ?? "");
     formData.append(prefix + "[address]", person.address);
     formData.append(
       prefix + "[age]",
@@ -58,6 +59,10 @@ function buildFormData(booking: WeddingBooking): FormData {
     );
 
     (["father", "mother"] as const).forEach((parent) => {
+      formData.append(
+        prefix + "[" + parent + "][suffix]",
+        person[parent].suffix ?? "",
+      );
       formData.append(
         prefix + "[" + parent + "][first_name]",
         person[parent].first_name,
@@ -92,6 +97,7 @@ function buildFormData(booking: WeddingBooking): FormData {
     formData.append(`${prefix}[first_name]`, sponsor.first_name);
     formData.append(`${prefix}[middle_initial]`, sponsor.middle_initial);
     formData.append(`${prefix}[last_name]`, sponsor.last_name);
+    formData.append(`${prefix}[suffix]`, sponsor.suffix ?? "");
     formData.append(`${prefix}[residence]`, sponsor.residence);
     formData.append(`${prefix}[requirement_type]`, sponsor.requirement_type);
 

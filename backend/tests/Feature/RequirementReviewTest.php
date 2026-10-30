@@ -188,7 +188,16 @@ class RequirementReviewTest extends TestCase
                 $this->postJson("/api/staff/bookings/{$booking->id}/requirements/review", ['action' => 'receive'])->assertOk();
                 Sanctum::actingAs($booking->user);
                 $this->getJson("/api/bookings/{$booking->id}")->assertOk()->assertJsonPath('data.payment.canSubmitPayment', true);
-                $this->post($url, $payload, ['Accept' => 'application/json'])->assertCreated();
+                if ($method === 'cash') {
+                    $this->assertSame('awaiting_payment', $booking->payments()->sole()->status);
+                    $this->assertSame('pending', $booking->fresh()->status);
+                    Sanctum::actingAs($staff);
+                    $this->postJson("/api/staff/bookings/{$booking->id}/requirements/review", ['action' => 'receive'])->assertOk();
+                    $this->assertSame(1, $booking->payments()->count());
+                } else {
+                    $this->assertSame(0, $booking->payments()->count());
+                    $this->post($url, $payload, ['Accept' => 'application/json'])->assertCreated();
+                }
                 $payment = $booking->payments()->sole();
                 Sanctum::actingAs($staff);
                 $booking->refresh()->update(['physical_copies_received_at' => null]);
@@ -215,5 +224,21 @@ class RequirementReviewTest extends TestCase
         $this->getJson("/api/bookings/{$booking->id}")->assertOk()->assertJsonPath('data.payment.method', 'cash')->assertJsonPath('data.payment.status', 'not_submitted')->assertJsonPath('data.payment.canSubmitPayment', false);
         $this->assertSame(0, $booking->payments()->count());
         $this->assertNull($booking->fresh()->payment_reference);
+    }
+
+    public function test_cash_preference_saved_after_requirements_are_received_is_ready_for_staff(): void
+    {
+        $booking = $this->booking();
+        $booking->update(['total_amount' => 100, 'schedule_status' => 'confirmed', 'details_submitted_at' => now()]);
+        $staff = User::factory()->create(['role' => 'staff']);
+        Sanctum::actingAs($staff);
+        $url = "/api/staff/bookings/{$booking->id}/requirements/review";
+        $this->postJson($url, ['action' => 'approve_all'])->assertOk();
+        $this->postJson($url, ['action' => 'receive'])->assertOk();
+        $this->assertSame(0, $booking->payments()->count());
+        Sanctum::actingAs($booking->user);
+        $this->patchJson("/api/bookings/{$booking->id}/payment-method", ['payment_method' => 'cash'])->assertOk();
+        $this->assertSame('awaiting_payment', $booking->payments()->sole()->status);
+        $this->assertSame('pending', $booking->fresh()->status);
     }
 }

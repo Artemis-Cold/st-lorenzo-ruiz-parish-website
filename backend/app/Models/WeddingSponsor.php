@@ -14,6 +14,7 @@ class WeddingSponsor extends Model
         'first_name',
         'middle_initial',
         'last_name',
+        'suffix',
         'residence',
         'requirement_type',
         'requirement_file_name',

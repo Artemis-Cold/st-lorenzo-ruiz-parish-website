@@ -123,6 +123,7 @@ ${
         ? `${godParent.middle_initial.replace(/\.$/, "")}.`
         : "",
       godParent.last_name,
+      godParent.suffix,
     ]
       .filter(Boolean)
       .join(" ");
@@ -268,7 +269,7 @@ ${
                   </h3>
 
                   <div className="grid grid-cols-12 gap-4">
-                    <div className="col-span-12 md:col-span-5">
+                    <div className="col-span-12 md:col-span-4">
                       <BookingLabel className="mb-2 block text-sm font-medium">
                         Last Name <span className="text-red-600">*</span>
                       </BookingLabel>
@@ -288,7 +289,7 @@ ${
                       <FieldError message={getError("baptizand.last_name")} />
                     </div>
 
-                    <div className="col-span-12 md:col-span-5">
+                    <div className="col-span-12 md:col-span-4">
                       <BookingLabel className="mb-2 block text-sm font-medium">
                         First Name <span className="text-red-600">*</span>
                       </BookingLabel>
@@ -329,6 +330,24 @@ ${
                       <FieldError
                         message={getError("baptizand.middle_initial")}
                       />
+                    </div>
+                    <div className="col-span-12 md:col-span-2">
+                      <BookingLabel className="mb-2 block text-sm font-medium">
+                        Suffix (optional)
+                      </BookingLabel>
+
+                      <input
+                        type="text"
+                        maxLength={20}
+                        value={booking.baptizand.suffix ?? ""}
+                        onChange={(e) =>
+                          updateBaptizand("suffix", e.target.value)
+                        }
+                        placeholder="Jr., Sr., III"
+                        readOnly={readOnly}
+                        className={inputClass(!!getError("baptizand.suffix"))}
+                      />
+                      <FieldError message={getError("baptizand.suffix")} />
                     </div>
 
                     <div className="col-span-12 md:col-span-4">
@@ -429,7 +448,7 @@ ${
                   </h3>
 
                   <div className="grid grid-cols-12 gap-4">
-                    <div className="col-span-12 md:col-span-5">
+                    <div className="col-span-12 md:col-span-4">
                       <BookingLabel className="mb-2 block text-sm font-medium">
                         Father's Last Name{" "}
                         <span className="text-red-600">*</span>
@@ -452,7 +471,7 @@ ${
                       />
                     </div>
 
-                    <div className="col-span-12 md:col-span-5">
+                    <div className="col-span-12 md:col-span-4">
                       <BookingLabel className="mb-2 block text-sm font-medium">
                         Father's First Name{" "}
                         <span className="text-red-600">*</span>
@@ -501,6 +520,28 @@ ${
                         message={getError(
                           `parents.${fatherIndex}.middle_initial`,
                         )}
+                      />
+                    </div>
+                    <div className="col-span-12 md:col-span-2">
+                      <BookingLabel className="mb-2 block text-sm font-medium">
+                        Father's Suffix (optional)
+                      </BookingLabel>
+
+                      <input
+                        type="text"
+                        maxLength={20}
+                        placeholder="Jr., Sr., III"
+                        readOnly={readOnly}
+                        className={inputClass(
+                          !!getError(`parents.${fatherIndex}.suffix`),
+                        )}
+                        value={father?.suffix ?? ""}
+                        onChange={(e) =>
+                          updateParent("father", "suffix", e.target.value)
+                        }
+                      />
+                      <FieldError
+                        message={getError(`parents.${fatherIndex}.suffix`)}
                       />
                     </div>
 
@@ -571,7 +612,7 @@ ${
                       </p>
                     </div>
 
-                    <div className="col-span-12 md:col-span-5">
+                    <div className="col-span-12 md:col-span-4">
                       <BookingLabel className="mb-2 block text-sm font-medium">
                         Mother's Last Name{" "}
                         <span className="text-red-600">*</span>
@@ -594,7 +635,7 @@ ${
                       />
                     </div>
 
-                    <div className="col-span-12 md:col-span-5">
+                    <div className="col-span-12 md:col-span-4">
                       <BookingLabel className="mb-2 block text-sm font-medium">
                         Mother's First Name{" "}
                         <span className="text-red-600">*</span>
@@ -643,6 +684,28 @@ ${
                         message={getError(
                           `parents.${motherIndex}.middle_initial`,
                         )}
+                      />
+                    </div>
+                    <div className="col-span-12 md:col-span-2">
+                      <BookingLabel className="mb-2 block text-sm font-medium">
+                        Mother's Suffix (optional)
+                      </BookingLabel>
+
+                      <input
+                        type="text"
+                        maxLength={20}
+                        placeholder="Jr., Sr., III"
+                        readOnly={readOnly}
+                        className={inputClass(
+                          !!getError(`parents.${motherIndex}.suffix`),
+                        )}
+                        value={mother?.suffix ?? ""}
+                        onChange={(e) =>
+                          updateParent("mother", "suffix", e.target.value)
+                        }
+                      />
+                      <FieldError
+                        message={getError(`parents.${motherIndex}.suffix`)}
                       />
                     </div>
 
@@ -785,7 +848,7 @@ ${
                             />
                           </div>
 
-                          <div className="col-span-12 sm:col-span-5">
+                          <div className="col-span-12 sm:col-span-4">
                             <BookingLabel className="mb-1.5 block text-sm font-medium">
                               Last Name <span className="text-red-600">*</span>
                             </BookingLabel>
@@ -813,7 +876,7 @@ ${
                             />
                           </div>
 
-                          <div className="col-span-12 sm:col-span-5">
+                          <div className="col-span-12 sm:col-span-4">
                             <BookingLabel className="mb-1.5 block text-sm font-medium">
                               First Name <span className="text-red-600">*</span>
                             </BookingLabel>
@@ -866,6 +929,34 @@ ${
                             <FieldError
                               message={getError(
                                 `god_parents.${godParentIndex}.middle_initial`,
+                              )}
+                            />
+                          </div>
+                          <div className="col-span-12 sm:col-span-2">
+                            <BookingLabel className="mb-1.5 block text-sm font-medium">
+                              Suffix (optional)
+                            </BookingLabel>
+                            <input
+                              maxLength={20}
+                              value={godParent.suffix ?? ""}
+                              onChange={(event) =>
+                                updateGodParent(
+                                  godParentIndex,
+                                  "suffix",
+                                  event.target.value,
+                                )
+                              }
+                              readOnly={readOnly}
+                              placeholder="Jr., Sr., III"
+                              className={inputClass(
+                                !!getError(
+                                  `god_parents.${godParentIndex}.suffix`,
+                                ),
+                              )}
+                            />
+                            <FieldError
+                              message={getError(
+                                `god_parents.${godParentIndex}.suffix`,
                               )}
                             />
                           </div>
