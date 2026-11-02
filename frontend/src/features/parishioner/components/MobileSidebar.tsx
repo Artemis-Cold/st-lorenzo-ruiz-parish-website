@@ -144,7 +144,7 @@ export default function MobileSidebar({ open, onClose }: MobileSidebarProps) {
           <SidebarItem
             collapsed={false}
             icon={MapPinned}
-            label="AR Navigation"
+            label="SLRP AR"
             to="/ar-navigation"
           />
 

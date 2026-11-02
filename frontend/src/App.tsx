@@ -48,6 +48,7 @@ function App() {
       <Routes>
         {/* Public */}
         <Route path="/" element={<Home />} />
+        <Route path="/slrp-ar" element={<Navigate to="/#slrp-ar" replace />} />
 
         <Route element={<GuestRoute />}>
           <Route path="/login" element={<Login />} />
@@ -59,6 +60,14 @@ function App() {
         {/* Protected */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route
+            path="/ar-navigation"
+            element={
+              <Suspense fallback={<RouteLoadingSkeleton />}>
+                <ARNavigationPage />
+              </Suspense>
+            }
+          />
 
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<ParishionerSettings />} />
@@ -81,15 +90,6 @@ function App() {
             <Route path="/services/mass-intention" element={<Mass />} />
             <Route path="/services/document-request" element={<Document />} />
           </Route>
-
-          <Route
-            path="/ar-navigation"
-            element={
-              <Suspense fallback={<RouteLoadingSkeleton />}>
-                <ARNavigationPage />
-              </Suspense>
-            }
-          />
         </Route>
 
         <Route element={<StaffProtectedRoute />}>

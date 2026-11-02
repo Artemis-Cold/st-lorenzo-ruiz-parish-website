@@ -8,6 +8,7 @@ const navItems = [
   { label: "Marriage Banns", href: "#marriage-banns" },
   { label: "Monthly Schedule", href: "#schedule" },
   { label: "Services", href: "#services" },
+  { label: "SLRP AR", href: "#slrp-ar" },
 ];
 
 const aboutItems = [
@@ -26,7 +27,10 @@ export default function Navbar() {
     event.preventDefault();
     const section = document.querySelector(href);
 
-    if (!section) return;
+    if (!section) {
+      window.location.assign(`/${href}`);
+      return;
+    }
 
     setMobileOpen(false);
     setMobileAboutOpen(false);
@@ -50,7 +54,7 @@ export default function Navbar() {
           </span>
         </a>
 
-        <nav className="hidden items-center gap-3 lg:flex xl:gap-5">
+        <nav className="hidden items-center gap-4 xl:flex">
           {navItems.map((item) => (
             <a
               key={item.label}
@@ -61,7 +65,6 @@ export default function Navbar() {
               {item.label}
             </a>
           ))}
-
           <div className="group relative">
             <button
               type="button"
@@ -95,7 +98,7 @@ export default function Navbar() {
           </div>
         </nav>
 
-        <div className="hidden items-center gap-2 lg:flex xl:gap-3">
+        <div className="hidden items-center gap-3 xl:flex">
           <Link
             to="/login"
             className="rounded-xl border border-white px-4 py-2 text-sm font-medium text-white transition duration-300 hover:bg-white hover:text-[#B22222]"
@@ -113,7 +116,7 @@ export default function Navbar() {
         <button
           type="button"
           onClick={() => setMobileOpen((open) => !open)}
-          className="grid size-10 place-items-center rounded-xl text-white transition hover:bg-white/10 lg:hidden"
+          className="grid size-10 place-items-center rounded-xl text-white transition hover:bg-white/10 xl:hidden"
           aria-label="Toggle navigation menu"
           aria-expanded={mobileOpen}
         >
@@ -122,7 +125,7 @@ export default function Navbar() {
       </div>
 
       {mobileOpen && (
-        <nav className="max-h-[calc(100svh-4.5rem)] overflow-y-auto border-t border-red-900/15 bg-white shadow-xl lg:hidden">
+        <nav className="max-h-[calc(100svh-4.5rem)] overflow-y-auto border-t border-red-900/15 bg-white shadow-xl xl:hidden">
           <div className="flex flex-col p-2">
             {navItems.map((item) => (
               <a
@@ -134,7 +137,6 @@ export default function Navbar() {
                 {item.label}
               </a>
             ))}
-
             <button
               type="button"
               onClick={() => setMobileAboutOpen((open) => !open)}
